@@ -40,6 +40,7 @@ $ pnpm run start
 
 # watch mode
 $ pnpm run start:dev
+$ docker-compose up
 
 # production mode
 $ pnpm run start:prod
@@ -53,6 +54,7 @@ $ pnpm run test
 
 # e2e tests
 $ pnpm run test:e2e
+$ docker-compose run --rm lsv-api pnpm run test:e2e
 
 # test coverage
 $ pnpm run test:cov
