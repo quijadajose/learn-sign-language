@@ -13,6 +13,7 @@ services:
     ports:
       - 3000:3000
       - 9229:9229
+
   lsv-db:
     image: mysql:8.0
     ports:
@@ -24,6 +25,20 @@ services:
       MYSQL_PASSWORD: ${DB_PASSWORD}
     volumes:
       - db_data:/var/lib/mysql
+
+  lsv-test:
+    build:
+      dockerfile: Dockerfile
+      context: .
+      target: development
+    volumes:
+      - .:/src/app
+      - /src/app/node_modules
+    command: pnpm run test:e2e
+    depends_on:
+      - lsv-db
+    profiles:
+      - test
 
 volumes:
   db_data:
