@@ -7,9 +7,21 @@ import { RegisterUserUseCase } from './domain/use-cases/register-user/register-u
 import { UserRepository } from './infrastructure/typeorm/user.repository/user.repository';
 import { BcryptService } from './infrastructure/services/bcrypt.service';
 import { JwtAuthService } from './infrastructure/services/jwt-auth.service';
+import { JwtModule } from '@nestjs/jwt';
+import { ConfigService } from '@nestjs/config';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([User])],
+  imports: [
+    TypeOrmModule.forFeature([User]),
+    JwtModule.registerAsync({
+      useFactory: async (configService: ConfigService) => ({
+        secret: configService.get<string>('JWT_SECRET'),
+        signOptions: { expiresIn: '12h' },
+      }),
+      inject: [ConfigService],
+    }),
+
+  ],
   providers: [
     AuthService,
     RegisterUserUseCase,
