@@ -12,11 +12,14 @@ export class AuthService {
         private readonly tokenService: TokenService,
     ) { }
     async registerUser(createUserDto: CreateUserDto): Promise<{ user: User, token: string }> {
-        const user = await this.registerUserUseCase.execute(createUserDto);
+        const user = await this.registerUserUseCase.register(createUserDto);
         user.hashPassword = undefined;
         user.googleId = undefined;
         user.updatedAt = undefined;
-        const token = this.tokenService.generateToken(user);
+        const token = this.generateToken(user);
         return { user, token };
+    }
+    generateToken(payload: any): string {
+        return this.tokenService.generateToken(payload);
     }
 }
