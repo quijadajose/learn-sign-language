@@ -9,6 +9,9 @@ import { BcryptService } from './infrastructure/services/bcrypt.service';
 import { JwtAuthService } from './infrastructure/services/jwt-auth.service';
 import { JwtModule } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
+import { GoogleStrategy } from './infrastructure/strategies/google.strategy';
+import { JwtStrategy } from './infrastructure/strategies/jwt.strategy';
+import { FindUserUseCase } from './domain/use-cases/find-user/find-user';
 
 @Module({
   imports: [
@@ -23,8 +26,11 @@ import { ConfigService } from '@nestjs/config';
 
   ],
   providers: [
+    GoogleStrategy,
+    JwtStrategy,
     AuthService,
     RegisterUserUseCase,
+    FindUserUseCase,
     {
       provide: 'TokenService',
       useClass: JwtAuthService

@@ -17,13 +17,13 @@ export class User {
     @Column()
     firstName: string;
 
-    @Column()
+    @Column({ nullable: true })
     lastName: string;
 
     @CreateDateColumn()
     createdAt: Date;
 
-    @Column()
+    @Column({ nullable: true })
     age: number;
 
     @Column({ nullable: true })
