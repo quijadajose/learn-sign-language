@@ -14,7 +14,7 @@ export class RegisterUserUseCase {
 
     ) { }
 
-    async execute(createUserDto: CreateUserDto): Promise<User> {
+    async register(createUserDto: CreateUserDto): Promise<User> {
         const { email, firstName, lastName, age, password, isRightHanded, role } = createUserDto;
 
         // Validar si el correo ya existe
@@ -32,6 +32,30 @@ export class RegisterUserUseCase {
         newUser.hashPassword = await this.hashService.hash(password);
         newUser.isRightHanded = isRightHanded;
         newUser.role = role;
+
+        // Guardar usuario en el repositorio
+        return await this.userRepository.save(newUser);
+    }
+    async registerUserWithOAuth2(createUserDto: CreateUserDto) {
+        const { email, firstName, lastName, age, role } = createUserDto;
+
+        // Validar si el correo ya existe
+        const existingUser = await this.userRepository.findByEmail(email);
+        if (existingUser) {
+            throw new BadRequestException('Email already in use');
+        }
+
+        // Crear instancia del usuario
+        const newUser = new User();
+        newUser.email = email;
+        newUser.firstName = firstName;
+        newUser.lastName = lastName;
+        newUser.age = age;
+        newUser.hashPassword = null
+        newUser.isRightHanded = true;
+        newUser.role = role;
+        newUser.googleId = createUserDto.googleId;
+        newUser.hashPassword = undefined;
 
         // Guardar usuario en el repositorio
         return await this.userRepository.save(newUser);
