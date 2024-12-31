@@ -46,8 +46,7 @@ export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
         }
 
         /// Generar token JWT
-        const payload = { email: user.email, sub: user.id };
-        const access_token = this.authService.generateToken(payload);
+        const access_token = this.authService.generateToken(user);
 
         // Retornar el usuario y el token al flujo de Passport
         done(null, { user, access_token });
