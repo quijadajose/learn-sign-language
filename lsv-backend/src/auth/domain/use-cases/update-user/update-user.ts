@@ -1,5 +1,4 @@
 import { BadRequestException, Inject, NotFoundException } from "@nestjs/common";
-import { HashService } from "../../ports/hash.service.interface/hash.service.interface";
 import { UserRepositoryInterface } from "../../ports/user.repository.interface/user.repository.interface.interface";
 import { User } from "src/shared/domain/entities/user";
 import { UpdateUserDto } from "src/auth/application/dtos/update-user/update-user";
@@ -8,11 +7,9 @@ export class UpdateUserUseCase {
     constructor(
         @Inject('UserRepositoryInterface')
         private readonly userRepository: UserRepositoryInterface,
-        @Inject('HashService')
-        private readonly hashService: HashService,
     ) { }
     async execute(userId: string, updateUserDto: UpdateUserDto): Promise<User> {
-        const { email, firstName, lastName, age, password, isRightHanded, role } = updateUserDto;
+        const { email, firstName, lastName, age, hashPassword, isRightHanded, role } = updateUserDto;
 
         // Buscar el usuario por ID
         const user = await this.userRepository.findById(userId);
@@ -33,7 +30,7 @@ export class UpdateUserUseCase {
         if (firstName) user.firstName = firstName;
         if (lastName) user.lastName = lastName;
         if (age) user.age = age;
-        if (password) user.hashPassword = await this.hashService.hash(password);
+        if (hashPassword) user.hashPassword = hashPassword;
         if (isRightHanded !== undefined) user.isRightHanded = isRightHanded;
         if (role) user.role = role;
 

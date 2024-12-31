@@ -1,4 +1,4 @@
-import { BadRequestException, Inject, Injectable } from '@nestjs/common';
+import { BadRequestException, Inject, Injectable, UnauthorizedException } from '@nestjs/common';
 import { RegisterUserUseCase } from '../domain/use-cases/register-user/register-user';
 import { CreateUserDto } from './dtos/create-user/create-user';
 import { User } from 'src/shared/domain/entities/user';
@@ -9,6 +9,8 @@ import { ConfigService } from '@nestjs/config';
 import { FindUserUseCase } from '../domain/use-cases/find-user/find-user';
 import { HashService } from '../domain/ports/hash.service.interface/hash.service.interface';
 import { UpdateUserUseCase } from '../domain/use-cases/update-user/update-user';
+import { LoginUserDto } from './dtos/login-user/login-user';
+import { JwtPayload } from '../interfaces/jwt-payload.interface';
 
 @Injectable()
 export class AuthService {
@@ -29,6 +31,24 @@ export class AuthService {
         user.googleId = undefined;
         user.updatedAt = undefined;
         const token = this.generateToken(user);
+        return { user, token };
+    }
+    async login(loginUserDto: LoginUserDto): Promise<{ user: User, token: string }> {
+        const user = await this.findUserUseCase.findByEmail(loginUserDto.email);
+
+        if (!user) {
+            throw new UnauthorizedException('Invalid credentials');
+        }
+
+        const isPasswordValid = await this.hashService.compare(loginUserDto.password, user.hashPassword);
+        if (!isPasswordValid) {
+            throw new UnauthorizedException('Invalid credentials');
+        }
+
+        const token = this.generateToken(user);
+        user.hashPassword = undefined;
+        user.googleId = undefined;
+        user.updatedAt = undefined;
         return { user, token };
     }
     generateToken(payload: User, expiresIn?: string): string {
@@ -53,22 +73,21 @@ export class AuthService {
         await this.sendEmailUseCase.execute(emailParams);
     }
     async resetPassword(token: string, newPassword: string): Promise<void> {
-        // 1. Validar el token y extraer la información del usuario
-        const payload = this.tokenService.verifyToken(token);
+        const payload: JwtPayload = this.tokenService.verifyToken(token);
+
         if (!payload) {
             throw new BadRequestException('Invalid or expired token');
         }
 
-        const { id: userId } = payload;
+        const { sub: userId } = payload;
 
-        // 2. Buscar al usuario por ID
         const user = await this.findUserUseCase.findById(userId);
         if (!user) {
             throw new BadRequestException('User not found');
         }
-        // 3. Actualizar la contraseña del usuario
 
-        user.hashPassword = await this.hashService.hash(newPassword); // Asegúrate de que este campo será hasheado antes de guardarse
+        user.hashPassword = await this.hashService.hash(newPassword);
+
         await this.updateUserUseCase.execute(userId, user);
 
         const emailParams: EmailParams = {
