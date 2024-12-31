@@ -11,7 +11,7 @@ export class UpdateUserDto {
 
     @IsOptional()
     @IsNotEmpty()
-    password?: string;
+    hashPassword?: string;
 
     @IsOptional()
     @IsNotEmpty()
