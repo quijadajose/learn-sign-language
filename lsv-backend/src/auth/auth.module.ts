@@ -12,6 +12,9 @@ import { ConfigService } from '@nestjs/config';
 import { GoogleStrategy } from './infrastructure/strategies/google.strategy';
 import { JwtStrategy } from './infrastructure/strategies/jwt.strategy';
 import { FindUserUseCase } from './domain/use-cases/find-user/find-user';
+import { NodeMailerService } from './infrastructure/services/nodemailer.service';
+import { UpdateUserUseCase } from './domain/use-cases/update-user/update-user';
+import { SendEmailUseCase } from './domain/use-cases/send-email/send-email';
 
 @Module({
   imports: [
@@ -29,8 +32,10 @@ import { FindUserUseCase } from './domain/use-cases/find-user/find-user';
     GoogleStrategy,
     JwtStrategy,
     AuthService,
+    UpdateUserUseCase,
     RegisterUserUseCase,
     FindUserUseCase,
+    SendEmailUseCase,
     {
       provide: 'TokenService',
       useClass: JwtAuthService
@@ -40,9 +45,13 @@ import { FindUserUseCase } from './domain/use-cases/find-user/find-user';
       useClass: BcryptService
     },
     {
+      provide: 'EmailService',
+      useClass: NodeMailerService,
+    },
+    {
       provide: 'UserRepositoryInterface',
       useClass: UserRepository,
-    }
+    },
   ],
   controllers: [AuthController]
 })
