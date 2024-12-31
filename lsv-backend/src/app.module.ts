@@ -6,6 +6,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { validate } from './config/env.validation';
 import { AuthModule } from './auth/auth.module';
 import { User } from './shared/domain/entities/user';
+import { MailerModule } from '@nestjs-modules/mailer';
 
 @Module({
   imports: [
@@ -24,6 +25,21 @@ import { User } from './shared/domain/entities/user';
         database: configService.get<string>('DB_DATABASE'),
         entities: [User],
         synchronize: true,
+      }),
+
+    }),
+    MailerModule.forRootAsync({
+      imports: [ConfigModule],
+      inject: [ConfigService],
+      useFactory: async (configService: ConfigService) => ({
+        transport: {
+          host: configService.get<string>('EMAIL_HOST'),
+          port: configService.get<number>('EMAIL_PORT', 587),
+          auth: {
+            user: configService.get<string>('EMAIL_USER'), // Usuario SMTP desde .env
+            pass: configService.get<string>('EMAIL_PASSWORD'), // Contraseña SMTP desde .env
+          },
+        },
       }),
     }),
     AuthModule,
