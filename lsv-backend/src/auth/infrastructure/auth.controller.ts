@@ -4,6 +4,7 @@ import { AuthService } from '../application/auth.service';
 import { AuthGuard } from '@nestjs/passport';
 import { ResetPassword } from '../application/dtos/reset-password/reset-password';
 import { ConfirmResetPasswordDto } from '../application/dtos/confirm-reset-password/confirm-reset-password-dto';
+import { LoginUserDto } from '../application/dtos/login-user/login-user';
 
 @Controller('auth')
 export class AuthController {
@@ -14,6 +15,14 @@ export class AuthController {
     return {
       message: 'User registered successfully',
       data: user,
+    };
+  }
+  @Post('login')
+  async login(@Body() user: LoginUserDto) {
+    const token = await this.authService.login(user);
+    return {
+      message: 'User logged in successfully',
+      data: token,
     };
   }
   @Post('password/reset')
@@ -37,7 +46,6 @@ export class AuthController {
       throw new HttpException(error.message, HttpStatus.BAD_REQUEST);
     }
   }
-
 
   @Get('google')
   @UseGuards(AuthGuard('google'))
