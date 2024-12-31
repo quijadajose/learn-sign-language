@@ -13,4 +13,8 @@ export class FindUserUseCase {
         const user = await this.userRepository.findByEmail(email);
         return user || null;
     }
+    async findById(id: string): Promise<User> {
+        const user = await this.userRepository.findById(id);
+        return user || null;
+    }
 }
