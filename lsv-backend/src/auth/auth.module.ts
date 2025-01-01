@@ -15,6 +15,8 @@ import { FindUserUseCase } from './domain/use-cases/find-user/find-user';
 import { NodeMailerService } from './infrastructure/services/nodemailer.service';
 import { UpdateUserUseCase } from './domain/use-cases/update-user/update-user';
 import { SendEmailUseCase } from './domain/use-cases/send-email/send-email';
+import { APP_GUARD } from '@nestjs/core';
+import { JwtAuthGuard } from './infrastructure/guards/jwt-auth/jwt-auth.guard';
 
 @Module({
   imports: [
@@ -37,6 +39,10 @@ import { SendEmailUseCase } from './domain/use-cases/send-email/send-email';
     FindUserUseCase,
     SendEmailUseCase,
     {
+      provide: APP_GUARD,
+      useClass: JwtAuthGuard, // Global JWT authentication
+    },
+    {
       provide: 'TokenService',
       useClass: JwtAuthService
     },
@@ -53,6 +59,7 @@ import { SendEmailUseCase } from './domain/use-cases/send-email/send-email';
       useClass: UserRepository,
     },
   ],
-  controllers: [AuthController]
+  controllers: [AuthController],
+  exports: [AuthService]
 })
 export class AuthModule { }
