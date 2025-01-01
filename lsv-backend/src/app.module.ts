@@ -7,6 +7,8 @@ import { validate } from './config/env.validation';
 import { AuthModule } from './auth/auth.module';
 import { User } from './shared/domain/entities/user';
 import { MailerModule } from '@nestjs-modules/mailer';
+import { UsersModule } from './users/users.module';
+import { UsersService } from './users/application/users/users.service';
 
 @Module({
   imports: [
@@ -43,8 +45,9 @@ import { MailerModule } from '@nestjs-modules/mailer';
       }),
     }),
     AuthModule,
+    UsersModule,
   ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [AppService, UsersService],
 })
 export class AppModule { }

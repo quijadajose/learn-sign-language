@@ -97,5 +97,12 @@ export class AuthService {
         };
         await this.sendEmailUseCase.execute(emailParams);
     }
+    async getUserProfile(userId: string): Promise<User> {
+        const user = await this.findUserUseCase.findById(userId);
+        if (!user) {
+            throw new BadRequestException('User not found');
+        }
+        return user;
+    }
 
 }
