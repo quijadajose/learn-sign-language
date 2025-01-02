@@ -5,10 +5,12 @@ import { AuthGuard } from '@nestjs/passport';
 import { ResetPassword } from '../application/dtos/reset-password/reset-password';
 import { ConfirmResetPasswordDto } from '../application/dtos/confirm-reset-password/confirm-reset-password-dto';
 import { LoginUserDto } from '../application/dtos/login-user/login-user';
+import { Public } from './decorators/public.decorator';
 
 @Controller('auth')
 export class AuthController {
   constructor(private readonly authService: AuthService) { }
+  @Public()
   @Post('register')
   async register(@Body() createUserDto: CreateUserDto) {
     const user = await this.authService.registerUser(createUserDto);
@@ -17,6 +19,8 @@ export class AuthController {
       data: user,
     };
   }
+
+  @Public()
   @Post('login')
   async login(@Body() user: LoginUserDto) {
     const token = await this.authService.login(user);
@@ -25,6 +29,8 @@ export class AuthController {
       data: token,
     };
   }
+
+  @Public()
   @Post('password/reset')
   async requestPasswordReset(@Body() resetPasswordDto: ResetPassword) {
     const { email } = resetPasswordDto;
@@ -36,6 +42,7 @@ export class AuthController {
     }
   }
 
+  @Public()
   @Post('password/reset/confirm')
   async confirmPasswordReset(@Body() confirmResetPasswordDto: ConfirmResetPasswordDto) {
     const { token, newPassword } = confirmResetPasswordDto;
@@ -47,12 +54,14 @@ export class AuthController {
     }
   }
 
+  @Public()
   @Get('google')
   @UseGuards(AuthGuard('google'))
   async googleAuth(@Req() req) {
     // Inicia el flujo de autenticación con Google
   }
 
+  @Public()
   @Get('google/callback')
   @UseGuards(AuthGuard('google'))
   async googleAuthRedirect(@Req() req) {
