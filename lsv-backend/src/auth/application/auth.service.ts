@@ -11,6 +11,7 @@ import { HashService } from '../domain/ports/hash.service.interface/hash.service
 import { UpdateUserUseCase } from '../domain/use-cases/update-user/update-user';
 import { LoginUserDto } from './dtos/login-user/login-user';
 import { JwtPayload } from '../interfaces/jwt-payload.interface';
+import { UpdateUserDto } from './dtos/update-user/update-user';
 
 @Injectable()
 export class AuthService {
@@ -60,7 +61,7 @@ export class AuthService {
             throw new BadRequestException('User not found');
         }
 
-        const resetToken = this.generateToken(user, '15m'); // Implementa este método para generar el token
+        const resetToken = this.generateToken(user, '15m');
         const frontEndUrl = this.configService.get<string>('FRONTEND_URL')
         const resetUrl = `${frontEndUrl}/reset-password?token=${resetToken}`;
 
@@ -103,6 +104,36 @@ export class AuthService {
             throw new BadRequestException('User not found');
         }
         return user;
+    }
+    async updateUserProfile(userId: string, updateUserDto: UpdateUserDto): Promise<User> {
+        const user = await this.findUserUseCase.findById(userId);
+        if (!user) {
+            throw new BadRequestException('User not found');
+        }
+        // Actualización del password si corresponde
+        if (updateUserDto.oldPassword && updateUserDto.newPassword) {
+            // Validar que la contraseña actual sea correcta
+            const isCurrentPassword = await this.hashService.compare(updateUserDto.oldPassword, user.hashPassword);
+            if (!isCurrentPassword) {
+                throw new BadRequestException('Current password does not match');
+            }
+
+            // Validar que el nuevo password sea diferente al anterior
+            const isSamePassword = await this.hashService.compare(updateUserDto.newPassword, user.hashPassword);
+            if (isSamePassword) {
+                throw new BadRequestException('New password must be different from the old password');
+            }
+
+            // Generar el hash del nuevo password
+            updateUserDto.hashPassword = await this.hashService.hash(updateUserDto.newPassword);
+
+            // Limpiar campos sensibles del DTO para evitar conflictos
+            delete updateUserDto.oldPassword;
+            delete updateUserDto.newPassword;
+        }
+
+        const updatedUser = await this.updateUserUseCase.execute(userId, updateUserDto);
+        return updatedUser;
     }
 
 }
