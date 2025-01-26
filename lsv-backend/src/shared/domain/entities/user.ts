@@ -1,4 +1,5 @@
-import { Column, CreateDateColumn, Entity, PrimaryGeneratedColumn, UpdateDateColumn } from "typeorm";
+import { Column, CreateDateColumn, Entity, OneToMany, PrimaryGeneratedColumn, UpdateDateColumn } from "typeorm";
+import { UserLesson } from "./userLesson";
 
 @Entity()
 export class User {
@@ -34,4 +35,7 @@ export class User {
 
     @Column({ default: 'user' }) // 'user' | 'admin'
     role: string;
+
+    @OneToMany(() => UserLesson, (userLesson) => userLesson.user)
+    userLessons: UserLesson[];
 }
