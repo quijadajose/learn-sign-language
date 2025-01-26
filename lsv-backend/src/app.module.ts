@@ -9,6 +9,11 @@ import { User } from './shared/domain/entities/user';
 import { MailerModule } from '@nestjs-modules/mailer';
 import { UsersModule } from './users/users.module';
 import { UsersService } from './users/application/users/users.service';
+import { UserLesson } from './shared/domain/entities/userLesson';
+import { Lesson } from './shared/domain/entities/lesson';
+import { AdminModule } from './admin/admin.module';
+import { Stages } from './shared/domain/entities/stage';
+import { Language } from './shared/domain/entities/language';
 
 @Module({
   imports: [
@@ -25,7 +30,7 @@ import { UsersService } from './users/application/users/users.service';
         username: configService.get<string>('DB_USERNAME'),
         password: configService.get<string>('DB_PASSWORD'),
         database: configService.get<string>('DB_DATABASE'),
-        entities: [User],
+        entities: [User, Language, Stages, Lesson, UserLesson],
         synchronize: true,
       }),
 
@@ -46,6 +51,7 @@ import { UsersService } from './users/application/users/users.service';
     }),
     AuthModule,
     UsersModule,
+    AdminModule,
   ],
   controllers: [AppController],
   providers: [AppService, UsersService],
