@@ -1,6 +1,6 @@
 import { Injectable } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
-import { LanguageRepositoryInterface } from "src/admin/domain/ports/language.repository.interface/language.repository.interface.interface";
+import { LanguageRepositoryInterface } from "src/admin/domain/ports/language.repository.interface/language.repository.interface";
 import { Language } from "src/shared/domain/entities/language";
 import { Repository } from "typeorm";
 
