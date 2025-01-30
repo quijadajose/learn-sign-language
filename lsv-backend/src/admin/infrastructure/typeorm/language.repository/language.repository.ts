@@ -10,22 +10,22 @@ export class LanguageRepository implements LanguageRepositoryInterface {
   constructor(
     @InjectRepository(Language)
     private readonly languageRepository: Repository<Language>,
-  ) {}
+  ) { }
 
   async findById(id: string): Promise<Language | null> {
     return this.languageRepository.findOne({ where: { id } });
   }
 
   async findByName(name: string): Promise<Language | null> {
-    return this.languageRepository.findOne({ where: { name } }) 
+    return this.languageRepository.findOne({ where: { name } })
   }
 
   async findAll(pagination: PaginationDto): Promise<Language[]> {
-    
-    const { page=1, limit=10, orderBy=undefined, sortOrder=undefined } = pagination;
-    
+
+    const { page, limit, orderBy = undefined, sortOrder = undefined } = pagination;
+
     const skip = (page - 1) * limit;
-  
+
     const findOptions: any = {
       skip,
       take: limit,
@@ -38,7 +38,7 @@ export class LanguageRepository implements LanguageRepositoryInterface {
     }
 
     return this.languageRepository.find(findOptions);
-}
+  }
 
   async save(language: Language): Promise<Language> {
     return this.languageRepository.save(language);
@@ -46,5 +46,9 @@ export class LanguageRepository implements LanguageRepositoryInterface {
 
   async deleteById(id: string): Promise<void> {
     await this.languageRepository.delete(id);
+  }
+  async update(id: string, language: Language): Promise<Language> {
+    await this.languageRepository.update(id, language);
+    return language;
   }
 }
