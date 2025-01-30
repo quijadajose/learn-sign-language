@@ -9,6 +9,7 @@ import { APP_GUARD } from '@nestjs/core';
 import { RolesGuard } from 'src/auth/infrastructure/guards/roles/roles.guard';
 import { ListLanguagesUseCase } from './application/use-cases/list-languages-use-case/list-languages-use-case';
 import { GetLanguageUseCase } from './application/use-cases/get-language-use-case/get-language-use-case';
+import { UpdateLanguagesUseCase } from './application/use-cases/update-languages-use-case/update-languages-use-case';
 
 @Module({
     imports: [
@@ -24,6 +25,7 @@ import { GetLanguageUseCase } from './application/use-cases/get-language-use-cas
         CreateLanguageUseCase,
         GetLanguageUseCase,
         ListLanguagesUseCase,
+        UpdateLanguagesUseCase,
         {
             provide: 'LanguageRepositoryInterface',
             useClass: LanguageRepository,
