@@ -11,14 +11,14 @@ export class PaginationDto {
     @Type(() => Number)
     @IsInt()
     @Min(0)
-    page: number;
+    page: number = 1;
 
     @IsOptional()
     @Type(() => Number)
     @IsInt()
     @Min(1)
     @Max(100)
-    limit: number;
+    limit: number = 10;
 
     @IsOptional()
     @IsString()
