@@ -7,6 +7,8 @@ import { LanguageAdminService } from './application/services/language-admin/lang
 import { CreateLanguageUseCase } from './application/use-cases/create-language-use-case/create-language-use-case';
 import { APP_GUARD } from '@nestjs/core';
 import { RolesGuard } from 'src/auth/infrastructure/guards/roles/roles.guard';
+import { ListLanguagesUseCase } from './application/use-cases/list-languages-use-case/list-languages-use-case';
+import { GetLanguageUseCase } from './application/use-cases/get-language-use-case/get-language-use-case';
 
 @Module({
     imports: [
@@ -20,10 +22,12 @@ import { RolesGuard } from 'src/auth/infrastructure/guards/roles/roles.guard';
         LanguageRepository,
         LanguageAdminService,
         CreateLanguageUseCase,
+        GetLanguageUseCase,
+        ListLanguagesUseCase,
         {
             provide: 'LanguageRepositoryInterface',
             useClass: LanguageRepository,
-        }
+        },
     ],
     controllers: [LanguageAdminController],
 })
