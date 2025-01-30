@@ -12,7 +12,7 @@ export class JwtAuthService implements TokenService {
         private readonly jwtService: JwtService) { }
 
     generateToken(user: User, expiresIn?: string): string {
-        const payload = { email: user.email, sub: user.id };
+        const payload = { email: user.email, sub: user.id, role: user.role };
         return this.jwtService.sign(payload, expiresIn ? { expiresIn } : undefined);
     }
     verifyToken(token: string): JwtPayload {

@@ -6,8 +6,7 @@ services:
       target: development
     volumes:
       - .:/src/app
-      - /src/app/node_modules
-    command: pnpm run start:debug
+    command: npm run start:debug
     depends_on:
       - lsv-db
     ports:

@@ -2,7 +2,7 @@ import { BadRequestException, Inject } from "@nestjs/common";
 import { LanguageRepository } from "src/admin/infrastructure/typeorm/language.repository/language.repository";
 import { CreateLanguageDto } from "../../dtos/create-language/create-language";
 import { Language } from "src/shared/domain/entities/language";
-import { LanguageRepositoryInterface } from "src/admin/domain/ports/language.repository.interface/language.repository.interface.interface";
+import { LanguageRepositoryInterface } from "src/admin/domain/ports/language.repository.interface/language.repository.interface";
 
 export class CreateLanguageUseCase {
     constructor(
