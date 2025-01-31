@@ -7,6 +7,7 @@ import { ListLanguagesUseCase } from '../../use-cases/list-languages-use-case/li
 import { PaginationDto } from 'src/shared/application/dtos/PaginationDto';
 import { UpdateLanguagesUseCase } from '../../use-cases/update-languages-use-case/update-languages-use-case';
 import { UpdateLanguageDto } from '../../dtos/update-language-dto/update-language-dto';
+import { DeleteLanguagesUseCase } from '../../use-cases/delete-languages-use-case/delete-languages-use-case';
 
 @Injectable()
 export class LanguageAdminService {
@@ -15,6 +16,7 @@ export class LanguageAdminService {
         private readonly getLanguageUseCase: GetLanguageUseCase,
         private readonly listLanguagesUseCase: ListLanguagesUseCase,
         private readonly updateLanguageUseCase: UpdateLanguagesUseCase,
+        private readonly removeLanguageUseCase: DeleteLanguagesUseCase,
     ) { }
     async createLanguage(createLanguageDto: CreateLanguageDto): Promise<Language> {
         return this.createLanguageUseCase.execute(createLanguageDto);
@@ -27,5 +29,8 @@ export class LanguageAdminService {
     }
     async updateLanguage(id: string, updateLanguageDto: CreateLanguageDto): Promise<Language> {
         return this.updateLanguageUseCase.execute(updateLanguageDto, id);
+    }
+    async removeLanguage(id: string): Promise<void> {
+        return this.removeLanguageUseCase.execute(id);
     }
 }
