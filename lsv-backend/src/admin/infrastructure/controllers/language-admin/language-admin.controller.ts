@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, ParseUUIDPipe, Post, Put, Query, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Get, HttpCode, Param, ParseUUIDPipe, Post, Put, Query, UseGuards } from '@nestjs/common';
 import { CreateLanguageDto as LanguageDto } from 'src/admin/application/dtos/create-language/create-language';
 import { LanguageAdminService } from 'src/admin/application/services/language-admin/language-admin.service';
 import { Roles } from 'src/auth/infrastructure/decorators/roles.decorator';
@@ -20,22 +20,30 @@ export class LanguageAdminController {
   @UseGuards(RolesGuard)
   @Roles('admin')
   @Get('/')
-  async listLanguages(@Query() pagination: PaginationDto) {
+  async listLanguages(@Query() pagination: PaginationDto): Promise<Language[]> {
     return this.languageAdminService.getAllLanguages(pagination);
   }
 
   @UseGuards(RolesGuard)
   @Roles('admin')
   @Get(':id')
-  async getLanguage(@Param('id', ParseUUIDPipe) id: string) {    
+  async getLanguage(@Param('id', ParseUUIDPipe) id: string): Promise<Language> {    
     return this.languageAdminService.getLanguage(id);
   }
 
   @UseGuards(RolesGuard)
   @Roles('admin')
   @Put(':id')
-  async update(@Param('id') id: string, @Body() updateLanguageDto: LanguageDto): Promise<Language> {
+  async update(@Param('id', ParseUUIDPipe) id: string, @Body() updateLanguageDto: LanguageDto): Promise<Language> {
     return this.languageAdminService.updateLanguage(id, updateLanguageDto);
+  }
+
+  @UseGuards(RolesGuard)
+  @Roles('admin')
+  @Delete(':id')
+  @HttpCode(204)
+  async remove(@Param('id', ParseUUIDPipe) id: string): Promise<void> {
+    return this.languageAdminService.removeLanguage(id);
   }
 
 }

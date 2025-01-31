@@ -10,6 +10,7 @@ import { RolesGuard } from 'src/auth/infrastructure/guards/roles/roles.guard';
 import { ListLanguagesUseCase } from './application/use-cases/list-languages-use-case/list-languages-use-case';
 import { GetLanguageUseCase } from './application/use-cases/get-language-use-case/get-language-use-case';
 import { UpdateLanguagesUseCase } from './application/use-cases/update-languages-use-case/update-languages-use-case';
+import { DeleteLanguagesUseCase } from './application/use-cases/delete-languages-use-case/delete-languages-use-case';
 
 @Module({
     imports: [
@@ -26,6 +27,7 @@ import { UpdateLanguagesUseCase } from './application/use-cases/update-languages
         GetLanguageUseCase,
         ListLanguagesUseCase,
         UpdateLanguagesUseCase,
+        DeleteLanguagesUseCase,
         {
             provide: 'LanguageRepositoryInterface',
             useClass: LanguageRepository,
