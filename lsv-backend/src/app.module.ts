@@ -1,7 +1,5 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
-import { AppController } from './app.controller';
-import { AppService } from './app.service';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { validate } from './config/env.validation';
 import { AuthModule } from './auth/auth.module';
@@ -14,6 +12,7 @@ import { Lesson } from './shared/domain/entities/lesson';
 import { AdminModule } from './admin/admin.module';
 import { Stages } from './shared/domain/entities/stage';
 import { Language } from './shared/domain/entities/language';
+import { ImagesController } from './shared/infrastructure/controllers/images/images.controller';
 
 @Module({
   imports: [
@@ -53,7 +52,7 @@ import { Language } from './shared/domain/entities/language';
     UsersModule,
     AdminModule,
   ],
-  controllers: [AppController],
-  providers: [AppService, UsersService],
+  controllers: [ImagesController],
+  providers: [UsersService],
 })
 export class AppModule { }

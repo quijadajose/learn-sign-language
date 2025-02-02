@@ -8,7 +8,6 @@ export class Lesson {
     @PrimaryGeneratedColumn("uuid")
     id: string;
 
-
     @CreateDateColumn()
     createdAt: Date;
 
@@ -20,6 +19,9 @@ export class Lesson {
 
     @Column('text')
     description: string;
+
+    @Column('text')
+    content: string;
 
     @ManyToOne(() => Language, (language) => language.lessons, { onDelete: 'CASCADE' })
     language: Language;
