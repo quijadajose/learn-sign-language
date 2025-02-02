@@ -37,6 +37,7 @@ export class CreateLessonUseCase {
         lesson.description = createLessonDto.description;
         lesson.stage = stage
         lesson.language = language
+        lesson.content = createLessonDto.content
 
         const createdLanguage = await this.lessonRepository.save(lesson);
         return createdLanguage;

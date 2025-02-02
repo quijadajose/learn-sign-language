@@ -18,6 +18,7 @@ import { LessonAdminController } from './infrastructure/controllers/lesson-admin
 import { LessonAdminService } from './application/services/lesson-admin/lesson-admin.service';
 import { LessonRepository } from './infrastructure/typeorm/lesson.repository/lesson.repository';
 import { StageRepository } from './infrastructure/typeorm/stage.repository/stage.repository';
+import { UploadPictureUseCase } from 'src/shared/application/use-cases/upload-picture-use-case/upload-picture-use-case';
 
 @Module({
     imports: [
@@ -37,6 +38,7 @@ import { StageRepository } from './infrastructure/typeorm/stage.repository/stage
         DeleteLanguagesUseCase,
         CreateLessonUseCase,
         LessonAdminService,
+        UploadPictureUseCase,
         {
             provide: 'LanguageRepositoryInterface',
             useClass: LanguageRepository,

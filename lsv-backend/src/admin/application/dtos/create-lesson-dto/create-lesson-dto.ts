@@ -11,6 +11,10 @@ export class CreateLessonDto {
     
     @IsNotEmpty()
     @IsString()
+    content: string;
+    
+    @IsNotEmpty()
+    @IsString()
     languageId: string;
     
     @IsNotEmpty()
