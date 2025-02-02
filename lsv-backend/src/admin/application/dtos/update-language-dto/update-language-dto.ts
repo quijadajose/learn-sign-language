@@ -12,4 +12,8 @@ export class UpdateLanguageDto {
     @IsNotEmpty()
     @IsString()
     description: string;
+
+    @IsNotEmpty()
+    @IsString()
+    content: string;
 }
