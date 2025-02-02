@@ -11,10 +11,18 @@ import { ListLanguagesUseCase } from './application/use-cases/list-languages-use
 import { GetLanguageUseCase } from './application/use-cases/get-language-use-case/get-language-use-case';
 import { UpdateLanguagesUseCase } from './application/use-cases/update-languages-use-case/update-languages-use-case';
 import { DeleteLanguagesUseCase } from './application/use-cases/delete-languages-use-case/delete-languages-use-case';
+import { Lesson } from 'src/shared/domain/entities/lesson';
+import { CreateLessonUseCase } from './application/use-cases/create-lesson-use-case/create-lesson-use-case';
+import { Stages } from 'src/shared/domain/entities/stage';
+import { LessonAdminController } from './infrastructure/controllers/lesson-admin/lesson-admin.controller';
+import { LessonAdminService } from './application/services/lesson-admin/lesson-admin.service';
+import { LessonRepository } from './infrastructure/typeorm/lesson.repository/lesson.repository';
+import { StageRepository } from './infrastructure/typeorm/stage.repository/stage.repository';
+import { UploadPictureUseCase } from 'src/shared/application/use-cases/upload-picture-use-case/upload-picture-use-case';
 
 @Module({
     imports: [
-        TypeOrmModule.forFeature([Language]),
+        TypeOrmModule.forFeature([Language,Lesson, Stages]),
     ],
     providers: [
         {
@@ -28,11 +36,22 @@ import { DeleteLanguagesUseCase } from './application/use-cases/delete-languages
         ListLanguagesUseCase,
         UpdateLanguagesUseCase,
         DeleteLanguagesUseCase,
+        CreateLessonUseCase,
+        LessonAdminService,
+        UploadPictureUseCase,
         {
             provide: 'LanguageRepositoryInterface',
             useClass: LanguageRepository,
         },
+        {
+            provide: 'LessonRepositoryInterface',
+            useClass: LessonRepository,
+        },
+        {
+            provide: 'StageRepositoryInterface',
+            useClass: StageRepository,
+        }
     ],
-    controllers: [LanguageAdminController],
+    controllers: [LanguageAdminController, LessonAdminController],
 })
 export class AdminModule { }
