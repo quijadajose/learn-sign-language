@@ -49,6 +49,6 @@ export class LanguageRepository implements LanguageRepositoryInterface {
   }
   async update(id: string, language: Language): Promise<Language> {
     await this.languageRepository.update(id, language);
-    return language;
+    return this.languageRepository.findOne({ where: { id } });
   }
 }
