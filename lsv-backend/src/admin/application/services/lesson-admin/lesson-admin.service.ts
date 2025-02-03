@@ -6,6 +6,7 @@ import { GetLessonByLaguageUseCase } from '../../use-cases/get-lesson-by-laguage
 import { PaginationDto } from 'src/shared/application/dtos/PaginationDto';
 import { GetLessonByIdUseCase } from '../../use-cases/get-lesson-by-id-use-case/get-lesson-by-id-use-case';
 import { UpdateLessonuseCase } from '../../use-cases/update-lessonuse-case/update-lessonuse-case';
+import { DeleteLessonUseCase } from '../../use-cases/delete-lesson-use-case/delete-lesson-use-case';
 
 @Injectable()
 export class LessonAdminService { 
@@ -15,6 +16,7 @@ export class LessonAdminService {
         private readonly getLessonByLaguageUseCase: GetLessonByLaguageUseCase,
         private readonly getLessonByIdUseCase: GetLessonByIdUseCase,
         private readonly updateLessonUseCase: UpdateLessonuseCase,
+        private readonly deleteLessonUseCase: DeleteLessonUseCase
     ) { }
     async createLesson(createLessonDto: CreateLessonDto) {
         return await this.createLessonUseCase.execute(createLessonDto);
@@ -30,5 +32,8 @@ export class LessonAdminService {
     }
     async updateLesson(id: string, createLessonDto: CreateLessonDto) {
         return await this.updateLessonUseCase.execute(id, createLessonDto);
+    }
+    async deleteLesson(id: string) {
+        return await this.deleteLessonUseCase.execute(id);
     }
 }
