@@ -50,4 +50,11 @@ export class LessonAdminController {
     async getLessonsByLanguage(@Param('languageId',ParseUUIDPipe) languageId: string,@Query() pagination: PaginationDto): Promise<Lesson[]> {
         return this.lessonAdminService.getLessonsByLanguage(languageId,pagination);
     }
+
+    @UseGuards(RolesGuard)
+    @Roles('admin')
+    @Get(':id')
+    async getLessonById(@Param('id',ParseUUIDPipe) id: string): Promise<Lesson> {
+        return this.lessonAdminService.getLessonById(id);
+    }
 }
