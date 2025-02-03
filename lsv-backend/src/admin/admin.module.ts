@@ -21,6 +21,7 @@ import { StageRepository } from './infrastructure/typeorm/stage.repository/stage
 import { UploadPictureUseCase } from 'src/shared/application/use-cases/upload-picture-use-case/upload-picture-use-case';
 import { GetLessonByLaguageUseCase } from './application/use-cases/get-lesson-by-laguage-use-case/get-lesson-by-laguage-use-case';
 import { GetLessonByIdUseCase } from './application/use-cases/get-lesson-by-id-use-case/get-lesson-by-id-use-case';
+import { UpdateLessonuseCase } from './application/use-cases/update-lessonuse-case/update-lessonuse-case';
 
 @Module({
     imports: [
@@ -43,6 +44,7 @@ import { GetLessonByIdUseCase } from './application/use-cases/get-lesson-by-id-u
         UploadPictureUseCase,
         GetLessonByLaguageUseCase,
         GetLessonByIdUseCase,
+        UpdateLessonuseCase,
         {
             provide: 'LanguageRepositoryInterface',
             useClass: LanguageRepository,
