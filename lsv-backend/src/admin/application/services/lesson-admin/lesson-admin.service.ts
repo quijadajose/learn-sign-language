@@ -5,6 +5,7 @@ import { UploadPictureUseCase } from 'src/shared/application/use-cases/upload-pi
 import { GetLessonByLaguageUseCase } from '../../use-cases/get-lesson-by-laguage-use-case/get-lesson-by-laguage-use-case';
 import { PaginationDto } from 'src/shared/application/dtos/PaginationDto';
 import { GetLessonByIdUseCase } from '../../use-cases/get-lesson-by-id-use-case/get-lesson-by-id-use-case';
+import { UpdateLessonuseCase } from '../../use-cases/update-lessonuse-case/update-lessonuse-case';
 
 @Injectable()
 export class LessonAdminService { 
@@ -12,7 +13,8 @@ export class LessonAdminService {
         private readonly createLessonUseCase: CreateLessonUseCase,
         private readonly uploadPictureUseCase: UploadPictureUseCase,
         private readonly getLessonByLaguageUseCase: GetLessonByLaguageUseCase,
-        private readonly getLessonByIdUseCase: GetLessonByIdUseCase
+        private readonly getLessonByIdUseCase: GetLessonByIdUseCase,
+        private readonly updateLessonUseCase: UpdateLessonuseCase,
     ) { }
     async createLesson(createLessonDto: CreateLessonDto) {
         return await this.createLessonUseCase.execute(createLessonDto);
@@ -25,5 +27,8 @@ export class LessonAdminService {
     }
     async getLessonById(id: string){
         return await this.getLessonByIdUseCase.execute(id);
+    }
+    async updateLesson(id: string, createLessonDto: CreateLessonDto) {
+        return await this.updateLessonUseCase.execute(id, createLessonDto);
     }
 }
