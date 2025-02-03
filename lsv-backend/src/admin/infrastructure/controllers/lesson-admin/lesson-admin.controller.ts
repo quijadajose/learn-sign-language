@@ -1,4 +1,4 @@
-import { BadRequestException, Body, Controller, Post, UploadedFile, UseGuards, UseInterceptors } from '@nestjs/common';
+import { BadRequestException, Body, Controller, Get, Param, ParseUUIDPipe, Post, Query, UploadedFile, UseGuards, UseInterceptors } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
 import { CreateLessonDto } from 'src/admin/application/dtos/create-lesson-dto/create-lesson-dto';
@@ -7,6 +7,7 @@ import { Roles } from 'src/auth/infrastructure/decorators/roles.decorator';
 import { RolesGuard } from 'src/auth/infrastructure/guards/roles/roles.guard';
 import { Lesson } from 'src/shared/domain/entities/lesson';
 import * as path from 'path';
+import { PaginationDto } from 'src/shared/application/dtos/PaginationDto';
 
 @Controller('lesson')
 export class LessonAdminController {
@@ -41,5 +42,12 @@ export class LessonAdminController {
     )
     async uploadImage(@UploadedFile() file: Express.Multer.File, @Body('lessonId') lessonId: string) {
         return await this.lessonAdminService.saveLessonImage(lessonId, file);
+    }
+
+    @UseGuards(RolesGuard)
+    @Roles('admin')
+    @Get('by-language/:languageId')
+    async getLessonsByLanguage(@Param('languageId',ParseUUIDPipe) languageId: string,@Query() pagination: PaginationDto): Promise<Lesson[]> {
+        return this.lessonAdminService.getLessonsByLanguage(languageId,pagination);
     }
 }

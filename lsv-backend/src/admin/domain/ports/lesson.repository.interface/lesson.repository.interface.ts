@@ -9,5 +9,6 @@ export interface LessonRepositoryInterface {
     save(lesson: Lesson): Promise<Lesson>;
     deleteById(id: string): Promise<void>;
     update(id: string, language: CreateLessonDto): Promise<Lesson>;
+    getLessonsByLanguage(languageId: string, pagination: PaginationDto): Promise<Lesson[]>;
   }
   
