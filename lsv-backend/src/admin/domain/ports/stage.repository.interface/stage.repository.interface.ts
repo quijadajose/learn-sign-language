@@ -9,4 +9,5 @@ export interface StageRepositoryInterface{
     save(stage: Stages): Promise<Stages>;
     deleteById(id: string): Promise<void>;
     update(id: string, stage: CreateStageDto): Promise<Stages>;
+    findStagesByLanguage(languageId: string,pagination: PaginationDto): Promise<Stages[]>;
 }

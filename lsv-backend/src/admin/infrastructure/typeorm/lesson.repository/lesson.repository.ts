@@ -72,13 +72,6 @@ export class LessonRepository implements LessonRepositoryInterface {
         await this.lessonRepository.save(existingLesson);
         return existingLesson;
     }
-    // async update(id: string, lesson: CreateLessonDto): Promise<Lesson> {
-    //     const language = await this.languageRepository.findOne({ where: { id: lesson.languageId } });
-    //     const stage = await this.stageRepository.findOne({ where: { id: lesson.stageId } });
-        
-    //     await this.lessonRepository.update(id, lesson);
-    //     return this.lessonRepository.findOne({ where: { id } });
-    // }
 
     async getLessonsByLanguage(languageId: string, pagination: PaginationDto): Promise<Lesson[]> {
         const { page, limit, orderBy = undefined, sortOrder = undefined } = pagination;
@@ -97,7 +90,6 @@ export class LessonRepository implements LessonRepositoryInterface {
                 [orderBy]: sortOrder,
             };
         }
-        this.lessonRepository.find()
         return this.lessonRepository.find(findOptions);
     }
 }
