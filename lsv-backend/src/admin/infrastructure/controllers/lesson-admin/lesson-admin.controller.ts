@@ -1,4 +1,4 @@
-import { BadRequestException, Body, Controller, Get, Param, ParseUUIDPipe, Post, Query, UploadedFile, UseGuards, UseInterceptors } from '@nestjs/common';
+import { BadRequestException, Body, Controller, Get, Param, ParseUUIDPipe, Post, Put, Query, UploadedFile, UseGuards, UseInterceptors } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
 import { CreateLessonDto } from 'src/admin/application/dtos/create-lesson-dto/create-lesson-dto';
@@ -56,5 +56,12 @@ export class LessonAdminController {
     @Get(':id')
     async getLessonById(@Param('id',ParseUUIDPipe) id: string): Promise<Lesson> {
         return this.lessonAdminService.getLessonById(id);
+    }
+
+    @UseGuards(RolesGuard)
+    @Roles('admin')
+    @Put(':id')
+    async update(@Param('id',ParseUUIDPipe) id: string, @Body() createLessonDto: CreateLessonDto): Promise<Lesson> {
+        return this.lessonAdminService.updateLesson(id, createLessonDto);
     }
 }
