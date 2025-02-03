@@ -3,10 +3,10 @@ import { CreateLessonDto } from "src/admin/application/dtos/create-lesson-dto/cr
 import { LessonRepositoryInterface } from "src/admin/domain/ports/lesson.repository.interface/lesson.repository.interface";
 import { PaginationDto } from "src/shared/application/dtos/PaginationDto";
 import { Lesson } from "src/shared/domain/entities/lesson";
-import { Repository } from "typeorm";
+import { FindManyOptions, Repository } from "typeorm";
 
 export class LessonRepository implements LessonRepositoryInterface {
-    constructor(
+    constructor( 
         @InjectRepository(Lesson)
         private readonly lessonRepository: Repository<Lesson>,
     ) { }
@@ -42,5 +42,26 @@ export class LessonRepository implements LessonRepositoryInterface {
     async update(id: string, language: CreateLessonDto): Promise<Lesson> {
         await this.lessonRepository.update(id, language);
         return this.lessonRepository.findOne({ where: { id } });
+    }
+
+    async getLessonsByLanguage(languageId: string, pagination: PaginationDto): Promise<Lesson[]> {
+        const { page, limit, orderBy = undefined, sortOrder = undefined } = pagination;
+
+        const skip = (page - 1) * limit;
+
+        const findOptions: FindManyOptions = {
+            select: ['id', 'name', 'description'],
+            where: { language: { id: languageId } },
+            skip,
+            take: limit,
+        };
+
+        if (orderBy && sortOrder) {
+            findOptions.order = {
+                [orderBy]: sortOrder,
+            };
+        }
+        this.lessonRepository.find()
+        return this.lessonRepository.find(findOptions);
     }
 }
