@@ -22,6 +22,7 @@ import { UploadPictureUseCase } from 'src/shared/application/use-cases/upload-pi
 import { GetLessonByLaguageUseCase } from './application/use-cases/get-lesson-by-laguage-use-case/get-lesson-by-laguage-use-case';
 import { GetLessonByIdUseCase } from './application/use-cases/get-lesson-by-id-use-case/get-lesson-by-id-use-case';
 import { UpdateLessonuseCase } from './application/use-cases/update-lessonuse-case/update-lessonuse-case';
+import { DeleteLessonUseCase } from './application/use-cases/delete-lesson-use-case/delete-lesson-use-case';
 
 @Module({
     imports: [
@@ -45,6 +46,7 @@ import { UpdateLessonuseCase } from './application/use-cases/update-lessonuse-ca
         GetLessonByLaguageUseCase,
         GetLessonByIdUseCase,
         UpdateLessonuseCase,
+        DeleteLessonUseCase,
         {
             provide: 'LanguageRepositoryInterface',
             useClass: LanguageRepository,
