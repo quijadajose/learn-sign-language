@@ -6,8 +6,9 @@ import { GetLanguageUseCase } from '../../use-cases/get-language-use-case/get-la
 import { ListLanguagesUseCase } from '../../use-cases/list-languages-use-case/list-languages-use-case';
 import { PaginationDto } from 'src/shared/application/dtos/PaginationDto';
 import { UpdateLanguagesUseCase } from '../../use-cases/update-languages-use-case/update-languages-use-case';
-import { UpdateLanguageDto } from '../../dtos/update-language-dto/update-language-dto';
 import { DeleteLanguagesUseCase } from '../../use-cases/delete-languages-use-case/delete-languages-use-case';
+import { GetStagesFromLanguageUseCase } from '../../use-cases/get-stages-from-language-use-case/get-stages-from-language-use-case';
+import { Stages } from 'src/shared/domain/entities/stage';
 
 @Injectable()
 export class LanguageAdminService {
@@ -17,6 +18,7 @@ export class LanguageAdminService {
         private readonly listLanguagesUseCase: ListLanguagesUseCase,
         private readonly updateLanguageUseCase: UpdateLanguagesUseCase,
         private readonly removeLanguageUseCase: DeleteLanguagesUseCase,
+        private readonly getStagesFromLanguageUseCase: GetStagesFromLanguageUseCase
     ) { }
     async createLanguage(createLanguageDto: CreateLanguageDto): Promise<Language> {
         return this.createLanguageUseCase.execute(createLanguageDto);
@@ -32,5 +34,8 @@ export class LanguageAdminService {
     }
     async removeLanguage(id: string): Promise<void> {
         return this.removeLanguageUseCase.execute(id);
+    }
+    async getStagesByLanguage(id: string,pagination: PaginationDto): Promise<Stages[]> {
+        return this.getStagesFromLanguageUseCase.execute(id,pagination);
     }
 }

@@ -3,10 +3,10 @@ import { CreateStageDto } from "src/admin/application/dtos/create-stage-dto/crea
 import { StageRepositoryInterface } from "src/admin/domain/ports/stage.repository.interface/stage.repository.interface";
 import { PaginationDto } from "src/shared/application/dtos/PaginationDto";
 import { Stages } from "src/shared/domain/entities/stage";
-import { Repository } from "typeorm";
+import { FindManyOptions, Repository } from "typeorm";
 
 export class StageRepository implements StageRepositoryInterface {
-     constructor(
+    constructor(
         @InjectRepository(Stages)
         private readonly stageRepository: Repository<Stages>,
     ) { }
@@ -42,5 +42,24 @@ export class StageRepository implements StageRepositoryInterface {
     update(id: string, stage: CreateStageDto): Promise<Stages> {
         this.stageRepository.update(id, stage);
         return this.stageRepository.findOne({ where: { id } });
+    }
+    findStagesByLanguage(languageId: string, pagination: PaginationDto): Promise<Stages[]> {
+        const { page, limit, orderBy = undefined, sortOrder = undefined } = pagination;
+
+        const skip = (page - 1) * limit;
+
+        const findOptions: FindManyOptions = {
+            select: ['id', 'name', 'description'],
+            where: { language: { id: languageId } },
+            skip,
+            take: limit,
+        };
+
+        if (orderBy && sortOrder) {
+            findOptions.order = {
+                [orderBy]: sortOrder,
+            };
+        }
+        return this.stageRepository.find(findOptions);
     }
 }
