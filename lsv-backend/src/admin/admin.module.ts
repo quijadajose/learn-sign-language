@@ -23,6 +23,8 @@ import { GetLessonByLaguageUseCase } from './application/use-cases/get-lesson-by
 import { GetLessonByIdUseCase } from './application/use-cases/get-lesson-by-id-use-case/get-lesson-by-id-use-case';
 import { UpdateLessonuseCase } from './application/use-cases/update-lessonuse-case/update-lessonuse-case';
 import { DeleteLessonUseCase } from './application/use-cases/delete-lesson-use-case/delete-lesson-use-case';
+import { GetStagesFromLanguageUseCase } from './application/use-cases/get-stages-from-language-use-case/get-stages-from-language-use-case';
+import { StageAdminService } from './application/services/stage-admin/stage-admin.service';
 
 @Module({
     imports: [
@@ -47,6 +49,8 @@ import { DeleteLessonUseCase } from './application/use-cases/delete-lesson-use-c
         GetLessonByIdUseCase,
         UpdateLessonuseCase,
         DeleteLessonUseCase,
+        GetStagesFromLanguageUseCase,
+        StageAdminService,
         {
             provide: 'LanguageRepositoryInterface',
             useClass: LanguageRepository,
