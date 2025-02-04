@@ -27,6 +27,7 @@ import { GetStagesFromLanguageUseCase } from './application/use-cases/get-stages
 import { StageAdminService } from './application/services/stage-admin/stage-admin.service';
 import { StageAdminController } from './infrastructure/controllers/stage-admin/stage-admin.controller';
 import { CreateStageUseCase } from './application/use-cases/create-stage-use-case/create-stage-use-case';
+import { UpdateStageUseCase } from './application/use-cases/update-stage-use-case/update-stage-use-case';
 
 @Module({
     imports: [
@@ -54,6 +55,7 @@ import { CreateStageUseCase } from './application/use-cases/create-stage-use-cas
         GetStagesFromLanguageUseCase,
         StageAdminService,
         CreateStageUseCase,
+        UpdateStageUseCase,
         {
             provide: 'LanguageRepositoryInterface',
             useClass: LanguageRepository,
