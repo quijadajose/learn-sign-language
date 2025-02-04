@@ -5,6 +5,7 @@ assert tf.__version__.startswith('2')
 import matplotlib.pyplot as plt
 from flask import Flask, request, jsonify
 from mediapipe_model_maker import gesture_recognizer
+from werkzeug.utils import secure_filename
 
 app = Flask(__name__)
 
@@ -52,8 +53,10 @@ def upload_files():
                         if file.filename == '':
                             print(f"Filename for key {file_key} is empty")
                             continue
+                        safe_filename = secure_filename(file.filename)
+                        file_path = os.path.join(part_dir, safe_filename)
                         print(f"Saving file: {file.filename} to {part_dir}")
-                        file.save(os.path.join(part_dir, file.filename))
+                        file.save(file_path)
                     else:
                         print(f"File {file_key} not found in request")
                     
