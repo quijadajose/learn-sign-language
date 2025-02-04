@@ -25,6 +25,8 @@ import { UpdateLessonuseCase } from './application/use-cases/update-lessonuse-ca
 import { DeleteLessonUseCase } from './application/use-cases/delete-lesson-use-case/delete-lesson-use-case';
 import { GetStagesFromLanguageUseCase } from './application/use-cases/get-stages-from-language-use-case/get-stages-from-language-use-case';
 import { StageAdminService } from './application/services/stage-admin/stage-admin.service';
+import { StageAdminController } from './infrastructure/controllers/stage-admin/stage-admin.controller';
+import { CreateStageUseCase } from './application/use-cases/create-stage-use-case/create-stage-use-case';
 
 @Module({
     imports: [
@@ -51,6 +53,7 @@ import { StageAdminService } from './application/services/stage-admin/stage-admi
         DeleteLessonUseCase,
         GetStagesFromLanguageUseCase,
         StageAdminService,
+        CreateStageUseCase,
         {
             provide: 'LanguageRepositoryInterface',
             useClass: LanguageRepository,
@@ -64,6 +67,6 @@ import { StageAdminService } from './application/services/stage-admin/stage-admi
             useClass: StageRepository,
         }
     ],
-    controllers: [LanguageAdminController, LessonAdminController],
+    controllers: [LanguageAdminController, LessonAdminController, StageAdminController],
 })
 export class AdminModule { }
