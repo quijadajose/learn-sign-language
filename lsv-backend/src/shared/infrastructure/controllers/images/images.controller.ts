@@ -1,6 +1,6 @@
-import { Controller, Get, NotFoundException, Param, Res, StreamableFile } from '@nestjs/common';
+import { BadRequestException, Controller, Get, NotFoundException, Param, Res, StreamableFile } from '@nestjs/common';
 import { createReadStream, existsSync } from 'fs';
-import { join } from 'path';
+import { join, resolve } from 'path';
 import { Public } from 'src/auth/infrastructure/decorators/public.decorator';
 import { lookup } from 'mime-types';
 import type { Response } from 'express';
@@ -14,7 +14,12 @@ export class ImagesController {
         @Param('filename') filename: string,
         @Res({ passthrough: true }) res: Response,
     ): StreamableFile {
-        const filePath = join(process.cwd(), 'uploads', folder, filename);
+        const basePath = join(process.cwd(), 'uploads');
+        const filePath = resolve(basePath, folder, filename);
+
+        if (!filePath.startsWith(basePath)) {
+            throw new BadRequestException('Invalid file path');
+        }
 
         if (!existsSync(filePath)) {
             throw new NotFoundException('Image not found');
