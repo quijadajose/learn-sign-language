@@ -3,17 +3,22 @@ import { GetStagesFromLanguageUseCase } from '../../use-cases/get-stages-from-la
 import { PaginationDto } from 'src/shared/application/dtos/PaginationDto';
 import { CreateStageUseCase } from '../../use-cases/create-stage-use-case/create-stage-use-case';
 import { CreateStageDto } from '../../dtos/create-stage-dto/create-stage-dto';
+import { UpdateStageUseCase } from '../../use-cases/update-stage-use-case/update-stage-use-case';
 
 @Injectable()
 export class StageAdminService {
     constructor(
         private readonly getStagesFromLanguageUseCase:GetStagesFromLanguageUseCase,
-        private readonly createStageUseCase: CreateStageUseCase
+        private readonly createStageUseCase: CreateStageUseCase,
+        private readonly updateStageUseCase: UpdateStageUseCase
     ) { }
     async getStagesByLanguage(id: string, pagination: PaginationDto): Promise<any> {
         return this.getStagesFromLanguageUseCase.execute(id, pagination);
     }
     async createStage(createStageDto: CreateStageDto) {
         await this.createStageUseCase.execute(createStageDto);
+    }
+    async updateStage(id:string, createStageDto: CreateStageDto) {
+        return this.updateStageUseCase.execute(id, createStageDto);
     }
 }
