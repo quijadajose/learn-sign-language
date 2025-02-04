@@ -54,7 +54,9 @@ def upload_files():
                             print(f"Filename for key {file_key} is empty")
                             continue
                         safe_filename = secure_filename(file.filename)
-                        file_path = os.path.join(part_dir, safe_filename)
+                        file_path = os.path.normpath(os.path.join(part_dir, safe_filename))
+                        if not file_path.startswith(os.path.abspath(part_dir)):
+                            raise Exception("Invalid file path")
                         print(f"Saving file: {file.filename} to {part_dir}")
                         file.save(file_path)
                     else:
