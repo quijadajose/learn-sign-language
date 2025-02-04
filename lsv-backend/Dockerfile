@@ -1,4 +1,4 @@
-FROM node:20.18.2-bookworm-slim AS development
+FROM node:20.18.2-alpine3.21 AS development
 
 WORKDIR /src/app
 
@@ -17,7 +17,7 @@ RUN npm run build
 ################
 ## PRODUCTION ##
 ################
-FROM node:20.18.2-bookworm-slim AS production
+FROM node:20.18.2-alpine3.21 AS production
 
 ARG NODE_ENV=production
 ENV NODE_ENV=${NODE_ENV}
