@@ -72,5 +72,6 @@ import { DeleteStageUseCase } from './application/use-cases/delete-stage-use-cas
         }
     ],
     controllers: [LanguageAdminController, LessonAdminController, StageAdminController],
+    exports: [LanguageAdminService, LessonAdminService, StageAdminService]
 })
 export class AdminModule { }
