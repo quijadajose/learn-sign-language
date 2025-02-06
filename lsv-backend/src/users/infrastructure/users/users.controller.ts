@@ -2,6 +2,8 @@ import {
   Body,
   Controller,
   Get,
+  Param,
+  ParseUUIDPipe,
   Put,
   Query,
   Req,
@@ -18,7 +20,7 @@ import { Language } from 'src/shared/domain/entities/language';
 export class UsersController {
   constructor(
     private readonly authService: AuthService,
-    private readonly languageAdminService: LanguageService,
+    private readonly languageService: LanguageService,
   ) {}
 
   @Get('me')
@@ -48,6 +50,10 @@ export class UsersController {
   @UseGuards(AuthGuard('jwt'))
   @Get('languages')
   async listLanguages(@Query() pagination: PaginationDto): Promise<Language[]> {
-    return this.languageAdminService.getAllLanguages(pagination);
+    return this.languageService.getAllLanguages(pagination);
+  }
+  @Get('languages/:id')
+  async getLanguage(@Param('id', ParseUUIDPipe) id: string): Promise<Language> {
+    return this.languageService.getLanguage(id);
   }
 }

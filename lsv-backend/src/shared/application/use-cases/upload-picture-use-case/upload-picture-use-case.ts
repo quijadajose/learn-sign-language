@@ -17,8 +17,13 @@ export class UploadPictureUseCase {
     // Validar y sanitizar `file.path` antes de procesar
     const safeBaseDir = path.resolve('./uploads/tmp');
     const resolvedFilePath = path.resolve(file.path);
-    if (!resolvedFilePath.startsWith(safeBaseDir) || !fs.existsSync(resolvedFilePath)) {
-      throw new BadRequestException('Uploaded file does not exist or invalid path');
+    if (
+      !resolvedFilePath.startsWith(safeBaseDir) ||
+      !fs.existsSync(resolvedFilePath)
+    ) {
+      throw new BadRequestException(
+        'Uploaded file does not exist or invalid path',
+      );
     }
 
     const sizes = { sm: 64, md: 128, lg: 256 };
