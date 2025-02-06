@@ -14,9 +14,6 @@ export class UserLesson {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @Column()
-  title: string;
-
   @Column({ default: false })
   isCompleted: boolean;
 
