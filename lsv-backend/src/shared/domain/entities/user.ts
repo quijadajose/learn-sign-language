@@ -1,41 +1,48 @@
-import { Column, CreateDateColumn, Entity, OneToMany, PrimaryGeneratedColumn, UpdateDateColumn } from "typeorm";
-import { UserLesson } from "./userLesson";
+import {
+  Column,
+  CreateDateColumn,
+  Entity,
+  OneToMany,
+  PrimaryGeneratedColumn,
+  UpdateDateColumn,
+} from 'typeorm';
+import { UserLesson } from './userLesson';
 
 @Entity()
 export class User {
-    @PrimaryGeneratedColumn("uuid")
-    id: string;
+  @PrimaryGeneratedColumn('uuid')
+  id: string;
 
-    @Column({ unique: true })
-    email: string;
+  @Column({ unique: true })
+  email: string;
 
-    @Column({ nullable: true })
-    googleId?: string;
+  @Column({ nullable: true })
+  googleId?: string;
 
-    @Column({ nullable: true })
-    hashPassword?: string;
+  @Column({ nullable: true })
+  hashPassword?: string;
 
-    @Column()
-    firstName: string;
+  @Column()
+  firstName: string;
 
-    @Column({ nullable: true })
-    lastName: string;
+  @Column({ nullable: true })
+  lastName: string;
 
-    @CreateDateColumn()
-    createdAt: Date;
+  @CreateDateColumn()
+  createdAt: Date;
 
-    @Column({ nullable: true })
-    age: number;
+  @Column({ nullable: true })
+  age: number;
 
-    @Column({ nullable: true })
-    isRightHanded: boolean;
+  @Column({ nullable: true })
+  isRightHanded: boolean;
 
-    @UpdateDateColumn()
-    updatedAt: Date;
+  @UpdateDateColumn()
+  updatedAt: Date;
 
-    @Column({ default: 'user' }) // 'user' | 'admin'
-    role: string;
+  @Column({ default: 'user' }) // 'user' | 'admin'
+  role: string;
 
-    @OneToMany(() => UserLesson, (userLesson) => userLesson.user)
-    userLessons: UserLesson[];
+  @OneToMany(() => UserLesson, (userLesson) => userLesson.user)
+  userLessons: UserLesson[];
 }
