@@ -1,4 +1,13 @@
-import { Body, Controller, Get, HttpException, HttpStatus, Post, Req, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  HttpException,
+  HttpStatus,
+  Post,
+  Req,
+  UseGuards,
+} from '@nestjs/common';
 import { CreateUserDto } from '../application/dtos/create-user/create-user';
 import { AuthService } from '../application/auth.service';
 import { AuthGuard } from '@nestjs/passport';
@@ -9,7 +18,7 @@ import { Public } from './decorators/public.decorator';
 
 @Controller('auth')
 export class AuthController {
-  constructor(private readonly authService: AuthService) { }
+  constructor(private readonly authService: AuthService) {}
   @Public()
   @Post('register')
   async register(@Body() createUserDto: CreateUserDto) {
@@ -44,7 +53,9 @@ export class AuthController {
 
   @Public()
   @Post('password/reset/confirm')
-  async confirmPasswordReset(@Body() confirmResetPasswordDto: ConfirmResetPasswordDto) {
+  async confirmPasswordReset(
+    @Body() confirmResetPasswordDto: ConfirmResetPasswordDto,
+  ) {
     const { token, newPassword } = confirmResetPasswordDto;
     try {
       await this.authService.resetPassword(token, newPassword);
@@ -57,15 +68,13 @@ export class AuthController {
   @Public()
   @Get('google')
   @UseGuards(AuthGuard('google'))
-  async googleAuth(@Req() req) {
-    // Inicia el flujo de autenticación con Google
-  }
+  async googleAuth() {}
 
   @Public()
   @Get('google/callback')
   @UseGuards(AuthGuard('google'))
   async googleAuthRedirect(@Req() req) {
-    const payload = req.user; // Usuario autenticado
+    const payload = req.user;
     return payload;
   }
 }

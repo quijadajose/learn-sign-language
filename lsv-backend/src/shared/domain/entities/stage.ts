@@ -1,26 +1,35 @@
-import { Column, CreateDateColumn, Entity, ManyToOne, OneToMany, PrimaryGeneratedColumn, UpdateDateColumn } from "typeorm";
-import { UserLesson } from "./userLesson";
-import { Language } from "./language";
-import { Lesson } from "./lesson";
+import {
+  Column,
+  CreateDateColumn,
+  Entity,
+  ManyToOne,
+  OneToMany,
+  PrimaryGeneratedColumn,
+  UpdateDateColumn,
+} from 'typeorm';
+import { Language } from './language';
+import { Lesson } from './lesson';
 
 @Entity()
 export class Stages {
-    @PrimaryGeneratedColumn("uuid")
-    id: string;
+  @PrimaryGeneratedColumn('uuid')
+  id: string;
 
-    @CreateDateColumn()
-    createdAt: Date;
+  @CreateDateColumn()
+  createdAt: Date;
 
-    @UpdateDateColumn()
-    updatedAt: Date;
+  @UpdateDateColumn()
+  updatedAt: Date;
 
-    @Column()
+  @Column()
   name: string;
 
   @Column('text')
   description: string;
 
-  @ManyToOne(() => Language, (language) => language.stages, { onDelete: 'CASCADE' })
+  @ManyToOne(() => Language, (language) => language.stages, {
+    onDelete: 'CASCADE',
+  })
   language: Language;
 
   @OneToMany(() => Lesson, (lesson) => lesson.stage)
