@@ -13,7 +13,6 @@ export class UserLessonRepository implements UserLessonRepositoryInterface {
     userId: string,
     pagination: PaginationDto,
   ): Promise<UserLesson[]> {
-    console.log('pagination', pagination);
     const {
       page,
       limit,
