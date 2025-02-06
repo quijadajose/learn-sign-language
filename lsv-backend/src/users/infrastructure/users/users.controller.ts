@@ -59,11 +59,18 @@ export class UsersController {
   async getLanguage(@Param('id', ParseUUIDPipe) id: string): Promise<Language> {
     return this.languageService.getLanguage(id);
   }
+
   @Get('lesson-by-language/:languageId')
   async getLessonsByLanguage(
     @Param('languageId', ParseUUIDPipe) languageId: string,
     @Query() pagination: PaginationDto,
   ): Promise<Lesson[]> {
     return this.lessonAdminService.getLessonsByLanguage(languageId, pagination);
+  }
+
+  @UseGuards(AuthGuard('jwt'))
+  @Get('lesson/:id')
+  async getLessonById(@Param('id', ParseUUIDPipe) id: string): Promise<Lesson> {
+    return this.lessonAdminService.getLessonById(id);
   }
 }
