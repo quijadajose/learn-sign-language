@@ -6,58 +6,52 @@ import { HashService } from '../../ports/hash.service.interface/hash.service.int
 
 @Injectable()
 export class RegisterUserUseCase {
-    constructor(
-        @Inject('UserRepositoryInterface')
-        private readonly userRepository: UserRepositoryInterface,
-        @Inject('HashService')
-        private readonly hashService: HashService,
+  constructor(
+    @Inject('UserRepositoryInterface')
+    private readonly userRepository: UserRepositoryInterface,
+    @Inject('HashService')
+    private readonly hashService: HashService,
+  ) {}
 
-    ) { }
+  async register(createUserDto: CreateUserDto): Promise<User> {
+    const { email, firstName, lastName, age, password, isRightHanded, role } =
+      createUserDto;
 
-    async register(createUserDto: CreateUserDto): Promise<User> {
-        const { email, firstName, lastName, age, password, isRightHanded, role } = createUserDto;
-
-        // Validar si el correo ya existe
-        const existingUser = await this.userRepository.findByEmail(email);
-        if (existingUser) {
-            throw new BadRequestException('Email already in use');
-        }
-
-        // Crear instancia del usuario
-        const newUser = new User();
-        newUser.email = email;
-        newUser.firstName = firstName;
-        newUser.lastName = lastName;
-        newUser.age = age;
-        newUser.hashPassword = await this.hashService.hash(password);
-        newUser.isRightHanded = isRightHanded;
-        newUser.role = role;
-
-        // Guardar usuario en el repositorio
-        return await this.userRepository.save(newUser);
+    const existingUser = await this.userRepository.findByEmail(email);
+    if (existingUser) {
+      throw new BadRequestException('Email already in use');
     }
-    async registerUserWithOAuth2(createUserDto: CreateUserDto) {
-        const { email, firstName, lastName, age, role } = createUserDto;
 
-        // Validar si el correo ya existe
-        const existingUser = await this.userRepository.findByEmail(email);
-        if (existingUser) {
-            throw new BadRequestException('Email already in use');
-        }
+    const newUser = new User();
+    newUser.email = email;
+    newUser.firstName = firstName;
+    newUser.lastName = lastName;
+    newUser.age = age;
+    newUser.hashPassword = await this.hashService.hash(password);
+    newUser.isRightHanded = isRightHanded;
+    newUser.role = role;
 
-        // Crear instancia del usuario
-        const newUser = new User();
-        newUser.email = email;
-        newUser.firstName = firstName;
-        newUser.lastName = lastName;
-        newUser.age = age;
-        newUser.hashPassword = null
-        newUser.isRightHanded = true;
-        newUser.role = role;
-        newUser.googleId = createUserDto.googleId;
-        newUser.hashPassword = undefined;
+    return await this.userRepository.save(newUser);
+  }
+  async registerUserWithOAuth2(createUserDto: CreateUserDto) {
+    const { email, firstName, lastName, age, role } = createUserDto;
 
-        // Guardar usuario en el repositorio
-        return await this.userRepository.save(newUser);
+    const existingUser = await this.userRepository.findByEmail(email);
+    if (existingUser) {
+      throw new BadRequestException('Email already in use');
     }
+
+    const newUser = new User();
+    newUser.email = email;
+    newUser.firstName = firstName;
+    newUser.lastName = lastName;
+    newUser.age = age;
+    newUser.hashPassword = null;
+    newUser.isRightHanded = true;
+    newUser.role = role;
+    newUser.googleId = createUserDto.googleId;
+    newUser.hashPassword = undefined;
+
+    return await this.userRepository.save(newUser);
+  }
 }

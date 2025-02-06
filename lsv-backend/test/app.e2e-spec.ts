@@ -25,16 +25,16 @@ describe('AppController (e2e)', () => {
     return request(app.getHttpServer())
       .post('/auth/register')
       .send({
-        email: "johndoe@example.com",
-        password: "hashedPassword",
-        firstName: "John",
-        lastName: "Doe",
+        email: 'johndoe@example.com',
+        password: 'hashedPassword',
+        firstName: 'John',
+        lastName: 'Doe',
         age: 30,
         isRightHanded: true,
-        role: "user"
+        role: 'user',
       })
       .expect(201)
-      .expect(response => {
+      .expect((response) => {
         console.log('response', response);
 
         expect(response.body).toHaveProperty('id');

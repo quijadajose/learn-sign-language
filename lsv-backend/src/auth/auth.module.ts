@@ -28,7 +28,6 @@ import { JwtAuthGuard } from './infrastructure/guards/jwt-auth/jwt-auth.guard';
       }),
       inject: [ConfigService],
     }),
-
   ],
   providers: [
     GoogleStrategy,
@@ -40,15 +39,15 @@ import { JwtAuthGuard } from './infrastructure/guards/jwt-auth/jwt-auth.guard';
     SendEmailUseCase,
     {
       provide: APP_GUARD,
-      useClass: JwtAuthGuard, // Global JWT authentication
+      useClass: JwtAuthGuard,
     },
     {
       provide: 'TokenService',
-      useClass: JwtAuthService
+      useClass: JwtAuthService,
     },
     {
       provide: 'HashService',
-      useClass: BcryptService
+      useClass: BcryptService,
     },
     {
       provide: 'EmailService',
@@ -60,6 +59,14 @@ import { JwtAuthGuard } from './infrastructure/guards/jwt-auth/jwt-auth.guard';
     },
   ],
   controllers: [AuthController],
-  exports: [AuthService]
+  exports: [
+    AuthService,
+    RegisterUserUseCase,
+    FindUserUseCase,
+    SendEmailUseCase,
+    UpdateUserUseCase,
+    'TokenService',
+    'HashService',
+  ],
 })
-export class AuthModule { }
+export class AuthModule {}

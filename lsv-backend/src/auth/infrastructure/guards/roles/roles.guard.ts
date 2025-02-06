@@ -1,4 +1,4 @@
-import { CanActivate, ExecutionContext, Inject, Injectable, UnauthorizedException } from '@nestjs/common';
+import { CanActivate, ExecutionContext, Injectable } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { Observable } from 'rxjs';
 
@@ -8,13 +8,13 @@ export class RolesGuard implements CanActivate {
 
   canActivate(
     context: ExecutionContext,
-  ): boolean | Promise<boolean> | Observable<boolean> {    
+  ): boolean | Promise<boolean> | Observable<boolean> {
     const roles = this.reflector.get<string[]>('roles', context.getHandler());
     if (!roles) {
       return true;
     }
     const request = context.switchToHttp().getRequest();
     const user = request.user; // Here you take the user object from the request, we set it in the JwtAuthGuard
-    return roles.some(rol => rol === user.role)
+    return roles.some((rol) => rol === user.role);
   }
 }
