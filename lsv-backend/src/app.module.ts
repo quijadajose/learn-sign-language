@@ -14,6 +14,7 @@ import { Language } from './shared/domain/entities/language';
 import { ImagesController } from './shared/infrastructure/controllers/images/images.controller';
 import { LessonModule } from './lesson/lesson.module';
 import { StageModule } from './stage/stage.module';
+import { UserLessonModule } from './user-lesson/user-lesson.module';
 
 @Module({
   imports: [
@@ -52,6 +53,7 @@ import { StageModule } from './stage/stage.module';
     UsersModule,
     LessonModule,
     StageModule,
+    UserLessonModule,
   ],
   controllers: [ImagesController],
   providers: [UsersService],
