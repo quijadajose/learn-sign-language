@@ -13,18 +13,19 @@ export class UploadPictureUseCase {
     if (!file) {
       throw new BadRequestException('No image received');
     }
-    // Sanitize id and folder to avoid path traversal
-    if (!/^[a-zA-Z0-9_-]+$/.test(id) || !/^[a-zA-Z0-9_-]+$/.test(folder)) {
-      throw new BadRequestException('Invalid folder or id format');
+
+    // Validar que `file.path` existe antes de procesar
+    if (!fs.existsSync(file.path)) {
+      throw new BadRequestException('Uploaded file does not exist');
     }
 
     const sizes = { sm: 64, md: 128, lg: 256 };
 
-    // Ensure `uploads` is the secure root directory
+    // Asegurar que `uploads` es el directorio base seguro
     const baseUploadDir = path.resolve('./uploads');
     const uploadsDir = path.join(baseUploadDir, folder);
 
-    // Prevent path traversal by validating that `uploadsDir` is still under `baseUploadDir`
+    // Evitar path traversal validando que `uploadsDir` sigue bajo `baseUploadDir`
     if (!uploadsDir.startsWith(baseUploadDir)) {
       throw new BadRequestException('Invalid upload directory');
     }
@@ -39,14 +40,15 @@ export class UploadPictureUseCase {
       const originalFileName = `${id}-original.${format}`;
       const originalPath = path.join(uploadsDir, originalFileName);
 
-      await fs.promises.copyFile(file.path, originalPath);
+      // Mover el archivo en lugar de copiar y luego eliminar
+      await fs.promises.rename(file.path, originalPath);
       imageUrls['original'] = `/uploads/${folder}/${originalFileName}`;
 
       for (const [key, size] of Object.entries(sizes)) {
         const resizedFileName = `${id}-${key}.${format}`;
         const filePath = path.join(uploadsDir, resizedFileName);
 
-        await sharp(file.path)
+        await sharp(originalPath)
           .resize(size, size)
           .toFormat(format)
           .toFile(filePath);
@@ -54,11 +56,9 @@ export class UploadPictureUseCase {
         imageUrls[key] = `/uploads/${folder}/${resizedFileName}`;
       }
 
-      fs.unlinkSync(file.path);
-
       return { imageUrls };
     } catch (error) {
-      console.error(error);
+      console.error('Image processing error:', error);
       throw new BadRequestException('Error processing image');
     }
   }
