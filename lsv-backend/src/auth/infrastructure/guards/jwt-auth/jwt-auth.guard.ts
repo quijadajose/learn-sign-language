@@ -1,4 +1,10 @@
-import { CanActivate, ExecutionContext, Inject, Injectable, UnauthorizedException } from '@nestjs/common';
+import {
+  CanActivate,
+  ExecutionContext,
+  Inject,
+  Injectable,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { TokenService } from 'src/auth/domain/ports/token.service/token.service.interface';
 
@@ -7,15 +13,17 @@ export class JwtAuthGuard implements CanActivate {
   constructor(
     @Inject('TokenService')
     private readonly tokenService: TokenService,
-    private reflector: Reflector
-  ) { }
+    private reflector: Reflector,
+  ) {}
 
   canActivate(context: ExecutionContext): boolean {
-    const isPublic = this.reflector.get<boolean>('isPublic', context.getHandler());
+    const isPublic = this.reflector.get<boolean>(
+      'isPublic',
+      context.getHandler(),
+    );
     if (isPublic) {
-      return true; // Permitir acceso a rutas públicas
+      return true; // Allow access to public routes
     }
-
 
     const request = context.switchToHttp().getRequest();
     const token = this.extractToken(request);
@@ -28,7 +36,7 @@ export class JwtAuthGuard implements CanActivate {
       const payload = this.tokenService.verifyToken(token);
       request.user = payload; // Attach user info to the request object
       return true;
-    } catch (error) {
+    } catch {
       throw new UnauthorizedException('Invalid token');
     }
   }

@@ -9,15 +9,16 @@ import { UsersModule } from './users/users.module';
 import { UsersService } from './users/application/users/users.service';
 import { UserLesson } from './shared/domain/entities/userLesson';
 import { Lesson } from './shared/domain/entities/lesson';
-import { AdminModule } from './admin/admin.module';
 import { Stages } from './shared/domain/entities/stage';
 import { Language } from './shared/domain/entities/language';
 import { ImagesController } from './shared/infrastructure/controllers/images/images.controller';
+import { LessonModule } from './lesson/lesson.module';
+import { StageModule } from './stage/stage.module';
 
 @Module({
   imports: [
     ConfigModule.forRoot({
-      validate, // Usa la función de validación con class-validator
+      validate,
       isGlobal: true,
     }),
     TypeOrmModule.forRootAsync({
@@ -32,7 +33,6 @@ import { ImagesController } from './shared/infrastructure/controllers/images/ima
         entities: [User, Language, Stages, Lesson, UserLesson],
         synchronize: true,
       }),
-
     }),
     MailerModule.forRootAsync({
       imports: [ConfigModule],
@@ -42,17 +42,18 @@ import { ImagesController } from './shared/infrastructure/controllers/images/ima
           host: configService.get<string>('EMAIL_HOST'),
           port: configService.get<number>('EMAIL_PORT', 587),
           auth: {
-            user: configService.get<string>('EMAIL_USER'), // Usuario SMTP desde .env
-            pass: configService.get<string>('EMAIL_PASSWORD'), // Contraseña SMTP desde .env
+            user: configService.get<string>('EMAIL_USER'),
+            pass: configService.get<string>('EMAIL_PASSWORD'),
           },
         },
       }),
     }),
     AuthModule,
     UsersModule,
-    AdminModule,
+    LessonModule,
+    StageModule,
   ],
   controllers: [ImagesController],
   providers: [UsersService],
 })
-export class AppModule { }
+export class AppModule {}

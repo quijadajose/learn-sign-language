@@ -9,52 +9,54 @@ import { AuthService } from 'src/auth/application/auth.service';
 
 @Injectable()
 export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
-    constructor(
-        private readonly configService: ConfigService,
-        private readonly findUserUseCase: FindUserUseCase,
-        private readonly registerUserUseCase: RegisterUserUseCase,
-        private readonly authService: AuthService,
-    ) {
-        super({
-            clientID: configService.get<string>('GOOGLE_CLIENT_ID'),
-            clientSecret: configService.get<string>('GOOGLE_CLIENT_SECRET'),
-            callbackURL: configService.get<string>('GOOGLE_CALLBACK_URL'),
-            scope: ['email', 'profile', 'https://www.googleapis.com/auth/user.birthday.read'],
-        });
+  constructor(
+    private readonly configService: ConfigService,
+    private readonly findUserUseCase: FindUserUseCase,
+    private readonly registerUserUseCase: RegisterUserUseCase,
+    private readonly authService: AuthService,
+  ) {
+    super({
+      clientID: configService.get<string>('GOOGLE_CLIENT_ID'),
+      clientSecret: configService.get<string>('GOOGLE_CLIENT_SECRET'),
+      callbackURL: configService.get<string>('GOOGLE_CALLBACK_URL'),
+      scope: [
+        'email',
+        'profile',
+        'https://www.googleapis.com/auth/user.birthday.read',
+      ],
+    });
+  }
+
+  async validate(
+    accessToken: string,
+    refreshToken: string,
+    profile: any,
+    done: VerifyCallback,
+  ): Promise<any> {
+    const { id, emails, name, birthday } = profile;
+
+    let user: User | null = await this.findUserUseCase.findByEmail(
+      emails[0].value,
+    );
+
+    if (!user) {
+      user = await this.registerUserUseCase.registerUserWithOAuth2({
+        email: emails[0].value,
+        firstName: name.givenName,
+        lastName: name.familyName,
+        age: birthday ? this.calculateAge(birthday) : null,
+        googleId: id,
+      });
     }
 
-    async validate(
-        accessToken: string,
-        refreshToken: string,
-        profile: any,
-        done: VerifyCallback,
-    ): Promise<any> {
-        const { id, emails, name, birthday } = profile;
+    const access_token = this.authService.generateToken(user);
 
-        // Buscar usuario en la base de datos
-        let user: User | null = await this.findUserUseCase.findByEmail(emails[0].value);
-
-        // Registrar al usuario si no existe
-        if (!user) {
-            user = await this.registerUserUseCase.registerUserWithOAuth2({
-                email: emails[0].value,
-                firstName: name.givenName,
-                lastName: name.familyName,
-                age: birthday ? this.calculateAge(birthday) : null,
-                googleId: id,
-            })
-        }
-
-        /// Generar token JWT
-        const access_token = this.authService.generateToken(user);
-
-        // Retornar el usuario y el token al flujo de Passport
-        done(null, { user, access_token });
-    }
-    private calculateAge(birthday: string): number {
-        const birthDate = new Date(birthday);
-        const ageDifMs = Date.now() - birthDate.getTime();
-        const ageDate = new Date(ageDifMs);
-        return Math.abs(ageDate.getUTCFullYear() - 1970);
-    }
+    done(null, { user, access_token });
+  }
+  private calculateAge(birthday: string): number {
+    const birthDate = new Date(birthday);
+    const ageDifMs = Date.now() - birthDate.getTime();
+    const ageDate = new Date(ageDifMs);
+    return Math.abs(ageDate.getUTCFullYear() - 1970);
+  }
 }

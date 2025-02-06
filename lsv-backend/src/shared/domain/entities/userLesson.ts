@@ -1,29 +1,38 @@
-import { Column, CreateDateColumn, Entity, JoinColumn, ManyToOne, PrimaryGeneratedColumn, UpdateDateColumn } from "typeorm";
-import { User } from "./user";
-import { Lesson } from "./lesson";
+import {
+  Column,
+  CreateDateColumn,
+  Entity,
+  JoinColumn,
+  ManyToOne,
+  PrimaryGeneratedColumn,
+} from 'typeorm';
+import { User } from './user';
+import { Lesson } from './lesson';
 
 @Entity()
 export class UserLesson {
-    @PrimaryGeneratedColumn("uuid")
-    id: string;
+  @PrimaryGeneratedColumn('uuid')
+  id: string;
 
-    @Column()
-    title: string;
+  @Column()
+  title: string;
 
-    @Column({ default: false })
-    isCompleted: boolean;
+  @Column({ default: false })
+  isCompleted: boolean;
 
-    @Column({ type: "datetime", nullable: true })
-    completedAt: Date | null;
+  @Column({ type: 'datetime', nullable: true })
+  completedAt: Date | null;
 
-    @CreateDateColumn()
-    createdAt: Date;
+  @CreateDateColumn()
+  createdAt: Date;
 
-    @ManyToOne(() => User, (user) => user.userLessons, { onDelete: "CASCADE" })
-    @JoinColumn({ name: "userId" })
-    user: User;
+  @ManyToOne(() => User, (user) => user.userLessons, { onDelete: 'CASCADE' })
+  @JoinColumn({ name: 'userId' })
+  user: User;
 
-    @ManyToOne(() => Lesson, (lesson) => lesson.userLessons, { onDelete: "CASCADE" })
-    @JoinColumn({ name: "lessonId" })
-    lesson: Lesson;
+  @ManyToOne(() => Lesson, (lesson) => lesson.userLessons, {
+    onDelete: 'CASCADE',
+  })
+  @JoinColumn({ name: 'lessonId' })
+  lesson: Lesson;
 }

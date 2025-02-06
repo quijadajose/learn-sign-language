@@ -1,3 +1,3 @@
 export class ResetPassword {
-    email: string;
+  email: string;
 }
