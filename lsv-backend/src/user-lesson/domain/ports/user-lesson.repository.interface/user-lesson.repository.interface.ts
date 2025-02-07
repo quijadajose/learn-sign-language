@@ -6,4 +6,5 @@ export interface UserLessonRepositoryInterface {
     userId: string,
     pagination: PaginationDto,
   ): Promise<UserLesson[]>;
+  startLesson(userId: string, lessonId: string): Promise<UserLesson>;
 }

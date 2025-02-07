@@ -28,4 +28,48 @@ export class UserLessonRepository implements UserLessonRepositoryInterface {
       order: orderBy ? { [orderBy]: sortOrder } : undefined,
     });
   }
+  async startLesson(userId: string, lessonId: string): Promise<UserLesson> {
+    let userLesson = await this.userLessonRepository.findOne({
+      where: { user: { id: userId }, lesson: { id: lessonId } },
+    });
+
+    if (!userLesson) {
+      userLesson = this.userLessonRepository.create({
+        user: { id: userId },
+        lesson: { id: lessonId },
+        isCompleted: false,
+        completedAt: null,
+      });
+
+      await this.userLessonRepository.save(userLesson);
+    }
+
+    return userLesson;
+  }
+
+  async setLessonCompletion(
+    userId: string,
+    lessonId: string,
+    isCompleted: boolean,
+  ): Promise<UserLesson> {
+    let userLesson = await this.userLessonRepository.findOne({
+      where: { user: { id: userId }, lesson: { id: lessonId } },
+    });
+
+    if (!userLesson) {
+      // Si el usuario aún no ha abierto la lección, se crea un nuevo registro.
+      userLesson = this.userLessonRepository.create({
+        user: { id: userId },
+        lesson: { id: lessonId },
+        isCompleted,
+        completedAt: isCompleted ? new Date() : null,
+      });
+    } else {
+      // Si el registro ya existe, solo actualizamos los campos necesarios.
+      userLesson.isCompleted = isCompleted;
+      userLesson.completedAt = isCompleted ? new Date() : null;
+    }
+
+    return this.userLessonRepository.save(userLesson);
+  }
 }
