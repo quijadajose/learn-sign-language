@@ -7,6 +7,7 @@ import {
   UpdateDateColumn,
 } from 'typeorm';
 import { UserLesson } from './userLesson';
+import { QuizSubmission } from './quizSubmission';
 
 @Entity()
 export class User {
@@ -45,4 +46,7 @@ export class User {
 
   @OneToMany(() => UserLesson, (userLesson) => userLesson.user)
   userLessons: UserLesson[];
+
+  @OneToMany(() => QuizSubmission, (submission) => submission.user)
+  quizSubmissions: QuizSubmission[];
 }

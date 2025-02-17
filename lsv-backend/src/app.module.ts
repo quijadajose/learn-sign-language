@@ -15,6 +15,11 @@ import { ImagesController } from './shared/infrastructure/controllers/images/ima
 import { LessonModule } from './lesson/lesson.module';
 import { StageModule } from './stage/stage.module';
 import { UserLessonModule } from './user-lesson/user-lesson.module';
+import { Quiz } from './shared/domain/entities/quiz';
+import { QuizSubmission } from './shared/domain/entities/quizSubmission';
+import { Question } from './shared/domain/entities/question';
+import { Option } from './shared/domain/entities/option';
+import { QuizModule } from './quiz/quiz.module';
 
 @Module({
   imports: [
@@ -31,7 +36,17 @@ import { UserLessonModule } from './user-lesson/user-lesson.module';
         username: configService.get<string>('DB_USERNAME'),
         password: configService.get<string>('DB_PASSWORD'),
         database: configService.get<string>('DB_DATABASE'),
-        entities: [User, Language, Stages, Lesson, UserLesson],
+        entities: [
+          User,
+          Language,
+          Stages,
+          Lesson,
+          UserLesson,
+          Quiz,
+          QuizSubmission,
+          Question,
+          Option,
+        ],
         synchronize: true,
       }),
     }),
@@ -54,6 +69,7 @@ import { UserLessonModule } from './user-lesson/user-lesson.module';
     LessonModule,
     StageModule,
     UserLessonModule,
+    QuizModule,
   ],
   controllers: [ImagesController],
   providers: [UsersService],
