@@ -1,0 +1,27 @@
+import { Module } from '@nestjs/common';
+import { QuizController } from './infrastructure/controllers/quiz/quiz.controller';
+import { CreateQuizWithQuestionsAndOptionsUseCase } from './application/use-cases/create-quiz-with-questions-and-options-use-case/create-quiz-with-questions-and-options-use-case';
+import { QuizRepository } from './infrastructure/typeorm/quiz.repository/quiz.repository';
+import { Quiz } from 'src/shared/domain/entities/quiz';
+import { Question } from 'src/shared/domain/entities/question';
+import { Lesson } from 'src/shared/domain/entities/lesson';
+import { Option } from 'src/shared/domain/entities/option';
+import { TypeOrmModule } from '@nestjs/typeorm';
+import { QuizService } from './application/services/quiz/quiz.service';
+import { listQuizzesByLanguageIdUseCase } from './application/use-cases/list-quizzes-by-language-use-case/list-quizzes-by-language-use-case';
+
+@Module({
+  imports: [TypeOrmModule.forFeature([Quiz, Question, Option, Lesson])],
+  providers: [
+    CreateQuizWithQuestionsAndOptionsUseCase,
+    listQuizzesByLanguageIdUseCase,
+    QuizService,
+    {
+      provide: 'QuizRepositoryInterface',
+      useClass: QuizRepository,
+    },
+  ],
+  controllers: [QuizController],
+  exports: [QuizService],
+})
+export class QuizModule {}

@@ -19,12 +19,16 @@ import { RolesGuard } from 'src/auth/infrastructure/guards/roles/roles.guard';
 import { PaginationDto } from 'src/shared/application/dtos/PaginationDto';
 import { Language } from 'src/shared/domain/entities/language';
 import { Stages } from 'src/shared/domain/entities/stage';
+import { AuthGuard } from '@nestjs/passport';
+import { QuizService } from 'src/quiz/application/services/quiz/quiz.service';
+import { Quiz } from 'src/shared/domain/entities/quiz';
 
 @Controller('languages')
 export class LanguageController {
   constructor(
     private readonly languageService: LanguageService,
     private readonly stageService: StageService,
+    private readonly quizService: QuizService,
   ) {}
 
   @UseGuards(RolesGuard)
@@ -73,5 +77,14 @@ export class LanguageController {
     @Query() pagination: PaginationDto,
   ): Promise<Stages[]> {
     return this.stageService.getStagesByLanguage(id, pagination);
+  }
+
+  @UseGuards(AuthGuard('jwt'))
+  @Get(':id/quizzes')
+  async getQuizzes(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Query() pagination: PaginationDto,
+  ): Promise<Quiz[]> {
+    return this.quizService.listQuizzesByLanguageId(id, pagination);
   }
 }

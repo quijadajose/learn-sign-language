@@ -13,8 +13,17 @@ export class StageRepository implements StageRepositoryInterface {
   findById(id: string): Promise<Stages | null> {
     return this.stageRepository.findOne({ where: { id } });
   }
-  findByName(name: string): Promise<Stages | null> {
-    return this.stageRepository.findOne({ where: { name } });
+  findByNameInLanguage(
+    name: string,
+    languageId: string,
+  ): Promise<Stages | null> {
+    console.log(languageId);
+    return this.stageRepository.findOne({
+      where: {
+        name: name,
+        language: { id: languageId },
+      },
+    });
   }
   findAll(pagination: PaginationDto): Promise<Stages[]> {
     const {

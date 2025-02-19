@@ -6,6 +6,7 @@ import {
   ParseUUIDPipe,
   Post,
   Query,
+  Req,
 } from '@nestjs/common';
 import { PaginationDto } from 'src/shared/application/dtos/PaginationDto';
 import { UserLessonService } from 'src/user-lesson/application/services/user-lesson/user-lesson.service';
@@ -22,19 +23,18 @@ export class UserLessonController {
   }
 
   @Post('start')
-  startLesson(
-    @Body('userId') userId: string,
-    @Body('lessonId') lessonId: string,
-  ) {
+  startLesson(@Req() req, @Body('lessonId') lessonId: string) {
+    const userId = req.user.userId;
     return this.userLessonService.startLesson(userId, lessonId);
   }
 
   @Post('set-lesson-completion')
   setLessonCompletion(
-    @Body('userId') userId: string,
+    @Req() req,
     @Body('lessonId') lessonId: string,
     @Body('isComplete') isComplete: boolean,
   ) {
+    const userId = req.user.userId;
     return this.userLessonService.setLessonCompletion(
       userId,
       lessonId,

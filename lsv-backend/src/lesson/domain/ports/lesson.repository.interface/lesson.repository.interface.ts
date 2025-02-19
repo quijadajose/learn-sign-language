@@ -4,7 +4,10 @@ import { Lesson } from 'src/shared/domain/entities/lesson';
 
 export interface LessonRepositoryInterface {
   findById(id: string): Promise<Lesson | null>;
-  findByName(name: string): Promise<Lesson | null>;
+  findByNameInLanguage(
+    name: string,
+    languageId: string,
+  ): Promise<Lesson | null>;
   findAll(pagination: PaginationDto): Promise<Lesson[]>;
   save(lesson: Lesson): Promise<Lesson>;
   deleteById(id: string): Promise<void>;
