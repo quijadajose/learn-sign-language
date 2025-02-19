@@ -15,33 +15,35 @@ export class CreateLessonUseCase {
     private readonly lessonRepository: LessonRepositoryInterface,
   ) {}
   async execute(createLessonDto: CreateLessonDto): Promise<Lesson> {
-    const { name } = createLessonDto;
+    const { name, languageId, stageId, description, content } = createLessonDto;
 
-    const existingLesson = await this.lessonRepository.findByName(name);
+    const existingLesson = await this.lessonRepository.findByNameInLanguage(
+      name,
+      languageId,
+    );
 
     if (existingLesson) {
       throw new BadRequestException('Lesson already in use');
     }
-    const stage = await this.stageRepository.findById(createLessonDto.stageId);
+
+    const stage = await this.stageRepository.findById(stageId);
     if (!stage) {
       throw new NotFoundException('Stage not found');
     }
 
-    const language = await this.languageRepository.findById(
-      createLessonDto.languageId,
-    );
+    const language = await this.languageRepository.findById(languageId);
     if (!language) {
       throw new NotFoundException('Language not found');
     }
 
     const lesson = new Lesson();
-    lesson.name = createLessonDto.name;
-    lesson.description = createLessonDto.description;
+    lesson.name = name;
+    lesson.description = description;
     lesson.stage = stage;
     lesson.language = language;
-    lesson.content = createLessonDto.content;
+    lesson.content = content;
 
-    const createdLanguage = await this.lessonRepository.save(lesson);
-    return createdLanguage;
+    const createdLesson = await this.lessonRepository.save(lesson);
+    return createdLesson;
   }
 }

@@ -23,7 +23,7 @@ export class Lesson {
   @UpdateDateColumn()
   updatedAt: Date;
 
-  @Column({ unique: true })
+  @Column()
   name: string;
 
   @Column('text')
