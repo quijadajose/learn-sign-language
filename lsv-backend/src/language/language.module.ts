@@ -18,9 +18,10 @@ import { LanguageController } from './infrastructure/controllers/language-admin/
 import { CreateStageUseCase } from 'src/stage/application/use-cases/create-stage-use-case/create-stage-use-case';
 import { UpdateStageUseCase } from 'src/stage/application/use-cases/update-stage-use-case/update-stage-use-case';
 import { DeleteStageUseCase } from 'src/stage/application/use-cases/delete-stage-use-case/delete-stage-use-case';
+import { QuizModule } from 'src/quiz/quiz.module';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Language, Stages, Lesson])],
+  imports: [TypeOrmModule.forFeature([Language, Stages, Lesson]), QuizModule],
   providers: [
     LanguageService,
     GetLanguageUseCase,

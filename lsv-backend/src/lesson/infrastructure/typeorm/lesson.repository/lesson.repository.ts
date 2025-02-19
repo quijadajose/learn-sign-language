@@ -17,11 +17,20 @@ export class LessonRepository implements LessonRepositoryInterface {
     @InjectRepository(Language)
     private readonly languageRepository: Repository<Language>,
   ) {}
+
   findById(id: string): Promise<Lesson | null> {
     return this.lessonRepository.findOne({ where: { id } });
   }
-  findByName(name: string): Promise<Lesson | null> {
-    return this.lessonRepository.findOne({ where: { name } });
+  findByNameInLanguage(
+    name: string,
+    languageId: string,
+  ): Promise<Lesson | null> {
+    return this.lessonRepository.findOne({
+      where: {
+        name: name,
+        language: { id: languageId },
+      },
+    });
   }
   findAll(pagination: PaginationDto): Promise<Lesson[]> {
     const {
@@ -33,7 +42,7 @@ export class LessonRepository implements LessonRepositoryInterface {
 
     const skip = (page - 1) * limit;
 
-    const findOptions: any = {
+    const findOptions: FindManyOptions = {
       skip,
       take: limit,
     };

@@ -4,7 +4,10 @@ import { Stages } from 'src/shared/domain/entities/stage';
 
 export interface StageRepositoryInterface {
   findById(id: string): Promise<Stages | null>;
-  findByName(name: string): Promise<Stages | null>;
+  findByNameInLanguage(
+    name: string,
+    languageId: string,
+  ): Promise<Stages | null>;
   findAll(pagination: PaginationDto): Promise<Stages[]>;
   save(stage: Stages): Promise<Stages>;
   deleteById(id: string): Promise<void>;
