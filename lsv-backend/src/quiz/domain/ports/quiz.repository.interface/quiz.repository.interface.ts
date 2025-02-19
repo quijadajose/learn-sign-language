@@ -9,4 +9,8 @@ export interface QuizRepositoryInterface {
   deleteById(id: string): Promise<void>;
   update(id: string, quiz: QuizDto): Promise<Quiz>;
   saveWithQuestionsAndOptions(quizDto: QuizDto): Promise<Quiz>;
+  listQuizzesByLanguageId(
+    languageId: string,
+    pagination: PaginationDto,
+  ): Promise<Quiz[]>;
 }

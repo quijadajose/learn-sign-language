@@ -16,7 +16,10 @@ export class CreateStageUseCase {
     const language = await this.languageRepository.findById(
       createstageDto.languageId,
     );
-    const existingStage = await this.stageRepository.findByName(name);
+    const existingStage = await this.stageRepository.findByNameInLanguage(
+      name,
+      createstageDto.languageId,
+    );
     if (existingStage) {
       throw new BadRequestException('Stage already in use');
     }
