@@ -132,4 +132,26 @@ export class QuizRepository implements QuizRepositoryInterface {
     }
     return this.quizRepository.find(findOptions);
   }
+
+  getQuizById(quizId: string): Promise<Quiz[]> {
+    return this.quizRepository.find({
+      where: { id: quizId },
+      relations: ['lesson', 'questions', 'questions.options'],
+      select: {
+        id: true,
+        lesson: {
+          id: true,
+          name: true,
+        },
+        questions: {
+          id: true,
+          text: true,
+          options: {
+            id: true,
+            text: true,
+          },
+        },
+      },
+    });
+  }
 }
