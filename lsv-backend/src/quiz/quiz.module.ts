@@ -9,12 +9,14 @@ import { Option } from 'src/shared/domain/entities/option';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { QuizService } from './application/services/quiz/quiz.service';
 import { listQuizzesByLanguageIdUseCase } from './application/use-cases/list-quizzes-by-language-use-case/list-quizzes-by-language-use-case';
+import { GetQuizByIdUseCase } from './application/use-cases/get-quiz-by-id-use-case/get-quiz-by-id-use-case';
 
 @Module({
   imports: [TypeOrmModule.forFeature([Quiz, Question, Option, Lesson])],
   providers: [
     CreateQuizWithQuestionsAndOptionsUseCase,
     listQuizzesByLanguageIdUseCase,
+    GetQuizByIdUseCase,
     QuizService,
     {
       provide: 'QuizRepositoryInterface',
