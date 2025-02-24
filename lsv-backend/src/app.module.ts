@@ -20,6 +20,7 @@ import { QuizSubmission } from './shared/domain/entities/quizSubmission';
 import { Question } from './shared/domain/entities/question';
 import { Option } from './shared/domain/entities/option';
 import { QuizModule } from './quiz/quiz.module';
+import { LeaderboardModule } from './leaderboard/leaderboard.module';
 
 @Module({
   imports: [
@@ -70,6 +71,7 @@ import { QuizModule } from './quiz/quiz.module';
     StageModule,
     UserLessonModule,
     QuizModule,
+    LeaderboardModule,
   ],
   controllers: [ImagesController],
   providers: [UsersService],
