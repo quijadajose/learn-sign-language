@@ -67,6 +67,7 @@ import { JwtAuthGuard } from './infrastructure/guards/jwt-auth/jwt-auth.guard';
     UpdateUserUseCase,
     'TokenService',
     'HashService',
+    'UserRepositoryInterface',
   ],
 })
 export class AuthModule {}
