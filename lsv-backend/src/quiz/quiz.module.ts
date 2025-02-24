@@ -10,13 +10,30 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { QuizService } from './application/services/quiz/quiz.service';
 import { listQuizzesByLanguageIdUseCase } from './application/use-cases/list-quizzes-by-language-use-case/list-quizzes-by-language-use-case';
 import { GetQuizByIdUseCase } from './application/use-cases/get-quiz-by-id-use-case/get-quiz-by-id-use-case';
+import { QuizSubmission } from 'src/shared/domain/entities/quizSubmission';
+import { User } from 'src/shared/domain/entities/user';
+import { SubmissionTestUseCase } from './application/use-cases/submission-test-use-case/submission-test-use-case';
+import { GetUserByIdUseCase } from 'src/users/application/use-cases/get-user-by-id-use-case/get-user-by-id-use-case';
+import { AuthModule } from 'src/auth/auth.module';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Quiz, Question, Option, Lesson])],
+  imports: [
+    AuthModule,
+    TypeOrmModule.forFeature([
+      Quiz,
+      Question,
+      Option,
+      Lesson,
+      QuizSubmission,
+      User,
+    ]),
+  ],
   providers: [
+    GetUserByIdUseCase,
     CreateQuizWithQuestionsAndOptionsUseCase,
     listQuizzesByLanguageIdUseCase,
     GetQuizByIdUseCase,
+    SubmissionTestUseCase,
     QuizService,
     {
       provide: 'QuizRepositoryInterface',
