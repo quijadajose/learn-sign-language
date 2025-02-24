@@ -29,7 +29,7 @@ export class UsersController {
   @Get('me')
   @UseGuards(AuthGuard('jwt'))
   async profile(@Req() req) {
-    const user = await this.authService.getUserProfile(req.user.userId);
+    const user = await this.authService.getUserProfile(req.user.sub);
     user.hashPassword = undefined;
     user.googleId = undefined;
     user.updatedAt = undefined;
@@ -41,7 +41,7 @@ export class UsersController {
   async updateProfile(@Req() req, @Body() updateUserDto: UpdateUserDto) {
     updateUserDto.role = undefined;
     const user = await this.authService.updateUserProfile(
-      req.user.userId,
+      req.user.sub,
       updateUserDto,
     );
     user.hashPassword = undefined;

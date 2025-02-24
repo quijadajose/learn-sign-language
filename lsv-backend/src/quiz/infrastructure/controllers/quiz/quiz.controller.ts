@@ -1,12 +1,16 @@
 import {
+  BadRequestException,
   Body,
   Controller,
   Get,
+  InternalServerErrorException,
   Param,
   ParseUUIDPipe,
   Post,
+  Req,
 } from '@nestjs/common';
 import { QuizDto } from 'src/quiz/application/dtos/quiz-dto/quiz-dto';
+import { SubmissionDto } from 'src/quiz/application/dtos/submission-dto/submission-dto';
 import { QuizService } from 'src/quiz/application/services/quiz/quiz.service';
 import { Quiz } from 'src/shared/domain/entities/quiz';
 
@@ -20,5 +24,28 @@ export class QuizController {
   @Get('/:quizId')
   async getQuizById(@Param('quizId', ParseUUIDPipe) quizId: string) {
     return this.quizService.getQuizById(quizId);
+  }
+  @Post('/:quizId/submissions')
+  async submission(
+    @Req() req,
+    @Param('quizId', ParseUUIDPipe) quizId: string,
+    @Body() submissionDto: SubmissionDto,
+  ) {
+    try {
+      const userId = req.user.sub;
+      if (!req.user || !userId) {
+        throw new BadRequestException('User ID is missing from the request.');
+      }
+
+      return await this.quizService.submissionTest(
+        userId,
+        quizId,
+        submissionDto,
+      );
+    } catch (error) {
+      throw new InternalServerErrorException(
+        `Submission failed: ${error.message}`,
+      );
+    }
   }
 }

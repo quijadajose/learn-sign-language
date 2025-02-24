@@ -24,7 +24,7 @@ export class UserLessonController {
 
   @Post('start')
   startLesson(@Req() req, @Body('lessonId') lessonId: string) {
-    const userId = req.user.userId;
+    const userId = req.user.sub;
     return this.userLessonService.startLesson(userId, lessonId);
   }
 
@@ -34,7 +34,7 @@ export class UserLessonController {
     @Body('lessonId') lessonId: string,
     @Body('isComplete') isComplete: boolean,
   ) {
-    const userId = req.user.userId;
+    const userId = req.user.sub;
     return this.userLessonService.setLessonCompletion(
       userId,
       lessonId,
