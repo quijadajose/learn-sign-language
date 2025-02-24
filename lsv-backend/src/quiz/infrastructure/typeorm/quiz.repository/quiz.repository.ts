@@ -1,5 +1,6 @@
 import { NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
+import { LeaderboardDto } from 'src/leaderboard/application/dtos/leaderboard/leaderboard';
 import { QuizDto } from 'src/quiz/application/dtos/quiz-dto/quiz-dto';
 import { SubmissionDto } from 'src/quiz/application/dtos/submission-dto/submission-dto';
 import { QuizRepositoryInterface } from 'src/quiz/domain/ports/quiz.repository.interface/quiz.repository.interface';
@@ -10,7 +11,7 @@ import { Question } from 'src/shared/domain/entities/question';
 import { Quiz } from 'src/shared/domain/entities/quiz';
 import { QuizSubmission } from 'src/shared/domain/entities/quizSubmission';
 import { User } from 'src/shared/domain/entities/user';
-import { FindManyOptions, Repository } from 'typeorm';
+import { FindManyOptions, Repository, SelectQueryBuilder } from 'typeorm';
 
 export class QuizRepository implements QuizRepositoryInterface {
   constructor(
@@ -225,5 +226,57 @@ export class QuizRepository implements QuizRepositoryInterface {
     }
 
     return this.submissionRepository.find(findOptions);
+  }
+
+  async getLeaderboard(pagination: PaginationDto): Promise<LeaderboardDto[]> {
+    const {
+      page,
+      limit,
+      orderBy = 'totalScore',
+      sortOrder = 'DESC',
+    } = pagination;
+    const skip = (page - 1) * limit;
+
+    const queryBuilder: SelectQueryBuilder<QuizSubmission> =
+      this.submissionRepository.createQueryBuilder('qs');
+
+    const rawLeaderboard = await queryBuilder
+      .select([
+        'u.id AS userId',
+        'u.firstName AS firstName',
+        'u.lastName AS lastName',
+        'SUM(subquery.maxScore) AS totalScore',
+      ])
+      .innerJoin(User, 'u', 'qs.userId = u.id')
+      .innerJoin(
+        (subquery) => {
+          return subquery
+            .select([
+              'qs2.userId AS userId',
+              'qs2.quizId AS quizId',
+              'MAX(qs2.score) AS maxScore',
+            ])
+            .from(QuizSubmission, 'qs2')
+            .where('qs2.score IS NOT NULL')
+            .groupBy('qs2.userId')
+            .addGroupBy('qs2.quizId');
+        },
+        'subquery',
+        'qs.userId = subquery.userId AND qs.quizId = subquery.quizId',
+      )
+      .groupBy('u.id')
+      .orderBy(orderBy, sortOrder === 'ASC' ? 'ASC' : 'DESC')
+      .skip(skip)
+      .take(limit)
+      .getRawMany();
+
+    const leaderboard: LeaderboardDto[] = rawLeaderboard.map((entry) => ({
+      userId: entry.userId,
+      firstName: entry.firstName,
+      lastName: entry.lastName,
+      totalScore: Number(entry.totalScore),
+    }));
+
+    return leaderboard;
   }
 }
