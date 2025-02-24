@@ -6,7 +6,7 @@ export class GetQuizByIdUseCase {
     @Inject('QuizRepositoryInterface')
     private readonly quizRepositoryInterface: QuizRepository,
   ) {}
-  execute(languageId: string) {
-    return this.quizRepositoryInterface.getQuizById(languageId);
+  execute(quizId: string) {
+    return this.quizRepositoryInterface.getQuizById(quizId);
   }
 }
