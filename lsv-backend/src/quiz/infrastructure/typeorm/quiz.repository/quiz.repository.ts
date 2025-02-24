@@ -195,4 +195,35 @@ export class QuizRepository implements QuizRepositoryInterface {
     const { id, submittedAt } = savedSubmission;
     return { id, submittedAt, score };
   }
+  getSubmissionsByUserId(
+    user: User,
+    quiz: Quiz,
+    pagination: PaginationDto,
+  ): Promise<QuizSubmission[]> {
+    const {
+      page,
+      limit,
+      orderBy = undefined,
+      sortOrder = undefined,
+    } = pagination;
+
+    const skip = (page - 1) * limit;
+
+    const findOptions: FindManyOptions = {
+      where: {
+        quiz: { id: quiz.id },
+        user: { id: user.id },
+      },
+      skip,
+      take: limit,
+    };
+
+    if (orderBy && sortOrder) {
+      findOptions.order = {
+        [orderBy]: sortOrder,
+      };
+    }
+
+    return this.submissionRepository.find(findOptions);
+  }
 }
