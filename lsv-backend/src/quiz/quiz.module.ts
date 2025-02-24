@@ -15,6 +15,7 @@ import { User } from 'src/shared/domain/entities/user';
 import { SubmissionTestUseCase } from './application/use-cases/submission-test-use-case/submission-test-use-case';
 import { GetUserByIdUseCase } from 'src/users/application/use-cases/get-user-by-id-use-case/get-user-by-id-use-case';
 import { AuthModule } from 'src/auth/auth.module';
+import { GetSubmissionTestFromUserUseCase } from './application/use-cases/get-submission-test-from-user-use-case/get-submission-test-from-user-use-case';
 
 @Module({
   imports: [
@@ -34,6 +35,7 @@ import { AuthModule } from 'src/auth/auth.module';
     listQuizzesByLanguageIdUseCase,
     GetQuizByIdUseCase,
     SubmissionTestUseCase,
+    GetSubmissionTestFromUserUseCase,
     QuizService,
     {
       provide: 'QuizRepositoryInterface',

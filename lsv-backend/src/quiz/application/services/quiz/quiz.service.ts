@@ -12,6 +12,7 @@ import { GetQuizByIdUseCase } from '../../use-cases/get-quiz-by-id-use-case/get-
 import { SubmissionTestUseCase } from '../../use-cases/submission-test-use-case/submission-test-use-case';
 import { SubmissionDto } from '../../dtos/submission-dto/submission-dto';
 import { GetUserByIdUseCase } from 'src/users/application/use-cases/get-user-by-id-use-case/get-user-by-id-use-case';
+import { GetSubmissionTestFromUserUseCase } from '../../use-cases/get-submission-test-from-user-use-case/get-submission-test-from-user-use-case';
 
 @Injectable()
 export class QuizService {
@@ -21,6 +22,7 @@ export class QuizService {
     private readonly getQuizByIdUseCase: GetQuizByIdUseCase,
     private readonly submissionTestUseCase: SubmissionTestUseCase,
     private readonly getUserByIdUseCase: GetUserByIdUseCase,
+    private readonly getSubmissionTestFromUserUseCase: GetSubmissionTestFromUserUseCase,
   ) {}
   createQuiz(quizDto: QuizDto) {
     return this.createQuizWithQuestionsAndOptionsUseCase.execute(quizDto);
@@ -54,5 +56,29 @@ export class QuizService {
     }
 
     return this.submissionTestUseCase.execute(user, quiz, submission);
+  }
+  async getQuizSubmissionTestFromUser(
+    userId: string,
+    quizId: string,
+    pagination: PaginationDto,
+  ) {
+    if (!userId || !quizId) {
+      throw new BadRequestException('User ID and Quiz ID are required.');
+    }
+
+    const user = await this.getUserByIdUseCase.execute(userId);
+    if (!user) {
+      throw new NotFoundException('User not found.');
+    }
+
+    const quiz = await this.getQuizByIdUseCase.execute(quizId);
+    if (!quiz) {
+      throw new NotFoundException('Quiz not found.');
+    }
+    return this.getSubmissionTestFromUserUseCase.execute(
+      user,
+      quiz,
+      pagination,
+    );
   }
 }

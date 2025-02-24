@@ -1,6 +1,8 @@
 import { QuizDto } from 'src/quiz/application/dtos/quiz-dto/quiz-dto';
 import { PaginationDto } from 'src/shared/application/dtos/PaginationDto';
 import { Quiz } from 'src/shared/domain/entities/quiz';
+import { QuizSubmission } from 'src/shared/domain/entities/quizSubmission';
+import { User } from 'src/shared/domain/entities/user';
 
 export interface QuizRepositoryInterface {
   findById(id: string): Promise<Quiz | null>;
@@ -13,4 +15,9 @@ export interface QuizRepositoryInterface {
     languageId: string,
     pagination: PaginationDto,
   ): Promise<Quiz[]>;
+  getSubmissionsByUserId(
+    user: User,
+    quiz: Quiz,
+    pagination: PaginationDto,
+  ): Promise<QuizSubmission[]>;
 }
