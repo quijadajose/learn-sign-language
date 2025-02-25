@@ -35,8 +35,6 @@ describe('AppController (e2e)', () => {
       })
       .expect(201)
       .expect((response) => {
-        console.log('response', response);
-
         expect(response.body).toHaveProperty('id');
         expect(response.body.email).toBe('example@example.com');
       });
