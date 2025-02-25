@@ -1,4 +1,4 @@
-import { Controller, Get, Query } from '@nestjs/common';
+import { Controller, Get, Param, ParseUUIDPipe, Query } from '@nestjs/common';
 import { LeaderboardService } from 'src/leaderboard/application/service/leaderboard/leaderboard.service';
 import { PaginationDto } from 'src/shared/application/dtos/PaginationDto';
 
@@ -8,5 +8,12 @@ export class LeaderboardController {
   @Get('/')
   async getGeneralLeaderboard(@Query() pagination: PaginationDto) {
     return this.leaderboardService.getLeaderboard(pagination);
+  }
+  @Get('language/:id')
+  async getLeaderboardByLanguage(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Query() pagination: PaginationDto,
+  ) {
+    return this.leaderboardService.getLeaderboardByLanguage(id, pagination);
   }
 }

@@ -1,3 +1,4 @@
+import { LeaderboardDto } from 'src/leaderboard/application/dtos/leaderboard/leaderboard';
 import { QuizDto } from 'src/quiz/application/dtos/quiz-dto/quiz-dto';
 import { PaginationDto } from 'src/shared/application/dtos/PaginationDto';
 import { Quiz } from 'src/shared/domain/entities/quiz';
@@ -20,4 +21,9 @@ export interface QuizRepositoryInterface {
     quiz: Quiz,
     pagination: PaginationDto,
   ): Promise<QuizSubmission[]>;
+  getLeaderboard(pagination: PaginationDto): Promise<LeaderboardDto[]>;
+  getLeaderboardByLanguageId(
+    languageId: string,
+    pagination: PaginationDto,
+  ): Promise<LeaderboardDto[]>;
 }

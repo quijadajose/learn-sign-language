@@ -279,4 +279,63 @@ export class QuizRepository implements QuizRepositoryInterface {
 
     return leaderboard;
   }
+
+  async getLeaderboardByLanguageId(
+    languageId: string,
+    pagination: PaginationDto,
+  ): Promise<LeaderboardDto[]> {
+    const {
+      page,
+      limit,
+      orderBy = 'totalScore',
+      sortOrder = 'DESC',
+    } = pagination;
+    const skip = (page - 1) * limit;
+
+    const queryBuilder: SelectQueryBuilder<QuizSubmission> =
+      this.submissionRepository.createQueryBuilder('qs');
+
+    const rawLeaderboard = await queryBuilder
+      .select([
+        'u.id AS userId',
+        'u.firstName AS firstName',
+        'u.lastName AS lastName',
+        'SUM(subquery.maxScore) AS totalScore',
+      ])
+      .innerJoin(User, 'u', 'qs.userId = u.id')
+      .innerJoin(Quiz, 'q', 'qs.quizId = q.id')
+      .innerJoin(Lesson, 'l', 'q.lessonId = l.id')
+      .where('l.languageId = :languageId', { languageId })
+      .innerJoin(
+        (subquery) => {
+          return subquery
+            .select([
+              'qs2.userId AS userId',
+              'qs2.quizId AS quizId',
+              'MAX(qs2.score) AS maxScore',
+            ])
+            .from(QuizSubmission, 'qs2')
+            .innerJoin(Quiz, 'q2', 'qs2.quizId = q2.id')
+            .innerJoin(Lesson, 'l2', 'q2.lessonId = l2.id')
+            .where('l2.languageId = :languageId', { languageId })
+            .groupBy('qs2.userId, qs2.quizId');
+        },
+        'subquery',
+        'qs.userId = subquery.userId AND qs.quizId = subquery.quizId',
+      )
+      .groupBy('u.id')
+      .orderBy(orderBy, sortOrder === 'ASC' ? 'ASC' : 'DESC')
+      .skip(skip)
+      .take(limit)
+      .getRawMany();
+
+    const leaderboard: LeaderboardDto[] = rawLeaderboard.map((entry) => ({
+      userId: entry.userId,
+      firstName: entry.firstName,
+      lastName: entry.lastName,
+      totalScore: Number(entry.totalScore),
+    }));
+
+    return leaderboard;
+  }
 }
