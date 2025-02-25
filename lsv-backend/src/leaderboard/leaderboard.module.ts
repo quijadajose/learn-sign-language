@@ -9,6 +9,7 @@ import { Option } from 'src/shared/domain/entities/option';
 import { Lesson } from 'src/shared/domain/entities/lesson';
 import { GetGeneralLeaderboardUseCase } from './application/use-cases/get-general-leaderboard-use-case/get-general-leaderboard-use-case';
 import { LeaderboardService } from './application/service/leaderboard/leaderboard.service';
+import { GetLeaderboardByLanguageUseCase } from './application/use-cases/get-leaderboard-by-language-use-case/get-leaderboard-by-language-use-case';
 
 @Module({
   imports: [
@@ -16,6 +17,7 @@ import { LeaderboardService } from './application/service/leaderboard/leaderboar
   ],
   providers: [
     GetGeneralLeaderboardUseCase,
+    GetLeaderboardByLanguageUseCase,
     LeaderboardService,
     {
       provide: 'QuizRepositoryInterface',
