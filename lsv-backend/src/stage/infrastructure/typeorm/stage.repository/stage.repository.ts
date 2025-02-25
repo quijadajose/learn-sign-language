@@ -17,7 +17,6 @@ export class StageRepository implements StageRepositoryInterface {
     name: string,
     languageId: string,
   ): Promise<Stages | null> {
-    console.log(languageId);
     return this.stageRepository.findOne({
       where: {
         name: name,
