@@ -284,7 +284,6 @@ export class QuizRepository implements QuizRepositoryInterface {
     languageId: string,
     pagination: PaginationDto,
   ): Promise<LeaderboardDto[]> {
-    console.log('languageId', languageId);
     const {
       page,
       limit,
