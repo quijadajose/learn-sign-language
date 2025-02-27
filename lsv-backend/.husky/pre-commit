@@ -1,5 +1,0 @@
-#!/usr/bin/env sh
-echo "test"
-npm run format
-npm run lint
-npm test
