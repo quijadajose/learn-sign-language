@@ -1,5 +1,5 @@
 import { Inject } from '@nestjs/common';
-import { PaginationDto } from 'src/shared/domain/dtos/PaginationDto';
+import { PaginationDto } from 'src/shared/domain/dto/PaginationDto';
 import { UserLesson } from 'src/shared/domain/entities/userLesson';
 import { UserLessonRepositoryInterface } from 'src/user-lesson/domain/ports/user-lesson.repository.interface/user-lesson.repository.interface';
 

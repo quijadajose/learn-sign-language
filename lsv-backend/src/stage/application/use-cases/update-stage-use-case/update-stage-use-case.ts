@@ -1,7 +1,7 @@
 import { Inject } from '@nestjs/common';
 import { LanguageRepositoryInterface } from 'src/language/domain/ports/language.repository.interface/language.repository.interface';
 import { StageRepositoryInterface } from 'src/stage/domain/ports/stage.repository.interface/stage.repository.interface';
-import { StageDto } from '../../../../shared/domain/dtos/create-stage-dto/create-stage-dto';
+import { StageDto } from '../../../../shared/domain/dto/create-stage/create-stage-dto';
 
 export class UpdateStageUseCase {
   constructor(

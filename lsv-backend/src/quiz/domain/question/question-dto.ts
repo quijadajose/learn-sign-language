@@ -1,5 +1,5 @@
 import { IsArray, IsString, ValidateNested } from 'class-validator';
-import { OptionDto } from '../dtos/option-dto/option-dto';
+import { OptionDto } from '../dto/option/option-dto';
 import { Type } from 'class-transformer';
 
 export class QuestionDto {

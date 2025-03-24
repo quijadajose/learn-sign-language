@@ -4,13 +4,13 @@ import {
   NotFoundException,
   Query,
 } from '@nestjs/common';
-import { QuizDto } from '../../../domain/dtos/quiz-dto/quiz-dto';
+import { QuizDto } from '../../../domain/dto/quiz/quiz-dto';
 import { CreateQuizWithQuestionsAndOptionsUseCase } from '../../use-cases/create-quiz-with-questions-and-options-use-case/create-quiz-with-questions-and-options-use-case';
-import { PaginationDto } from 'src/shared/domain/dtos/PaginationDto';
+import { PaginationDto } from 'src/shared/domain/dto/PaginationDto';
 import { listQuizzesByLanguageIdUseCase } from '../../use-cases/list-quizzes-by-language-use-case/list-quizzes-by-language-use-case';
 import { GetQuizByIdUseCase } from '../../use-cases/get-quiz-by-id-use-case/get-quiz-by-id-use-case';
 import { SubmissionTestUseCase } from '../../use-cases/submission-test-use-case/submission-test-use-case';
-import { SubmissionDto } from '../../dtos/submission-dto/submission-dto';
+import { SubmissionDto } from '../../dto/submission/submission-dto';
 import { GetUserByIdUseCase } from 'src/users/application/use-cases/get-user-by-id-use-case/get-user-by-id-use-case';
 import { GetSubmissionTestFromUserUseCase } from '../../use-cases/get-submission-test-from-user-use-case/get-submission-test-from-user-use-case';
 

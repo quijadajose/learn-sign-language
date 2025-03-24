@@ -10,10 +10,10 @@ import {
   Query,
   Req,
 } from '@nestjs/common';
-import { QuizDto } from 'src/quiz/domain/dtos/quiz-dto/quiz-dto';
-import { SubmissionDto } from 'src/quiz/application/dtos/submission-dto/submission-dto';
+import { QuizDto } from 'src/quiz/domain/dto/quiz/quiz-dto';
+import { SubmissionDto } from 'src/quiz/application/dto/submission/submission-dto';
 import { QuizService } from 'src/quiz/application/services/quiz/quiz.service';
-import { PaginationDto } from 'src/shared/domain/dtos/PaginationDto';
+import { PaginationDto } from 'src/shared/domain/dto/PaginationDto';
 import { Quiz } from 'src/shared/domain/entities/quiz';
 
 @Controller('quiz')

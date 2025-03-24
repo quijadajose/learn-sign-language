@@ -1,8 +1,8 @@
 import { NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { CreateLessonDto } from 'src/lesson/domain/dtos/create-lesson-dto/create-lesson-dto';
+import { CreateLessonDto } from 'src/lesson/domain/dto/create-lesson/create-lesson-dto';
 import { LessonRepositoryInterface } from 'src/lesson/domain/ports/lesson.repository.interface/lesson.repository.interface';
-import { PaginationDto } from 'src/shared/domain/dtos/PaginationDto';
+import { PaginationDto } from 'src/shared/domain/dto/PaginationDto';
 import { Language } from 'src/shared/domain/entities/language';
 import { Lesson } from 'src/shared/domain/entities/lesson';
 import { Stages } from 'src/shared/domain/entities/stage';

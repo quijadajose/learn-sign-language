@@ -1,5 +1,5 @@
 import { BadRequestException, Inject } from '@nestjs/common';
-import { CreateLanguageDto } from '../../../domain/dtos/create-language/create-language';
+import { CreateLanguageDto } from '../../../domain/dto/create-language/create-language';
 import { Language } from 'src/shared/domain/entities/language';
 import { LanguageRepositoryInterface } from 'src/language/domain/ports/language.repository.interface/language.repository.interface';
 

@@ -1,4 +1,4 @@
-import { UpdateUserDto } from 'src/auth/domain/dtos/update-user/update-user';
+import { UpdateUserDto } from 'src/auth/domain/dto/update-user/update-user';
 
 describe('UpdateUserDto', () => {
   it('should be defined', () => {
