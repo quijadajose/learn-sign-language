@@ -1,12 +1,12 @@
 import { Inject } from '@nestjs/common';
-import { PaginationDto } from 'src/shared/application/dtos/PaginationDto';
+import { PaginationDto } from 'src/shared/domain/dtos/PaginationDto';
 import { UserLesson } from 'src/shared/domain/entities/userLesson';
-import { UserLessonRepository } from 'src/user-lesson/infrastructure/typeorm/user-lesson.repository/user-lesson.repository';
+import { UserLessonRepositoryInterface } from 'src/user-lesson/domain/ports/user-lesson.repository.interface/user-lesson.repository.interface';
 
 export class GetUserLessonByUserIdUseCase {
   constructor(
     @Inject('UserLessonRepositoryInterface')
-    private readonly userLessonRepository: UserLessonRepository,
+    private readonly userLessonRepository: UserLessonRepositoryInterface,
   ) {}
 
   async execute(

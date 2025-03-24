@@ -1,6 +1,6 @@
 import { Inject } from '@nestjs/common';
 import { QuizRepository } from 'src/quiz/infrastructure/typeorm/quiz.repository/quiz.repository';
-import { PaginationDto } from 'src/shared/application/dtos/PaginationDto';
+import { PaginationDto } from 'src/shared/domain/dtos/PaginationDto';
 import { Quiz } from 'src/shared/domain/entities/quiz';
 import { User } from 'src/shared/domain/entities/user';
 

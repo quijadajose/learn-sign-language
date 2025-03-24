@@ -1,10 +1,10 @@
 import { Inject } from '@nestjs/common';
-import { UserLessonRepository } from 'src/user-lesson/infrastructure/typeorm/user-lesson.repository/user-lesson.repository';
+import { UserLessonRepositoryInterface } from 'src/user-lesson/domain/ports/user-lesson.repository.interface/user-lesson.repository.interface';
 
 export class SetLessonCompletionUseCase {
   constructor(
     @Inject('UserLessonRepositoryInterface')
-    private readonly userLessonRepository: UserLessonRepository,
+    private readonly userLessonRepository: UserLessonRepositoryInterface,
   ) {}
   execute(userId: string, lessonId: string, isCompleted: boolean) {
     this.userLessonRepository.setLessonCompletion(

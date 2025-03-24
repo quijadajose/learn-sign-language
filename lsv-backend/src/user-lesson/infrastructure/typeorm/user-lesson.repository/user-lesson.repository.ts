@@ -1,5 +1,5 @@
 import { InjectRepository } from '@nestjs/typeorm';
-import { PaginationDto } from 'src/shared/application/dtos/PaginationDto';
+import { PaginationDto } from 'src/shared/domain/dtos/PaginationDto';
 import { UserLesson } from 'src/shared/domain/entities/userLesson';
 import { UserLessonRepositoryInterface } from 'src/user-lesson/domain/ports/user-lesson.repository.interface/user-lesson.repository.interface';
 import { Repository } from 'typeorm';
@@ -57,7 +57,6 @@ export class UserLessonRepository implements UserLessonRepositoryInterface {
     });
 
     if (!userLesson) {
-      // Si el usuario aún no ha abierto la lección, se crea un nuevo registro.
       userLesson = this.userLessonRepository.create({
         user: { id: userId },
         lesson: { id: lessonId },
@@ -65,7 +64,6 @@ export class UserLessonRepository implements UserLessonRepositoryInterface {
         completedAt: isCompleted ? new Date() : null,
       });
     } else {
-      // Si el registro ya existe, solo actualizamos los campos necesarios.
       userLesson.isCompleted = isCompleted;
       userLesson.completedAt = isCompleted ? new Date() : null;
     }
