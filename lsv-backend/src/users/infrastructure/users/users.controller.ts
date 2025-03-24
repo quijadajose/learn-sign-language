@@ -11,10 +11,10 @@ import {
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { AuthService } from 'src/auth/application/auth.service';
-import { UpdateUserDto } from 'src/auth/domain/dtos/update-user/update-user';
+import { UpdateUserDto } from 'src/auth/domain/dto/update-user/update-user';
 import { LanguageService } from 'src/language/application/services/language/language-admin.service';
 import { LessonService } from 'src/lesson/application/services/lesson/lesson.service';
-import { PaginationDto } from 'src/shared/domain/dtos/PaginationDto';
+import { PaginationDto } from 'src/shared/domain/dto/PaginationDto';
 import { Language } from 'src/shared/domain/entities/language';
 import { Lesson } from 'src/shared/domain/entities/lesson';
 

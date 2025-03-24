@@ -1,5 +1,5 @@
-import { StageDto } from 'src/shared/domain/dtos/create-stage-dto/create-stage-dto';
-import { PaginationDto } from 'src/shared/domain/dtos/PaginationDto';
+import { StageDto } from 'src/shared/domain/dto/create-stage/create-stage-dto';
+import { PaginationDto } from 'src/shared/domain/dto/PaginationDto';
 import { Stages } from 'src/shared/domain/entities/stage';
 
 export interface StageRepositoryInterface {

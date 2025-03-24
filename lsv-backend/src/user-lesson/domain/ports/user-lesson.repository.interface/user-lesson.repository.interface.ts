@@ -1,4 +1,4 @@
-import { PaginationDto } from 'src/shared/domain/dtos/PaginationDto';
+import { PaginationDto } from 'src/shared/domain/dto/PaginationDto';
 import { UserLesson } from 'src/shared/domain/entities/userLesson';
 
 export interface UserLessonRepositoryInterface {

@@ -1,5 +1,5 @@
 import { IsArray, IsString, IsUUID, ValidateNested } from 'class-validator';
-import { QuestionDto } from '../../question-dto/question-dto';
+import { QuestionDto } from '../../question/question-dto';
 import { Type } from 'class-transformer';
 
 export class QuizDto {

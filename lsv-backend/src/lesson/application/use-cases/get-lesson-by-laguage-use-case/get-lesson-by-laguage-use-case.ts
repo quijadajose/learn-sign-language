@@ -1,6 +1,6 @@
 import { Inject } from '@nestjs/common';
 import { LessonRepositoryInterface } from 'src/lesson/domain/ports/lesson.repository.interface/lesson.repository.interface';
-import { PaginationDto } from 'src/shared/domain/dtos/PaginationDto';
+import { PaginationDto } from 'src/shared/domain/dto/PaginationDto';
 import { Lesson } from 'src/shared/domain/entities/lesson';
 
 export class GetLessonByLanguageUseCase {

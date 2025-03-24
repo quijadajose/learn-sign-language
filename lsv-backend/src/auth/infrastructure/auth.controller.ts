@@ -8,12 +8,12 @@ import {
   Req,
   UseGuards,
 } from '@nestjs/common';
-import { CreateUserDto } from '../domain/dtos/create-user/create-user';
+import { CreateUserDto } from '../domain/dto/create-user/create-user';
 import { AuthService } from '../application/auth.service';
 import { AuthGuard } from '@nestjs/passport';
-import { ResetPassword } from '../application/dtos/reset-password/reset-password';
-import { ConfirmResetPasswordDto } from '../application/dtos/confirm-reset-password/confirm-reset-password-dto';
-import { LoginUserDto } from '../application/dtos/login-user/login-user';
+import { ResetPassword } from '../application/dto/reset-password/reset-password';
+import { ConfirmResetPasswordDto } from '../application/dto/confirm-reset-password/confirm-reset-password-dto';
+import { LoginUserDto } from '../application/dto/login-user/login-user';
 import { Public } from './decorators/public.decorator';
 
 @Controller('auth')

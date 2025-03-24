@@ -1,6 +1,6 @@
 import { Controller, Get, Param, ParseUUIDPipe, Query } from '@nestjs/common';
 import { LeaderboardService } from 'src/leaderboard/application/service/leaderboard/leaderboard.service';
-import { PaginationDto } from 'src/shared/domain/dtos/PaginationDto';
+import { PaginationDto } from 'src/shared/domain/dto/PaginationDto';
 
 @Controller('leaderboard')
 export class LeaderboardController {

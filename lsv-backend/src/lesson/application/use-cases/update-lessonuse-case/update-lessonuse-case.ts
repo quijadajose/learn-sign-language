@@ -1,5 +1,5 @@
 import { Inject } from '@nestjs/common';
-import { CreateLessonDto } from '../../../domain/dtos/create-lesson-dto/create-lesson-dto';
+import { CreateLessonDto } from '../../../domain/dto/create-lesson/create-lesson-dto';
 import { Lesson } from 'src/shared/domain/entities/lesson';
 import { LessonRepositoryInterface } from 'src/lesson/domain/ports/lesson.repository.interface/lesson.repository.interface';
 

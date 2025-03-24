@@ -1,7 +1,7 @@
 import { InjectRepository } from '@nestjs/typeorm';
-import { StageDto } from 'src/shared/domain/dtos/create-stage-dto/create-stage-dto';
+import { StageDto } from 'src/shared/domain/dto/create-stage/create-stage-dto';
 import { StageRepositoryInterface } from 'src/stage/domain/ports/stage.repository.interface/stage.repository.interface';
-import { PaginationDto } from 'src/shared/domain/dtos/PaginationDto';
+import { PaginationDto } from 'src/shared/domain/dto/PaginationDto';
 import { Stages } from 'src/shared/domain/entities/stage';
 import { FindManyOptions, Repository } from 'typeorm';
 

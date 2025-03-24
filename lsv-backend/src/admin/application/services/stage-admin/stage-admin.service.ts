@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
-import { PaginationDto } from 'src/shared/domain/dtos/PaginationDto';
-import { StageDto } from '../../../../shared/domain/dtos/create-stage-dto/create-stage-dto';
+import { PaginationDto } from 'src/shared/domain/dto/PaginationDto';
+import { StageDto } from '../../../../shared/domain/dto/create-stage/create-stage-dto';
 import { GetStagesFromLanguageUseCase } from 'src/stage/application/use-cases/get-stages-from-language-use-case/get-stages-from-language-use-case';
 import { CreateStageUseCase } from 'src/stage/application/use-cases/create-stage-use-case/create-stage-use-case';
 import { UpdateStageUseCase } from 'src/stage/application/use-cases/update-stage-use-case/update-stage-use-case';

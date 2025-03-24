@@ -1,6 +1,6 @@
 import { BadRequestException, Inject } from '@nestjs/common';
 import { LanguageRepositoryInterface } from 'src/language/domain/ports/language.repository.interface/language.repository.interface';
-import { CreateLanguageDto } from '../../../domain/dtos/create-language/create-language';
+import { CreateLanguageDto } from '../../../domain/dto/create-language/create-language';
 
 export class UpdateLanguagesUseCase {
   constructor(
