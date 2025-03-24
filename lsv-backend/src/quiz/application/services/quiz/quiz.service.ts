@@ -4,9 +4,9 @@ import {
   NotFoundException,
   Query,
 } from '@nestjs/common';
-import { QuizDto } from '../../dtos/quiz-dto/quiz-dto';
+import { QuizDto } from '../../../domain/dtos/quiz-dto/quiz-dto';
 import { CreateQuizWithQuestionsAndOptionsUseCase } from '../../use-cases/create-quiz-with-questions-and-options-use-case/create-quiz-with-questions-and-options-use-case';
-import { PaginationDto } from 'src/shared/application/dtos/PaginationDto';
+import { PaginationDto } from 'src/shared/domain/dtos/PaginationDto';
 import { listQuizzesByLanguageIdUseCase } from '../../use-cases/list-quizzes-by-language-use-case/list-quizzes-by-language-use-case';
 import { GetQuizByIdUseCase } from '../../use-cases/get-quiz-by-id-use-case/get-quiz-by-id-use-case';
 import { SubmissionTestUseCase } from '../../use-cases/submission-test-use-case/submission-test-use-case';

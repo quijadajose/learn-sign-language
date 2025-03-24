@@ -11,12 +11,12 @@ import {
   Query,
   UseGuards,
 } from '@nestjs/common';
-import { CreateLanguageDto as LanguageDto } from 'src/language/application/dto/create-language/create-language';
+import { CreateLanguageDto as LanguageDto } from 'src/language/domain/dtos/create-language/create-language';
 import { LanguageService } from 'src/language/application/services/language/language-admin.service';
 import { StageService } from 'src/stage/application/services/stage/stage.service';
 import { Roles } from 'src/auth/infrastructure/decorators/roles.decorator';
 import { RolesGuard } from 'src/auth/infrastructure/guards/roles/roles.guard';
-import { PaginationDto } from 'src/shared/application/dtos/PaginationDto';
+import { PaginationDto } from 'src/shared/domain/dtos/PaginationDto';
 import { Language } from 'src/shared/domain/entities/language';
 import { Stages } from 'src/shared/domain/entities/stage';
 import { AuthGuard } from '@nestjs/passport';

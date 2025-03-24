@@ -1,10 +1,10 @@
 import { Inject } from '@nestjs/common';
-import { QuizRepository } from 'src/quiz/infrastructure/typeorm/quiz.repository/quiz.repository';
+import { QuizRepositoryInterface } from 'src/quiz/domain/ports/quiz.repository.interface/quiz.repository.interface';
 
 export class GetQuizByIdUseCase {
   constructor(
     @Inject('QuizRepositoryInterface')
-    private readonly quizRepositoryInterface: QuizRepository,
+    private readonly quizRepositoryInterface: QuizRepositoryInterface,
   ) {}
   execute(quizId: string) {
     return this.quizRepositoryInterface.getQuizById(quizId);
