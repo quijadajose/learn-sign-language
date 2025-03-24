@@ -3,8 +3,8 @@
 
 # Detect changes in lsv-backend
 if git diff --cached --name-only | grep -q '^lsv-backend/'; then
-  echo "🔍 Running lint and tests in lsv-backend..."
-  (cd lsv-backend && bun run lint && bun run test)
+  echo "🔍 Running format, lint and tests in lsv-backend..."
+  (cd lsv-backend && bun run format && bun run lint && bun run test)
 fi
 
 # Detect changes in lsv-model-trainer
