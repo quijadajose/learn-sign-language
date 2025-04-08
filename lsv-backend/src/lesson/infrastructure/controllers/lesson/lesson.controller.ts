@@ -15,13 +15,13 @@ import {
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
-import { CreateLessonDto } from 'src/lesson/application/dtos/create-lesson-dto/create-lesson-dto';
+import { CreateLessonDto } from 'src/lesson/domain/dto/create-lesson/create-lesson-dto';
 import { LessonService } from 'src/lesson/application/services/lesson/lesson.service';
 import { Roles } from 'src/auth/infrastructure/decorators/roles.decorator';
 import { RolesGuard } from 'src/auth/infrastructure/guards/roles/roles.guard';
 import { Lesson } from 'src/shared/domain/entities/lesson';
 import * as path from 'path';
-import { PaginationDto } from 'src/shared/application/dtos/PaginationDto';
+import { PaginationDto } from 'src/shared/domain/dto/PaginationDto';
 
 @Controller('lesson')
 export class LessonController {

@@ -1,5 +1,5 @@
 {
-  description = "A flake for a Node.js project using npm";
+  description = "A flake for a  project using bun";
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
@@ -15,14 +15,14 @@
         devShell = pkgs.mkShell {
           buildInputs = [
             pkgs.nodejs
-            pkgs.pnpm
+            pkgs.bun
           ];
 
           shellHook = ''
-            # Instalar NestJS localmente si no está instalado
+            # Instalar bun localmente si no está instalado
             if ! [ -d "node_modules/.bin/nest" ]; then
               echo "Instalando NestJS CLI localmente..."
-              npm add -D @nestjs/cli
+              bun add -D @nestjs/cli
             fi
           '';
         };

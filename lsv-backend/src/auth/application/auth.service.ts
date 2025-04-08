@@ -5,7 +5,7 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import { RegisterUserUseCase } from '../domain/use-cases/register-user/register-user';
-import { CreateUserDto } from './dtos/create-user/create-user';
+import { CreateUserDto } from '../domain/dto/create-user/create-user';
 import { User } from 'src/shared/domain/entities/user';
 import { TokenService } from '../domain/ports/token.service/token.service.interface';
 import { SendEmailUseCase } from '../domain/use-cases/send-email/send-email';
@@ -14,9 +14,9 @@ import { ConfigService } from '@nestjs/config';
 import { FindUserUseCase } from '../domain/use-cases/find-user/find-user';
 import { HashService } from '../domain/ports/hash.service.interface/hash.service.interface';
 import { UpdateUserUseCase } from '../domain/use-cases/update-user/update-user';
-import { LoginUserDto } from './dtos/login-user/login-user';
+import { LoginUserDto } from './dto/login-user/login-user';
 import { JwtPayload } from '../interfaces/jwt-payload.interface';
-import { UpdateUserDto } from './dtos/update-user/update-user';
+import { UpdateUserDto } from '../domain/dto/update-user/update-user';
 
 @Injectable()
 export class AuthService {

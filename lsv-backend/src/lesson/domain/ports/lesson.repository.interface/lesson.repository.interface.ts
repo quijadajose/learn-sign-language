@@ -1,5 +1,5 @@
-import { CreateLessonDto } from 'src/lesson/application/dtos/create-lesson-dto/create-lesson-dto';
-import { PaginationDto } from 'src/shared/application/dtos/PaginationDto';
+import { CreateLessonDto } from 'src/lesson/domain/dto/create-lesson/create-lesson-dto';
+import { PaginationDto } from 'src/shared/domain/dto/PaginationDto';
 import { Lesson } from 'src/shared/domain/entities/lesson';
 
 export interface LessonRepositoryInterface {

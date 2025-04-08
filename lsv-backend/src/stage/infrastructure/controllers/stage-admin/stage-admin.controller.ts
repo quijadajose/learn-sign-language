@@ -9,7 +9,7 @@ import {
   Put,
   UseGuards,
 } from '@nestjs/common';
-import { StageDto } from 'src/stage/application/dto/create-stage-dto/create-stage-dto';
+import { StageDto } from 'src/shared/domain/dto/create-stage/create-stage-dto';
 import { StageService } from 'src/stage/application/services/stage/stage.service';
 import { Roles } from 'src/auth/infrastructure/decorators/roles.decorator';
 import { RolesGuard } from 'src/auth/infrastructure/guards/roles/roles.guard';

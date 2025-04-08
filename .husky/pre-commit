@@ -1,0 +1,20 @@
+#!/bin/sh
+. "$(dirname "$0")/_/husky.sh"
+
+# Detect changes in lsv-backend
+if git diff --cached --name-only | grep -q '^lsv-backend/'; then
+  echo "🔍 Running format, lint and tests in lsv-backend..."
+  (cd lsv-backend && bun run format && bun run lint && bun run test)
+fi
+
+# Detect changes in lsv-model-trainer
+if git diff --cached --name-only | grep -q '^lsv-model-trainer/'; then
+  echo "🐍 Running lint and tests in lsv-model-trainer..."
+  (cd lsv-model-trainer && echo "You need add test")
+fi
+
+# Detect changes in lsv-frontend
+if git diff --cached --name-only | grep -q '^lsv-frontend/'; then
+  echo "🌐 Running lint anf tests in lsv-frontend..."
+  (cd lsv-frontend && echo "You need add test")
+fi

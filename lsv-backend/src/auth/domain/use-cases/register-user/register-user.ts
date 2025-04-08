@@ -1,5 +1,5 @@
 import { Injectable, BadRequestException, Inject } from '@nestjs/common';
-import { CreateUserDto } from 'src/auth/application/dtos/create-user/create-user';
+import { CreateUserDto } from 'src/auth/domain/dto/create-user/create-user';
 import { User } from 'src/shared/domain/entities/user';
 import { UserRepositoryInterface } from '../../ports/user.repository.interface/user.repository.interface.interface';
 import { HashService } from '../../ports/hash.service.interface/hash.service.interface';

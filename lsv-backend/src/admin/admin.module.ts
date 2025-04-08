@@ -16,7 +16,7 @@ import { Stages } from 'src/shared/domain/entities/stage';
 import { LessonService } from '../lesson/application/services/lesson/lesson.service';
 import { StageRepository } from '../stage/infrastructure/typeorm/stage.repository/stage.repository';
 import { UploadPictureUseCase } from 'src/shared/application/use-cases/upload-picture-use-case/upload-picture-use-case';
-import { GetLessonByLaguageUseCase } from '../lesson/application/use-cases/get-lesson-by-laguage-use-case/get-lesson-by-laguage-use-case';
+import { GetLessonByLanguageUseCase } from '../lesson/application/use-cases/get-lesson-by-laguage-use-case/get-lesson-by-laguage-use-case';
 import { GetLessonByIdUseCase } from '../lesson/application/use-cases/get-lesson-by-id-use-case/get-lesson-by-id-use-case';
 import { DeleteLessonUseCase } from '../lesson/application/use-cases/delete-lesson-use-case/delete-lesson-use-case';
 import { GetStagesFromLanguageUseCase } from '../stage/application/use-cases/get-stages-from-language-use-case/get-stages-from-language-use-case';
@@ -47,7 +47,7 @@ import { StageController } from 'src/stage/infrastructure/controllers/stage-admi
     CreateLessonUseCase,
     LessonService,
     UploadPictureUseCase,
-    GetLessonByLaguageUseCase,
+    GetLessonByLanguageUseCase,
     GetLessonByIdUseCase,
     UpdateLessonuseCase,
     DeleteLessonUseCase,

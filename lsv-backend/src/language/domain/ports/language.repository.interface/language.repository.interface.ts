@@ -1,5 +1,5 @@
-import { CreateLanguageDto } from 'src/language/application/dto/create-language/create-language';
-import { PaginationDto } from 'src/shared/application/dtos/PaginationDto';
+import { CreateLanguageDto } from 'src/language/domain/dto/create-language/create-language';
+import { PaginationDto } from 'src/shared/domain/dto/PaginationDto';
 import { Language } from 'src/shared/domain/entities/language';
 
 export interface LanguageRepositoryInterface {
