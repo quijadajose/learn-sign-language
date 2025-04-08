@@ -1,5 +1,5 @@
-import { LeaderboardDto } from 'src/leaderboard/application/dtos/leaderboard/leaderboard';
-import { PaginationDto } from 'src/shared/application/dtos/PaginationDto';
+import { LeaderboardDto } from 'src/leaderboard/domain/dto/leaderboard/leaderboard';
+import { PaginationDto } from 'src/shared/domain/dto/PaginationDto';
 
 export interface LeaderboardRepositoryInterface {
   getGlobalLeaderboard(limit: number): Promise<LeaderboardDto[]>;

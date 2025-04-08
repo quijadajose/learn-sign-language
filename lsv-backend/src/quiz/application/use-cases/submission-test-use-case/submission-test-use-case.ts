@@ -1,6 +1,6 @@
 import { Inject } from '@nestjs/common';
 import { QuizRepository } from 'src/quiz/infrastructure/typeorm/quiz.repository/quiz.repository';
-import { SubmissionDto } from '../../dtos/submission-dto/submission-dto';
+import { SubmissionDto } from '../../dto/submission/submission-dto';
 import { Quiz } from 'src/shared/domain/entities/quiz';
 import { User } from 'src/shared/domain/entities/user';
 

@@ -3,7 +3,7 @@ import { Lesson } from 'src/shared/domain/entities/lesson';
 import { StageRepositoryInterface } from 'src/stage/domain/ports/stage.repository.interface/stage.repository.interface';
 import { LanguageRepositoryInterface } from 'src/language/domain/ports/language.repository.interface/language.repository.interface';
 import { LessonRepositoryInterface } from 'src/lesson/domain/ports/lesson.repository.interface/lesson.repository.interface';
-import { CreateLessonDto } from '../../dtos/create-lesson-dto/create-lesson-dto';
+import { CreateLessonDto } from '../../../domain/dto/create-lesson/create-lesson-dto';
 
 export class CreateLessonUseCase {
   constructor(

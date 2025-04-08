@@ -1,11 +1,11 @@
 import { Inject } from '@nestjs/common';
-import { QuizRepository } from 'src/quiz/infrastructure/typeorm/quiz.repository/quiz.repository';
-import { QuizDto } from '../../dtos/quiz-dto/quiz-dto';
+import { QuizDto } from '../../../domain/dto/quiz/quiz-dto';
+import { QuizRepositoryInterface } from 'src/quiz/domain/ports/quiz.repository.interface/quiz.repository.interface';
 
 export class CreateQuizWithQuestionsAndOptionsUseCase {
   constructor(
     @Inject('QuizRepositoryInterface')
-    private readonly quizRepositoryInterface: QuizRepository,
+    private readonly quizRepositoryInterface: QuizRepositoryInterface,
   ) {}
   execute(quizDto: QuizDto) {
     return this.quizRepositoryInterface.saveWithQuestionsAndOptions(quizDto);

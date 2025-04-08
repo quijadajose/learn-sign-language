@@ -8,7 +8,7 @@ import {
   Query,
   Req,
 } from '@nestjs/common';
-import { PaginationDto } from 'src/shared/application/dtos/PaginationDto';
+import { PaginationDto } from 'src/shared/domain/dto/PaginationDto';
 import { UserLessonService } from 'src/user-lesson/application/services/user-lesson/user-lesson.service';
 
 @Controller('user-lesson')

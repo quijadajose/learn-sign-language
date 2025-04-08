@@ -1,10 +1,10 @@
 import { NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { LeaderboardDto } from 'src/leaderboard/application/dtos/leaderboard/leaderboard';
-import { QuizDto } from 'src/quiz/application/dtos/quiz-dto/quiz-dto';
-import { SubmissionDto } from 'src/quiz/application/dtos/submission-dto/submission-dto';
+import { LeaderboardDto } from 'src/leaderboard/domain/dto/leaderboard/leaderboard';
+import { QuizDto } from 'src/quiz/domain/dto/quiz/quiz-dto';
+import { SubmissionDto } from 'src/quiz/application/dto/submission/submission-dto';
 import { QuizRepositoryInterface } from 'src/quiz/domain/ports/quiz.repository.interface/quiz.repository.interface';
-import { PaginationDto } from 'src/shared/application/dtos/PaginationDto';
+import { PaginationDto } from 'src/shared/domain/dto/PaginationDto';
 import { Lesson } from 'src/shared/domain/entities/lesson';
 import { Option } from 'src/shared/domain/entities/option';
 import { Question } from 'src/shared/domain/entities/question';

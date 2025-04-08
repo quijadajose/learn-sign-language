@@ -1,6 +1,6 @@
-import { LeaderboardDto } from 'src/leaderboard/application/dtos/leaderboard/leaderboard';
-import { QuizDto } from 'src/quiz/application/dtos/quiz-dto/quiz-dto';
-import { PaginationDto } from 'src/shared/application/dtos/PaginationDto';
+import { LeaderboardDto } from 'src/leaderboard/domain/dto/leaderboard/leaderboard';
+import { QuizDto } from 'src/quiz/domain/dto/quiz/quiz-dto';
+import { PaginationDto } from 'src/shared/domain/dto/PaginationDto';
 import { Quiz } from 'src/shared/domain/entities/quiz';
 import { QuizSubmission } from 'src/shared/domain/entities/quizSubmission';
 import { User } from 'src/shared/domain/entities/user';
@@ -26,4 +26,5 @@ export interface QuizRepositoryInterface {
     languageId: string,
     pagination: PaginationDto,
   ): Promise<LeaderboardDto[]>;
+  getQuizById(quizId: string): Promise<Quiz>;
 }

@@ -1,7 +1,7 @@
 import { BadRequestException, Inject, NotFoundException } from '@nestjs/common';
 import { UserRepositoryInterface } from '../../ports/user.repository.interface/user.repository.interface.interface';
 import { User } from 'src/shared/domain/entities/user';
-import { UpdateUserDto } from 'src/auth/application/dtos/update-user/update-user';
+import { UpdateUserDto } from 'src/auth/domain/dto/update-user/update-user';
 
 export class UpdateUserUseCase {
   constructor(

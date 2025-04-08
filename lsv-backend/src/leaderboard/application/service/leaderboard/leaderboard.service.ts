@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { GetGeneralLeaderboardUseCase } from '../../use-cases/get-general-leaderboard-use-case/get-general-leaderboard-use-case';
-import { PaginationDto } from 'src/shared/application/dtos/PaginationDto';
+import { PaginationDto } from 'src/shared/domain/dto/PaginationDto';
 import { GetLeaderboardByLanguageUseCase } from '../../use-cases/get-leaderboard-by-language-use-case/get-leaderboard-by-language-use-case';
 
 @Injectable()
