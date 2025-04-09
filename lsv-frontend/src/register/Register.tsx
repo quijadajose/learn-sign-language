@@ -1,0 +1,75 @@
+import { useState, useCallback } from "react";
+import { Formity, OnReturn } from "@formity/react";
+import { schema, Values } from "./schema";
+import { BACKEND_BASE_URL } from "../config";
+import { Toast } from "flowbite-react";
+import { HiCheck, HiX } from "react-icons/hi";
+import { useNavigate } from "react-router-dom";
+
+export default function Register() {
+  const [toastMessages, setToastMessages] = useState<{ id: number; type: "success" | "error"; message: string }[]>([]);
+  const navigate = useNavigate();
+
+  const addToast = (type: "success" | "error", message: string) => {
+    const id = Date.now(); // Generar un ID único basado en la fecha actual
+    setToastMessages((prev) => [...prev, { id, type, message }]);
+
+    // Eliminar el toast después de 4 segundos
+    setTimeout(() => {
+      setToastMessages((prev) => prev.filter((toast) => toast.id !== id));
+    }, 4000);
+  };
+
+  const onReturn = useCallback<OnReturn<Values>>(async (values) => {
+    console.log(values);
+    try {
+      const response = await fetch(`${BACKEND_BASE_URL}/auth/register`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(values),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        localStorage.setItem("auth", data.token);
+        localStorage.setItem("user", JSON.stringify(data.user));
+        addToast("success", "Registro exitoso");
+        navigate("/dashboard");
+      } else {
+        const errorData = await response.json();
+        console.error("Error en el registro:", errorData);
+        addToast("error", errorData.message || "Error al registrar");
+      }
+    } catch (error) {
+      console.error("Error al enviar la solicitud:", error);
+      addToast("error", "Error al conectar con el servidor");
+    }
+  }, []);
+
+  return (
+    <>
+      {/* Contenedor de toasts */}
+      <div className="fixed right-5 top-5 z-50 flex flex-col gap-3">
+        {toastMessages.map((toast) => (
+          <Toast key={toast.id}>
+            <div
+              className={`inline-flex size-8 shrink-0 items-center justify-center rounded-lg ${
+                toast.type === "success"
+                  ? "bg-green-100 text-green-500 dark:bg-green-800 dark:text-green-200"
+                  : "bg-red-100 text-red-500 dark:bg-red-800 dark:text-red-200"
+              }`}
+            >
+              {toast.type === "success" ? <HiCheck className="size-5" /> : <HiX className="size-5" />}
+            </div>
+            <div className="ml-3 text-sm font-normal">{toast.message}</div>
+            <Toast.Toggle onDismiss={() => setToastMessages((prev) => prev.filter((t) => t.id !== toast.id))} />
+          </Toast>
+        ))}
+      </div>
+
+      <Formity<Values> schema={schema} onReturn={onReturn} />
+    </>
+  );
+}
