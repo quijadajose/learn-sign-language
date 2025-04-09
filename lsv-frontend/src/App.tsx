@@ -12,7 +12,7 @@ function PrivateRoute({ children }: { children: JSX.Element }) {
   return localStorage.getItem("auth") ? children : <Navigate to="/login" />;
 }
 
-function App() {
+function App() { 
   return (
     <main className="h-screen bg-gray-50 dark:bg-gray-900">
       <Routes>
