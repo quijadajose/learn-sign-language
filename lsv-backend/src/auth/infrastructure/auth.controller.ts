@@ -6,6 +6,7 @@ import {
   HttpStatus,
   Post,
   Req,
+  Res,
   UseGuards,
 } from '@nestjs/common';
 import { CreateUserDto } from '../domain/dto/create-user/create-user';
@@ -15,10 +16,15 @@ import { ResetPassword } from '../application/dto/reset-password/reset-password'
 import { ConfirmResetPasswordDto } from '../application/dto/confirm-reset-password/confirm-reset-password-dto';
 import { LoginUserDto } from '../application/dto/login-user/login-user';
 import { Public } from './decorators/public.decorator';
+import { Response } from 'express';
+import { ConfigService } from '@nestjs/config';
 
 @Controller('auth')
 export class AuthController {
-  constructor(private readonly authService: AuthService) {}
+  constructor(
+    private readonly authService: AuthService,
+    private readonly configService: ConfigService,
+  ) {}
   @Public()
   @Post('register')
   async register(@Body() createUserDto: CreateUserDto) {
@@ -73,8 +79,12 @@ export class AuthController {
   @Public()
   @Get('google/callback')
   @UseGuards(AuthGuard('google'))
-  async googleAuthRedirect(@Req() req) {
+  async googleAuthRedirect(@Req() req, @Res() res: Response) {
     const payload = req.user;
-    return payload;
+    if (!payload) {
+      throw new HttpException('No user data found', HttpStatus.UNAUTHORIZED);
+    }
+    const frontendUrl = this.configService.get<string>('FRONTEND_URL');
+    res.redirect(302, `${frontendUrl}/login?token=${payload.access_token}`);
   }
 }
