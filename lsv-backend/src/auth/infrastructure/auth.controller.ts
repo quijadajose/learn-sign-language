@@ -36,7 +36,7 @@ export class AuthController {
   }
 
   @Public()
-  @Post('login')
+  @Post('login/')
   async login(@Body() user: LoginUserDto) {
     const token = await this.authService.login(user);
     return {
