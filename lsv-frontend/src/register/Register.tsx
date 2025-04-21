@@ -11,17 +11,15 @@ export default function Register() {
   const navigate = useNavigate();
 
   const addToast = (type: "success" | "error", message: string) => {
-    const id = Date.now(); // Generar un ID único basado en la fecha actual
+    const id = Date.now();
     setToastMessages((prev) => [...prev, { id, type, message }]);
 
-    // Eliminar el toast después de 4 segundos
     setTimeout(() => {
       setToastMessages((prev) => prev.filter((toast) => toast.id !== id));
     }, 4000);
   };
 
   const onReturn = useCallback<OnReturn<Values>>(async (values) => {
-    console.log(values);
     try {
       const response = await fetch(`${BACKEND_BASE_URL}/auth/register`, {
         method: "POST",
@@ -50,7 +48,6 @@ export default function Register() {
 
   return (
     <>
-      {/* Contenedor de toasts */}
       <div className="fixed right-5 top-5 z-50 flex flex-col gap-3">
         {toastMessages.map((toast) => (
           <Toast key={toast.id}>
