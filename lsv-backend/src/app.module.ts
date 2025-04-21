@@ -21,6 +21,7 @@ import { Question } from './shared/domain/entities/question';
 import { Option } from './shared/domain/entities/option';
 import { QuizModule } from './quiz/quiz.module';
 import { LeaderboardModule } from './leaderboard/leaderboard.module';
+import { UploadPictureUseCase } from './shared/application/use-cases/upload-picture-use-case/upload-picture-use-case';
 
 @Module({
   imports: [
@@ -74,6 +75,6 @@ import { LeaderboardModule } from './leaderboard/leaderboard.module';
     LeaderboardModule,
   ],
   controllers: [ImagesController],
-  providers: [UsersService],
+  providers: [UsersService, UploadPictureUseCase],
 })
 export class AppModule {}

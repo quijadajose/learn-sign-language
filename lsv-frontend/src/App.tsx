@@ -1,18 +1,19 @@
 import { Routes, Route, Navigate } from "react-router-dom";
 
 import Login from "./Login";
-import Dashboard from "./Dashboard";
 import ForgoPassword from "./ForgotPasswordComponent";
 import ResetPassword from "./ResetPasswordComponent";
 import LandingPageComponent from "./LandingPageComponent";
 // import SignupForm from "./SingUp";
 import FormularioMultiPaso from "./register/Register";
+import Profile from "./Profile"; // Descomenta esta línea
+import DashboardLayout from "./layouts/DashboardLayout";
 
 function PrivateRoute({ children }: { children: JSX.Element }) {
   return localStorage.getItem("auth") ? children : <Navigate to="/login" />;
 }
 
-function App() { 
+function App() {
   return (
     <main className="h-screen bg-gray-50 dark:bg-gray-900">
       <Routes>
@@ -25,8 +26,20 @@ function App() {
           path="/dashboard"
           element={
             <PrivateRoute>
-              <Dashboard />
+              <DashboardLayout>
+                <div className="flex min-h-screen flex-col items-center justify-center dark:bg-gray-800">
+                  <h1 className="text-2xl dark:text-white">Dashboard</h1>
+                </div>
+              </DashboardLayout>
             </PrivateRoute>
+          }
+        />
+        <Route
+          path="/profile"
+          element={
+            <DashboardLayout>
+              <Profile />
+            </DashboardLayout>
           }
         />
       </Routes>
