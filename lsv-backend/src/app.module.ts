@@ -22,6 +22,9 @@ import { Option } from './shared/domain/entities/option';
 import { QuizModule } from './quiz/quiz.module';
 import { LeaderboardModule } from './leaderboard/leaderboard.module';
 import { UploadPictureUseCase } from './shared/application/use-cases/upload-picture-use-case/upload-picture-use-case';
+import { SeederService } from './seeder/seeder.service';
+import { LanguageModule } from './language/language.module';
+import { StageRepository } from './stage/infrastructure/typeorm/stage.repository/stage.repository';
 
 @Module({
   imports: [
@@ -73,8 +76,13 @@ import { UploadPictureUseCase } from './shared/application/use-cases/upload-pict
     UserLessonModule,
     QuizModule,
     LeaderboardModule,
+    LanguageModule,
   ],
   controllers: [ImagesController],
-  providers: [UsersService, UploadPictureUseCase],
+  providers: [
+    UsersService,
+    UploadPictureUseCase,
+    SeederService,
+  ],
 })
 export class AppModule {}

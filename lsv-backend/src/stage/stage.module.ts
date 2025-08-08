@@ -18,5 +18,6 @@ import { LanguageModule } from 'src/language/language.module';
     DeleteStageUseCase,
   ],
   controllers: [StageController],
+  exports: [StageService],
 })
 export class StageModule {}

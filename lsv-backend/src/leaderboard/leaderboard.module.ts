@@ -25,5 +25,6 @@ import { GetLeaderboardByLanguageUseCase } from './application/use-cases/get-lea
     },
   ],
   controllers: [LeaderboardController],
+  exports: ['QuizRepositoryInterface'],
 })
 export class LeaderboardModule {}

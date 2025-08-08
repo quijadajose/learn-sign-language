@@ -43,6 +43,6 @@ import { GetSubmissionTestFromUserUseCase } from './application/use-cases/get-su
     },
   ],
   controllers: [QuizController],
-  exports: [QuizService],
+  exports: [QuizService, CreateQuizWithQuestionsAndOptionsUseCase],
 })
 export class QuizModule {}

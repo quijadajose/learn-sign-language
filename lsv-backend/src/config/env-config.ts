@@ -1,4 +1,4 @@
-import { IsString, IsNumber, IsBoolean } from 'class-validator';
+import { IsString, IsNumber, IsBoolean, IsEmail } from 'class-validator';
 
 export class EnvConfig {
   @IsString()
@@ -25,8 +25,12 @@ export class EnvConfig {
   @IsString()
   JWT_SECRET: string;
 
+  @IsEmail()
+  API_ADMIN_EMAIL: string;
+
   @IsString()
-  JWT_EXPIRES_IN: string;
+  API_ADMIN_PASSWORD: string;
+
 
   @IsString()
   GOOGLE_CLIENT_ID: string;
