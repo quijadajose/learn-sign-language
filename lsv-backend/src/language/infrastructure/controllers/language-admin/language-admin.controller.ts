@@ -16,7 +16,7 @@ import { LanguageService } from 'src/language/application/services/language/lang
 import { StageService } from 'src/stage/application/services/stage/stage.service';
 import { Roles } from 'src/auth/infrastructure/decorators/roles.decorator';
 import { RolesGuard } from 'src/auth/infrastructure/guards/roles/roles.guard';
-import { PaginationDto } from 'src/shared/domain/dto/PaginationDto';
+import { PaginatedResponseDto, PaginationDto } from 'src/shared/domain/dto/PaginationDto';
 import { Language } from 'src/shared/domain/entities/language';
 import { Stages } from 'src/shared/domain/entities/stage';
 import { AuthGuard } from '@nestjs/passport';
@@ -41,7 +41,7 @@ export class LanguageController {
   @UseGuards(RolesGuard)
   @Roles('admin')
   @Get('/')
-  async listLanguages(@Query() pagination: PaginationDto): Promise<Language[]> {
+  async listLanguages(@Query() pagination: PaginationDto): Promise<PaginatedResponseDto<Language>> {
     return this.languageService.getAllLanguages(pagination);
   }
 
