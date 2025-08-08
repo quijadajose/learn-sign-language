@@ -25,7 +25,6 @@ import {
 import { MultiStep } from "../multi-step";
 import { Resolver } from "react-hook-form";
 
-// First step: Personal information
 type PersonalInfoValues = {
   email: string;
   firstName: string;
@@ -33,7 +32,6 @@ type PersonalInfoValues = {
   age: number;
 };
 
-// Second step: Account information
 type AccountInfoValues = {
   password: string;
   confirmPassword: string;

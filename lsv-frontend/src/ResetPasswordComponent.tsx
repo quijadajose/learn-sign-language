@@ -18,7 +18,6 @@ function ResetPassword() {
   const [passwordError, setPasswordError] = useState("");
 
   useEffect(() => {
-    // Verificar que el token existe
     if (!token) {
       addToast("error", "Token inválido o expirado");
       setTimeout(() => {
@@ -28,10 +27,9 @@ function ResetPassword() {
   }, [token, navigate]);
 
   const addToast = (type: "success" | "error", message: string) => {
-    const id = Date.now(); // Generar un ID único basado en la fecha actual
+    const id = Date.now();
     setToastMessages((prev) => [...prev, { id, type, message }]);
 
-    // Eliminar el toast después de 4 segundos
     setTimeout(() => {
       setToastMessages((prev) => prev.filter((toast) => toast.id !== id));
     }, 4000);

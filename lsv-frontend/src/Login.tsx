@@ -14,10 +14,9 @@ function Login() {
   const navigate = useNavigate();
 
   const addToast = (type: "success" | "error", message: string) => {
-    const id = Date.now(); // Generar un ID único basado en la fecha actual
+    const id = Date.now();
     setToastMessages((prev) => [...prev, { id, type, message }]);
 
-    // Eliminar el toast después de 4 segundos
     setTimeout(() => {
       setToastMessages((prev) => prev.filter((toast) => toast.id !== id));
     }, 4000);
@@ -27,7 +26,6 @@ function Login() {
   const [password, setPassword] = useState("");
   const [rememberMe, setRememberMe] = useState(false);
 
-  // Cargar el email guardado al iniciar la página
   useEffect(() => {
     const savedEmail = localStorage.getItem("rememberedEmail");
     if (savedEmail) {
@@ -35,7 +33,6 @@ function Login() {
       setRememberMe(true);
     }
     
-    // Si hay un token en la URL, podemos usarlo para alguna acción específica
     if (token || localStorage.getItem("auth")) {
       if(token){
         localStorage.setItem("auth", token);
@@ -61,7 +58,6 @@ function Login() {
         localStorage.setItem("auth", json.data.token);
         localStorage.setItem("user", JSON.stringify(json.data.user));
         
-        // Guardar el email en localStorage si "Recuérdame" está marcado
         if (rememberMe) {
           localStorage.setItem("rememberedEmail", email);
         } else {
@@ -80,8 +76,6 @@ function Login() {
   }; 
 
   const handleGoogleLogin = () => {
-    // Using window.location.href for OAuth redirects is actually the recommended approach
-    // as React Router's navigate won't perform a full page navigation which is needed for OAuth
     window.location.href = `${BACKEND_BASE_URL}/auth/google`;
   };
 
