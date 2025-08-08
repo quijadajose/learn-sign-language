@@ -14,7 +14,7 @@ import { AuthService } from 'src/auth/application/auth.service';
 import { UpdateUserDto } from 'src/auth/domain/dto/update-user/update-user';
 import { LanguageService } from 'src/language/application/services/language/language-admin.service';
 import { LessonService } from 'src/lesson/application/services/lesson/lesson.service';
-import { PaginationDto } from 'src/shared/domain/dto/PaginationDto';
+import { PaginatedResponseDto, PaginationDto } from 'src/shared/domain/dto/PaginationDto';
 import { Language } from 'src/shared/domain/entities/language';
 import { Lesson } from 'src/shared/domain/entities/lesson';
 
@@ -52,7 +52,7 @@ export class UsersController {
 
   @UseGuards(AuthGuard('jwt'))
   @Get('languages')
-  async listLanguages(@Query() pagination: PaginationDto): Promise<Language[]> {
+  async listLanguages(@Query() pagination: PaginationDto): Promise<PaginatedResponseDto<Language>> {
     return this.languageService.getAllLanguages(pagination);
   }
   @Get('languages/:id')

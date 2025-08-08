@@ -1,7 +1,10 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { LanguageRepositoryInterface } from 'src/language/domain/ports/language.repository.interface/language.repository.interface';
-import { PaginationDto } from 'src/shared/domain/dto/PaginationDto';
+import {
+  PaginatedResponseDto,
+  PaginationDto,
+} from 'src/shared/domain/dto/PaginationDto';
 import { Language } from 'src/shared/domain/entities/language';
 import { Repository } from 'typeorm';
 
@@ -20,7 +23,9 @@ export class LanguageRepository implements LanguageRepositoryInterface {
     return this.languageRepository.findOne({ where: { name } });
   }
 
-  async findAll(pagination: PaginationDto): Promise<Language[]> {
+  async findAll(
+    pagination: PaginationDto,
+  ): Promise<PaginatedResponseDto<Language>> {
     const {
       page,
       limit,
@@ -41,7 +46,10 @@ export class LanguageRepository implements LanguageRepositoryInterface {
       };
     }
 
-    return this.languageRepository.find(findOptions);
+    const [data, total] =
+      await this.languageRepository.findAndCount(findOptions);
+
+    return new PaginatedResponseDto(data, total, page, limit);
   }
 
   async save(language: Language): Promise<Language> {

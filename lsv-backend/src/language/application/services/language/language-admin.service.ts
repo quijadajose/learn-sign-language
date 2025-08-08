@@ -4,7 +4,7 @@ import { CreateLanguageDto } from '../../../domain/dto/create-language/create-la
 import { Language } from 'src/shared/domain/entities/language';
 import { GetLanguageUseCase } from '../../use-cases/get-language-use-case/get-language-use-case';
 import { ListLanguagesUseCase } from '../../use-cases/list-languages-use-case/list-languages-use-case';
-import { PaginationDto } from 'src/shared/domain/dto/PaginationDto';
+import { PaginatedResponseDto, PaginationDto } from 'src/shared/domain/dto/PaginationDto';
 import { UpdateLanguagesUseCase } from '../../use-cases/update-languages-use-case/update-languages-use-case';
 import { DeleteLanguagesUseCase } from '../../use-cases/delete-languages-use-case/delete-languages-use-case';
 import { GetStagesFromLanguageUseCase } from '../../../../stage/application/use-cases/get-stages-from-language-use-case/get-stages-from-language-use-case';
@@ -28,7 +28,7 @@ export class LanguageService {
   async getLanguage(id: string): Promise<Language> {
     return this.getLanguageUseCase.execute(id);
   }
-  async getAllLanguages(pagination: PaginationDto): Promise<Language[]> {
+  async getAllLanguages(pagination: PaginationDto): Promise<PaginatedResponseDto<Language>> {
     return this.listLanguagesUseCase.execute(pagination);
   }
   async updateLanguage(
