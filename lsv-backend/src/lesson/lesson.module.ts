@@ -21,6 +21,6 @@ import { LanguageModule } from 'src/language/language.module';
     DeleteLessonUseCase,
   ],
   controllers: [LessonController],
-  exports: [LessonService],
+  exports: [LessonService, CreateLessonUseCase],
 })
 export class LessonModule {}
