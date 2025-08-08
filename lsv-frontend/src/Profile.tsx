@@ -232,7 +232,7 @@ export const ResponsiveProfileForm = () => {
             confirmPassword: '',
       };
       setProfile(finalProfileData);
-      localStorage.setItem("user", JSON.stringify(finalProfileData)); // Update localStorage
+      localStorage.setItem("user", JSON.stringify(finalProfileData));
       setIsEditing(false);
       setNewPhotoFile(null); 
       addToast("success", "Perfil actualizado correctamente.");
