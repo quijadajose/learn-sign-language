@@ -46,7 +46,7 @@ export class SeederService implements OnModuleInit {
     await this.seedQuiz();
     console.log('Seeding completed.');
   }
-  private async seedAdminUser() {    
+  private async seedAdminUser() {
     if (
       !(await this.findUserUseCase.findByEmail(
         this.configService.get<string>('API_ADMIN_EMAIL'),
@@ -63,7 +63,7 @@ export class SeederService implements OnModuleInit {
       });
     }
   }
-  private async seedLanguages() {    
+  private async seedLanguages() {
     const lang = await this.languageRepository.findByName(
       'Lenguaje de señas Venezolano',
     );
@@ -80,7 +80,7 @@ export class SeederService implements OnModuleInit {
       this.languageId = language.id;
     }
   }
-  private async seedStages() {    
+  private async seedStages() {
     const stages = [
       {
         name: 'A I',
@@ -133,7 +133,7 @@ export class SeederService implements OnModuleInit {
       }
     }
   }
-  private async seedLessons() {    
+  private async seedLessons() {
     const lesson = await this.lessonRepository.findByNameInLanguage(
       'El abecedario',
       this.languageId,
@@ -146,8 +146,8 @@ export class SeederService implements OnModuleInit {
         description: 'El abecedario de la A a la Z',
         languageId: this.languageId,
         stageId: this.stageId,
-      });      
-      this.lessonId = lesson.id;      
+      });
+      this.lessonId = lesson.id;
     }
   }
   private async seedQuiz() {
@@ -195,7 +195,7 @@ export class SeederService implements OnModuleInit {
             ],
           },
         ],
-      });      
+      });
     }
   }
 }

@@ -79,10 +79,6 @@ import { StageRepository } from './stage/infrastructure/typeorm/stage.repository
     LanguageModule,
   ],
   controllers: [ImagesController],
-  providers: [
-    UsersService,
-    UploadPictureUseCase,
-    SeederService,
-  ],
+  providers: [UsersService, UploadPictureUseCase, SeederService],
 })
 export class AppModule {}

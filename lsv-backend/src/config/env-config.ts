@@ -31,7 +31,6 @@ export class EnvConfig {
   @IsString()
   API_ADMIN_PASSWORD: string;
 
-
   @IsString()
   GOOGLE_CLIENT_ID: string;
 

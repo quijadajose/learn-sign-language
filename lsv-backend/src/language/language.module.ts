@@ -54,7 +54,7 @@ import { QuizModule } from 'src/quiz/quiz.module';
     'LessonRepositoryInterface',
     'StageRepositoryInterface',
     CreateLanguageUseCase,
-    CreateStageUseCase
+    CreateStageUseCase,
   ],
 })
 export class LanguageModule {}

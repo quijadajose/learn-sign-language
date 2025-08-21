@@ -54,5 +54,4 @@ export class StageController {
   ) {
     return this.stageService.getStagesByLanguage(id, pagination);
   }
-
 }
