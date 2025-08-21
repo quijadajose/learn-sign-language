@@ -48,7 +48,7 @@ export class LanguageService {
   async getStagesByLanguage(
     id: string,
     pagination: PaginationDto,
-  ): Promise<Stages[]> {
+  ): Promise<PaginatedResponseDto<Stages>> {
     return this.getStagesFromLanguageUseCase.execute(id, pagination);
   }
 }

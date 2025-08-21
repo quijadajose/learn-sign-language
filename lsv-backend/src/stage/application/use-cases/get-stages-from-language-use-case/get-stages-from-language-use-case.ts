@@ -1,5 +1,8 @@
 import { Inject } from '@nestjs/common';
-import { PaginationDto } from 'src/shared/domain/dto/PaginationDto';
+import {
+  PaginationDto,
+  PaginatedResponseDto,
+} from 'src/shared/domain/dto/PaginationDto';
 import { Stages } from 'src/shared/domain/entities/stage';
 import { StageRepositoryInterface } from 'src/stage/domain/ports/stage.repository.interface/stage.repository.interface';
 
@@ -8,7 +11,10 @@ export class GetStagesFromLanguageUseCase {
     @Inject('StageRepositoryInterface')
     private readonly stageRepository: StageRepositoryInterface,
   ) {}
-  async execute(id: string, pagination: PaginationDto): Promise<Stages[]> {
+  async execute(
+    id: string,
+    pagination: PaginationDto,
+  ): Promise<PaginatedResponseDto<Stages>> {
     return await this.stageRepository.findStagesByLanguage(id, pagination);
   }
 }

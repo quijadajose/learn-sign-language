@@ -80,7 +80,7 @@ export class LanguageController {
   async getStagesByLanguage(
     @Param('id', ParseUUIDPipe) id: string,
     @Query() pagination: PaginationDto,
-  ): Promise<Stages[]> {
+  ): Promise<PaginatedResponseDto<Stages>> {
     return this.stageService.getStagesByLanguage(id, pagination);
   }
 

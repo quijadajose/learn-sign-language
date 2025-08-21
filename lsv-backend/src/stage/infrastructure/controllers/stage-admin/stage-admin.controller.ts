@@ -15,7 +15,11 @@ import { StageDto } from 'src/shared/domain/dto/create-stage/create-stage-dto';
 import { StageService } from 'src/stage/application/services/stage/stage.service';
 import { Roles } from 'src/auth/infrastructure/decorators/roles.decorator';
 import { RolesGuard } from 'src/auth/infrastructure/guards/roles/roles.guard';
-import { PaginationDto } from 'src/shared/domain/dto/PaginationDto';
+import {
+  PaginationDto,
+  PaginatedResponseDto,
+} from 'src/shared/domain/dto/PaginationDto';
+import { Stages } from 'src/shared/domain/entities/stage';
 
 @Controller('stage')
 export class StageController {
@@ -51,7 +55,7 @@ export class StageController {
   async findAll(
     @Query() pagination: PaginationDto,
     @Param('id', ParseUUIDPipe) id: string,
-  ) {
+  ): Promise<PaginatedResponseDto<Stages>> {
     return this.stageService.getStagesByLanguage(id, pagination);
   }
 }

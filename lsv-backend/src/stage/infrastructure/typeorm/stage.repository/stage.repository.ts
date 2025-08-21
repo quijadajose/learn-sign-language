@@ -1,7 +1,10 @@
 import { InjectRepository } from '@nestjs/typeorm';
 import { StageDto } from 'src/shared/domain/dto/create-stage/create-stage-dto';
 import { StageRepositoryInterface } from 'src/stage/domain/ports/stage.repository.interface/stage.repository.interface';
-import { PaginationDto } from 'src/shared/domain/dto/PaginationDto';
+import {
+  PaginatedResponseDto,
+  PaginationDto,
+} from 'src/shared/domain/dto/PaginationDto';
 import { Stages } from 'src/shared/domain/entities/stage';
 import { FindManyOptions, Repository } from 'typeorm';
 
@@ -59,7 +62,7 @@ export class StageRepository implements StageRepositoryInterface {
   findStagesByLanguage(
     languageId: string,
     pagination: PaginationDto,
-  ): Promise<Stages[]> {
+  ): Promise<PaginatedResponseDto<Stages>> {
     const {
       page,
       limit,
@@ -81,6 +84,11 @@ export class StageRepository implements StageRepositoryInterface {
         [orderBy]: sortOrder,
       };
     }
-    return this.stageRepository.find(findOptions);
+
+    return this.stageRepository
+      .findAndCount(findOptions)
+      .then(([data, total]) => {
+        return new PaginatedResponseDto(data, total, page, limit);
+      });
   }
 }
