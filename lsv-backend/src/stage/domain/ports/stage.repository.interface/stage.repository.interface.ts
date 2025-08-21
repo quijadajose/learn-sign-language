@@ -1,5 +1,8 @@
 import { StageDto } from 'src/shared/domain/dto/create-stage/create-stage-dto';
-import { PaginationDto } from 'src/shared/domain/dto/PaginationDto';
+import {
+  PaginationDto,
+  PaginatedResponseDto,
+} from 'src/shared/domain/dto/PaginationDto';
 import { Stages } from 'src/shared/domain/entities/stage';
 
 export interface StageRepositoryInterface {
@@ -15,5 +18,5 @@ export interface StageRepositoryInterface {
   findStagesByLanguage(
     languageId: string,
     pagination: PaginationDto,
-  ): Promise<Stages[]>;
+  ): Promise<PaginatedResponseDto<Stages>>;
 }
