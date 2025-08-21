@@ -79,8 +79,7 @@ export default function LanguageCards() {
           throw new Error(errorMsg);
         }
 
-        const responseData: PaginatedLanguageResponse = await response.json();
-
+        const responseData: PaginatedLanguageResponse = await response.json();        
         setLanguages(responseData.data);
 
         const calculatedTotalPages = Math.ceil(responseData.total / ITEMS_PER_PAGE);
@@ -112,6 +111,7 @@ export default function LanguageCards() {
 
   const handleSelectLanguage = (languageId: string) => {
     setSelectedLanguageId(languageId);
+    addToast("success", `Idioma seleccionado: ${name}`);
   };
 
   const handleNext = () => {
@@ -122,9 +122,6 @@ export default function LanguageCards() {
     setIsSaving(true);
     try {
       localStorage.setItem("selectedLanguageId", selectedLanguageId);
-      console.log(
-        `Idioma con ID ${selectedLanguageId} guardado en localStorage.`,
-      );
       addToast("success", `Idioma seleccionado guardado localmente.`);
     } catch (saveError) {
       console.error("Error al guardar en localStorage:", saveError);
@@ -174,7 +171,7 @@ export default function LanguageCards() {
             <span className="font-medium">Error!</span> {error}
           </Alert>
         )}
-
+        
         {!loading && !error && languages.length > 0 && (
           <div className="mb-8 grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4">
             {languages.map((lang) => (
