@@ -35,6 +35,7 @@ export default function StageManagement() {
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [languageId, setLanguageId] = useState<string | null>(null);
+  const [languageName, setLanguageName] = useState<string | null>(null);
 
   const [showAddModal, setShowAddModal] = useState<boolean>(false);
   const [showEditModal, setShowEditModal] = useState<boolean>(false);
@@ -91,6 +92,35 @@ export default function StageManagement() {
     }
   }, [addToast]);
 
+  const fetchLanguageName = useCallback(async (langId: string, token: string) => {
+    try {
+      const response = await fetch(`${BACKEND_BASE_URL}/languages/${langId}`, {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      });
+
+      if (!response.ok) {
+        let errorMsg = `Error ${response.status}: ${response.statusText}`;
+        try {
+          const errorData = await response.json();
+          errorMsg = errorData.message || errorMsg;
+        } catch (jsonError) {
+          console.warn("Could not parse error response as JSON during fetch language:", jsonError);
+        }
+        throw new Error(errorMsg);
+      }
+
+      const data: { id: string; name: string } = await response.json();
+      setLanguageName(data?.name || null);
+    } catch (err: any) {
+      console.error("Error fetching language:", err);
+      setLanguageName(null);
+    }
+  }, []);
+
   useEffect(() => {
     const token = localStorage.getItem("auth");
     const selectedLangId = localStorage.getItem("selectedLanguageId");
@@ -112,6 +142,7 @@ export default function StageManagement() {
 
     setLanguageId(selectedLangId);
     fetchStages(selectedLangId, token);
+    fetchLanguageName(selectedLangId, token);
 
   }, [navigate, fetchStages, addToast]);
 
@@ -243,7 +274,6 @@ export default function StageManagement() {
       }
 
       const rawText = await response.text();
-      console.log("Raw response text:", rawText);
       const updatedStageData = rawText ? JSON.parse(rawText) : {};
       const updatedStage: Stage = {
         ...currentStage,
@@ -289,7 +319,7 @@ export default function StageManagement() {
       <div className="mx-auto w-full max-w-4xl p-6">
         <div className="mb-6 flex items-center justify-between">
           <h1 className="text-2xl font-bold text-gray-700 dark:text-gray-300">
-            Gestionar Etapas {languageId ? `(Idioma ID: ...${languageId.slice(-6)})` : ''}
+            Gestionar Etapas del {languageName}
           </h1>
           <Button onClick={openAddModal} color="blue">
             <HiPlus className="mr-2 size-5" />
