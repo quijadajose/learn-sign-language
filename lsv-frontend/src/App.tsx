@@ -9,9 +9,9 @@ import Profile from "./Profile";
 import DashboardLayout from "./layouts/DashboardLayout";
 import { AdminRoute } from "./AdminRoute";
 import LanguageCards from "./LanguageCards";
-import StageManagement from "./stage/stageForm";
 import LanguageManagement from "./admin/LanguageManagement";
 import { ToastProvider } from "./components/ToastProvider";
+import StageManagement from "./admin/stageForm";
 
 function PrivateRoute({ children }: { children: JSX.Element }) {
   return localStorage.getItem("auth") ? children : <Navigate to="/login" />;

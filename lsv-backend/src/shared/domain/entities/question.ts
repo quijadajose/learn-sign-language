@@ -16,9 +16,9 @@ export class Question {
   @Column()
   text: string;
 
-  @ManyToOne(() => Quiz, (quiz) => quiz.questions, { nullable: true })
+  @ManyToOne(() => Quiz, (quiz) => quiz.questions, { nullable: true, onDelete: 'CASCADE' })
   quiz?: Quiz;
 
-  @OneToMany(() => Option, (option) => option.question)
+  @OneToMany(() => Option, (option) => option.question, { onDelete: 'CASCADE' })
   options: Option[];
 }
