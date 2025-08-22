@@ -12,6 +12,7 @@ interface UserData {
   firstName: string;
   lastName: string;
   photo?: string;
+  role?: string;
 }
 
 const DashboardLayout = ({ children }: Props) => {
@@ -149,6 +150,22 @@ const DashboardLayout = ({ children }: Props) => {
           >
             Lessons
           </Navbar.Link>
+          {userData?.role === "admin" && (
+            <>
+              <Navbar.Link
+                href="/admin/stages"
+                active={location.pathname.startsWith("/admin/stages")}
+              >
+                Stages
+              </Navbar.Link>
+              <Navbar.Link
+                href="/admin/languages"
+                active={location.pathname.startsWith("/admin/languages")}
+              >
+                Languages
+              </Navbar.Link>
+            </>
+          )}
         </Navbar.Collapse>
       </Navbar>
       {userData ? (
