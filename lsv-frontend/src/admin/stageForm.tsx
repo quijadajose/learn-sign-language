@@ -340,9 +340,16 @@ export default function StageManagement() {
 
       addToast("success", "Etapa eliminada correctamente.");
       closeDeleteModal();
-      
+
       if (languageId) {
-        await fetchStages(languageId, token, currentPage, pageSize, orderBy, sortOrder);
+        await fetchStages(
+          languageId,
+          token,
+          currentPage,
+          pageSize,
+          orderBy,
+          sortOrder,
+        );
       }
     } catch (err: any) {
       console.error("Error deleting stage:", err);
@@ -667,7 +674,8 @@ export default function StageManagement() {
               ?
             </h3>
             <p className="mb-5 text-sm text-gray-500 dark:text-gray-400">
-              Esta acción no se puede deshacer. Se eliminará permanentemente la etapa y todos sus datos asociados.
+              Esta acción no se puede deshacer. Se eliminará permanentemente la
+              etapa y todos sus datos asociados.
             </p>
             <div className="flex justify-center gap-4">
               <Button
