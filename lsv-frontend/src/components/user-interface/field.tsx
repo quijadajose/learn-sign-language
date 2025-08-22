@@ -30,7 +30,11 @@ export default function Field({
         </label>
         {children}
       </div>
-      {error && <p className="mt-1 text-sm text-red-500 dark:text-red-400">{error.message}</p>}
+      {error && (
+        <p className="mt-1 text-sm text-red-500 dark:text-red-400">
+          {error.message}
+        </p>
+      )}
     </div>
   );
 }

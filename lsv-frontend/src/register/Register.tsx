@@ -7,7 +7,9 @@ import { HiCheck, HiX } from "react-icons/hi";
 import { useNavigate } from "react-router-dom";
 
 export default function Register() {
-  const [toastMessages, setToastMessages] = useState<{ id: number; type: "success" | "error"; message: string }[]>([]);
+  const [toastMessages, setToastMessages] = useState<
+    { id: number; type: "success" | "error"; message: string }[]
+  >([]);
   const navigate = useNavigate();
 
   const addToast = (type: "success" | "error", message: string) => {
@@ -58,10 +60,20 @@ export default function Register() {
                   : "bg-red-100 text-red-500 dark:bg-red-800 dark:text-red-200"
               }`}
             >
-              {toast.type === "success" ? <HiCheck className="size-5" /> : <HiX className="size-5" />}
+              {toast.type === "success" ? (
+                <HiCheck className="size-5" />
+              ) : (
+                <HiX className="size-5" />
+              )}
             </div>
             <div className="ml-3 text-sm font-normal">{toast.message}</div>
-            <Toast.Toggle onDismiss={() => setToastMessages((prev) => prev.filter((t) => t.id !== toast.id))} />
+            <Toast.Toggle
+              onDismiss={() =>
+                setToastMessages((prev) =>
+                  prev.filter((t) => t.id !== toast.id),
+                )
+              }
+            />
           </Toast>
         ))}
       </div>

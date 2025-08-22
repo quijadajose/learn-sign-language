@@ -34,10 +34,10 @@ export default function RadioGroup({
             key={option.value}
             className={cn(
               "group flex cursor-pointer items-center gap-2 rounded-lg border p-2.5 transition",
-              value === option.value 
-                ? "border-blue-500 bg-blue-50 dark:border-blue-500 dark:bg-gray-700" 
+              value === option.value
+                ? "border-blue-500 bg-blue-50 dark:border-blue-500 dark:bg-gray-700"
                 : "border-gray-300 bg-gray-50 dark:border-gray-600 dark:bg-gray-700",
-              { "border-red-500 dark:border-red-400": error }
+              { "border-red-500 dark:border-red-400": error },
             )}
           >
             <input

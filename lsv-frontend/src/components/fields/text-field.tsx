@@ -24,11 +24,7 @@ export default function TextField({
 }: TextFieldProps) {
   const id = useId();
   return (
-    <Field
-      id={id}
-      label={label}
-      error={error}
-    >
+    <Field id={id} label={label} error={error}>
       <Input
         as="input"
         id={id}
@@ -40,7 +36,10 @@ export default function TextField({
         placeholder={label}
         className={cn(
           "focus:border-blue-500 focus:outline-none focus:ring-blue-500",
-          { "border-red-500 focus:border-red-500 dark:border-red-400 dark:focus:border-red-400": error },
+          {
+            "border-red-500 focus:border-red-500 dark:border-red-400 dark:focus:border-red-400":
+              error,
+          },
         )}
       />
     </Field>

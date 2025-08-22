@@ -1,4 +1,11 @@
-import { Card, Button, Spinner, Alert, Toast, Pagination } from "flowbite-react";
+import {
+  Card,
+  Button,
+  Spinner,
+  Alert,
+  Toast,
+  Pagination,
+} from "flowbite-react";
 import { useState, useEffect } from "react";
 import { BACKEND_BASE_URL } from "./config";
 import { HiExclamationCircle, HiCheck, HiX } from "react-icons/hi";
@@ -75,25 +82,32 @@ export default function LanguageCards() {
           try {
             const errorData = await response.json();
             errorMsg = errorData.message || errorMsg;
-          } catch (jsonError) { /* Ignora */ }
+          } catch (jsonError) {
+            /* Ignora */
+          }
           throw new Error(errorMsg);
         }
 
-        const responseData: PaginatedLanguageResponse = await response.json();        
+        const responseData: PaginatedLanguageResponse = await response.json();
         setLanguages(responseData.data);
 
-        const calculatedTotalPages = Math.ceil(responseData.total / ITEMS_PER_PAGE);
+        const calculatedTotalPages = Math.ceil(
+          responseData.total / ITEMS_PER_PAGE,
+        );
         setTotalPages(calculatedTotalPages > 0 ? calculatedTotalPages : 1);
 
         if (responseData.page !== currentPage && responseData.total > 0) {
-             console.warn(`API returned page ${responseData.page} but expected ${currentPage}. Adjusting.`);
+          console.warn(
+            `API returned page ${responseData.page} but expected ${currentPage}. Adjusting.`,
+          );
         }
-
-
       } catch (err: any) {
         console.error("Error fetching languages:", err);
         setError(err.message || "Ocurrió un error al cargar los idiomas.");
-        addToast("error", err.message || "Ocurrió un error al cargar los idiomas.");
+        addToast(
+          "error",
+          err.message || "Ocurrió un error al cargar los idiomas.",
+        );
         setLanguages([]);
         setTotalPages(1);
       } finally {
@@ -106,7 +120,7 @@ export default function LanguageCards() {
 
   const onPageChange = (page: number) => {
     setCurrentPage(page);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   const handleSelectLanguage = (languageId: string) => {
@@ -144,10 +158,20 @@ export default function LanguageCards() {
                   : "bg-red-100 text-red-500 dark:bg-red-800 dark:text-red-200"
               }`}
             >
-              {toast.type === "success" ? <HiCheck className="size-5" /> : <HiX className="size-5" />}
+              {toast.type === "success" ? (
+                <HiCheck className="size-5" />
+              ) : (
+                <HiX className="size-5" />
+              )}
             </div>
             <div className="ml-3 text-sm font-normal">{toast.message}</div>
-            <Toast.Toggle onDismiss={() => setToastMessages((prev) => prev.filter((t) => t.id !== toast.id))} />
+            <Toast.Toggle
+              onDismiss={() =>
+                setToastMessages((prev) =>
+                  prev.filter((t) => t.id !== toast.id),
+                )
+              }
+            />
           </Toast>
         ))}
       </div>
@@ -171,7 +195,7 @@ export default function LanguageCards() {
             <span className="font-medium">Error!</span> {error}
           </Alert>
         )}
-        
+
         {!loading && !error && languages.length > 0 && (
           <div className="mb-8 grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4">
             {languages.map((lang) => (
@@ -188,7 +212,9 @@ export default function LanguageCards() {
                 <h5 className="text-xl font-semibold tracking-tight text-gray-900 dark:text-white">
                   {lang.name}
                 </h5>
-                 <p className="text-sm text-gray-500 dark:text-gray-400">{lang.description}</p>
+                <p className="text-sm text-gray-500 dark:text-gray-400">
+                  {lang.description}
+                </p>
               </Card>
             ))}
           </div>
