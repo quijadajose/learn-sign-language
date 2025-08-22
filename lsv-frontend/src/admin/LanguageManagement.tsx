@@ -10,7 +10,13 @@ import {
   Alert,
   Toast,
 } from "flowbite-react";
-import { HiPencil, HiExclamationCircle, HiCheck, HiX, HiTrash } from "react-icons/hi";
+import {
+  HiPencil,
+  HiExclamationCircle,
+  HiCheck,
+  HiX,
+  HiTrash,
+} from "react-icons/hi";
 
 interface Language {
   id: string;
@@ -38,7 +44,9 @@ export default function LanguageManagement() {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
-  const [deletingLanguage, setDeletingLanguage] = useState<Language | null>(null);
+  const [deletingLanguage, setDeletingLanguage] = useState<Language | null>(
+    null,
+  );
   const [isDeleting, setIsDeleting] = useState(false);
   const [toastMessages, setToastMessages] = useState<
     { id: number; type: "success" | "error"; message: string }[]
@@ -173,7 +181,7 @@ export default function LanguageManagement() {
             Authorization: `Bearer ${token}`,
             "Content-Type": "application/json",
           },
-        }
+        },
       );
 
       if (!response.ok) {
@@ -448,7 +456,12 @@ export default function LanguageManagement() {
         </Modal.Body>
       </Modal>
 
-      <Modal show={isDeleteModalOpen} onClose={handleCancelDelete} popup size="md">
+      <Modal
+        show={isDeleteModalOpen}
+        onClose={handleCancelDelete}
+        popup
+        size="md"
+      >
         <Modal.Header />
         <Modal.Body>
           <div className="text-center">
