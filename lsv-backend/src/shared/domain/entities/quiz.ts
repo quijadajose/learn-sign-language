@@ -8,12 +8,12 @@ export class Quiz {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @ManyToOne(() => Lesson, (lesson) => lesson.quizzes)
+  @ManyToOne(() => Lesson, (lesson) => lesson.quizzes, { onDelete: 'CASCADE' })
   lesson: Lesson;
 
-  @OneToMany(() => QuizSubmission, (submission) => submission.quiz)
+  @OneToMany(() => QuizSubmission, (submission) => submission.quiz, { onDelete: 'CASCADE' })
   submissions: QuizSubmission[];
 
-  @OneToMany(() => Question, (question) => question.quiz)
+  @OneToMany(() => Question, (question) => question.quiz, { onDelete: 'CASCADE' })
   questions: Question[];
 }
