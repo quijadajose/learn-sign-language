@@ -9,8 +9,15 @@ import {
   Spinner,
   Alert,
   Toast,
+  Pagination,
 } from "flowbite-react";
-import { HiPlus, HiPencil, HiExclamationCircle, HiCheck, HiX } from "react-icons/hi";
+import {
+  HiPlus,
+  HiPencil,
+  HiExclamationCircle,
+  HiCheck,
+  HiX,
+} from "react-icons/hi";
 import { useNavigate } from "react-router-dom";
 import { BACKEND_BASE_URL } from "../config";
 
@@ -28,7 +35,6 @@ interface StageFormData {
   description: string;
 }
 
-
 export default function StageManagement() {
   const navigate = useNavigate();
   const [stages, setStages] = useState<Stage[]>([]);
@@ -37,10 +43,19 @@ export default function StageManagement() {
   const [languageId, setLanguageId] = useState<string | null>(null);
   const [languageName, setLanguageName] = useState<string | null>(null);
 
+  const [currentPage, setCurrentPage] = useState<number>(1);
+  const [pageSize, setPageSize] = useState<number>(5);
+  const [totalStages, setTotalStages] = useState<number>(0);
+  const [orderBy, setOrderBy] = useState<string>("name");
+  const [sortOrder, setSortOrder] = useState<"ASC" | "DESC">("ASC");
+
   const [showAddModal, setShowAddModal] = useState<boolean>(false);
   const [showEditModal, setShowEditModal] = useState<boolean>(false);
   const [currentStage, setCurrentStage] = useState<Stage | null>(null);
-  const [formData, setFormData] = useState<StageFormData>({ name: "", description: "" });
+  const [formData, setFormData] = useState<StageFormData>({
+    name: "",
+    description: "",
+  });
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
 
   const [toastMessages, setToastMessages] = useState<
@@ -55,71 +70,163 @@ export default function StageManagement() {
     }, 4000);
   }, []);
 
-  const fetchStages = useCallback(async (langId: string, token: string) => {
-    setLoading(true);
-    setError(null);
-    try {
-      const response = await fetch(`${BACKEND_BASE_URL}/stage/${langId}`, {
-        method: "GET",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-      });
+  const fetchStages = useCallback(
+    async (
+      langId: string,
+      token: string,
+      page: number,
+      size: number,
+      order: string,
+      sort: "ASC" | "DESC",
+    ) => {
+      setLoading(true);
+      setError(null);
+      try {
+        const params = new URLSearchParams({
+          page: page.toString(),
+          limit: size.toString(),
+          orderBy: order,
+          sortOrder: sort,
+        });
 
-      if (!response.ok) {
-        let errorMsg = `Error ${response.status}: ${response.statusText}`;
-        try {
-          const errorData = await response.json();
-          errorMsg = errorData.message || errorMsg;
-        } catch (jsonError) {
-          console.warn("Could not parse error response as JSON during fetch:", jsonError);
+        const response = await fetch(
+          `${BACKEND_BASE_URL}/stage/${langId}?${params}`,
+          {
+            method: "GET",
+            headers: {
+              Authorization: `Bearer ${token}`,
+              "Content-Type": "application/json",
+            },
+          },
+        );
+
+        if (!response.ok) {
+          let errorMsg = `Error ${response.status}: ${response.statusText}`;
+          try {
+            const errorData = await response.json();
+            errorMsg = errorData.message || errorMsg;
+          } catch (jsonError) {
+            console.warn(
+              "Could not parse error response as JSON during fetch:",
+              jsonError,
+            );
+          }
+          throw new Error(errorMsg);
         }
-        throw new Error(errorMsg);
-      }
 
-      const data: Stage[] = await response.json();
-      setStages(data);
-
-    } catch (err: any) {
-      console.error("Error fetching stages:", err);
-      const displayError = err.message || "Ocurrió un error al cargar las etapas.";
-      setError(displayError);
-      addToast("error", displayError);
-      setStages([]);
-    } finally {
-      setLoading(false);
-    }
-  }, [addToast]);
-
-  const fetchLanguageName = useCallback(async (langId: string, token: string) => {
-    try {
-      const response = await fetch(`${BACKEND_BASE_URL}/languages/${langId}`, {
-        method: "GET",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-      });
-
-      if (!response.ok) {
-        let errorMsg = `Error ${response.status}: ${response.statusText}`;
-        try {
-          const errorData = await response.json();
-          errorMsg = errorData.message || errorMsg;
-        } catch (jsonError) {
-          console.warn("Could not parse error response as JSON during fetch language:", jsonError);
+        const responseData = await response.json();
+        if (
+          responseData &&
+          responseData.data &&
+          Array.isArray(responseData.data)
+        ) {
+          setStages(responseData.data);
+          if (responseData.total !== undefined)
+            setTotalStages(responseData.total);
+          if (responseData.page !== undefined)
+            setCurrentPage(responseData.page);
+          if (responseData.pageSize !== undefined)
+            setPageSize(responseData.pageSize);
+        } else {
+          setStages(responseData || []);
+          setTotalStages(responseData?.length || 0);
         }
-        throw new Error(errorMsg);
+      } catch (err: any) {
+        console.error("Error fetching stages:", err);
+        const displayError =
+          err.message || "Ocurrió un error al cargar las etapas.";
+        setError(displayError);
+        addToast("error", displayError);
+        setStages([]);
+      } finally {
+        setLoading(false);
       }
+    },
+    [addToast],
+  );
 
-      const data: { id: string; name: string } = await response.json();
-      setLanguageName(data?.name || null);
-    } catch (err: any) {
-      console.error("Error fetching language:", err);
-      setLanguageName(null);
-    }
-  }, []);
+  const handlePageChange = useCallback(
+    (newPage: number) => {
+      setCurrentPage(newPage);
+      const token = localStorage.getItem("auth");
+      const selectedLangId = localStorage.getItem("selectedLanguageId");
+      if (token && selectedLangId) {
+        fetchStages(
+          selectedLangId,
+          token,
+          newPage,
+          pageSize,
+          orderBy,
+          sortOrder,
+        );
+      }
+    },
+    [pageSize, orderBy, sortOrder, fetchStages],
+  );
+
+  const handleSortChange = useCallback(
+    (newOrderBy: string) => {
+      const newSortOrder =
+        orderBy === newOrderBy ? (sortOrder === "ASC" ? "DESC" : "ASC") : "ASC";
+      const newOrderByValue = orderBy === newOrderBy ? orderBy : newOrderBy;
+
+      setOrderBy(newOrderByValue);
+      setSortOrder(newSortOrder);
+      setCurrentPage(1);
+
+      const token = localStorage.getItem("auth");
+      const selectedLangId = localStorage.getItem("selectedLanguageId");
+      if (token && selectedLangId) {
+        fetchStages(
+          selectedLangId,
+          token,
+          1,
+          pageSize,
+          newOrderByValue,
+          newSortOrder,
+        );
+      }
+    },
+    [orderBy, sortOrder, pageSize, fetchStages],
+  );
+
+  const fetchLanguageName = useCallback(
+    async (langId: string, token: string) => {
+      try {
+        const response = await fetch(
+          `${BACKEND_BASE_URL}/languages/${langId}`,
+          {
+            method: "GET",
+            headers: {
+              Authorization: `Bearer ${token}`,
+              "Content-Type": "application/json",
+            },
+          },
+        );
+
+        if (!response.ok) {
+          let errorMsg = `Error ${response.status}: ${response.statusText}`;
+          try {
+            const errorData = await response.json();
+            errorMsg = errorData.message || errorMsg;
+          } catch (jsonError) {
+            console.warn(
+              "Could not parse error response as JSON during fetch language:",
+              jsonError,
+            );
+          }
+          throw new Error(errorMsg);
+        }
+
+        const data: { id: string; name: string } = await response.json();
+        setLanguageName(data?.name || null);
+      } catch (err: any) {
+        console.error("Error fetching language:", err);
+        setLanguageName(null);
+      }
+    },
+    [],
+  );
 
   useEffect(() => {
     const token = localStorage.getItem("auth");
@@ -134,17 +241,25 @@ export default function StageManagement() {
     }
 
     if (!selectedLangId) {
-      setError("No se ha seleccionado un idioma. Por favor, selecciona uno primero.");
+      setError(
+        "No se ha seleccionado un idioma. Por favor, selecciona uno primero.",
+      );
       addToast("error", "No se ha seleccionado un idioma.");
       setLoading(false);
       return;
     }
 
     setLanguageId(selectedLangId);
-    fetchStages(selectedLangId, token);
+    fetchStages(
+      selectedLangId,
+      token,
+      currentPage,
+      pageSize,
+      orderBy,
+      sortOrder,
+    );
     fetchLanguageName(selectedLangId, token);
-
-  }, [navigate, fetchStages, addToast]);
+  }, [navigate, fetchStages, addToast, fetchLanguageName]);
 
   const openAddModal = () => {
     setFormData({ name: "", description: "" });
@@ -169,7 +284,9 @@ export default function StageManagement() {
     setFormData({ name: "", description: "" });
   };
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+  const handleInputChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
+  ) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
@@ -208,24 +325,26 @@ export default function StageManagement() {
           const errorData = await response.json();
           errorMsg = errorData.message || errorMsg;
         } catch (jsonError) {
-          console.warn("Could not parse error response as JSON during add:", jsonError);
+          console.warn(
+            "Could not parse error response as JSON during add:",
+            jsonError,
+          );
         }
         throw new Error(errorMsg);
       }
 
-
-
       const text = await response.text();
-      const newStage: Stage = text ? JSON.parse(text) : {
-        ...formData,
-        languageId,
-      };
+      const newStage: Stage = text
+        ? JSON.parse(text)
+        : {
+            ...formData,
+            languageId,
+          };
 
       setStages((prev) => [...prev, newStage]);
       setStages((prev) => [...prev, newStage]);
       addToast("success", "Etapa creada correctamente.");
       closeAddModal();
-
     } catch (err: any) {
       console.error("Error adding stage:", err);
       addToast("error", `Error al crear etapa: ${err.message}`);
@@ -250,17 +369,20 @@ export default function StageManagement() {
     }
 
     try {
-      const response = await fetch(`${BACKEND_BASE_URL}/stage/${currentStage.id}`, {
-        method: "PUT",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
+      const response = await fetch(
+        `${BACKEND_BASE_URL}/stage/${currentStage.id}`,
+        {
+          method: "PUT",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            ...formData,
+            languageId: languageId,
+          }),
         },
-        body: JSON.stringify({
-          ...formData,
-          languageId: languageId,
-        }),
-      });
+      );
 
       if (!response.ok) {
         let errorMsg = `Error ${response.status}: ${response.statusText}`;
@@ -268,7 +390,10 @@ export default function StageManagement() {
           const errorData = await response.json();
           errorMsg = errorData.message || errorMsg;
         } catch (jsonError) {
-          console.warn("Could not parse error response as JSON during edit:", jsonError);
+          console.warn(
+            "Could not parse error response as JSON during edit:",
+            jsonError,
+          );
         }
         throw new Error(errorMsg);
       }
@@ -283,11 +408,12 @@ export default function StageManagement() {
       };
 
       setStages((prev) =>
-        prev.map((stage) => (stage.id === currentStage.id ? updatedStage : stage))
+        prev.map((stage) =>
+          stage.id === currentStage.id ? updatedStage : stage,
+        ),
       );
       addToast("success", "Etapa actualizada correctamente.");
       closeEditModal();
-
     } catch (err: any) {
       console.error("Error editing stage:", err);
       addToast("error", `Error al editar etapa: ${err.message}`);
@@ -308,19 +434,36 @@ export default function StageManagement() {
                   : "bg-red-100 text-red-500 dark:bg-red-800 dark:text-red-200"
               }`}
             >
-              {toast.type === "success" ? <HiCheck className="size-5" /> : <HiX className="size-5" />}
+              {toast.type === "success" ? (
+                <HiCheck className="size-5" />
+              ) : (
+                <HiX className="size-5" />
+              )}
             </div>
             <div className="ml-3 text-sm font-normal">{toast.message}</div>
-            <Toast.Toggle onDismiss={() => setToastMessages((prev) => prev.filter((t) => t.id !== toast.id))} />
+            <Toast.Toggle
+              onDismiss={() =>
+                setToastMessages((prev) =>
+                  prev.filter((t) => t.id !== toast.id),
+                )
+              }
+            />
           </Toast>
         ))}
       </div>
 
       <div className="mx-auto w-full max-w-4xl p-6">
         <div className="mb-6 flex items-center justify-between">
-          <h1 className="text-2xl font-bold text-gray-700 dark:text-gray-300">
-            Gestionar Etapas del {languageName}
-          </h1>
+          <div>
+            <h1 className="text-2xl font-bold text-gray-700 dark:text-gray-300">
+              Gestionar Etapas del {languageName}
+            </h1>
+            {totalStages > 0 && (
+              <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
+                Total de etapas: {totalStages}
+              </p>
+            )}
+          </div>
           <Button onClick={openAddModal} color="blue">
             <HiPlus className="mr-2 size-5" />
             Añadir Etapa
@@ -344,43 +487,90 @@ export default function StageManagement() {
 
         {!loading && !error && (
           <div className="overflow-x-auto">
-             <Table hoverable>
-               <Table.Head>
-                 <Table.HeadCell>Nombre</Table.HeadCell>
-                 <Table.HeadCell>Descripción</Table.HeadCell>
-                 <Table.HeadCell>
-                   <span className="sr-only">Editar</span>
-                 </Table.HeadCell>
-               </Table.Head>
-               <Table.Body className="divide-y">
-                 {stages.length > 0 ? (
-                   stages.map((stage) => (
-                     <Table.Row key={stage.id} className="bg-white dark:border-gray-700 dark:bg-gray-800">
-                       <Table.Cell className="whitespace-nowrap font-medium text-gray-900 dark:text-white">
-                         {stage.name}
-                       </Table.Cell>
-                       <Table.Cell>{stage.description}</Table.Cell>
-                       <Table.Cell>
-                         <Button
-                           size="sm"
-                           color="light"
-                           onClick={() => openEditModal(stage)}
-                         >
-                           <HiPencil className="mr-1 size-4" />
-                           Editar
-                         </Button>
-                       </Table.Cell>
-                     </Table.Row>
-                   ))
-                 ) : (
-                   <Table.Row>
-                     <Table.Cell colSpan={3} className="text-center text-gray-500 dark:text-gray-400">
-                       No se encontraron etapas para este idioma.
-                     </Table.Cell>
-                   </Table.Row>
-                 )}
-               </Table.Body>
-             </Table>
+            <Table hoverable>
+              <Table.Head>
+                <Table.HeadCell
+                  className="cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700"
+                  onClick={() => handleSortChange("name")}
+                >
+                  <div className="flex items-center gap-2">
+                    Nombre
+                    {orderBy === "name" && (
+                      <span className="text-blue-600">
+                        {sortOrder === "ASC" ? "↑" : "↓"}
+                      </span>
+                    )}
+                  </div>
+                </Table.HeadCell>
+                <Table.HeadCell
+                  className="cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700"
+                  onClick={() => handleSortChange("description")}
+                >
+                  <div className="flex items-center gap-2">
+                    Descripción
+                    {orderBy === "description" && (
+                      <span className="text-blue-600">
+                        {sortOrder === "ASC" ? "↑" : "↓"}
+                      </span>
+                    )}
+                  </div>
+                </Table.HeadCell>
+                <Table.HeadCell>
+                  <span className="sr-only">Editar</span>
+                </Table.HeadCell>
+              </Table.Head>
+              <Table.Body className="divide-y">
+                {stages.length > 0 ? (
+                  stages.map((stage) => (
+                    <Table.Row
+                      key={stage.id}
+                      className="bg-white dark:border-gray-700 dark:bg-gray-800"
+                    >
+                      <Table.Cell className="whitespace-nowrap font-medium text-gray-900 dark:text-white">
+                        {stage.name}
+                      </Table.Cell>
+                      <Table.Cell>{stage.description}</Table.Cell>
+                      <Table.Cell>
+                        <Button
+                          size="sm"
+                          color="light"
+                          onClick={() => openEditModal(stage)}
+                        >
+                          <HiPencil className="mr-1 size-4" />
+                          Editar
+                        </Button>
+                      </Table.Cell>
+                    </Table.Row>
+                  ))
+                ) : (
+                  <Table.Row>
+                    <Table.Cell
+                      colSpan={3}
+                      className="text-center text-gray-500 dark:text-gray-400"
+                    >
+                      No se encontraron etapas para este idioma.
+                    </Table.Cell>
+                  </Table.Row>
+                )}
+              </Table.Body>
+            </Table>
+
+            {/* Controles de paginación */}
+            {totalStages > pageSize && (
+              <div className="mt-4 space-y-4">
+                <div className="flex overflow-x-auto sm:justify-center">
+                  <Pagination
+                    layout="pagination"
+                    currentPage={currentPage}
+                    totalPages={Math.ceil(totalStages / pageSize)}
+                    onPageChange={handlePageChange}
+                    previousLabel="Anterior"
+                    nextLabel="Siguiente"
+                    showIcons
+                  />
+                </div>
+              </div>
+            )}
           </div>
         )}
       </div>
@@ -417,12 +607,21 @@ export default function StageManagement() {
               />
             </div>
             <div className="flex justify-end gap-3">
-               <Button color="gray" onClick={closeAddModal} disabled={isSubmitting}>
-                 Cancelar
-               </Button>
-               <Button type="submit" color="blue" isProcessing={isSubmitting} disabled={isSubmitting}>
-                 {isSubmitting ? "Creando..." : "Crear Etapa"}
-               </Button>
+              <Button
+                color="gray"
+                onClick={closeAddModal}
+                disabled={isSubmitting}
+              >
+                Cancelar
+              </Button>
+              <Button
+                type="submit"
+                color="blue"
+                isProcessing={isSubmitting}
+                disabled={isSubmitting}
+              >
+                {isSubmitting ? "Creando..." : "Crear Etapa"}
+              </Button>
             </div>
           </form>
         </Modal.Body>
@@ -458,12 +657,21 @@ export default function StageManagement() {
               />
             </div>
             <div className="flex justify-end gap-3">
-               <Button color="gray" onClick={closeEditModal} disabled={isSubmitting}>
-                 Cancelar
-               </Button>
-               <Button type="submit" color="success" isProcessing={isSubmitting} disabled={isSubmitting}>
-                 {isSubmitting ? "Guardando..." : "Guardar Cambios"}
-               </Button>
+              <Button
+                color="gray"
+                onClick={closeEditModal}
+                disabled={isSubmitting}
+              >
+                Cancelar
+              </Button>
+              <Button
+                type="submit"
+                color="success"
+                isProcessing={isSubmitting}
+                disabled={isSubmitting}
+              >
+                {isSubmitting ? "Guardando..." : "Guardar Cambios"}
+              </Button>
             </div>
           </form>
         </Modal.Body>
