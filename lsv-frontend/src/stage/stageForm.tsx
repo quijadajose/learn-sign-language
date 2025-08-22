@@ -341,7 +341,6 @@ export default function StageManagement() {
       addToast("success", "Etapa eliminada correctamente.");
       closeDeleteModal();
       
-      // Recargar los datos después de eliminar
       if (languageId) {
         await fetchStages(languageId, token, currentPage, pageSize, orderBy, sortOrder);
       }
