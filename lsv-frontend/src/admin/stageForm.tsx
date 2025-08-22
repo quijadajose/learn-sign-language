@@ -660,7 +660,6 @@ export default function StageManagement() {
         )}
       </div>
 
-      {/* Modal de confirmación de eliminación */}
       <Modal show={showDeleteModal} onClose={closeDeleteModal} popup size="md">
         <Modal.Header />
         <Modal.Body>
