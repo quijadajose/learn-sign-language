@@ -16,7 +16,10 @@ export class QuizSubmission {
   @ManyToOne(() => User, (user) => user.quizSubmissions)
   user: User;
 
-  @ManyToOne(() => Quiz, (quiz) => quiz.submissions, { nullable: true, onDelete: 'CASCADE' })
+  @ManyToOne(() => Quiz, (quiz) => quiz.submissions, {
+    nullable: true,
+    onDelete: 'CASCADE',
+  })
   quiz?: Quiz;
 
   @Column({ type: 'json', nullable: true, default: null })
