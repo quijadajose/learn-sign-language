@@ -9,6 +9,7 @@ import {
   Spinner,
   Alert,
   Toast,
+  FileInput,
 } from "flowbite-react";
 import {
   HiPencil,
@@ -16,6 +17,7 @@ import {
   HiCheck,
   HiX,
   HiTrash,
+  HiPlus,
 } from "react-icons/hi";
 
 interface Language {
@@ -41,6 +43,7 @@ export default function LanguageManagement() {
   const [totalPages, setTotalPages] = useState(1);
   const [editingLanguage, setEditingLanguage] = useState<Language | null>(null);
   const [editForm, setEditForm] = useState({ name: "", description: "" });
+  const [editSelectedFile, setEditSelectedFile] = useState<File | null>(null);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
@@ -48,9 +51,14 @@ export default function LanguageManagement() {
     null,
   );
   const [isDeleting, setIsDeleting] = useState(false);
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [addForm, setAddForm] = useState({ name: "", description: "" });
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [isAdding, setIsAdding] = useState(false);
   const [toastMessages, setToastMessages] = useState<
     { id: number; type: "success" | "error"; message: string }[]
   >([]);
+  const [imageTimestamp, setImageTimestamp] = useState<number>(Date.now());
 
   const addToast = (type: "success" | "error", message: string) => {
     const id = Date.now();
@@ -77,7 +85,10 @@ export default function LanguageManagement() {
       );
 
       if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+        const errorData = await response.json().catch(() => ({}));
+        const errorMessage =
+          errorData.message || `Error al cargar idiomas (${response.status})`;
+        throw new Error(errorMessage);
       }
 
       const data: LanguagesResponse = await response.json();
@@ -109,6 +120,7 @@ export default function LanguageManagement() {
       name: language.name,
       description: language.description,
     });
+    setEditSelectedFile(null);
     setIsEditModalOpen(true);
   };
 
@@ -117,8 +129,12 @@ export default function LanguageManagement() {
     if (!editingLanguage) return;
 
     setIsSubmitting(true);
+    let languageUpdateSuccess = false;
+    let imageUploadSuccess = false;
+
     try {
       const token = localStorage.getItem("auth");
+
       const response = await fetch(
         `${BACKEND_BASE_URL}/languages/${editingLanguage.id}`,
         {
@@ -131,20 +147,78 @@ export default function LanguageManagement() {
         },
       );
 
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+      if (response.ok) {
+        languageUpdateSuccess = true;
+      } else {
+        const errorData = await response.json().catch(() => ({}));
+        const errorMessage =
+          errorData.message ||
+          `Error al actualizar idioma (${response.status})`;
+        addToast("error", `Error al actualizar idioma: ${errorMessage}`);
       }
 
-      await fetchLanguages(currentPage);
-      setIsEditModalOpen(false);
-      setEditingLanguage(null);
-      setEditForm({ name: "", description: "" });
-      setError(null);
-      addToast("success", "Idioma actualizado correctamente.");
+      if (editSelectedFile) {
+        try {
+          const formData = new FormData();
+          formData.append("id", editingLanguage.id);
+          const fileExtension = editSelectedFile.name
+            .split(".")
+            .pop()
+            ?.toLowerCase();
+          const validFormats = ["png", "jpeg", "jpg", "webp"];
+          const format = validFormats.includes(fileExtension || "")
+            ? fileExtension!
+            : "png";
+          formData.append("format", format);
+          formData.append("file", editSelectedFile);
+
+          const uploadResponse = await fetch(
+            `${BACKEND_BASE_URL}/images/upload/language`,
+            {
+              method: "POST",
+              headers: {
+                Authorization: `Bearer ${token}`,
+              },
+              body: formData,
+            },
+          );
+
+          if (uploadResponse.ok) {
+            imageUploadSuccess = true;
+            setImageTimestamp(Date.now());
+          } else {
+            const uploadErrorData = await uploadResponse
+              .json()
+              .catch(() => ({}));
+            const uploadErrorMessage =
+              uploadErrorData.message || "Error desconocido al subir imagen";
+            addToast("error", `Error al subir imagen: ${uploadErrorMessage}`);
+          }
+        } catch (uploadErr) {
+          console.warn("Error uploading image:", uploadErr);
+          addToast("error", "Error al subir la imagen.");
+        }
+      }
+
+      if (languageUpdateSuccess && imageUploadSuccess) {
+        addToast("success", "Idioma e imagen actualizados correctamente.");
+      } else if (languageUpdateSuccess) {
+        addToast("success", "Idioma actualizado correctamente.");
+      } else if (imageUploadSuccess) {
+        addToast("success", "Imagen actualizada correctamente.");
+      }
+
+      if (languageUpdateSuccess || imageUploadSuccess) {
+        await fetchLanguages(currentPage);
+        setIsEditModalOpen(false);
+        setEditingLanguage(null);
+        setEditForm({ name: "", description: "" });
+        setEditSelectedFile(null);
+        setError(null);
+      }
     } catch (err) {
       const errorMessage =
         err instanceof Error ? err.message : "Error updating language";
-      setError(errorMessage);
       addToast("error", `Error al actualizar idioma: ${errorMessage}`);
     } finally {
       setIsSubmitting(false);
@@ -155,6 +229,7 @@ export default function LanguageManagement() {
     setIsEditModalOpen(false);
     setEditingLanguage(null);
     setEditForm({ name: "", description: "" });
+    setEditSelectedFile(null);
   };
 
   const handleDeleteClick = (language: Language) => {
@@ -185,7 +260,10 @@ export default function LanguageManagement() {
       );
 
       if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+        const errorData = await response.json().catch(() => ({}));
+        const errorMessage =
+          errorData.message || `Error al eliminar idioma (${response.status})`;
+        throw new Error(errorMessage);
       }
 
       await fetchLanguages(currentPage);
@@ -200,6 +278,146 @@ export default function LanguageManagement() {
       addToast("error", `Error al eliminar idioma: ${errorMessage}`);
     } finally {
       setIsDeleting(false);
+    }
+  };
+
+  const handleAddClick = () => {
+    setAddForm({ name: "", description: "" });
+    setSelectedFile(null);
+    setIsAddModalOpen(true);
+  };
+
+  const handleCancelAdd = () => {
+    setIsAddModalOpen(false);
+    setAddForm({ name: "", description: "" });
+    setSelectedFile(null);
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setSelectedFile(file);
+    }
+  };
+
+  const handleEditFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setEditSelectedFile(file);
+    }
+  };
+
+  const handleFileDrop = (e: React.DragEvent<HTMLLabelElement>) => {
+    e.preventDefault();
+    const file = e.dataTransfer.files?.[0];
+    if (file && file.type.startsWith("image/")) {
+      setSelectedFile(file);
+    }
+  };
+
+  const handleEditFileDrop = (e: React.DragEvent<HTMLLabelElement>) => {
+    e.preventDefault();
+    const file = e.dataTransfer.files?.[0];
+    if (file && file.type.startsWith("image/")) {
+      setEditSelectedFile(file);
+    }
+  };
+
+  const handleDragOver = (e: React.DragEvent<HTMLLabelElement>) => {
+    e.preventDefault();
+  };
+
+  const handleAddSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!addForm.name.trim()) {
+      addToast("error", "El nombre del idioma es obligatorio.");
+      return;
+    }
+
+    setIsAdding(true);
+    try {
+      const token = localStorage.getItem("auth");
+
+      const createResponse = await fetch(`${BACKEND_BASE_URL}/languages`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(addForm),
+      });
+
+      if (!createResponse.ok) {
+        const errorData = await createResponse.json().catch(() => ({}));
+        const errorMessage =
+          errorData.message ||
+          `Error al crear idioma (${createResponse.status})`;
+        throw new Error(errorMessage);
+      }
+
+      const newLanguage = await createResponse.json();
+
+      if (selectedFile) {
+        try {
+          const formData = new FormData();
+          formData.append("id", newLanguage.id);
+          const fileExtension = selectedFile.name
+            .split(".")
+            .pop()
+            ?.toLowerCase();
+          const validFormats = ["png", "jpeg", "jpg", "webp"];
+          const format = validFormats.includes(fileExtension || "")
+            ? fileExtension!
+            : "png";
+          formData.append("format", format);
+          formData.append("file", selectedFile);
+
+          const uploadResponse = await fetch(
+            `${BACKEND_BASE_URL}/images/upload/language`,
+            {
+              method: "POST",
+              headers: {
+                Authorization: `Bearer ${token}`,
+              },
+              body: formData,
+            },
+          );
+
+          if (!uploadResponse.ok) {
+            const uploadErrorData = await uploadResponse
+              .json()
+              .catch(() => ({}));
+            const uploadErrorMessage =
+              uploadErrorData.message || "Error desconocido al subir imagen";
+            addToast(
+              "error",
+              `Idioma creado pero error al subir imagen: ${uploadErrorMessage}`,
+            );
+          } else {
+            setImageTimestamp(Date.now());
+          }
+        } catch (uploadErr) {
+          console.warn("Error uploading image:", uploadErr);
+          addToast(
+            "error",
+            "Idioma creado pero hubo un error al subir la imagen.",
+          );
+        }
+      }
+
+      await fetchLanguages(currentPage);
+      setIsAddModalOpen(false);
+      setAddForm({ name: "", description: "" });
+      setSelectedFile(null);
+      setError(null);
+      addToast("success", "Idioma creado correctamente.");
+    } catch (err) {
+      const errorMessage =
+        err instanceof Error ? err.message : "Error creating language";
+      setError(errorMessage);
+      addToast("error", `Error al crear idioma: ${errorMessage}`);
+    } finally {
+      setIsAdding(false);
     }
   };
 
@@ -245,13 +463,19 @@ export default function LanguageManagement() {
       </div>
 
       <div className="mx-auto w-full max-w-6xl p-6">
-        <div className="mb-6">
-          <h1 className="text-2xl font-bold text-gray-700 dark:text-gray-300">
-            Administración de Idiomas
-          </h1>
-          <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
-            Gestiona los idiomas disponibles en la plataforma
-          </p>
+        <div className="mb-6 flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-bold text-gray-700 dark:text-gray-300">
+              Administración de Idiomas
+            </h1>
+            <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
+              Gestiona los idiomas disponibles en la plataforma
+            </p>
+          </div>
+          <Button onClick={handleAddClick} color="blue">
+            <HiPlus className="mr-2 size-5" />
+            Añadir Idioma
+          </Button>
         </div>
 
         {error && (
@@ -297,7 +521,7 @@ export default function LanguageManagement() {
                     <td className="whitespace-nowrap px-6 py-4">
                       <div className="flex items-center">
                         <img
-                          src={`${BACKEND_BASE_URL}/images/language/${language.id}?size=sm`}
+                          src={`${BACKEND_BASE_URL}/images/language/${language.id}?size=sm&v=${imageTimestamp}`}
                           alt={`Bandera de ${language.name}`}
                           className="mr-3 h-6 w-8 rounded object-cover"
                           onError={(e) => {
@@ -435,6 +659,51 @@ export default function LanguageManagement() {
                 disabled={isSubmitting}
               />
             </div>
+            <div>
+              <Label htmlFor="edit-image" value="Imagen (Opcional)" />
+              <div className="flex w-full items-center justify-center">
+                <Label
+                  htmlFor="edit-dropzone-file"
+                  className="flex h-32 w-full cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed border-gray-300 bg-gray-50 hover:bg-gray-100 dark:border-gray-600 dark:bg-gray-700 dark:hover:border-gray-500 dark:hover:bg-gray-600"
+                  onDrop={handleEditFileDrop}
+                  onDragOver={handleDragOver}
+                >
+                  <div className="flex flex-col items-center justify-center pb-6 pt-5">
+                    <svg
+                      className="mb-4 h-8 w-8 text-gray-500 dark:text-gray-400"
+                      aria-hidden="true"
+                      xmlns="http://www.w3.org/2000/svg"
+                      fill="none"
+                      viewBox="0 0 20 16"
+                    >
+                      <path
+                        stroke="currentColor"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth="2"
+                        d="M13 13h3a3 3 0 0 0 0-6h-.025A5.56 5.56 0 0 0 16 6.5 5.5 5.5 0 0 0 5.207 5.021C5.137 5.017 5.071 5 5 5a4 4 0 0 0 0 8h2.167M10 15V6m0 0L8 8m2-2 2 2"
+                      />
+                    </svg>
+                    <p className="mb-2 text-sm text-gray-500 dark:text-gray-400">
+                      <span className="font-semibold">Click to upload</span> or
+                      drag and drop
+                    </p>
+                  </div>
+                  <FileInput
+                    id="edit-dropzone-file"
+                    className="hidden"
+                    accept="image/*"
+                    onChange={handleEditFileChange}
+                    disabled={isSubmitting}
+                  />
+                </Label>
+              </div>
+              {editSelectedFile && (
+                <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                  Archivo seleccionado: {editSelectedFile.name}
+                </p>
+              )}
+            </div>
             <div className="flex justify-end gap-3">
               <Button
                 color="gray"
@@ -495,6 +764,105 @@ export default function LanguageManagement() {
               </Button>
             </div>
           </div>
+        </Modal.Body>
+      </Modal>
+
+      <Modal show={isAddModalOpen} onClose={handleCancelAdd} popup size="md">
+        <Modal.Header />
+        <Modal.Body>
+          <form onSubmit={handleAddSubmit} className="space-y-6">
+            <h3 className="text-xl font-medium text-gray-900 dark:text-white">
+              Añadir Nuevo Idioma
+            </h3>
+            <div>
+              <Label htmlFor="add-name" value="Nombre del Idioma" />
+              <TextInput
+                id="add-name"
+                value={addForm.name}
+                onChange={(e) =>
+                  setAddForm({ ...addForm, name: e.target.value })
+                }
+                placeholder="Ej: Lenguaje de señas Chileno"
+                required
+                disabled={isAdding}
+              />
+            </div>
+            <div>
+              <Label htmlFor="add-description" value="Descripción" />
+              <Textarea
+                id="add-description"
+                value={addForm.description}
+                onChange={(e) =>
+                  setAddForm({ ...addForm, description: e.target.value })
+                }
+                placeholder="Describe brevemente el idioma"
+                rows={3}
+                disabled={isAdding}
+              />
+            </div>
+            <div>
+              <Label htmlFor="add-image" value="Imagen (Opcional)" />
+              <div className="flex w-full items-center justify-center">
+                <Label
+                  htmlFor="dropzone-file"
+                  className="flex h-32 w-full cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed border-gray-300 bg-gray-50 hover:bg-gray-100 dark:border-gray-600 dark:bg-gray-700 dark:hover:border-gray-500 dark:hover:bg-gray-600"
+                  onDrop={handleFileDrop}
+                  onDragOver={handleDragOver}
+                >
+                  <div className="flex flex-col items-center justify-center pb-6 pt-5">
+                    <svg
+                      className="mb-4 h-8 w-8 text-gray-500 dark:text-gray-400"
+                      aria-hidden="true"
+                      xmlns="http://www.w3.org/2000/svg"
+                      fill="none"
+                      viewBox="0 0 20 16"
+                    >
+                      <path
+                        stroke="currentColor"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth="2"
+                        d="M13 13h3a3 3 0 0 0 0-6h-.025A5.56 5.56 0 0 0 16 6.5 5.5 5.5 0 0 0 5.207 5.021C5.137 5.017 5.071 5 5 5a4 4 0 0 0 0 8h2.167M10 15V6m0 0L8 8m2-2 2 2"
+                      />
+                    </svg>
+                    <p className="mb-2 text-sm text-gray-500 dark:text-gray-400">
+                      <span className="font-semibold">Click to upload</span> or
+                      drag and drop
+                    </p>
+                  </div>
+                  <FileInput
+                    id="dropzone-file"
+                    className="hidden"
+                    accept="image/*"
+                    onChange={handleFileChange}
+                    disabled={isAdding}
+                  />
+                </Label>
+              </div>
+              {selectedFile && (
+                <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                  Archivo seleccionado: {selectedFile.name}
+                </p>
+              )}
+            </div>
+            <div className="flex justify-end gap-3">
+              <Button
+                color="gray"
+                onClick={handleCancelAdd}
+                disabled={isAdding}
+              >
+                Cancelar
+              </Button>
+              <Button
+                type="submit"
+                color="blue"
+                isProcessing={isAdding}
+                disabled={isAdding}
+              >
+                {isAdding ? "Creando..." : "Crear Idioma"}
+              </Button>
+            </div>
+          </form>
         </Modal.Body>
       </Modal>
     </>
