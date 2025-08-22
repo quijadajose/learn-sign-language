@@ -10,7 +10,13 @@ import {
   Alert,
   Toast,
 } from "flowbite-react";
-import { HiPencil, HiExclamationCircle, HiCheck, HiX } from "react-icons/hi";
+import {
+  HiPencil,
+  HiExclamationCircle,
+  HiCheck,
+  HiX,
+  HiTrash,
+} from "react-icons/hi";
 
 interface Language {
   id: string;
@@ -37,6 +43,11 @@ export default function LanguageManagement() {
   const [editForm, setEditForm] = useState({ name: "", description: "" });
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [deletingLanguage, setDeletingLanguage] = useState<Language | null>(
+    null,
+  );
+  const [isDeleting, setIsDeleting] = useState(false);
   const [toastMessages, setToastMessages] = useState<
     { id: number; type: "success" | "error"; message: string }[]
   >([]);
@@ -144,6 +155,52 @@ export default function LanguageManagement() {
     setIsEditModalOpen(false);
     setEditingLanguage(null);
     setEditForm({ name: "", description: "" });
+  };
+
+  const handleDeleteClick = (language: Language) => {
+    setDeletingLanguage(language);
+    setIsDeleteModalOpen(true);
+  };
+
+  const handleCancelDelete = () => {
+    setIsDeleteModalOpen(false);
+    setDeletingLanguage(null);
+  };
+
+  const handleDeleteSubmit = async () => {
+    if (!deletingLanguage) return;
+
+    setIsDeleting(true);
+    try {
+      const token = localStorage.getItem("auth");
+      const response = await fetch(
+        `${BACKEND_BASE_URL}/languages/${deletingLanguage.id}`,
+        {
+          method: "DELETE",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        },
+      );
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      await fetchLanguages(currentPage);
+      setIsDeleteModalOpen(false);
+      setDeletingLanguage(null);
+      setError(null);
+      addToast("success", "Idioma eliminado correctamente.");
+    } catch (err) {
+      const errorMessage =
+        err instanceof Error ? err.message : "Error deleting language";
+      setError(errorMessage);
+      addToast("error", `Error al eliminar idioma: ${errorMessage}`);
+    } finally {
+      setIsDeleting(false);
+    }
   };
 
   if (loading) {
@@ -268,14 +325,24 @@ export default function LanguageManagement() {
                       </div>
                     </td>
                     <td className="whitespace-nowrap px-6 py-4">
-                      <Button
-                        size="sm"
-                        color="light"
-                        onClick={() => handleEditClick(language)}
-                      >
-                        <HiPencil className="mr-1 size-4" />
-                        Editar
-                      </Button>
+                      <div className="flex gap-2">
+                        <Button
+                          size="sm"
+                          color="light"
+                          onClick={() => handleEditClick(language)}
+                        >
+                          <HiPencil className="mr-1 size-4" />
+                          Editar
+                        </Button>
+                        <Button
+                          size="sm"
+                          color="failure"
+                          onClick={() => handleDeleteClick(language)}
+                        >
+                          <HiTrash className="mr-1 size-4" />
+                          Eliminar
+                        </Button>
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -283,7 +350,6 @@ export default function LanguageManagement() {
             </table>
           </div>
 
-          {/* Pagination */}
           {totalPages > 1 && (
             <div className="flex items-center justify-between border-t border-gray-200 bg-white px-4 py-3 dark:border-gray-700 dark:bg-gray-800 sm:px-6">
               <div className="flex flex-1 justify-between sm:hidden">
@@ -338,7 +404,6 @@ export default function LanguageManagement() {
         </div>
       </div>
 
-      {/* Modal de Edición */}
       <Modal show={isEditModalOpen} onClose={handleCancelEdit} popup size="md">
         <Modal.Header />
         <Modal.Body>
@@ -388,6 +453,48 @@ export default function LanguageManagement() {
               </Button>
             </div>
           </form>
+        </Modal.Body>
+      </Modal>
+
+      <Modal
+        show={isDeleteModalOpen}
+        onClose={handleCancelDelete}
+        popup
+        size="md"
+      >
+        <Modal.Header />
+        <Modal.Body>
+          <div className="text-center">
+            <HiExclamationCircle className="mx-auto mb-4 size-14 text-gray-400 dark:text-gray-200" />
+            <h3 className="mb-5 text-lg font-normal text-gray-500 dark:text-gray-400">
+              ¿Estás seguro de que quieres eliminar el idioma{" "}
+              <span className="font-semibold text-gray-900 dark:text-white">
+                "{deletingLanguage?.name}"
+              </span>
+              ?
+            </h3>
+            <p className="mb-5 text-sm text-gray-500 dark:text-gray-400">
+              Esta acción no se puede deshacer. Se eliminará permanentemente el
+              idioma y todos sus datos asociados.
+            </p>
+            <div className="flex justify-center gap-4">
+              <Button
+                color="gray"
+                onClick={handleCancelDelete}
+                disabled={isDeleting}
+              >
+                Cancelar
+              </Button>
+              <Button
+                color="failure"
+                onClick={handleDeleteSubmit}
+                isProcessing={isDeleting}
+                disabled={isDeleting}
+              >
+                {isDeleting ? "Eliminando..." : "Sí, eliminar"}
+              </Button>
+            </div>
+          </div>
         </Modal.Body>
       </Modal>
     </>
