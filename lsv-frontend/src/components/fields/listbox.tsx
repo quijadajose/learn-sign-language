@@ -28,12 +28,16 @@ export default function Listbox({
         value={value}
         onChange={(e) => onChange(e.target.value)}
         className={cn(
-          "flex items-center gap-2 px-4 py-2 border border-neutral-800 rounded-lg bg-neutral-950 text-white focus:outline-none",
-          { "border-red-500": error }
+          "flex items-center gap-2 rounded-lg border border-neutral-800 bg-neutral-950 px-4 py-2 text-white focus:outline-none",
+          { "border-red-500": error },
         )}
       >
         {options.map((option) => (
-          <option key={option.value} value={option.value} className="text-black">
+          <option
+            key={option.value}
+            value={option.value}
+            className="text-black"
+          >
             {option.label}
           </option>
         ))}

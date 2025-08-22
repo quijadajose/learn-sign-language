@@ -9,8 +9,10 @@ import { HiCheck, HiX } from "react-icons/hi";
 function ResetPassword() {
   const [searchParams] = useSearchParams();
   const token = searchParams.get("token");
-  
-  const [toastMessages, setToastMessages] = useState<{ id: number; type: "success" | "error"; message: string }[]>([]);
+
+  const [toastMessages, setToastMessages] = useState<
+    { id: number; type: "success" | "error"; message: string }[]
+  >([]);
   const navigate = useNavigate();
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -40,46 +42,56 @@ function ResetPassword() {
       setPasswordError("La contraseña debe tener al menos 8 caracteres");
       return false;
     }
-    
+
     if (newPassword !== confirmPassword) {
       setPasswordError("Las contraseñas no coinciden");
       return false;
     }
-    
+
     setPasswordError("");
     return true;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!validatePasswords()) {
       return;
     }
-    
+
     setIsSubmitting(true);
-    
+
     try {
-      const response = await fetch(`${BACKEND_BASE_URL}/auth/password/reset/confirm`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
+      const response = await fetch(
+        `${BACKEND_BASE_URL}/auth/password/reset/confirm`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            newPassword,
+            token,
+          }),
         },
-        body: JSON.stringify({ 
-          newPassword,
-          token
-        }),
-      });
+      );
       if (response.ok) {
         const data = await response.json();
         const message = data?.message;
-        addToast("success", message || "Tu contraseña ha sido restablecida correctamente");
+        addToast(
+          "success",
+          message || "Tu contraseña ha sido restablecida correctamente",
+        );
         setTimeout(() => {
           navigate("/login");
         }, 3000);
       } else {
         const errorData = await response.json();
-        addToast("error", errorData.message || "Ha ocurrido un error al restablecer tu contraseña");
+        addToast(
+          "error",
+          errorData.message ||
+            "Ha ocurrido un error al restablecer tu contraseña",
+        );
       }
     } catch (error) {
       addToast("error", "Ha ocurrido un error inesperado");
@@ -100,10 +112,20 @@ function ResetPassword() {
                   : "bg-red-100 text-red-500 dark:bg-red-800 dark:text-red-200"
               }`}
             >
-              {toast.type === "success" ? <HiCheck className="size-5" /> : <HiX className="size-5" />}
+              {toast.type === "success" ? (
+                <HiCheck className="size-5" />
+              ) : (
+                <HiX className="size-5" />
+              )}
             </div>
             <div className="ml-3 text-sm font-normal">{toast.message}</div>
-            <Toast.Toggle onDismiss={() => setToastMessages((prev) => prev.filter((t) => t.id !== toast.id))} />
+            <Toast.Toggle
+              onDismiss={() =>
+                setToastMessages((prev) =>
+                  prev.filter((t) => t.id !== toast.id),
+                )
+              }
+            />
           </Toast>
         ))}
       </div>
@@ -161,8 +183,8 @@ function ResetPassword() {
                   {passwordError}
                 </p>
               )}
-              <Button 
-                type="submit" 
+              <Button
+                type="submit"
                 className="w-full px-4 py-2 font-semibold"
                 disabled={isSubmitting}
               >
@@ -170,7 +192,10 @@ function ResetPassword() {
               </Button>
               <p className="text-center text-sm font-medium text-gray-600 dark:text-gray-400">
                 ¿Recordaste tu contraseña?{" "}
-                <Link to="/login" className="text-blue-700 hover:underline dark:text-blue-500">
+                <Link
+                  to="/login"
+                  className="text-blue-700 hover:underline dark:text-blue-500"
+                >
                   Volver al inicio de sesión
                 </Link>
               </p>
@@ -182,4 +207,4 @@ function ResetPassword() {
   );
 }
 
-export default ResetPassword; 
+export default ResetPassword;

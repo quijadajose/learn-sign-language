@@ -14,7 +14,7 @@ export function AdminRoute({ children }: Props) {
   const token = localStorage.getItem("auth");
   const userString = localStorage.getItem("user");
 
-  if (!token || token === 'undefined') {
+  if (!token || token === "undefined") {
     return <Navigate to="/login" />;
   }
 
@@ -33,7 +33,9 @@ export function AdminRoute({ children }: Props) {
   if (user && user.role === "admin") {
     return children;
   } else {
-    console.warn("AdminRoute: Access denied. User is not an admin or user data is invalid.");
+    console.warn(
+      "AdminRoute: Access denied. User is not an admin or user data is invalid.",
+    );
     return <Navigate to="/dashboard" />;
   }
 }

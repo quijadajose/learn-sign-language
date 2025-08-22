@@ -11,9 +11,7 @@ export default function Screen({ progress, children }: ScreenProps) {
   return (
     <div className="relative w-full bg-gray-50 dark:bg-gray-900">
       <Progress total={progress.total} current={progress.current} />
-      <div>
-        {children}
-      </div>
+      <div>{children}</div>
     </div>
   );
 }

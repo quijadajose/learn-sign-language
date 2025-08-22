@@ -51,10 +51,10 @@ export default function LandingPageComponent() {
       <section id="about" className="bg-white dark:bg-gray-900">
         <div className="mx-auto grid max-w-screen-xl px-4 py-8 lg:grid-cols-12 lg:gap-8 lg:py-16 xl:gap-0">
           <div className="mr-auto place-self-center lg:col-span-7">
-            <h1 className="mb-4 max-w-2xl text-4xl font-extrabold leading-none md:text-5xl xl:text-6xl dark:text-white">
+            <h1 className="mb-4 max-w-2xl text-4xl font-extrabold leading-none dark:text-white md:text-5xl xl:text-6xl">
               Aprende lenguaje de señas venezolano
             </h1>
-            <p className="mb-6 max-w-2xl font-light text-gray-500 md:text-lg lg:mb-8 lg:text-xl dark:text-gray-400">
+            <p className="mb-6 max-w-2xl font-light text-gray-500 dark:text-gray-400 md:text-lg lg:mb-8 lg:text-xl">
               Aprende lenguaje de señas venezolano con esta aplicación gratis y
               online. Diviértete, practica y comunícate con la comunidad sorda y
               sordomuda de Venezuela.
@@ -96,7 +96,7 @@ export default function LandingPageComponent() {
             <h2 className="mb-4 text-4xl font-extrabold text-gray-900 dark:text-white">
               ¿Por qué LSV?
             </h2>
-            <p className="text-gray-500 sm:text-xl dark:text-gray-400">
+            <p className="text-gray-500 dark:text-gray-400 sm:text-xl">
               LSV es una aplicación web y móvil que te permite aprender y
               practicar el lenguaje de señas venezolano de forma fácil,
               divertida y eficaz.
@@ -158,7 +158,7 @@ export default function LandingPageComponent() {
 
       <section id="history" className="bg-white dark:bg-gray-900">
         <div className="mx-auto max-w-screen-xl items-center gap-16 px-4 py-8 lg:grid lg:grid-cols-2 lg:px-6 lg:py-16">
-          <div className="font-light text-gray-500 sm:text-lg dark:text-gray-400">
+          <div className="font-light text-gray-500 dark:text-gray-400 sm:text-lg">
             <h2 className="mb-4 text-4xl font-extrabold text-gray-900 dark:text-white">
               Historia del proyecto
             </h2>

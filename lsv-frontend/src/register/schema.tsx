@@ -1,9 +1,5 @@
 import { FieldValues } from "react-hook-form";
-import type {
-  Schema,
-  Form,
-  Return,
-} from "@formity/react";
+import type { Schema, Form, Return } from "@formity/react";
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -39,23 +35,36 @@ type AccountInfoValues = {
 };
 
 const personalInfoSchema = z.object({
-  email: z.string().email({ message: "Dirección de correo electrónico no válida" }),
+  email: z
+    .string()
+    .email({ message: "Dirección de correo electrónico no válida" }),
   firstName: z.string().min(1, { message: "Requerido" }),
   lastName: z.string().min(1, { message: "Requerido" }),
-  age: z.number().min(14, { message: "Mínimo de 14 años" }).max(99, { message: "Máximo de 99 años" }),
+  age: z
+    .number()
+    .min(14, { message: "Mínimo de 14 años" })
+    .max(99, { message: "Máximo de 99 años" }),
 });
 
-const accountInfoSchema = z.object({
-  password: z.string().min(8, { message: "La contraseña debe tener al menos 8 caracteres" }),
-  confirmPassword: z.string(),
-  isRightHanded: z.boolean(),
-}).refine((data) => data.password === data.confirmPassword, {
-  message: "Las contraseñas no coinciden",
-  path: ["confirmPassword"],
-});
+const accountInfoSchema = z
+  .object({
+    password: z
+      .string()
+      .min(8, { message: "La contraseña debe tener al menos 8 caracteres" }),
+    confirmPassword: z.string(),
+    isRightHanded: z.boolean(),
+  })
+  .refine((data) => data.password === data.confirmPassword, {
+    message: "Las contraseñas no coinciden",
+    path: ["confirmPassword"],
+  });
 
-const personalInfoResolver = zodResolver(personalInfoSchema) as Resolver<PersonalInfoValues>;
-const accountInfoResolver = zodResolver(accountInfoSchema) as Resolver<AccountInfoValues>;
+const personalInfoResolver = zodResolver(
+  personalInfoSchema,
+) as Resolver<PersonalInfoValues>;
+const accountInfoResolver = zodResolver(
+  accountInfoSchema,
+) as Resolver<AccountInfoValues>;
 
 export type Values = [
   Form<{
@@ -93,7 +102,9 @@ export const schema: Schema<Values> = [
           <MultiStep step="personalInfo" {...rest}>
             <Step
               defaultValues={values}
-              resolver={personalInfoResolver as unknown as Resolver<FieldValues>}
+              resolver={
+                personalInfoResolver as unknown as Resolver<FieldValues>
+              }
             >
               <Layout
                 heading="Registro"
@@ -103,8 +114,16 @@ export const schema: Schema<Values> = [
                   <Row
                     key="names"
                     items={[
-                      <TextField key="firstName" name="firstName" label="Nombre" />,
-                      <TextField key="lastName" name="lastName" label="Apellido" />,
+                      <TextField
+                        key="firstName"
+                        name="firstName"
+                        label="Nombre"
+                      />,
+                      <TextField
+                        key="lastName"
+                        name="lastName"
+                        label="Apellido"
+                      />,
                     ]}
                   />,
                   <NumberField key="age" name="age" label="Edad" />,
@@ -135,9 +154,21 @@ export const schema: Schema<Values> = [
                 heading="Registro"
                 description="Establecas la configuracion adicional de la cuenta"
                 fields={[
-                  <PasswordField key="password" name="password" label="Contraseña" />,
-                  <PasswordField key="confirmPassword" name="confirmPassword" label="Repita la Contraseña" />,
-                  <YesNo key="isRightHanded" name="isRightHanded" label="¿Eres diestro?" />,
+                  <PasswordField
+                    key="password"
+                    name="password"
+                    label="Contraseña"
+                  />,
+                  <PasswordField
+                    key="confirmPassword"
+                    name="confirmPassword"
+                    label="Repita la Contraseña"
+                  />,
+                  <YesNo
+                    key="isRightHanded"
+                    name="isRightHanded"
+                    label="¿Eres diestro?"
+                  />,
                 ]}
                 button={<NextButton>Crear cuenta</NextButton>}
                 back={<BackButton />}

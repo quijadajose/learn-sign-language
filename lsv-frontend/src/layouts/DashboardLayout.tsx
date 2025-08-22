@@ -29,15 +29,15 @@ const DashboardLayout = ({ children }: Props) => {
     const fetchUserData = async () => {
       const storedUser = localStorage.getItem("user");
       const token = localStorage.getItem("auth");
-  
+
       if (!token || token === "undefined") {
         console.warn(
-          `Invalid or missing auth token ('${token}') found in DashboardLayout. Logging out.`
+          `Invalid or missing auth token ('${token}') found in DashboardLayout. Logging out.`,
         );
         handleLogout();
         return;
       }
-  
+
       if (storedUser) {
         try {
           const parsedUser = JSON.parse(storedUser);
@@ -53,7 +53,7 @@ const DashboardLayout = ({ children }: Props) => {
           localStorage.removeItem("user");
         }
       }
-  
+
       try {
         const response = await fetch(`${BACKEND_BASE_URL}/users/me`, {
           method: "GET",
@@ -62,7 +62,7 @@ const DashboardLayout = ({ children }: Props) => {
             "Content-Type": "application/json",
           },
         });
-  
+
         if (response.ok) {
           const data: UserData = await response.json();
           setUserData(data);
@@ -77,10 +77,9 @@ const DashboardLayout = ({ children }: Props) => {
         console.error("Error fetching user data:", error);
       }
     };
-  
+
     fetchUserData();
   }, [navigate]);
-  
 
   const avatarImgSrc =
     userData?.id && !avatarError
@@ -92,9 +91,9 @@ const DashboardLayout = ({ children }: Props) => {
       <Navbar fluid rounded>
         <Navbar.Brand href="/dashboard">
           <img src="/LogoLogin.png" className="mr-3 h-6 sm:h-9" alt="Logo" />
-        </Navbar.Brand> 
+        </Navbar.Brand>
         <div className="flex md:order-2">
-        <DarkThemeToggle />
+          <DarkThemeToggle />
 
           {userData ? (
             <Dropdown
@@ -108,8 +107,8 @@ const DashboardLayout = ({ children }: Props) => {
                   rounded
                   onError={() => {
                     if (!avatarError) {
-                        console.warn(`Failed to load avatar: ${avatarImgSrc}`);
-                        setAvatarError(true);
+                      console.warn(`Failed to load avatar: ${avatarImgSrc}`);
+                      setAvatarError(true);
                     }
                   }}
                 />
@@ -133,24 +132,30 @@ const DashboardLayout = ({ children }: Props) => {
               <Dropdown.Item onClick={handleLogout}>Sign out</Dropdown.Item>
             </Dropdown>
           ) : (
-             <div className="h-10 w-10 rounded-full bg-gray-200 dark:bg-gray-700 animate-pulse"></div>
+            <div className="h-10 w-10 animate-pulse rounded-full bg-gray-200 dark:bg-gray-700"></div>
           )}
           <Navbar.Toggle />
         </div>
         <Navbar.Collapse>
-          <Navbar.Link href="/dashboard" active={location.pathname === '/dashboard'}>
+          <Navbar.Link
+            href="/dashboard"
+            active={location.pathname === "/dashboard"}
+          >
             Dashboard
           </Navbar.Link>
-          <Navbar.Link href="/lessons" active={location.pathname.startsWith('/lessons')}>
+          <Navbar.Link
+            href="/lessons"
+            active={location.pathname.startsWith("/lessons")}
+          >
             Lessons
           </Navbar.Link>
         </Navbar.Collapse>
       </Navbar>
       {userData ? (
-         <main className="min-h-screen p-4 dark:bg-gray-800">{children}</main>
+        <main className="min-h-screen p-4 dark:bg-gray-800">{children}</main>
       ) : (
         <div className="flex min-h-screen items-center justify-center dark:bg-gray-800">
-            <p className="text-gray-500 dark:text-gray-400">Loading...</p>
+          <p className="text-gray-500 dark:text-gray-400">Loading...</p>
         </div>
       )}
     </>

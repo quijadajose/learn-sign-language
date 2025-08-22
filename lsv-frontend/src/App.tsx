@@ -58,10 +58,8 @@ function App() {
               </DashboardLayout>
             </AdminRoute>
           }
-          />
+        />
       </Routes>
-      
-      
     </main>
   );
 }
