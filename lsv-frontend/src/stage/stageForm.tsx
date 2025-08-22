@@ -14,6 +14,7 @@ import {
 import {
   HiPlus,
   HiPencil,
+  HiTrash,
   HiExclamationCircle,
   HiCheck,
   HiX,
@@ -44,19 +45,21 @@ export default function StageManagement() {
   const [languageName, setLanguageName] = useState<string | null>(null);
 
   const [currentPage, setCurrentPage] = useState<number>(1);
-  const [pageSize, setPageSize] = useState<number>(5);
+  const [pageSize, setPageSize] = useState<number>(10);
   const [totalStages, setTotalStages] = useState<number>(0);
   const [orderBy, setOrderBy] = useState<string>("name");
   const [sortOrder, setSortOrder] = useState<"ASC" | "DESC">("ASC");
 
   const [showAddModal, setShowAddModal] = useState<boolean>(false);
   const [showEditModal, setShowEditModal] = useState<boolean>(false);
+  const [showDeleteModal, setShowDeleteModal] = useState<boolean>(false);
   const [currentStage, setCurrentStage] = useState<Stage | null>(null);
   const [formData, setFormData] = useState<StageFormData>({
     name: "",
     description: "",
   });
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
+  const [isDeleting, setIsDeleting] = useState<boolean>(false);
 
   const [toastMessages, setToastMessages] = useState<
     { id: number; type: "success" | "error"; message: string }[]
@@ -282,6 +285,72 @@ export default function StageManagement() {
     setShowEditModal(false);
     setCurrentStage(null);
     setFormData({ name: "", description: "" });
+  };
+
+  const openDeleteModal = (stage: Stage) => {
+    setCurrentStage(stage);
+    setShowDeleteModal(true);
+  };
+
+  const closeDeleteModal = () => {
+    setShowDeleteModal(false);
+    setCurrentStage(null);
+  };
+
+  const handleDeleteStage = async () => {
+    if (!currentStage) {
+      addToast("error", "No se ha seleccionado una etapa para eliminar.");
+      return;
+    }
+
+    setIsDeleting(true);
+    const token = localStorage.getItem("auth");
+
+    if (!token || token === "undefined") {
+      addToast("error", "Autenticación requerida.");
+      setIsDeleting(false);
+      return;
+    }
+
+    try {
+      const response = await fetch(
+        `${BACKEND_BASE_URL}/stage/${currentStage.id}`,
+        {
+          method: "DELETE",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        },
+      );
+
+      if (!response.ok) {
+        let errorMsg = `Error ${response.status}: ${response.statusText}`;
+        try {
+          const errorData = await response.json();
+          errorMsg = errorData.message || errorMsg;
+        } catch (jsonError) {
+          console.warn(
+            "Could not parse error response as JSON during delete:",
+            jsonError,
+          );
+        }
+        throw new Error(errorMsg);
+      }
+
+      addToast("success", "Etapa eliminada correctamente.");
+      closeDeleteModal();
+      
+      // Recargar los datos después de eliminar
+      if (languageId) {
+        await fetchStages(languageId, token, currentPage, pageSize, orderBy, sortOrder);
+      }
+    } catch (err: any) {
+      console.error("Error deleting stage:", err);
+      addToast("error", `Error al eliminar etapa: ${err.message}`);
+    } finally {
+      setIsDeleting(false);
+    }
   };
 
   const handleInputChange = (
@@ -516,7 +585,7 @@ export default function StageManagement() {
                   </div>
                 </Table.HeadCell>
                 <Table.HeadCell>
-                  <span className="sr-only">Editar</span>
+                  <span className="sr-only">Acciones</span>
                 </Table.HeadCell>
               </Table.Head>
               <Table.Body className="divide-y">
@@ -531,14 +600,24 @@ export default function StageManagement() {
                       </Table.Cell>
                       <Table.Cell>{stage.description}</Table.Cell>
                       <Table.Cell>
-                        <Button
-                          size="sm"
-                          color="light"
-                          onClick={() => openEditModal(stage)}
-                        >
-                          <HiPencil className="mr-1 size-4" />
-                          Editar
-                        </Button>
+                        <div className="flex gap-2">
+                          <Button
+                            size="sm"
+                            color="light"
+                            onClick={() => openEditModal(stage)}
+                          >
+                            <HiPencil className="mr-1 size-4" />
+                            Editar
+                          </Button>
+                          <Button
+                            size="sm"
+                            color="failure"
+                            onClick={() => openDeleteModal(stage)}
+                          >
+                            <HiTrash className="mr-1 size-4" />
+                            Eliminar
+                          </Button>
+                        </div>
                       </Table.Cell>
                     </Table.Row>
                   ))
@@ -574,6 +653,43 @@ export default function StageManagement() {
           </div>
         )}
       </div>
+
+      {/* Modal de confirmación de eliminación */}
+      <Modal show={showDeleteModal} onClose={closeDeleteModal} popup size="md">
+        <Modal.Header />
+        <Modal.Body>
+          <div className="text-center">
+            <HiExclamationCircle className="mx-auto mb-4 size-14 text-gray-400 dark:text-gray-200" />
+            <h3 className="mb-5 text-lg font-normal text-gray-500 dark:text-gray-400">
+              ¿Estás seguro de que quieres eliminar la etapa{" "}
+              <span className="font-semibold text-gray-900 dark:text-white">
+                "{currentStage?.name}"
+              </span>
+              ?
+            </h3>
+            <p className="mb-5 text-sm text-gray-500 dark:text-gray-400">
+              Esta acción no se puede deshacer. Se eliminará permanentemente la etapa y todos sus datos asociados.
+            </p>
+            <div className="flex justify-center gap-4">
+              <Button
+                color="gray"
+                onClick={closeDeleteModal}
+                disabled={isDeleting}
+              >
+                Cancelar
+              </Button>
+              <Button
+                color="failure"
+                onClick={handleDeleteStage}
+                isProcessing={isDeleting}
+                disabled={isDeleting}
+              >
+                {isDeleting ? "Eliminando..." : "Sí, eliminar"}
+              </Button>
+            </div>
+          </div>
+        </Modal.Body>
+      </Modal>
 
       <Modal show={showAddModal} onClose={closeAddModal} popup size="md">
         <Modal.Header />
