@@ -10,6 +10,7 @@ import DashboardLayout from "./layouts/DashboardLayout";
 import { AdminRoute } from "./AdminRoute";
 import LanguageCards from "./LanguageCards";
 import LanguageManagement from "./admin/LanguageManagement";
+import LessonManagement from "./admin/LessonManagement";
 import { ToastProvider } from "./components/ToastProvider";
 import StageManagement from "./admin/stageForm";
 
@@ -66,6 +67,16 @@ function App() {
             <AdminRoute>
               <DashboardLayout>
                 <LanguageManagement />
+              </DashboardLayout>
+            </AdminRoute>
+          }
+        />
+        <Route
+          path="/admin/lessons"
+          element={
+            <AdminRoute>
+              <DashboardLayout>
+                <LessonManagement />
               </DashboardLayout>
             </AdminRoute>
           }

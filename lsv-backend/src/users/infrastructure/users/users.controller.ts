@@ -69,7 +69,7 @@ export class UsersController {
   async getLessonsByLanguage(
     @Param('languageId', ParseUUIDPipe) languageId: string,
     @Query() pagination: PaginationDto,
-  ): Promise<Lesson[]> {
+  ): Promise<PaginatedResponseDto<Lesson>> {
     return this.lessonAdminService.getLessonsByLanguage(languageId, pagination);
   }
 

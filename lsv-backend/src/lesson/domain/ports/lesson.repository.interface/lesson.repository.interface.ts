@@ -1,5 +1,8 @@
 import { CreateLessonDto } from 'src/lesson/domain/dto/create-lesson/create-lesson-dto';
-import { PaginationDto } from 'src/shared/domain/dto/PaginationDto';
+import {
+  PaginationDto,
+  PaginatedResponseDto,
+} from 'src/shared/domain/dto/PaginationDto';
 import { Lesson } from 'src/shared/domain/entities/lesson';
 
 export interface LessonRepositoryInterface {
@@ -15,5 +18,5 @@ export interface LessonRepositoryInterface {
   getLessonsByLanguage(
     languageId: string,
     pagination: PaginationDto,
-  ): Promise<Lesson[]>;
+  ): Promise<PaginatedResponseDto<Lesson>>;
 }
