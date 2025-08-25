@@ -17,6 +17,7 @@ import {
   HiCheck,
   HiX,
   HiTrash,
+  HiPlus,
 } from "react-icons/hi";
 import ReactQuill from "react-quill";
 import "react-quill/dist/quill.snow.css";
@@ -115,6 +116,16 @@ export default function LessonManagement() {
   const [stages, setStages] = useState<StageItem[]>([]);
   const [editLessonId, setEditLessonId] = useState<string | null>(null);
   const [editForm, setEditForm] = useState({
+    name: "",
+    description: "",
+    content: "",
+    languageId: "",
+    stageId: "",
+  });
+
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [createLoading, setCreateLoading] = useState(false);
+  const [createForm, setCreateForm] = useState({
     name: "",
     description: "",
     content: "",
@@ -478,6 +489,84 @@ export default function LessonManagement() {
     }
   };
 
+  const handleOpenCreateModal = () => {
+    setIsCreateModalOpen(true);
+    const langId = selectedLanguageId || "";
+    setCreateForm({
+      name: "",
+      description: "",
+      content: "",
+      languageId: langId,
+      stageId: "",
+    });
+    if (langId) {
+      fetchStages(langId);
+    }
+  };
+
+  const handleCloseCreateModal = () => {
+    setIsCreateModalOpen(false);
+    setCreateForm({
+      name: "",
+      description: "",
+      content: "",
+      languageId: "",
+      stageId: "",
+    });
+  };
+
+  const handleSubmitCreate = async () => {
+    if (
+      !createForm.name ||
+      !createForm.description ||
+      !createForm.languageId ||
+      !createForm.stageId
+    ) {
+      setError("Completa los campos requeridos");
+      return;
+    }
+    try {
+      setCreateLoading(true);
+      setError(null);
+      const token = localStorage.getItem("auth");
+      const response = await fetch(`${BACKEND_BASE_URL}/lesson`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          name: createForm.name,
+          description: createForm.description,
+          content: createForm.content,
+          languageId: createForm.languageId,
+          stageId: createForm.stageId,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        const errorMessage =
+          errorData.message || `Error al crear lección (${response.status})`;
+        throw new Error(errorMessage);
+      }
+
+      if (createForm.languageId) {
+        await fetchLessonsByLanguage(createForm.languageId, 1);
+        setSelectedLanguageId(createForm.languageId);
+      }
+      handleCloseCreateModal();
+      addToast("success", "Lección creada correctamente");
+    } catch (err) {
+      const errorMessage =
+        err instanceof Error ? err.message : "Error al crear lección";
+      setError(errorMessage);
+      addToast("error", errorMessage);
+    } finally {
+      setCreateLoading(false);
+    }
+  };
+
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString("es-ES", {
       year: "numeric",
@@ -496,7 +585,7 @@ export default function LessonManagement() {
       [{ list: "ordered" }, { list: "bullet" }],
       [{ indent: "-1" }, { indent: "+1" }],
       ["blockquote", "code-block"],
-      ["link", "image", "video"],
+      ["link"],
       [{ align: [] }],
       ["clean"],
     ],
@@ -587,9 +676,15 @@ export default function LessonManagement() {
         {selectedLanguageId && (
           <div className="mt-6 overflow-hidden rounded-lg bg-white shadow-lg dark:bg-gray-800">
             <div className="border-b border-gray-200 px-6 py-4 dark:border-gray-700">
-              <h2 className="text-xl font-bold text-gray-900 dark:text-white">
-                Lista de Lecciones
-              </h2>
+              <div className="flex items-center justify-between">
+                <h2 className="text-xl font-bold text-gray-900 dark:text-white">
+                  Lista de Lecciones
+                </h2>
+                <Button color="blue" onClick={handleOpenCreateModal}>
+                  <HiPlus className="mr-2 size-5" />
+                  Agregar lección
+                </Button>
+              </div>
             </div>
 
             {lessonsLoading ? (
@@ -720,6 +815,131 @@ export default function LessonManagement() {
           </div>
         )}
       </div>
+
+      <Modal
+        show={isCreateModalOpen}
+        onClose={handleCloseCreateModal}
+        size="5xl"
+      >
+        <Modal.Header>
+          <div className="flex w-full items-center justify-between">
+            <h3 className="text-xl font-medium text-gray-900 dark:text-white">
+              Agregar Lección
+            </h3>
+          </div>
+        </Modal.Header>
+        <Modal.Body>
+          <div className="space-y-6">
+            <div>
+              <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
+                Nombre
+              </label>
+              <TextInput
+                value={createForm.name}
+                onChange={(e) =>
+                  setCreateForm((p) => ({ ...p, name: e.target.value }))
+                }
+                placeholder="Nombre de la lección"
+              />
+            </div>
+
+            <div>
+              <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
+                Descripción
+              </label>
+              <Textarea
+                rows={3}
+                value={createForm.description}
+                onChange={(e) =>
+                  setCreateForm((p) => ({ ...p, description: e.target.value }))
+                }
+                placeholder="Descripción de la lección"
+              />
+            </div>
+
+            <div>
+              <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
+                Contenido
+              </label>
+              <div className="quill-flowbite rounded-md bg-gray-50 dark:bg-gray-700">
+                <ReactQuill
+                  value={createForm.content}
+                  onChange={(value) =>
+                    setCreateForm((p) => ({ ...p, content: value }))
+                  }
+                  modules={quillEditModules}
+                  formats={quillFormats}
+                  theme="snow"
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+              <div>
+                <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
+                  Idioma
+                </label>
+                <Select
+                  value={createForm.languageId}
+                  onChange={(e) => {
+                    const newLang = e.target.value;
+                    setCreateForm((p) => ({
+                      ...p,
+                      languageId: newLang,
+                      stageId: "",
+                    }));
+                    fetchStages(newLang);
+                  }}
+                >
+                  <option value="">Selecciona un idioma</option>
+                  {languages.map((language) => (
+                    <option key={language.id} value={language.id}>
+                      {language.name}
+                    </option>
+                  ))}
+                </Select>
+              </div>
+              <div>
+                <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
+                  Etapa
+                </label>
+                <Select
+                  value={createForm.stageId}
+                  onChange={(e) =>
+                    setCreateForm((p) => ({ ...p, stageId: e.target.value }))
+                  }
+                  disabled={!createForm.languageId || stagesLoading}
+                >
+                  <option value="">Selecciona una etapa</option>
+                  {stages.map((stage) => (
+                    <option key={stage.id} value={stage.id}>
+                      {stage.name}
+                    </option>
+                  ))}
+                </Select>
+              </div>
+            </div>
+          </div>
+        </Modal.Body>
+        <Modal.Footer>
+          <div className="flex w-full justify-end gap-2">
+            <Button
+              color="light"
+              onClick={handleCloseCreateModal}
+              disabled={createLoading}
+            >
+              Cancelar
+            </Button>
+            <Button
+              color="success"
+              onClick={handleSubmitCreate}
+              isProcessing={createLoading}
+            >
+              Crear Lección
+            </Button>
+          </div>
+        </Modal.Footer>
+      </Modal>
 
       <Modal show={isViewModalOpen} onClose={handleCloseViewModal} size="4xl">
         <Modal.Header>
