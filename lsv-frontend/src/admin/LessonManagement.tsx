@@ -16,6 +16,7 @@ import {
   HiPencilAlt,
   HiCheck,
   HiX,
+  HiTrash,
 } from "react-icons/hi";
 import ReactQuill from "react-quill";
 import "react-quill/dist/quill.snow.css";
@@ -120,6 +121,10 @@ export default function LessonManagement() {
     languageId: "",
     stageId: "",
   });
+
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [deletingLesson, setDeletingLesson] = useState<Lesson | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const fetchLanguages = async () => {
     try {
@@ -332,6 +337,57 @@ export default function LessonManagement() {
     });
   };
 
+  const handleOpenDeleteModal = (lesson: Lesson) => {
+    setDeletingLesson(lesson);
+    setIsDeleteModalOpen(true);
+  };
+
+  const handleCloseDeleteModal = () => {
+    if (isDeleting) return;
+    setIsDeleteModalOpen(false);
+    setDeletingLesson(null);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!deletingLesson) return;
+    try {
+      setIsDeleting(true);
+      setError(null);
+      const token = localStorage.getItem("auth");
+      const response = await fetch(
+        `${BACKEND_BASE_URL}/lesson/${deletingLesson.id}`,
+        {
+          method: "DELETE",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        },
+      );
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        const errorMessage =
+          errorData.message || `Error al eliminar lección (${response.status})`;
+        throw new Error(errorMessage);
+      }
+
+      addToast("success", "Lección eliminada correctamente");
+      setIsDeleteModalOpen(false);
+      setDeletingLesson(null);
+      if (selectedLanguageId) {
+        await fetchLessonsByLanguage(selectedLanguageId, currentPage);
+      }
+    } catch (err) {
+      const errorMessage =
+        err instanceof Error ? err.message : "Error al eliminar lección";
+      setError(errorMessage);
+      addToast("error", errorMessage);
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
   const handleSubmitEdit = async () => {
     if (!editLessonId) return;
     if (
@@ -428,36 +484,6 @@ export default function LessonManagement() {
       month: "short",
       day: "numeric",
     });
-  };
-
-  const getDifficultyColor = (difficulty: string | undefined) => {
-    if (!difficulty) return "gray";
-
-    switch (difficulty.toLowerCase()) {
-      case "beginner":
-        return "success";
-      case "intermediate":
-        return "warning";
-      case "advanced":
-        return "failure";
-      default:
-        return "gray";
-    }
-  };
-
-  const getDifficultyText = (difficulty: string | undefined) => {
-    if (!difficulty) return "No definida";
-
-    switch (difficulty.toLowerCase()) {
-      case "beginner":
-        return "Principiante";
-      case "intermediate":
-        return "Intermedio";
-      case "advanced":
-        return "Avanzado";
-      default:
-        return difficulty;
-    }
   };
 
   const quillModules = {
@@ -644,6 +670,15 @@ export default function LessonManagement() {
                               <HiPencilAlt className="mr-1 h-4 w-4" />
                               Editar
                             </Button>
+                            <Button
+                              size="sm"
+                              color="failure"
+                              onClick={() => handleOpenDeleteModal(lesson)}
+                              disabled={isDeleting}
+                            >
+                              <HiTrash className="mr-1 h-4 w-4" />
+                              Eliminar
+                            </Button>
                           </div>
                         </td>
                       </tr>
@@ -686,7 +721,6 @@ export default function LessonManagement() {
         )}
       </div>
 
-      {/* Modal para ver detalles de la lección */}
       <Modal show={isViewModalOpen} onClose={handleCloseViewModal} size="4xl">
         <Modal.Header>
           <div className="flex w-full items-center justify-between">
@@ -792,7 +826,6 @@ export default function LessonManagement() {
         </Modal.Body>
       </Modal>
 
-      {/* Modal para editar lección */}
       <Modal show={isEditModalOpen} onClose={handleCloseEditModal} size="5xl">
         <Modal.Header>
           <div className="flex w-full items-center justify-between">
@@ -914,7 +947,48 @@ export default function LessonManagement() {
         </Modal.Footer>
       </Modal>
 
-      {/* Toasts */}
+      <Modal
+        show={isDeleteModalOpen}
+        onClose={handleCloseDeleteModal}
+        popup
+        size="md"
+      >
+        <Modal.Header />
+        <Modal.Body>
+          <div className="text-center">
+            <HiExclamationCircle className="mx-auto mb-4 size-14 text-gray-400 dark:text-gray-200" />
+            <h3 className="mb-5 text-lg font-normal text-gray-500 dark:text-gray-400">
+              ¿Estás seguro de que quieres eliminar la lección{" "}
+              <span className="font-semibold text-gray-900 dark:text-white">
+                "{deletingLesson?.name}"
+              </span>
+              ?
+            </h3>
+            <p className="mb-5 text-sm text-gray-500 dark:text-gray-400">
+              Esta acción no se puede deshacer. Se eliminará permanentemente la
+              lección y sus datos asociados.
+            </p>
+            <div className="flex justify-center gap-4">
+              <Button
+                color="gray"
+                onClick={handleCloseDeleteModal}
+                disabled={isDeleting}
+              >
+                Cancelar
+              </Button>
+              <Button
+                color="failure"
+                onClick={handleConfirmDelete}
+                isProcessing={isDeleting}
+                disabled={isDeleting}
+              >
+                {isDeleting ? "Eliminando..." : "Sí, eliminar"}
+              </Button>
+            </div>
+          </div>
+        </Modal.Body>
+      </Modal>
+
       <div className="pointer-events-none fixed right-4 top-4 z-50 flex flex-col gap-2">
         {toasts.map((t: ToastMessage) => (
           <div key={t.id} className="pointer-events-auto">
