@@ -164,6 +164,12 @@ const DashboardLayout = ({ children }: Props) => {
               >
                 Languages
               </Navbar.Link>
+              <Navbar.Link
+                href="/admin/lessons"
+                active={location.pathname.startsWith("/admin/lessons")}
+              >
+                Lessons
+              </Navbar.Link>
             </>
           )}
         </Navbar.Collapse>
