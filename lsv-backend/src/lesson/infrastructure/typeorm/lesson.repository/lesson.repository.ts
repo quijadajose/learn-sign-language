@@ -22,7 +22,10 @@ export class LessonRepository implements LessonRepositoryInterface {
   ) {}
 
   findById(id: string): Promise<Lesson | null> {
-    return this.lessonRepository.findOne({ where: { id } });
+    return this.lessonRepository.findOne({
+      where: { id },
+      relations: ['stage'],
+    });
   }
   findByNameInLanguage(
     name: string,
