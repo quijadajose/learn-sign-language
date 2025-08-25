@@ -1,0 +1,115 @@
+/* Scope all overrides to this wrapper to avoid global side effects */
+.quill-flowbite .ql-container {
+  background-color: rgb(249 250 251 / 1); /* gray-50 */
+  border-color: rgb(229 231 235 / 1); /* gray-200 */
+  border-width: 1px;
+  border-style: solid;
+}
+
+.dark .quill-flowbite .ql-container {
+  background-color: rgb(55 65 81 / 1); /* gray-700 */
+  border-color: rgb(55 65 81 / 1); /* gray-700 */
+}
+
+/* Force editor text color to match Flowbite scheme (override Quill Snow defaults) */
+.quill-flowbite .ql-editor {
+  color: rgb(17 24 39 / 1) !important; /* gray-900 */
+}
+
+.dark .quill-flowbite .ql-editor {
+  color: rgb(243 244 246 / 1) !important; /* gray-100 */
+}
+
+.quill-flowbite .ql-editor.ql-blank::before {
+  color: rgb(156 163 175 / 1); /* gray-400 */
+}
+
+.dark .quill-flowbite .ql-editor.ql-blank::before {
+  color: rgb(156 163 175 / 1); /* gray-400 */
+}
+
+.quill-flowbite .ql-toolbar {
+  background-color: rgb(249 250 251 / 1); /* gray-50 */
+  border-color: rgb(229 231 235 / 1); /* gray-200 */
+}
+
+.dark .quill-flowbite .ql-toolbar {
+  background-color: rgb(31 41 55 / 1); /* gray-800 */
+  border-color: rgb(55 65 81 / 1); /* gray-700 */
+}
+
+/* Make icons use currentColor so we can style hover/focus with color */
+.quill-flowbite .ql-stroke {
+  stroke: currentColor !important;
+}
+
+.quill-flowbite .ql-fill {
+  fill: currentColor !important;
+}
+
+.quill-flowbite .ql-picker {
+  color: rgb(17 24 39 / 1); /* gray-900 */
+}
+
+.dark .quill-flowbite .ql-picker {
+  color: rgb(243 244 246 / 1); /* gray-100 */
+}
+
+.quill-flowbite .ql-toolbar button,
+.quill-flowbite .ql-toolbar .ql-picker-label,
+.quill-flowbite .ql-toolbar .ql-picker-item {
+  color: rgb(55 65 81 / 1); /* gray-700 */
+}
+
+.dark .quill-flowbite .ql-toolbar button,
+.dark .quill-flowbite .ql-toolbar .ql-picker-label,
+.dark .quill-flowbite .ql-toolbar .ql-picker-item {
+  color: rgb(209 213 219 / 1); /* gray-300 */
+}
+
+/* Hover states to match Flowbite look (subtle gray) */
+.quill-flowbite .ql-toolbar button:hover,
+.quill-flowbite .ql-toolbar .ql-picker-label:hover,
+.quill-flowbite .ql-toolbar .ql-picker-item:hover {
+  color: rgb(17 24 39 / 1); /* gray-900 */
+  background-color: rgb(243 244 246 / 1); /* gray-100 */
+}
+
+.dark .quill-flowbite .ql-toolbar button:hover,
+.dark .quill-flowbite .ql-toolbar .ql-picker-label:hover,
+.dark .quill-flowbite .ql-toolbar .ql-picker-item:hover {
+  color: rgb(243 244 246 / 1); /* gray-100 */
+  background-color: rgb(55 65 81 / 1); /* gray-700 */
+}
+
+/* Active button style */
+.quill-flowbite .ql-toolbar button.ql-active,
+.quill-flowbite .ql-toolbar .ql-picker-label.ql-active {
+  color: rgb(17 24 39 / 1); /* gray-900 */
+}
+
+.dark .quill-flowbite .ql-toolbar button.ql-active,
+.dark .quill-flowbite .ql-toolbar .ql-picker-label.ql-active {
+  color: rgb(243 244 246 / 1); /* gray-100 */
+}
+
+/* Dropdown menus */
+.quill-flowbite .ql-picker-options {
+  background-color: rgb(255 255 255 / 1);
+  border-color: rgb(229 231 235 / 1);
+}
+
+.dark .quill-flowbite .ql-picker-options {
+  background-color: rgb(31 41 55 / 1);
+  border-color: rgb(55 65 81 / 1);
+}
+
+/* Links inside editor */
+.quill-flowbite .ql-editor a {
+  color: rgb(59 130 246 / 1); /* blue-500 */
+  text-decoration: underline;
+}
+
+.dark .quill-flowbite .ql-editor a {
+  color: rgb(96 165 250 / 1); /* blue-400 */
+}
