@@ -2,7 +2,10 @@ import { NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { CreateLessonDto } from 'src/lesson/domain/dto/create-lesson/create-lesson-dto';
 import { LessonRepositoryInterface } from 'src/lesson/domain/ports/lesson.repository.interface/lesson.repository.interface';
-import { PaginationDto } from 'src/shared/domain/dto/PaginationDto';
+import {
+  PaginationDto,
+  PaginatedResponseDto,
+} from 'src/shared/domain/dto/PaginationDto';
 import { Language } from 'src/shared/domain/entities/language';
 import { Lesson } from 'src/shared/domain/entities/lesson';
 import { Stages } from 'src/shared/domain/entities/stage';
@@ -96,7 +99,7 @@ export class LessonRepository implements LessonRepositoryInterface {
   async getLessonsByLanguage(
     languageId: string,
     pagination: PaginationDto,
-  ): Promise<Lesson[]> {
+  ): Promise<PaginatedResponseDto<Lesson>> {
     const {
       page,
       limit,
@@ -107,7 +110,7 @@ export class LessonRepository implements LessonRepositoryInterface {
     const skip = (page - 1) * limit;
 
     const findOptions: FindManyOptions = {
-      select: ['id', 'name', 'description'],
+      select: ['id', 'name', 'description', 'createdAt', 'updatedAt'],
       where: { language: { id: languageId } },
       skip,
       take: limit,
@@ -118,6 +121,14 @@ export class LessonRepository implements LessonRepositoryInterface {
         [orderBy]: sortOrder,
       };
     }
-    return this.lessonRepository.find(findOptions);
+
+    const [data, total] = await this.lessonRepository.findAndCount(findOptions);
+
+    return {
+      data,
+      total,
+      page,
+      pageSize: limit,
+    };
   }
 }

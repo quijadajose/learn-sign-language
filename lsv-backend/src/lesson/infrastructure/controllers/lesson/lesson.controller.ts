@@ -21,7 +21,10 @@ import { Roles } from 'src/auth/infrastructure/decorators/roles.decorator';
 import { RolesGuard } from 'src/auth/infrastructure/guards/roles/roles.guard';
 import { Lesson } from 'src/shared/domain/entities/lesson';
 import * as path from 'path';
-import { PaginationDto } from 'src/shared/domain/dto/PaginationDto';
+import {
+  PaginationDto,
+  PaginatedResponseDto,
+} from 'src/shared/domain/dto/PaginationDto';
 
 @Controller('lesson')
 export class LessonController {
@@ -68,7 +71,7 @@ export class LessonController {
   async getLessonsByLanguage(
     @Param('languageId', ParseUUIDPipe) languageId: string,
     @Query() pagination: PaginationDto,
-  ): Promise<Lesson[]> {
+  ): Promise<PaginatedResponseDto<Lesson>> {
     return this.lessonAdminService.getLessonsByLanguage(languageId, pagination);
   }
 
