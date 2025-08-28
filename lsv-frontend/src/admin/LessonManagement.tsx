@@ -988,10 +988,6 @@ export default function LessonManagement() {
                     modules={quillModules}
                     formats={quillFormats}
                     theme="snow"
-                    style={{
-                      backgroundColor: "transparent",
-                      border: "none",
-                    }}
                   />
                 </div>
               </div>
