@@ -753,8 +753,10 @@ export default function LessonManagement() {
                               onClick={() => handleViewClick(lesson.id)}
                               disabled={viewLoading}
                             >
-                              <HiEye className="mr-1 h-4 w-4" />
-                              Ver
+                              <div className="flex items-center">
+                                <HiEye className="mr-1 h-4 w-4" />
+                                Ver
+                              </div>
                             </Button>
                             <Button
                               size="sm"
@@ -762,8 +764,10 @@ export default function LessonManagement() {
                               onClick={() => handleOpenEditModal(lesson)}
                               disabled={editLoading}
                             >
-                              <HiPencilAlt className="mr-1 h-4 w-4" />
-                              Editar
+                              <div className="flex items-center">
+                                <HiPencilAlt className="mr-1 h-4 w-4" />
+                                Editar
+                              </div>
                             </Button>
                             <Button
                               size="sm"
@@ -771,6 +775,7 @@ export default function LessonManagement() {
                               onClick={() => handleOpenDeleteModal(lesson)}
                               disabled={isDeleting}
                             >
+                              <div className="flex items-center"></div>
                               <HiTrash className="mr-1 h-4 w-4" />
                               Eliminar
                             </Button>

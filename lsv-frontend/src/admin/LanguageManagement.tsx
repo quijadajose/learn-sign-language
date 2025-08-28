@@ -555,16 +555,20 @@ export default function LanguageManagement() {
                           color="light"
                           onClick={() => handleEditClick(language)}
                         >
-                          <HiPencil className="mr-1 size-4" />
-                          Editar
+                          <div className="flex items-center">
+                            <HiPencil className="mr-1 size-4" />
+                            Editar
+                          </div>
                         </Button>
                         <Button
                           size="sm"
                           color="failure"
                           onClick={() => handleDeleteClick(language)}
                         >
-                          <HiTrash className="mr-1 size-4" />
-                          Eliminar
+                          <div className="flex items-center">
+                            <HiTrash className="mr-1 size-4" />
+                            Eliminar
+                          </div>
                         </Button>
                       </div>
                     </td>
