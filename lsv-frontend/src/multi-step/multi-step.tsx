@@ -55,7 +55,7 @@ export function MultiStep({
     >
       <motion.div
         key={step}
-        inert={Boolean(animate)}
+        inherit={Boolean(animate)}
         animate={{
           x: 0,
           opacity: 1,
