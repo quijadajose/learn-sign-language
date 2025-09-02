@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { BACKEND_BASE_URL } from "../config";
 import {
   Button,
@@ -514,9 +514,6 @@ export default function LessonManagement() {
       languageId: "",
       stageId: "",
     });
-  };
-  const imageHandler = () => {
-    console.log("Image handler called");
   };
 
   const handleSubmitCreate = async () => {
