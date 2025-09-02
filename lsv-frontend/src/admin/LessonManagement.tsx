@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { BACKEND_BASE_URL } from "../config";
 import {
   Button,
@@ -21,6 +21,7 @@ import {
 } from "react-icons/hi";
 import ReactQuill from "react-quill";
 import "react-quill/dist/quill.snow.css";
+import Editor from "./Editor";
 import "../styles/quill-flowbite.css";
 
 interface Language {
@@ -514,6 +515,9 @@ export default function LessonManagement() {
       stageId: "",
     });
   };
+  const imageHandler = () => {
+    console.log("Image handler called");
+  };
 
   const handleSubmitCreate = async () => {
     if (
@@ -579,16 +583,18 @@ export default function LessonManagement() {
     toolbar: false,
   };
   const quillEditModules = {
-    toolbar: [
-      [{ header: [1, 2, 3, false] }],
-      ["bold", "italic", "underline", "strike"],
-      [{ list: "ordered" }, { list: "bullet" }],
-      [{ indent: "-1" }, { indent: "+1" }],
-      ["blockquote", "code-block"],
-      ["link"],
-      [{ align: [] }],
-      ["clean"],
-    ],
+    toolbar: {
+      container: [
+        [{ header: [1, 2, 3, false] }],
+        ["bold", "italic", "underline", "strike"],
+        [{ list: "ordered" }, { list: "bullet" }],
+        [{ indent: "-1" }, { indent: "+1" }],
+        ["blockquote", "code-block"],
+        ["link", "image", "video"],
+        [{ align: [] }],
+        ["clean"],
+      ],
+    },
   };
 
   const quillFormats = [
@@ -605,7 +611,6 @@ export default function LessonManagement() {
     "indent",
     "link",
     "image",
-    "video",
   ];
 
   if (loading) {
@@ -1089,14 +1094,11 @@ export default function LessonManagement() {
                 Contenido
               </label>
               <div className="quill-flowbite rounded-md bg-gray-50 dark:bg-gray-700">
-                <ReactQuill
+                <Editor
                   value={editForm.content}
-                  onChange={(value) =>
-                    setEditForm((p) => ({ ...p, content: value }))
+                  onChange={(changes) =>
+                    setEditForm((p) => ({ ...p, content: changes.html }))
                   }
-                  modules={quillEditModules}
-                  formats={quillFormats}
-                  theme="snow"
                 />
               </div>
             </div>

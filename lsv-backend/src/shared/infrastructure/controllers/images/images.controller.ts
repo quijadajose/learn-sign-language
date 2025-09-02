@@ -71,7 +71,7 @@ export class ImagesController {
     @Param('folder') folder: string,
     @UploadedFile() file: Express.Multer.File,
     @Body() body: { id: string; format: 'png' | 'jpeg' | 'webp' },
-  ): Promise<{ imageUrls: Record<string, string> }> {
+  ): Promise<string[]> {
     const { id, format } = body;
     return await this.uploadPictureUseCase.execute(id, folder, format, file);
   }
