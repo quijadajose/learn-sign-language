@@ -6,10 +6,11 @@ import {
   Toast,
   Pagination,
 } from "flowbite-react";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { BACKEND_BASE_URL } from "./config";
 import { HiExclamationCircle, HiCheck, HiX } from "react-icons/hi";
 import { useNavigate } from "react-router-dom";
+import { useLocalStorage } from "./hooks/useLocalStorage";
 
 interface Language {
   id: string;
@@ -34,27 +35,27 @@ export default function LanguageCards() {
     { id: number; type: "success" | "error"; message: string }[]
   >([]);
 
-  const addToast = (type: "success" | "error", message: string) => {
+  const addToast = useCallback((type: "success" | "error", message: string) => {
     const id = Date.now();
     setToastMessages((prev) => [...prev, { id, type, message }]);
     setTimeout(() => {
       setToastMessages((prev) => prev.filter((toast) => toast.id !== id));
     }, 4000);
-  };
+  }, []);
 
   const [languages, setLanguages] = useState<Language[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState<number>(1);
   const [totalPages, setTotalPages] = useState<number>(1);
-  const [selectedLanguageId, setSelectedLanguageId] = useState<string | null>(
-    null,
-  );
+  const [selectedLanguageId, setSelectedLanguageId] = useLocalStorage<
+    string | null
+  >("selectedLanguageId", null);
   const [isSaving, setIsSaving] = useState<boolean>(false);
+  const [token, setToken] = useLocalStorage<string | null>("auth", null);
 
   useEffect(() => {
     const fetchLanguages = async () => {
-      const token = localStorage.getItem("auth");
       if (!token || token === "undefined") {
         setError("No estás autenticado. Redirigiendo al login...");
         addToast("error", "No estás autenticado. Redirigiendo al login...");
@@ -76,6 +77,13 @@ export default function LanguageCards() {
             "Content-Type": "application/json",
           },
         });
+
+        if (response.status === 401) {
+          addToast("error", "Sesión inválida. Redirigiendo al login...");
+          setToken(null);
+          navigate("/login");
+          return;
+        }
 
         if (!response.ok) {
           let errorMsg = `Error ${response.status}: ${response.statusText}`;
@@ -116,7 +124,7 @@ export default function LanguageCards() {
     };
 
     fetchLanguages();
-  }, [currentPage, navigate]);
+  }, [currentPage, navigate, token, addToast]);
 
   const onPageChange = (page: number) => {
     setCurrentPage(page);
@@ -138,7 +146,6 @@ export default function LanguageCards() {
     }
     setIsSaving(true);
     try {
-      localStorage.setItem("selectedLanguageId", selectedLanguageId);
       addToast("success", `Idioma seleccionado guardado localmente.`);
     } catch (saveError) {
       console.error("Error al guardar en localStorage:", saveError);
