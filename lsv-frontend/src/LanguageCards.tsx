@@ -125,7 +125,10 @@ export default function LanguageCards() {
 
   const handleSelectLanguage = (languageId: string) => {
     setSelectedLanguageId(languageId);
-    addToast("success", `Idioma seleccionado: ${name}`);
+    const language = languages.find((lang) => lang.id === languageId);
+    if (language) {
+      addToast("success", `Idioma seleccionado: ${language.name}`);
+    }
   };
 
   const handleNext = () => {
