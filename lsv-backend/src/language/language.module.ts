@@ -13,6 +13,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { Language } from 'src/shared/domain/entities/language';
 import { Stages } from 'src/shared/domain/entities/stage';
 import { Lesson } from 'src/shared/domain/entities/lesson';
+import { QuizSubmission } from 'src/shared/domain/entities/quizSubmission';
 import { StageService } from 'src/stage/application/services/stage/stage.service';
 import { LanguageController } from './infrastructure/controllers/language-admin/language-admin.controller';
 import { CreateStageUseCase } from 'src/stage/application/use-cases/create-stage-use-case/create-stage-use-case';
@@ -21,7 +22,10 @@ import { DeleteStageUseCase } from 'src/stage/application/use-cases/delete-stage
 import { QuizModule } from 'src/quiz/quiz.module';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Language, Stages, Lesson]), QuizModule],
+  imports: [
+    TypeOrmModule.forFeature([Language, Stages, Lesson, QuizSubmission]),
+    QuizModule,
+  ],
   providers: [
     LanguageService,
     GetLanguageUseCase,

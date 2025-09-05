@@ -3,6 +3,7 @@ import { UserLessonRepository } from './infrastructure/typeorm/user-lesson.repos
 import { UserLessonController } from './infrastructure/controllers/user-lesson/user-lesson.controller';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { UserLesson } from 'src/shared/domain/entities/userLesson';
+import { QuizSubmission } from 'src/shared/domain/entities/quizSubmission';
 import { GetUserLessonByUserIdUseCase } from './application/use-cases/get-user-lesson-by-user-id-use-case/get-user-lesson-by-user-id-use-case';
 import { UserLessonService } from './application/services/user-lesson/user-lesson.service';
 import { StartLessonUseCase } from './application/use-cases/start-lesson-use-case/start-lesson-use-case';
@@ -15,10 +16,19 @@ import { Lesson } from 'src/shared/domain/entities/lesson';
 import { Stages } from 'src/shared/domain/entities/stage';
 import { Language } from 'src/shared/domain/entities/language';
 import { GetLessonByIdUseCase } from 'src/lesson/application/use-cases/get-lesson-by-id-use-case/get-lesson-by-id-use-case';
+import { LessonModule } from 'src/lesson/lesson.module';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([User, UserLesson, Lesson, Stages, Language]),
+    TypeOrmModule.forFeature([
+      User,
+      UserLesson,
+      Lesson,
+      Stages,
+      Language,
+      QuizSubmission,
+    ]),
+    LessonModule,
   ],
   providers: [
     UserLessonService,

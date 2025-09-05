@@ -243,12 +243,15 @@ export default function StageManagement() {
       return;
     }
 
-    if (!selectedLangId) {
+    const uuidRegex =
+      /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    if (!selectedLangId || !uuidRegex.test(selectedLangId)) {
       setError(
-        "No se ha seleccionado un idioma. Por favor, selecciona uno primero.",
+        "No se ha seleccionado un idioma válido. Por favor, vuelve a la gestión de idiomas y selecciona uno.",
       );
-      addToast("error", "No se ha seleccionado un idioma.");
+      addToast("error", "ID de idioma no válido.");
       setLoading(false);
+      setStages([]);
       return;
     }
 

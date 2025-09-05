@@ -383,7 +383,7 @@ export const ResponsiveProfileForm = () => {
                 key={preview}
                 src={preview || "/user.svg"}
                 alt="Profile"
-                className="mb-4 h-40 w-40 rounded-full border object-cover dark:border-gray-600"
+                className="mb-4 size-40 rounded-full border object-cover dark:border-gray-600"
                 onError={(e) => {
                   const target = e.target as HTMLImageElement;
                   if (target.src !== window.location.origin + "/user.svg") {
@@ -407,7 +407,7 @@ export const ResponsiveProfileForm = () => {
                     type="file"
                     accept="image/*"
                     onChange={handleFileChange}
-                    className="block w-full cursor-pointer rounded-lg border border-gray-300 bg-gray-50 text-sm text-gray-900 focus:outline-none dark:border-gray-600 dark:bg-gray-700 dark:text-gray-400 dark:placeholder-gray-400"
+                    className="block w-full cursor-pointer rounded-lg border border-gray-300 bg-gray-50 text-sm text-gray-900 focus:outline-none dark:border-gray-600 dark:bg-gray-700 dark:text-gray-400 dark:placeholder:text-gray-400"
                   />
                   <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
                     PNG, JPG, GIF (Max 2MB).
@@ -591,7 +591,7 @@ export const ResponsiveProfileForm = () => {
                       )
                     }
                     disabled={!isEditing || loading}
-                    className="mr-2 h-4 w-4 border-gray-300 text-blue-600 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:ring-offset-gray-800 dark:focus:ring-blue-600"
+                    className="mr-2 size-4 border-gray-300 text-blue-600 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:ring-offset-gray-800 dark:focus:ring-blue-600"
                   />
                   Diestro
                 </Label>
@@ -611,7 +611,7 @@ export const ResponsiveProfileForm = () => {
                       )
                     }
                     disabled={!isEditing || loading}
-                    className="mr-2 h-4 w-4 border-gray-300 text-blue-600 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:ring-offset-gray-800 dark:focus:ring-blue-600"
+                    className="mr-2 size-4 border-gray-300 text-blue-600 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:ring-offset-gray-800 dark:focus:ring-blue-600"
                   />
                   Zurdo
                 </Label>
