@@ -8,6 +8,7 @@ import {
 } from 'typeorm';
 import { Stages } from './stage';
 import { Lesson } from './lesson';
+import { UserLanguage } from './userLanguage';
 
 @Entity()
 export class Language {
@@ -25,6 +26,9 @@ export class Language {
 
   @OneToMany(() => Lesson, (lesson) => lesson.language)
   lessons: Lesson[];
+
+  @OneToMany(() => UserLanguage, (userLanguage) => userLanguage.language)
+  userLanguages: UserLanguage[];
 
   @CreateDateColumn()
   createdAt: Date;

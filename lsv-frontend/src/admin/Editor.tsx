@@ -69,7 +69,6 @@ export default function Editor(props: EditorProps) {
           throw new Error("No URLs returned from backend");
         }
 
-        // 👈 prefijar si es ruta relativa
         const rawUrl = data[0];
         const imageUrl = rawUrl.startsWith("http")
           ? rawUrl

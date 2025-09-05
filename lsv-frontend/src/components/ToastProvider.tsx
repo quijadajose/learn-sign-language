@@ -6,9 +6,13 @@ import {
   useCallback,
 } from "react";
 import { Toast } from "flowbite-react";
-import { HiCheck, HiX } from "react-icons/hi";
+import { HiCheck, HiX, HiInformationCircle } from "react-icons/hi";
 
-type ToastMessage = { id: number; type: "success" | "error"; message: string };
+type ToastMessage = {
+  id: number;
+  type: "success" | "error" | "info";
+  message: string;
+};
 type ToastContextType = {
   addToast: (type: ToastMessage["type"], message: string) => void;
 };
@@ -40,11 +44,15 @@ export const ToastProvider = ({ children }: { children: ReactNode }) => {
               className={`inline-flex size-8 shrink-0 items-center justify-center rounded-lg ${
                 toast.type === "success"
                   ? "bg-green-100 text-green-500 dark:bg-green-800 dark:text-green-200"
-                  : "bg-red-100 text-red-500 dark:bg-red-800 dark:text-red-200"
+                  : toast.type === "error"
+                    ? "bg-red-100 text-red-500 dark:bg-red-800 dark:text-red-200"
+                    : "bg-blue-100 text-blue-500 dark:bg-blue-800 dark:text-blue-200"
               }`}
             >
               {toast.type === "success" ? (
                 <HiCheck className="size-5" />
+              ) : toast.type === "info" ? (
+                <HiInformationCircle className="size-5" />
               ) : (
                 <HiX className="size-5" />
               )}

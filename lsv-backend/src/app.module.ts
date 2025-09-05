@@ -24,7 +24,7 @@ import { LeaderboardModule } from './leaderboard/leaderboard.module';
 import { UploadPictureUseCase } from './shared/application/use-cases/upload-picture-use-case/upload-picture-use-case';
 import { SeederService } from './seeder/seeder.service';
 import { LanguageModule } from './language/language.module';
-import { StageRepository } from './stage/infrastructure/typeorm/stage.repository/stage.repository';
+import { UserLanguage } from './shared/domain/entities/userLanguage';
 
 @Module({
   imports: [
@@ -51,6 +51,7 @@ import { StageRepository } from './stage/infrastructure/typeorm/stage.repository
           QuizSubmission,
           Question,
           Option,
+          UserLanguage,
         ],
         synchronize: true,
       }),

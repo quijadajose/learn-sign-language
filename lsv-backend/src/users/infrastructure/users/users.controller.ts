@@ -4,6 +4,7 @@ import {
   Get,
   Param,
   ParseUUIDPipe,
+  Post,
   Put,
   Query,
   Req,
@@ -20,6 +21,10 @@ import {
 } from 'src/shared/domain/dto/PaginationDto';
 import { Language } from 'src/shared/domain/entities/language';
 import { Lesson } from 'src/shared/domain/entities/lesson';
+import { UserLanguage } from 'src/shared/domain/entities/userLanguage';
+import { UsersService } from 'src/users/application/users/users.service';
+// import { StagesProgressDto } from 'src/users/domain/dto/stages-progress.dto';
+import { EnrollUserInLanguageDto } from './enroll-user-in-language.dto';
 
 @Controller('users')
 export class UsersController {
@@ -27,6 +32,7 @@ export class UsersController {
     private readonly authService: AuthService,
     private readonly languageService: LanguageService,
     private readonly lessonAdminService: LessonService,
+    private readonly usersService: UsersService,
   ) {}
 
   @Get('me')
@@ -77,5 +83,35 @@ export class UsersController {
   @Get('lesson/:id')
   async getLessonById(@Param('id', ParseUUIDPipe) id: string): Promise<Lesson> {
     return this.lessonAdminService.getLessonById(id);
+  }
+  @UseGuards(AuthGuard('jwt'))
+  @Get('enrolled-languages')
+  findUserLanguages(
+    @Req() req,
+    @Query() pagination: PaginationDto,
+  ): Promise<PaginatedResponseDto<UserLanguage>> {
+    return this.usersService.findUserLanguages(req.user.sub, pagination);
+  }
+
+  @UseGuards(AuthGuard('jwt'))
+  @Post('enroll')
+  enroll(
+    @Req() req,
+    @Body() enrollDto: EnrollUserInLanguageDto,
+  ): Promise<UserLanguage> {
+    return this.usersService.enrollUserInLanguage(
+      req.user.sub,
+      enrollDto.languageId,
+    );
+  }
+
+  @UseGuards(AuthGuard('jwt'))
+  @Get('stages-progress/:languageId')
+  getStagesProgress(
+    @Req() req,
+    @Param('languageId', ParseUUIDPipe) languageId: string,
+  ): Promise<any> {
+    const userId = req.user.sub;
+    return this.usersService.getStagesProgress(userId, languageId);
   }
 }

@@ -9,6 +9,7 @@ import {
 import { Language } from 'src/shared/domain/entities/language';
 import { Lesson } from 'src/shared/domain/entities/lesson';
 import { Stages } from 'src/shared/domain/entities/stage';
+import { QuizSubmission } from 'src/shared/domain/entities/quizSubmission';
 import { FindManyOptions, Repository } from 'typeorm';
 
 export class LessonRepository implements LessonRepositoryInterface {
@@ -19,7 +20,24 @@ export class LessonRepository implements LessonRepositoryInterface {
     private readonly stageRepository: Repository<Stages>,
     @InjectRepository(Language)
     private readonly languageRepository: Repository<Language>,
+    @InjectRepository(QuizSubmission)
+    private readonly quizSubmissionRepository: Repository<QuizSubmission>,
   ) {}
+  async findPassedLessonIdsForUser(userId: string): Promise<Set<string>> {
+    const submissions = await this.quizSubmissionRepository
+      .createQueryBuilder('submission')
+      .innerJoin('submission.quiz', 'quiz')
+      .select('DISTINCT quiz.lessonId', 'lessonId')
+      .where('submission.user.id = :userId', { userId })
+      .andWhere('submission.score >= :minScore', { minScore: 80 })
+      .getRawMany();
+
+    const passedLessonIds = new Set<string>();
+    for (const sub of submissions) {
+      if (sub.lessonId) passedLessonIds.add(sub.lessonId);
+    }
+    return passedLessonIds;
+  }
 
   findById(id: string): Promise<Lesson | null> {
     return this.lessonRepository.findOne({
@@ -102,6 +120,7 @@ export class LessonRepository implements LessonRepositoryInterface {
   async getLessonsByLanguage(
     languageId: string,
     pagination: PaginationDto,
+    stageId?: string,
   ): Promise<PaginatedResponseDto<Lesson>> {
     const {
       page,
@@ -112,9 +131,14 @@ export class LessonRepository implements LessonRepositoryInterface {
 
     const skip = (page - 1) * limit;
 
-    const findOptions: FindManyOptions = {
+    const whereClause: any = { language: { id: languageId } };
+    if (stageId) {
+      whereClause.stage = { id: stageId };
+    }
+
+    const findOptions: FindManyOptions<Lesson> = {
       select: ['id', 'name', 'description', 'createdAt', 'updatedAt'],
-      where: { language: { id: languageId } },
+      where: whereClause,
       skip,
       take: limit,
     };
