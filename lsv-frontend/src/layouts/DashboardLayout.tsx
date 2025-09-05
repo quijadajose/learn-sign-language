@@ -133,7 +133,7 @@ const DashboardLayout = ({ children }: Props) => {
               <Dropdown.Item onClick={handleLogout}>Sign out</Dropdown.Item>
             </Dropdown>
           ) : (
-            <div className="h-10 w-10 animate-pulse rounded-full bg-gray-200 dark:bg-gray-700"></div>
+            <div className="size-10 animate-pulse rounded-full bg-gray-200 dark:bg-gray-700"></div>
           )}
           <Navbar.Toggle />
         </div>

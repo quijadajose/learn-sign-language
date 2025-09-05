@@ -19,6 +19,7 @@ import {
   HiTrash,
   HiPlus,
 } from "react-icons/hi";
+import { useNavigate } from "react-router-dom";
 
 interface Language {
   id: string;
@@ -59,6 +60,7 @@ export default function LanguageManagement() {
     { id: number; type: "success" | "error"; message: string }[]
   >([]);
   const [imageTimestamp, setImageTimestamp] = useState<number>(Date.now());
+  const navigate = useNavigate();
 
   const addToast = (type: "success" | "error", message: string) => {
     const id = Date.now();
@@ -570,6 +572,19 @@ export default function LanguageManagement() {
                             Eliminar
                           </div>
                         </Button>
+                        <Button
+                          size="sm"
+                          color="blue"
+                          onClick={() => {
+                            localStorage.setItem(
+                              "selectedLanguageId",
+                              language.id,
+                            );
+                            navigate("/admin/stages");
+                          }}
+                        >
+                          Etapas
+                        </Button>
                       </div>
                     </td>
                   </tr>
@@ -674,7 +689,7 @@ export default function LanguageManagement() {
                 >
                   <div className="flex flex-col items-center justify-center pb-6 pt-5">
                     <svg
-                      className="mb-4 h-8 w-8 text-gray-500 dark:text-gray-400"
+                      className="mb-4 size-8 text-gray-500 dark:text-gray-400"
                       aria-hidden="true"
                       xmlns="http://www.w3.org/2000/svg"
                       fill="none"
@@ -815,7 +830,7 @@ export default function LanguageManagement() {
                 >
                   <div className="flex flex-col items-center justify-center pb-6 pt-5">
                     <svg
-                      className="mb-4 h-8 w-8 text-gray-500 dark:text-gray-400"
+                      className="mb-4 size-8 text-gray-500 dark:text-gray-400"
                       aria-hidden="true"
                       xmlns="http://www.w3.org/2000/svg"
                       fill="none"
