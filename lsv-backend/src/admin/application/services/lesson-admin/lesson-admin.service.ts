@@ -32,7 +32,10 @@ export class LessonService {
       file,
     );
   }
-  async getLessonsByLanguage(languageId: string, pagination: PaginationDto): Promise<PaginatedResponseDto<any>> {
+  async getLessonsByLanguage(
+    languageId: string,
+    pagination: PaginationDto,
+  ): Promise<PaginatedResponseDto<any>> {
     return await this.getLessonByLaguageUseCase.execute(languageId, pagination);
   }
   async getLessonById(id: string) {

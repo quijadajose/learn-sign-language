@@ -11,7 +11,15 @@ export class GetLessonByLanguageUseCase {
     @Inject('LessonRepositoryInterface')
     private readonly lessonRepository: LessonRepositoryInterface,
   ) {}
-  execute(languageId: string, pagination: PaginationDto): Promise<PaginatedResponseDto<Lesson>> {
-    return this.lessonRepository.getLessonsByLanguage(languageId, pagination);
+  execute(
+    languageId: string,
+    pagination: PaginationDto,
+    stageId?: string,
+  ): Promise<PaginatedResponseDto<Lesson>> {
+    return this.lessonRepository.getLessonsByLanguage(
+      languageId,
+      pagination,
+      stageId,
+    );
   }
 }

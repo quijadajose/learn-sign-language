@@ -4,6 +4,7 @@ import {
   PaginatedResponseDto,
 } from 'src/shared/domain/dto/PaginationDto';
 import { Stages } from 'src/shared/domain/entities/stage';
+// import { StagesProgressDto } from 'src/users/domain/dto/stages-progress.dto';
 
 export interface StageRepositoryInterface {
   findById(id: string): Promise<Stages | null>;
@@ -19,4 +20,6 @@ export interface StageRepositoryInterface {
     languageId: string,
     pagination: PaginationDto,
   ): Promise<PaginatedResponseDto<Stages>>;
+  findByLanguageId(languageId: string): Promise<Stages[]>;
+  getStagesProgressForUser(userId: string, languageId: string): Promise<any[]>;
 }
