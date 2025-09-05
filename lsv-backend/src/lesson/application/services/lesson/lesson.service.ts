@@ -32,8 +32,16 @@ export class LessonService {
       file,
     );
   }
-  async getLessonsByLanguage(languageId: string, pagination: PaginationDto): Promise<PaginatedResponseDto<any>> {
-    return await this.getLessonByLaguageUseCase.execute(languageId, pagination);
+  async getLessonsByLanguage(
+    languageId: string,
+    pagination: PaginationDto,
+    stageId?: string,
+  ): Promise<PaginatedResponseDto<any>> {
+    return await this.getLessonByLaguageUseCase.execute(
+      languageId,
+      pagination,
+      stageId,
+    );
   }
   async getLessonById(id: string) {
     return await this.getLessonByIdUseCase.execute(id);

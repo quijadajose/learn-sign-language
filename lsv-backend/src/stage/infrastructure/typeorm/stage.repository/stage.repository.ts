@@ -91,4 +91,40 @@ export class StageRepository implements StageRepositoryInterface {
         return new PaginatedResponseDto(data, total, page, limit);
       });
   }
+
+  async findByLanguageId(languageId: string): Promise<Stages[]> {
+    return this.stageRepository.find({
+      where: { language: { id: languageId } },
+      relations: ['lessons'],
+    });
+  }
+
+  async getStagesProgressForUser(
+    userId: string,
+    languageId: string,
+  ): Promise<any[]> {
+    return this.stageRepository
+      .createQueryBuilder('s')
+      .select('s.id', 'id')
+      .addSelect('s.name', 'name')
+      .addSelect('s.description', 'description')
+      .addSelect('COUNT(DISTINCT l.id)', 'totalLessons')
+      .addSelect(
+        'COUNT(DISTINCT CASE WHEN qs.score >= 80 THEN l.id END)',
+        'completedLessons',
+      )
+      .addSelect(
+        'ROUND(COUNT(DISTINCT CASE WHEN qs.score >= 80 THEN l.id END) / NULLIF(COUNT(DISTINCT l.id), 0) * 100, 2)',
+        'progress',
+      )
+      .leftJoin('s.lessons', 'l')
+      .leftJoin('l.quizzes', 'q')
+      .leftJoin('q.submissions', 'qs', 'qs.userId = :userId', { userId })
+      .where('s.languageId = :languageId', { languageId })
+      .groupBy('s.id')
+      .addGroupBy('s.name')
+      .addGroupBy('s.description')
+      .orderBy('s.name', 'ASC')
+      .getRawMany();
+  }
 }

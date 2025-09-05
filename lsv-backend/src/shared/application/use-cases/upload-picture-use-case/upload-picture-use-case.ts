@@ -9,7 +9,7 @@ export class UploadPictureUseCase {
     folder: string,
     format: 'png' | 'jpeg' | 'webp',
     file: Express.Multer.File,
-    ): Promise<string[]> {
+  ): Promise<string[]> {
     if (!file) {
       throw new BadRequestException('No image received');
     }
@@ -19,7 +19,7 @@ export class UploadPictureUseCase {
       throw new BadRequestException('No image buffer available');
     }
 
-  const sizes = { original: null, sm: 64, md: 128, lg: 256 };
+    const sizes = { original: null, sm: 64, md: 128, lg: 256 };
 
     // Asegurar que `uploads` es el directorio base seguro
     const baseUploadDir = path.resolve('./uploads');
@@ -34,12 +34,12 @@ export class UploadPictureUseCase {
       fs.mkdirSync(uploadsDir, { recursive: true });
     }
 
-  const imageUrls: string[] = [];
+    const imageUrls: string[] = [];
 
     try {
       for (const [key, size] of Object.entries(sizes)) {
-        let fileName = `${id}-${key}.${format}`;
-        let filePath = path.join(uploadsDir, fileName);
+        const fileName = `${id}-${key}.${format}`;
+        const filePath = path.join(uploadsDir, fileName);
         if (key === 'original') {
           await fs.promises.writeFile(filePath, file.buffer);
         } else {

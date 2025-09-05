@@ -8,6 +8,7 @@ import {
 } from 'typeorm';
 import { UserLesson } from './userLesson';
 import { QuizSubmission } from './quizSubmission';
+import { UserLanguage } from './userLanguage';
 
 @Entity()
 export class User {
@@ -49,4 +50,7 @@ export class User {
 
   @OneToMany(() => QuizSubmission, (submission) => submission.user)
   quizSubmissions: QuizSubmission[];
+
+  @OneToMany(() => UserLanguage, (userLanguage) => userLanguage.user)
+  userLanguages: UserLanguage[];
 }
