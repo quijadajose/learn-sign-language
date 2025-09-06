@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import { Card, Spinner, Button, Alert } from "flowbite-react";
 import { useLocalStorage } from "./hooks/useLocalStorage";
 import { useToast } from "./components/ToastProvider";
@@ -23,6 +23,7 @@ interface LessonResponse {
 
 export default function LessonListView() {
   const { stageId } = useParams<{ stageId: string }>();
+  const navigate = useNavigate();
   const [lessons, setLessons] = useState<Lesson[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -69,11 +70,11 @@ export default function LessonListView() {
   }, [stageId, token, addToast]);
 
   const handleViewLesson = (lessonId: string) => {
-    addToast("info", `Navegar a ver la lección: ${lessonId}`);
+    navigate(`/lesson/${lessonId}`);
   };
 
   const handleTakeExam = (lessonId: string) => {
-    addToast("info", `Navegar a tomar el examen de la lección: ${lessonId}`);
+    navigate(`/quiz/${lessonId}`);
   };
 
   return (

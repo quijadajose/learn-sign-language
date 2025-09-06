@@ -14,6 +14,8 @@ import LanguageManagement from "./admin/LanguageManagement";
 import LessonManagement from "./admin/LessonManagement";
 import { ToastProvider } from "./components/ToastProvider";
 import LessonListView from "./LessonListView";
+import LessonView from "./LessonView";
+import QuizView from "./QuizView";
 import StageManagement from "./admin/stageForm";
 
 function PrivateRoute({ children }: { children: JSX.Element }) {
@@ -49,6 +51,26 @@ function App() {
                 <PrivateRoute>
                   <DashboardLayout>
                     <LessonListView />
+                  </DashboardLayout>
+                </PrivateRoute>
+              }
+            />
+            <Route
+              path="/lesson/:lessonId"
+              element={
+                <PrivateRoute>
+                  <DashboardLayout>
+                    <LessonView />
+                  </DashboardLayout>
+                </PrivateRoute>
+              }
+            />
+            <Route
+              path="/quiz/:lessonId"
+              element={
+                <PrivateRoute>
+                  <DashboardLayout>
+                    <QuizView />
                   </DashboardLayout>
                 </PrivateRoute>
               }
