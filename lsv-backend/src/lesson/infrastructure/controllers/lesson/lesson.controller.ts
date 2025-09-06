@@ -23,6 +23,7 @@ import { Lesson } from 'src/shared/domain/entities/lesson';
 import * as path from 'path';
 import { PaginatedResponseDto } from 'src/shared/domain/dto/PaginationDto';
 import { GetLessonsQueryDto } from 'src/lesson/domain/dto/get-lessons-query-dto';
+import { AuthGuard } from '@nestjs/passport';
 
 @Controller('lesson')
 export class LessonController {
@@ -83,6 +84,20 @@ export class LessonController {
   @Get(':id')
   async getLessonById(@Param('id', ParseUUIDPipe) id: string): Promise<Lesson> {
     return this.lessonAdminService.getLessonById(id);
+  }
+
+  @UseGuards(RolesGuard)
+  @Roles('admin')
+  @Get(':id/with-quizzes')
+  async getLessonWithQuizzes(
+    @Param('id', ParseUUIDPipe) id: string,
+  ): Promise<Lesson> {
+    return this.lessonAdminService.getLessonWithQuizzes(id);
+  }
+  @UseGuards(AuthGuard('jwt'))
+  @Get(':id/quizzes')
+  async getQuizzesByLessonId(@Param('id', ParseUUIDPipe) id: string): Promise<any> {
+    return this.lessonAdminService.getQuizzesByLessonId(id);
   }
 
   @UseGuards(RolesGuard)
