@@ -8,6 +8,7 @@ import {
 } from 'src/shared/domain/dto/PaginationDto';
 import { Language } from 'src/shared/domain/entities/language';
 import { Lesson } from 'src/shared/domain/entities/lesson';
+import { Quiz } from 'src/shared/domain/entities/quiz';
 import { Stages } from 'src/shared/domain/entities/stage';
 import { QuizSubmission } from 'src/shared/domain/entities/quizSubmission';
 import { FindManyOptions, Repository } from 'typeorm';
@@ -44,6 +45,34 @@ export class LessonRepository implements LessonRepositoryInterface {
       where: { id },
       relations: ['stage'],
     });
+  }
+
+  findByIdWithQuizzes(id: string): Promise<Lesson | null> {
+    return this.lessonRepository.findOne({
+      where: { id },
+      relations: ['quizzes', 'quizzes.questions', 'quizzes.questions.options'],
+    });
+  }
+
+  async findQuizzesByLessonId(id: string): Promise<Quiz[]> {
+    const lesson = await this.findByIdWithQuizzes(id);
+    if (!lesson) {
+      throw new NotFoundException('Lesson not found');
+    }
+
+    // Mapea los quizzes para excluir el campo isCorrect de las opciones
+    const quizzesToReturn = lesson.quizzes.map((quiz) => ({
+      ...quiz,
+      questions: quiz.questions.map((question) => ({
+        ...question,
+        options: question.options.map((option) => {
+          const { isCorrect, ...rest } = option;
+          return rest;
+        }),
+      })),
+    }));
+
+    return quizzesToReturn as Quiz[];
   }
   findByNameInLanguage(
     name: string,

@@ -11,6 +11,8 @@ import { CreateLessonUseCase } from './application/use-cases/create-lesson-use-c
 import { DeleteLessonUseCase } from './application/use-cases/delete-lesson-use-case/delete-lesson-use-case';
 import { GetLessonByIdUseCase } from './application/use-cases/get-lesson-by-id-use-case/get-lesson-by-id-use-case';
 import { GetLessonByLanguageUseCase } from './application/use-cases/get-lesson-by-laguage-use-case/get-lesson-by-laguage-use-case';
+import { GetLessonWithQuizzesUseCase } from './application/use-cases/get-lesson-with-quizzes-use-case/get-lesson-with-quizzes-use-case';
+import { GetQuizzesByLessonIdUseCase } from './application/use-cases/get-quizzes-by-lesson-id-use-case/get-quizzes-by-lesson-id-use-case';
 import { UpdateLessonuseCase } from './application/use-cases/update-lessonuse-case/update-lessonuse-case';
 import { LessonController } from './infrastructure/controllers/lesson/lesson.controller';
 import { LessonRepository } from './infrastructure/typeorm/lesson.repository/lesson.repository';
@@ -28,6 +30,8 @@ import { LessonRepository } from './infrastructure/typeorm/lesson.repository/les
     GetLessonByIdUseCase,
     UpdateLessonuseCase,
     DeleteLessonUseCase,
+    GetLessonWithQuizzesUseCase,
+    GetQuizzesByLessonIdUseCase,
     {
       provide: 'LessonRepositoryInterface',
       useClass: LessonRepository,
@@ -40,6 +44,8 @@ import { LessonRepository } from './infrastructure/typeorm/lesson.repository/les
     GetLessonByIdUseCase,
     UpdateLessonuseCase,
     DeleteLessonUseCase,
+    GetLessonWithQuizzesUseCase,
+    GetQuizzesByLessonIdUseCase,
     TypeOrmModule,
   ],
 })

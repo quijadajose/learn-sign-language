@@ -4,9 +4,12 @@ import {
   PaginatedResponseDto,
 } from 'src/shared/domain/dto/PaginationDto';
 import { Lesson } from 'src/shared/domain/entities/lesson';
+import { Quiz } from 'src/shared/domain/entities/quiz';
 
 export interface LessonRepositoryInterface {
   findById(id: string): Promise<Lesson | null>;
+  findByIdWithQuizzes(id: string): Promise<Lesson | null>;
+  findQuizzesByLessonId(id: string): Promise<Quiz[]>;
   findByNameInLanguage(
     name: string,
     languageId: string,

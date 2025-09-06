@@ -10,6 +10,8 @@ import {
 import { GetLessonByIdUseCase } from '../../use-cases/get-lesson-by-id-use-case/get-lesson-by-id-use-case';
 import { DeleteLessonUseCase } from '../../use-cases/delete-lesson-use-case/delete-lesson-use-case';
 import { UpdateLessonuseCase } from '../../use-cases/update-lessonuse-case/update-lessonuse-case';
+import { GetLessonWithQuizzesUseCase } from '../../use-cases/get-lesson-with-quizzes-use-case/get-lesson-with-quizzes-use-case';
+import { GetQuizzesByLessonIdUseCase } from '../../use-cases/get-quizzes-by-lesson-id-use-case/get-quizzes-by-lesson-id-use-case';
 
 @Injectable()
 export class LessonService {
@@ -20,6 +22,8 @@ export class LessonService {
     private readonly getLessonByIdUseCase: GetLessonByIdUseCase,
     private readonly updateLessonUseCase: UpdateLessonuseCase,
     private readonly deleteLessonUseCase: DeleteLessonUseCase,
+    private readonly getLessonWithQuizzesUseCase: GetLessonWithQuizzesUseCase,
+    private readonly getQuizzesByLessonIdUseCase: GetQuizzesByLessonIdUseCase,
   ) {}
   async createLesson(createLessonDto: CreateLessonDto) {
     return await this.createLessonUseCase.execute(createLessonDto);
@@ -46,6 +50,15 @@ export class LessonService {
   async getLessonById(id: string) {
     return await this.getLessonByIdUseCase.execute(id);
   }
+
+  async getLessonWithQuizzes(id: string) {
+    return await this.getLessonWithQuizzesUseCase.execute(id);
+  }
+
+  async getQuizzesByLessonId(id: string) {
+    return await this.getQuizzesByLessonIdUseCase.execute(id);
+  }
+
   async updateLesson(id: string, createLessonDto: CreateLessonDto) {
     return await this.updateLessonUseCase.execute(id, createLessonDto);
   }
