@@ -2,6 +2,7 @@ import {
   BadRequestException,
   Body,
   Controller,
+  Delete,
   Get,
   InternalServerErrorException,
   Param,
@@ -9,7 +10,10 @@ import {
   Post,
   Query,
   Req,
+  UseGuards,
 } from '@nestjs/common';
+import { Roles } from 'src/auth/infrastructure/decorators/roles.decorator';
+import { RolesGuard } from 'src/auth/infrastructure/guards/roles/roles.guard';
 import { QuizDto } from 'src/quiz/domain/dto/quiz/quiz-dto';
 import { SubmissionDto } from 'src/quiz/application/dto/submission/submission-dto';
 import { QuizService } from 'src/quiz/application/services/quiz/quiz.service';
@@ -71,5 +75,12 @@ export class QuizController {
         `Get submission tests failed: ${error.message}`,
       );
     }
+  }
+
+  @UseGuards(RolesGuard)
+  @Roles('admin')
+  @Delete(':id')
+  async delete(@Param('id', ParseUUIDPipe) id: string): Promise<void> {
+    return this.quizService.deleteQuiz(id);
   }
 }

@@ -13,6 +13,7 @@ import { SubmissionTestUseCase } from '../../use-cases/submission-test-use-case/
 import { SubmissionDto } from '../../dto/submission/submission-dto';
 import { GetUserByIdUseCase } from 'src/users/application/use-cases/get-user-by-id-use-case/get-user-by-id-use-case';
 import { GetSubmissionTestFromUserUseCase } from '../../use-cases/get-submission-test-from-user-use-case/get-submission-test-from-user-use-case';
+import { DeleteQuizUseCase } from '../../use-cases/delete-quiz-use-case/delete-quiz-use-case';
 
 @Injectable()
 export class QuizService {
@@ -23,6 +24,7 @@ export class QuizService {
     private readonly submissionTestUseCase: SubmissionTestUseCase,
     private readonly getUserByIdUseCase: GetUserByIdUseCase,
     private readonly getSubmissionTestFromUserUseCase: GetSubmissionTestFromUserUseCase,
+    private readonly deleteQuizUseCase: DeleteQuizUseCase,
   ) {}
   createQuiz(quizDto: QuizDto) {
     return this.createQuizWithQuestionsAndOptionsUseCase.execute(quizDto);
@@ -80,5 +82,9 @@ export class QuizService {
       quiz,
       pagination,
     );
+  }
+
+  async deleteQuiz(id: string): Promise<void> {
+    return await this.deleteQuizUseCase.execute(id);
   }
 }
