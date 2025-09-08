@@ -177,7 +177,11 @@ export default function LanguageSelection({ onLanguageSelected }: Props) {
         {title}
       </h1>
 
-      {loading && <Spinner size="xl" />}
+      {loading && (
+        <div className="flex items-center justify-center py-8">
+          <Spinner size="xl" />
+        </div>
+      )}
       {error && (
         <Alert color="failure" icon={HiExclamationCircle}>
           {error}
