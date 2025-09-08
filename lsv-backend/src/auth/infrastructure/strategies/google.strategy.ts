@@ -53,7 +53,7 @@ export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
     done(null, {
       sub: user.id,
       email: user.email,
-      access_token
+      access_token,
     });
   }
   private calculateAge(birthday: string): number {
