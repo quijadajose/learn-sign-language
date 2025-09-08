@@ -144,6 +144,12 @@ const DashboardLayout = ({ children }: Props) => {
           >
             Dashboard
           </Navbar.Link>
+          <Navbar.Link
+            href="/leaderboard"
+            active={location.pathname === "/leaderboard"}
+          >
+            Leaderboard
+          </Navbar.Link>
           {userData?.role === "admin" && (
             <>
               <Navbar.Link

@@ -132,7 +132,6 @@ export default function LessonListView() {
           alt="Opción de respuesta"
           className="h-auto max-h-32 max-w-full rounded border object-contain"
           onError={(e) => {
-            // Si la imagen falla al cargar, mostrar el texto como fallback
             const target = e.target as HTMLImageElement;
             target.style.display = "none";
             const parent = target.parentElement;
@@ -226,7 +225,6 @@ export default function LessonListView() {
         </Card>
       )}
 
-      {/* Modal para mostrar submissions */}
       <Modal show={showModal} onClose={() => setShowModal(false)} size="4xl">
         <Modal.Header>
           <div className="flex items-center gap-2">
