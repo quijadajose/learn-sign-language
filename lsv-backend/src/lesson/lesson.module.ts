@@ -1,6 +1,7 @@
-import { Module } from '@nestjs/common';
+import { Module, forwardRef } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { LanguageModule } from 'src/language/language.module';
+import { QuizModule } from 'src/quiz/quiz.module';
 import { UploadPictureUseCase } from 'src/shared/application/use-cases/upload-picture-use-case/upload-picture-use-case';
 import { Language } from 'src/shared/domain/entities/language';
 import { Lesson } from 'src/shared/domain/entities/lesson';
@@ -13,6 +14,7 @@ import { GetLessonByIdUseCase } from './application/use-cases/get-lesson-by-id-u
 import { GetLessonByLanguageUseCase } from './application/use-cases/get-lesson-by-laguage-use-case/get-lesson-by-laguage-use-case';
 import { GetLessonWithQuizzesUseCase } from './application/use-cases/get-lesson-with-quizzes-use-case/get-lesson-with-quizzes-use-case';
 import { GetQuizzesByLessonIdUseCase } from './application/use-cases/get-quizzes-by-lesson-id-use-case/get-quizzes-by-lesson-id-use-case';
+import { GetLessonsByLanguageWithSubmissionsUseCase } from './application/use-cases/get-lessons-by-language-with-submissions-use-case/get-lessons-by-language-with-submissions-use-case';
 import { UpdateLessonuseCase } from './application/use-cases/update-lessonuse-case/update-lessonuse-case';
 import { LessonController } from './infrastructure/controllers/lesson/lesson.controller';
 import { LessonRepository } from './infrastructure/typeorm/lesson.repository/lesson.repository';
@@ -21,6 +23,7 @@ import { LessonRepository } from './infrastructure/typeorm/lesson.repository/les
   imports: [
     TypeOrmModule.forFeature([Lesson, Stages, Language, QuizSubmission]),
     LanguageModule,
+    forwardRef(() => QuizModule),
   ],
   providers: [
     LessonService,
@@ -32,6 +35,7 @@ import { LessonRepository } from './infrastructure/typeorm/lesson.repository/les
     DeleteLessonUseCase,
     GetLessonWithQuizzesUseCase,
     GetQuizzesByLessonIdUseCase,
+    GetLessonsByLanguageWithSubmissionsUseCase,
     {
       provide: 'LessonRepositoryInterface',
       useClass: LessonRepository,
@@ -46,6 +50,11 @@ import { LessonRepository } from './infrastructure/typeorm/lesson.repository/les
     DeleteLessonUseCase,
     GetLessonWithQuizzesUseCase,
     GetQuizzesByLessonIdUseCase,
+    GetLessonsByLanguageWithSubmissionsUseCase,
+    {
+      provide: 'LessonRepositoryInterface',
+      useClass: LessonRepository,
+    },
     TypeOrmModule,
   ],
 })

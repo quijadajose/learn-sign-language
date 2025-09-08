@@ -12,6 +12,7 @@ import { DeleteLessonUseCase } from '../../use-cases/delete-lesson-use-case/dele
 import { UpdateLessonuseCase } from '../../use-cases/update-lessonuse-case/update-lessonuse-case';
 import { GetLessonWithQuizzesUseCase } from '../../use-cases/get-lesson-with-quizzes-use-case/get-lesson-with-quizzes-use-case';
 import { GetQuizzesByLessonIdUseCase } from '../../use-cases/get-quizzes-by-lesson-id-use-case/get-quizzes-by-lesson-id-use-case';
+import { GetLessonsByLanguageWithSubmissionsUseCase } from '../../use-cases/get-lessons-by-language-with-submissions-use-case/get-lessons-by-language-with-submissions-use-case';
 
 @Injectable()
 export class LessonService {
@@ -24,6 +25,7 @@ export class LessonService {
     private readonly deleteLessonUseCase: DeleteLessonUseCase,
     private readonly getLessonWithQuizzesUseCase: GetLessonWithQuizzesUseCase,
     private readonly getQuizzesByLessonIdUseCase: GetQuizzesByLessonIdUseCase,
+    private readonly getLessonsByLanguageWithSubmissionsUseCase: GetLessonsByLanguageWithSubmissionsUseCase,
   ) {}
   async createLesson(createLessonDto: CreateLessonDto) {
     return await this.createLessonUseCase.execute(createLessonDto);
@@ -57,6 +59,20 @@ export class LessonService {
 
   async getQuizzesByLessonId(id: string) {
     return await this.getQuizzesByLessonIdUseCase.execute(id);
+  }
+
+  async getLessonsByLanguageWithSubmissions(
+    languageId: string,
+    userId: string,
+    pagination: PaginationDto,
+    stageId?: string,
+  ): Promise<PaginatedResponseDto<any>> {
+    return await this.getLessonsByLanguageWithSubmissionsUseCase.execute(
+      languageId,
+      userId,
+      pagination,
+      stageId,
+    );
   }
 
   async updateLesson(id: string, createLessonDto: CreateLessonDto) {

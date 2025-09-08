@@ -11,7 +11,6 @@ import { SetLessonCompletionUseCase } from './application/use-cases/set-lesson-c
 import { UserRepository } from 'src/auth/infrastructure/typeorm/user.repository/user.repository';
 import { FindUserUseCase } from 'src/auth/domain/use-cases/find-user/find-user';
 import { User } from 'src/shared/domain/entities/user';
-import { LessonRepository } from 'src/lesson/infrastructure/typeorm/lesson.repository/lesson.repository';
 import { Lesson } from 'src/shared/domain/entities/lesson';
 import { Stages } from 'src/shared/domain/entities/stage';
 import { Language } from 'src/shared/domain/entities/language';
@@ -45,10 +44,7 @@ import { LessonModule } from 'src/lesson/lesson.module';
       provide: 'UserRepositoryInterface',
       useClass: UserRepository,
     },
-    {
-      provide: 'LessonRepositoryInterface',
-      useClass: LessonRepository,
-    },
+    // Removemos la instancia directa del LessonRepository ya que viene del LessonModule
   ],
   controllers: [UserLessonController],
 })

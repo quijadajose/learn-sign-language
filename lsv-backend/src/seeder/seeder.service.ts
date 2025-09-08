@@ -52,7 +52,7 @@ export class SeederService implements OnModuleInit {
         this.configService.get<string>('API_ADMIN_EMAIL'),
       ))
     ) {
-      await this.registerUserUseCase.register({
+      const admin = await this.registerUserUseCase.register({
         age: 20,
         email: this.configService.get<string>('API_ADMIN_EMAIL'),
         firstName: 'admin',
@@ -127,136 +127,26 @@ export class SeederService implements OnModuleInit {
           description: stageData.description,
         });
       }
-      // guardamos el id del primer stage
       if (stageData.name === 'A I') {
         this.stageId = stage.id;
       }
     }
   }
   private async seedLessons() {
-    const lessons = [
-      {
+    const lesson = await this.lessonRepository.findByNameInLanguage(
+      'El abecedario',
+      this.languageId,
+    );
+    this.lessonId = lesson?.id;
+    if (!this.lessonId && this.languageId && this.stageId) {
+      const lesson = await this.createLessonUseCase.execute({
         name: 'El abecedario',
         content: 'A,B,C ... , X,Y,Z',
         description: 'El abecedario de la A a la Z',
-      },
-      {
-        name: 'Saludos básicos',
-        content: 'Hola, Adiós, Buenos días, Buenas noches',
-        description: 'Frases comunes para saludar y despedirse',
-      },
-      {
-        name: 'Los números del 1 al 20',
-        content: '1, 2, 3, ..., 20',
-        description: 'Aprende a contar del uno al veinte',
-      },
-      {
-        name: 'Colores primarios',
-        content: 'Rojo, Azul, Amarillo',
-        description: 'Identificación de colores básicos',
-      },
-      {
-        name: 'Días de la semana',
-        content: 'Lunes, Martes, ..., Domingo',
-        description: 'Los siete días de la semana',
-      },
-      {
-        name: 'Meses del año',
-        content: 'Enero, Febrero, ..., Diciembre',
-        description: 'Los doce meses del calendario',
-      },
-      {
-        name: 'Partes del cuerpo',
-        content: 'Cabeza, Brazos, Piernas, Manos',
-        description: 'Vocabulario sobre el cuerpo humano',
-      },
-      {
-        name: 'La familia',
-        content: 'Madre, Padre, Hermano, Hermana',
-        description: 'Miembros de la familia',
-      },
-      {
-        name: 'Animales domésticos',
-        content: 'Perro, Gato, Pez, Pájaro',
-        description: 'Mascotas comunes',
-      },
-      {
-        name: 'Frutas y verduras',
-        content: 'Manzana, Plátano, Zanahoria, Tomate',
-        description: 'Alimentos saludables',
-      },
-      {
-        name: 'Objetos de la casa',
-        content: 'Mesa, Silla, Cama, Puerta',
-        description: 'Vocabulario del hogar',
-      },
-      {
-        name: 'Ropa y accesorios',
-        content: 'Camisa, Pantalón, Zapatos, Sombrero',
-        description: 'Vestimenta básica',
-      },
-      {
-        name: 'Clima y estaciones',
-        content: 'Soleado, Lluvioso, Invierno, Verano',
-        description: 'Condiciones climáticas y estaciones del año',
-      },
-      {
-        name: 'Transporte',
-        content: 'Carro, Bicicleta, Autobús, Avión',
-        description: 'Medios de transporte comunes',
-      },
-      {
-        name: 'Profesiones',
-        content: 'Doctor, Maestro, Policía, Cocinero',
-        description: 'Ocupaciones y trabajos',
-      },
-      {
-        name: 'Acciones cotidianas',
-        content: 'Comer, Dormir, Leer, Escribir',
-        description: 'Verbos comunes en la rutina diaria',
-      },
-      {
-        name: 'Formas geométricas',
-        content: 'Círculo, Cuadrado, Triángulo, Rectángulo',
-        description: 'Identificación de formas básicas',
-      },
-      {
-        name: 'Preposiciones de lugar',
-        content: 'Encima, Debajo, Dentro, Fuera',
-        description: 'Ubicación espacial',
-      },
-      {
-        name: 'Emociones y sentimientos',
-        content: 'Feliz, Triste, Enojado, Asustado',
-        description: 'Cómo expresar estados emocionales',
-      },
-      {
-        name: 'Comida y bebida',
-        content: 'Pan, Agua, Jugo, Arroz',
-        description: 'Vocabulario de alimentos y bebidas',
-      },
-    ];
-
-    for (const lessonData of lessons) {
-      const existingLesson = await this.lessonRepository.findByNameInLanguage(
-        lessonData.name,
-        this.languageId,
-      );
-
-      if (!existingLesson && this.languageId && this.stageId) {
-        const lesson = await this.createLessonUseCase.execute({
-          name: lessonData.name,
-          content: lessonData.content,
-          description: lessonData.description,
-          languageId: this.languageId,
-          stageId: this.stageId,
-        });
-
-        // Guardamos el ID de la primera lección para el quiz
-        if (lessonData.name === 'El abecedario') {
-          this.lessonId = lesson.id;
-        }
-      }
+        languageId: this.languageId,
+        stageId: this.stageId,
+      });
+      this.lessonId = lesson.id;
     }
   }
   private async seedQuiz() {
