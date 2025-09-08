@@ -55,7 +55,7 @@ export default function LessonView() {
             },
           },
         );
-        
+
         if (!res.ok) throw new Error(await res.text());
         const lessonData: Lesson = await res.json();
         setLesson(lessonData);
@@ -89,27 +89,30 @@ export default function LessonView() {
     setUpdatingCompletion(true);
     try {
       const newCompletionStatus = !isComplete;
-      
-      const res = await fetch(`${BACKEND_BASE_URL}/user-lesson/set-lesson-completion`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
+
+      const res = await fetch(
+        `${BACKEND_BASE_URL}/user-lesson/set-lesson-completion`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            lessonId: lessonId,
+            isComplete: newCompletionStatus,
+          }),
         },
-        body: JSON.stringify({
-          lessonId: lessonId,
-          isComplete: newCompletionStatus,
-        }),
-      });
+      );
 
       if (!res.ok) throw new Error(await res.text());
 
       setIsComplete(newCompletionStatus);
       addToast(
-        "success", 
-        newCompletionStatus 
-          ? "Lección marcada como completada" 
-          : "Lección desmarcada como completada"
+        "success",
+        newCompletionStatus
+          ? "Lección marcada como completada"
+          : "Lección desmarcada como completada",
       );
     } catch (err: any) {
       addToast("error", err.message);
@@ -178,19 +181,19 @@ export default function LessonView() {
 
       <Card className="mb-6">
         <div className="mb-6">
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-4">
+          <h1 className="mb-4 text-3xl font-bold text-gray-900 dark:text-white">
             {lesson.name}
           </h1>
-          <p className="text-lg text-gray-700 dark:text-gray-300 mb-6">
+          <p className="mb-6 text-lg text-gray-700 dark:text-gray-300">
             {lesson.description}
           </p>
         </div>
 
         <div className="mb-6">
-          <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">
+          <h3 className="mb-4 text-xl font-semibold text-gray-900 dark:text-white">
             Contenido de la lección
           </h3>
-          <div className="border border-gray-200 dark:border-gray-700 rounded-lg">
+          <div className="rounded-lg border border-gray-200 dark:border-gray-700">
             <ReactQuill
               value={lesson.content}
               readOnly={true}

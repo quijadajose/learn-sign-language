@@ -144,12 +144,6 @@ const DashboardLayout = ({ children }: Props) => {
           >
             Dashboard
           </Navbar.Link>
-          <Navbar.Link
-            href="/lessons"
-            active={location.pathname.startsWith("/lessons")}
-          >
-            Lessons
-          </Navbar.Link>
           {userData?.role === "admin" && (
             <>
               <Navbar.Link

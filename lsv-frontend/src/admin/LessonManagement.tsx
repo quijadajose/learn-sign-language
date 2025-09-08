@@ -170,7 +170,8 @@ export default function LessonManagement() {
 
   const [isQuizModalOpen, setIsQuizModalOpen] = useState(false);
   const [quizLoading, setQuizLoading] = useState(false);
-  const [selectedLessonForQuiz, setSelectedLessonForQuiz] = useState<Lesson | null>(null);
+  const [selectedLessonForQuiz, setSelectedLessonForQuiz] =
+    useState<Lesson | null>(null);
   const [quizQuestions, setQuizQuestions] = useState<QuizQuestion[]>([]);
   const [existingQuizzes, setExistingQuizzes] = useState<ExistingQuiz[]>([]);
   const [loadingQuizzes, setLoadingQuizzes] = useState(false);
@@ -402,48 +403,56 @@ export default function LessonManagement() {
       setLoadingQuizzes(true);
       const token = localStorage.getItem("auth");
 
-      const response = await fetch(`${BACKEND_BASE_URL}/lesson/${lessonId}/with-quizzes`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
+      const response = await fetch(
+        `${BACKEND_BASE_URL}/lesson/${lessonId}/with-quizzes`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
         },
-      });
+      );
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
-        const errorMessage = errorData.message || `Error al cargar quizzes (${response.status})`;
+        const errorMessage =
+          errorData.message || `Error al cargar quizzes (${response.status})`;
         throw new Error(errorMessage);
       }
 
       const lessonWithQuizzes: LessonWithQuizzes = await response.json();
       setExistingQuizzes(lessonWithQuizzes.quizzes || []);
-      
+
       if (lessonWithQuizzes.quizzes && lessonWithQuizzes.quizzes.length > 0) {
         setQuizQuestions(lessonWithQuizzes.quizzes[0].questions);
       } else {
-        setQuizQuestions([{
+        setQuizQuestions([
+          {
+            text: "",
+            options: [
+              { text: "", isCorrect: false },
+              { text: "", isCorrect: false },
+            ],
+          },
+        ]);
+      }
+    } catch (err) {
+      const errorMessage =
+        err instanceof Error ? err.message : "Error al cargar quizzes";
+      addToast("error", errorMessage);
+      setQuizQuestions([
+        {
           text: "",
           options: [
             { text: "", isCorrect: false },
-            { text: "", isCorrect: false }
-          ]
-        }]);
-      }
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : "Error al cargar quizzes";
-      addToast("error", errorMessage);
-      setQuizQuestions([{
-        text: "",
-        options: [
-          { text: "", isCorrect: false },
-          { text: "", isCorrect: false }
-        ]
-      }]);
+            { text: "", isCorrect: false },
+          ],
+        },
+      ]);
     } finally {
       setLoadingQuizzes(false);
     }
   };
-
 
   const handleCloseQuizModal = () => {
     setIsQuizModalOpen(false);
@@ -453,13 +462,16 @@ export default function LessonManagement() {
   };
 
   const addQuestion = () => {
-    setQuizQuestions([...quizQuestions, {
-      text: "",
-      options: [
-        { text: "", isCorrect: false },
-        { text: "", isCorrect: false }
-      ]
-    }]);
+    setQuizQuestions([
+      ...quizQuestions,
+      {
+        text: "",
+        options: [
+          { text: "", isCorrect: false },
+          { text: "", isCorrect: false },
+        ],
+      },
+    ]);
   };
 
   const removeQuestion = (index: number) => {
@@ -488,7 +500,11 @@ export default function LessonManagement() {
     }
   };
 
-  const updateOption = (questionIndex: number, optionIndex: number, text: string) => {
+  const updateOption = (
+    questionIndex: number,
+    optionIndex: number,
+    text: string,
+  ) => {
     const updated = [...quizQuestions];
     updated[questionIndex].options[optionIndex].text = text;
     setQuizQuestions(updated);
@@ -496,7 +512,9 @@ export default function LessonManagement() {
 
   const toggleCorrectOption = (questionIndex: number, optionIndex: number) => {
     const updated = [...quizQuestions];
-    updated[questionIndex].options.forEach(option => option.isCorrect = false);
+    updated[questionIndex].options.forEach(
+      (option) => (option.isCorrect = false),
+    );
     updated[questionIndex].options[optionIndex].isCorrect = true;
     setQuizQuestions(updated);
   };
@@ -505,7 +523,7 @@ export default function LessonManagement() {
     const token = localStorage.getItem("auth");
     const formData = new FormData();
     formData.append("id", crypto.randomUUID());
-    formData.append("format", file.type.split('/')[1] || 'png');
+    formData.append("format", file.type.split("/")[1] || "png");
     formData.append("file", file);
 
     const response = await fetch(`${BACKEND_BASE_URL}/images/upload/quiz`, {
@@ -524,10 +542,14 @@ export default function LessonManagement() {
     return urls[0];
   };
 
-  const handleImageUpload = async (questionIndex: number, optionIndex: number, file: File) => {
+  const handleImageUpload = async (
+    questionIndex: number,
+    optionIndex: number,
+    file: File,
+  ) => {
     try {
       updateOption(questionIndex, optionIndex, "Subiendo imagen...");
-      
+
       const imageUrl = await uploadImage(file);
       updateOption(questionIndex, optionIndex, imageUrl);
       addToast("success", "Imagen subida correctamente");
@@ -550,7 +572,8 @@ export default function LessonManagement() {
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
-        const errorMessage = errorData.message || `Error al eliminar quiz (${response.status})`;
+        const errorMessage =
+          errorData.message || `Error al eliminar quiz (${response.status})`;
         throw new Error(errorMessage);
       }
 
@@ -559,7 +582,8 @@ export default function LessonManagement() {
         fetchExistingQuizzes(selectedLessonForQuiz.id);
       }
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : "Error al eliminar quiz";
+      const errorMessage =
+        err instanceof Error ? err.message : "Error al eliminar quiz";
       addToast("error", errorMessage);
     }
   };
@@ -567,14 +591,18 @@ export default function LessonManagement() {
   const handleSubmitQuiz = async () => {
     if (!selectedLessonForQuiz) return;
 
-    const isValid = quizQuestions.every(question => 
-      question.text.trim() !== "" && 
-      question.options.some(option => option.isCorrect) &&
-      question.options.every(option => option.text.trim() !== "")
+    const isValid = quizQuestions.every(
+      (question) =>
+        question.text.trim() !== "" &&
+        question.options.some((option) => option.isCorrect) &&
+        question.options.every((option) => option.text.trim() !== ""),
     );
 
     if (!isValid) {
-      addToast("error", "Completa todas las preguntas y asegúrate de que cada una tenga al menos una respuesta correcta");
+      addToast(
+        "error",
+        "Completa todas las preguntas y asegúrate de que cada una tenga al menos una respuesta correcta",
+      );
       return;
     }
 
@@ -586,12 +614,12 @@ export default function LessonManagement() {
         await deleteExistingQuiz(quiz.id);
       }
 
-      const cleanQuestions = quizQuestions.map(question => ({
+      const cleanQuestions = quizQuestions.map((question) => ({
         text: question.text,
-        options: question.options.map(option => ({
+        options: question.options.map((option) => ({
           text: option.text,
-          isCorrect: option.isCorrect
-        }))
+          isCorrect: option.isCorrect,
+        })),
       }));
 
       const response = await fetch(`${BACKEND_BASE_URL}/quiz`, {
@@ -608,14 +636,16 @@ export default function LessonManagement() {
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
-        const errorMessage = errorData.message || `Error al crear quiz (${response.status})`;
+        const errorMessage =
+          errorData.message || `Error al crear quiz (${response.status})`;
         throw new Error(errorMessage);
       }
 
       addToast("success", "Quiz actualizado correctamente");
       handleCloseQuizModal();
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : "Error al crear quiz";
+      const errorMessage =
+        err instanceof Error ? err.message : "Error al crear quiz";
       addToast("error", errorMessage);
     } finally {
       setQuizLoading(false);
@@ -1501,19 +1531,23 @@ export default function LessonManagement() {
           ) : (
             <div className="space-y-6">
               {existingQuizzes.length > 0 && (
-                <div className="border border-gray-200 dark:border-gray-700 rounded-lg p-4">
-                  <h4 className="text-lg font-medium text-gray-900 dark:text-white mb-4">
+                <div className="rounded-lg border border-gray-200 p-4 dark:border-gray-700">
+                  <h4 className="mb-4 text-lg font-medium text-gray-900 dark:text-white">
                     Quizzes Existentes ({existingQuizzes.length})
                   </h4>
                   <div className="space-y-3">
                     {existingQuizzes.map((quiz, index) => (
-                      <div key={quiz.id} className="flex items-center justify-between bg-gray-50 dark:bg-gray-700 rounded p-3">
+                      <div
+                        key={quiz.id}
+                        className="flex items-center justify-between rounded bg-gray-50 p-3 dark:bg-gray-700"
+                      >
                         <div>
                           <span className="text-sm font-medium text-gray-900 dark:text-white">
                             Quiz {index + 1}
                           </span>
                           <span className="ml-2 text-sm text-gray-500 dark:text-gray-400">
-                            ({quiz.questions.length} pregunta{quiz.questions.length !== 1 ? 's' : ''})
+                            ({quiz.questions.length} pregunta
+                            {quiz.questions.length !== 1 ? "s" : ""})
                           </span>
                         </div>
                         <div className="flex gap-2">
@@ -1539,165 +1573,207 @@ export default function LessonManagement() {
                 </div>
               )}
 
-              <div className="border border-gray-200 dark:border-gray-700 rounded-lg p-4">
-                <h4 className="text-lg font-medium text-gray-900 dark:text-white mb-4">
-                  {existingQuizzes.length > 0 ? 'Editar Quiz' : 'Crear Nuevo Quiz'}
+              <div className="rounded-lg border border-gray-200 p-4 dark:border-gray-700">
+                <h4 className="mb-4 text-lg font-medium text-gray-900 dark:text-white">
+                  {existingQuizzes.length > 0
+                    ? "Editar Quiz"
+                    : "Crear Nuevo Quiz"}
                 </h4>
-                <div className="max-h-96 overflow-y-auto space-y-6">
-            {quizQuestions.map((question, questionIndex) => (
-              <div key={questionIndex} className="border border-gray-200 dark:border-gray-700 rounded-lg p-4">
-                <div className="flex items-center justify-between mb-4">
-                  <h4 className="text-lg font-medium text-gray-900 dark:text-white">
-                    Pregunta {questionIndex + 1}
-                  </h4>
-                  <div className="flex gap-2">
-                    <Button
-                      size="sm"
-                      color="light"
-                      onClick={() => addQuestion()}
+                <div className="max-h-96 space-y-6 overflow-y-auto">
+                  {quizQuestions.map((question, questionIndex) => (
+                    <div
+                      key={questionIndex}
+                      className="rounded-lg border border-gray-200 p-4 dark:border-gray-700"
                     >
-                      <HiPlus className="mr-1 size-4" />
-                      Agregar Pregunta
-                    </Button>
-                    {quizQuestions.length > 1 && (
-                      <Button
-                        size="sm"
-                        color="failure"
-                        onClick={() => removeQuestion(questionIndex)}
-                      >
-                        <HiX className="mr-1 size-4" />
-                        Eliminar
-                      </Button>
-                    )}
-                  </div>
-                </div>
-
-                <div className="mb-4">
-                  <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
-                    Texto de la pregunta
-                  </label>
-                  <Textarea
-                    rows={2}
-                    value={question.text}
-                    onChange={(e) => updateQuestion(questionIndex, e.target.value)}
-                    placeholder="Escribe tu pregunta aquí..."
-                  />
-                </div>
-
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between">
-                    <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                      Opciones de respuesta
-                    </label>
-                    <Button
-                      size="sm"
-                      color="light"
-                      onClick={() => addOption(questionIndex)}
-                    >
-                      <HiPlus className="mr-1 size-4" />
-                      Agregar Opción
-                    </Button>
-                  </div>
-
-                  {question.options.map((option, optionIndex) => {
-                    const isImageUrl = option.text && (
-                      option.text.startsWith('http') || 
-                      option.text.startsWith('/images/') ||
-                      option.text.includes('.jpg') || 
-                      option.text.includes('.jpeg') || 
-                      option.text.includes('.png') || 
-                      option.text.includes('.gif') || 
-                      option.text.includes('.webp')
-                    ) && !option.text.includes('Subiendo imagen');
-                    
-                    return (
-                      <div key={optionIndex} className="flex items-center gap-3">
-                        <input
-                          type="radio"
-                          name={`question-${questionIndex}`}
-                          checked={option.isCorrect}
-                          onChange={() => toggleCorrectOption(questionIndex, optionIndex)}
-                          className="size-4 text-blue-600"
-                        />
-                        <div className="flex-1">
-                          {isImageUrl ? (
-                            <div className="space-y-2">
-                              <div className="relative">
-                                <img 
-                                  src={`${BACKEND_BASE_URL}${option.text}`} 
-                                  alt="Preview" 
-                                  className="w-32 h-20 object-cover rounded border"
-                                  onError={(e) => {
-                                    const target = e.target as HTMLImageElement;
-                                    target.style.display = 'none';
-                                    const textInput = target.parentElement?.nextElementSibling as HTMLInputElement;
-                                    if (textInput) textInput.style.display = 'block';
-                                  }}
-                                />
-                                <Button
-                                  size="xs"
-                                  color="light"
-                                  className="absolute top-1 right-1"
-                                  onClick={() => {
-                                    const fileInput = document.getElementById(`file-${questionIndex}-${optionIndex}`) as HTMLInputElement;
-                                    fileInput?.click();
-                                  }}
-                                >
-                                  ✏️
-                                </Button>
-                              </div>
-                              <TextInput
-                                value={option.text}
-                                onChange={(e) => updateOption(questionIndex, optionIndex, e.target.value)}
-                                placeholder="URL de imagen..."
-                                style={{ display: 'none' }}
-                              />
-                            </div>
-                          ) : (
-                            <TextInput
-                              value={option.text}
-                              onChange={(e) => updateOption(questionIndex, optionIndex, e.target.value)}
-                              placeholder="Texto de la opción..."
-                            />
-                          )}
-                        </div>
-                        <input
-                          type="file"
-                          accept="image/*"
-                          onChange={(e) => {
-                            const file = e.target.files?.[0];
-                            if (file) {
-                              handleImageUpload(questionIndex, optionIndex, file);
-                            }
-                          }}
-                          className="hidden"
-                          id={`file-${questionIndex}-${optionIndex}`}
-                        />
-                        <Button 
-                          size="sm" 
-                          color="light"
-                          onClick={() => {
-                            const fileInput = document.getElementById(`file-${questionIndex}-${optionIndex}`) as HTMLInputElement;
-                            fileInput?.click();
-                          }}
-                        >
-                          📷
-                        </Button>
-                        {question.options.length > 2 && (
+                      <div className="mb-4 flex items-center justify-between">
+                        <h4 className="text-lg font-medium text-gray-900 dark:text-white">
+                          Pregunta {questionIndex + 1}
+                        </h4>
+                        <div className="flex gap-2">
                           <Button
                             size="sm"
-                            color="failure"
-                            onClick={() => removeOption(questionIndex, optionIndex)}
+                            color="light"
+                            onClick={() => addQuestion()}
                           >
-                            <HiX className="size-4" />
+                            <HiPlus className="mr-1 size-4" />
+                            Agregar Pregunta
                           </Button>
-                        )}
+                          {quizQuestions.length > 1 && (
+                            <Button
+                              size="sm"
+                              color="failure"
+                              onClick={() => removeQuestion(questionIndex)}
+                            >
+                              <HiX className="mr-1 size-4" />
+                              Eliminar
+                            </Button>
+                          )}
+                        </div>
                       </div>
-                    );
-                  })}
-                </div>
-              </div>
-            ))}
+
+                      <div className="mb-4">
+                        <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
+                          Texto de la pregunta
+                        </label>
+                        <Textarea
+                          rows={2}
+                          value={question.text}
+                          onChange={(e) =>
+                            updateQuestion(questionIndex, e.target.value)
+                          }
+                          placeholder="Escribe tu pregunta aquí..."
+                        />
+                      </div>
+
+                      <div className="space-y-3">
+                        <div className="flex items-center justify-between">
+                          <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                            Opciones de respuesta
+                          </label>
+                          <Button
+                            size="sm"
+                            color="light"
+                            onClick={() => addOption(questionIndex)}
+                          >
+                            <HiPlus className="mr-1 size-4" />
+                            Agregar Opción
+                          </Button>
+                        </div>
+
+                        {question.options.map((option, optionIndex) => {
+                          const isImageUrl =
+                            option.text &&
+                            (option.text.startsWith("http") ||
+                              option.text.startsWith("/images/") ||
+                              option.text.includes(".jpg") ||
+                              option.text.includes(".jpeg") ||
+                              option.text.includes(".png") ||
+                              option.text.includes(".gif") ||
+                              option.text.includes(".webp")) &&
+                            !option.text.includes("Subiendo imagen");
+
+                          return (
+                            <div
+                              key={optionIndex}
+                              className="flex items-center gap-3"
+                            >
+                              <input
+                                type="radio"
+                                name={`question-${questionIndex}`}
+                                checked={option.isCorrect}
+                                onChange={() =>
+                                  toggleCorrectOption(
+                                    questionIndex,
+                                    optionIndex,
+                                  )
+                                }
+                                className="size-4 text-blue-600"
+                              />
+                              <div className="flex-1">
+                                {isImageUrl ? (
+                                  <div className="space-y-2">
+                                    <div className="relative">
+                                      <img
+                                        src={`${BACKEND_BASE_URL}${option.text}`}
+                                        alt="Preview"
+                                        className="h-20 w-32 rounded border object-cover"
+                                        onError={(e) => {
+                                          const target =
+                                            e.target as HTMLImageElement;
+                                          target.style.display = "none";
+                                          const textInput = target.parentElement
+                                            ?.nextElementSibling as HTMLInputElement;
+                                          if (textInput)
+                                            textInput.style.display = "block";
+                                        }}
+                                      />
+                                      <Button
+                                        size="xs"
+                                        color="light"
+                                        className="absolute right-1 top-1"
+                                        onClick={() => {
+                                          const fileInput =
+                                            document.getElementById(
+                                              `file-${questionIndex}-${optionIndex}`,
+                                            ) as HTMLInputElement;
+                                          fileInput?.click();
+                                        }}
+                                      >
+                                        ✏️
+                                      </Button>
+                                    </div>
+                                    <TextInput
+                                      value={option.text}
+                                      onChange={(e) =>
+                                        updateOption(
+                                          questionIndex,
+                                          optionIndex,
+                                          e.target.value,
+                                        )
+                                      }
+                                      placeholder="URL de imagen..."
+                                      style={{ display: "none" }}
+                                    />
+                                  </div>
+                                ) : (
+                                  <TextInput
+                                    value={option.text}
+                                    onChange={(e) =>
+                                      updateOption(
+                                        questionIndex,
+                                        optionIndex,
+                                        e.target.value,
+                                      )
+                                    }
+                                    placeholder="Texto de la opción..."
+                                  />
+                                )}
+                              </div>
+                              <input
+                                type="file"
+                                accept="image/*"
+                                onChange={(e) => {
+                                  const file = e.target.files?.[0];
+                                  if (file) {
+                                    handleImageUpload(
+                                      questionIndex,
+                                      optionIndex,
+                                      file,
+                                    );
+                                  }
+                                }}
+                                className="hidden"
+                                id={`file-${questionIndex}-${optionIndex}`}
+                              />
+                              <Button
+                                size="sm"
+                                color="light"
+                                onClick={() => {
+                                  const fileInput = document.getElementById(
+                                    `file-${questionIndex}-${optionIndex}`,
+                                  ) as HTMLInputElement;
+                                  fileInput?.click();
+                                }}
+                              >
+                                📷
+                              </Button>
+                              {question.options.length > 2 && (
+                                <Button
+                                  size="sm"
+                                  color="failure"
+                                  onClick={() =>
+                                    removeOption(questionIndex, optionIndex)
+                                  }
+                                >
+                                  <HiX className="size-4" />
+                                </Button>
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  ))}
                 </div>
               </div>
             </div>
@@ -1717,7 +1793,7 @@ export default function LessonManagement() {
               onClick={handleSubmitQuiz}
               isProcessing={quizLoading}
             >
-              {existingQuizzes.length > 0 ? 'Actualizar Quiz' : 'Crear Quiz'}
+              {existingQuizzes.length > 0 ? "Actualizar Quiz" : "Crear Quiz"}
             </Button>
           </div>
         </Modal.Footer>

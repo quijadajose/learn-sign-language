@@ -46,16 +46,6 @@ function App() {
               }
             />
             <Route
-              path="/lessons/stage/:stageId"
-              element={
-                <PrivateRoute>
-                  <DashboardLayout>
-                    <LessonListView />
-                  </DashboardLayout>
-                </PrivateRoute>
-              }
-            />
-            <Route
               path="/lesson/:lessonId"
               element={
                 <PrivateRoute>
