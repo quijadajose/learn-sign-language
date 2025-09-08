@@ -50,8 +50,11 @@ export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
     }
 
     const access_token = this.authService.generateToken(user);
-
-    done(null, { user, access_token });
+    done(null, {
+      sub: user.id,
+      email: user.email,
+      access_token
+    });
   }
   private calculateAge(birthday: string): number {
     const birthDate = new Date(birthday);
