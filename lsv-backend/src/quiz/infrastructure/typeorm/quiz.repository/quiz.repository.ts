@@ -4,7 +4,10 @@ import { LeaderboardDto } from 'src/leaderboard/domain/dto/leaderboard/leaderboa
 import { QuizDto } from 'src/quiz/domain/dto/quiz/quiz-dto';
 import { SubmissionDto } from 'src/quiz/application/dto/submission/submission-dto';
 import { QuizRepositoryInterface } from 'src/quiz/domain/ports/quiz.repository.interface/quiz.repository.interface';
-import { PaginationDto } from 'src/shared/domain/dto/PaginationDto';
+import {
+  PaginationDto,
+  PaginatedResponseDto,
+} from 'src/shared/domain/dto/PaginationDto';
 import { Lesson } from 'src/shared/domain/entities/lesson';
 import { Option } from 'src/shared/domain/entities/option';
 import { Question } from 'src/shared/domain/entities/question';
@@ -228,7 +231,9 @@ export class QuizRepository implements QuizRepositoryInterface {
     return this.submissionRepository.find(findOptions);
   }
 
-  async getLeaderboard(pagination: PaginationDto): Promise<LeaderboardDto[]> {
+  async getLeaderboard(
+    pagination: PaginationDto,
+  ): Promise<PaginatedResponseDto<LeaderboardDto>> {
     const {
       page,
       limit,
@@ -237,10 +242,33 @@ export class QuizRepository implements QuizRepositoryInterface {
     } = pagination;
     const skip = (page - 1) * limit;
 
-    const queryBuilder: SelectQueryBuilder<QuizSubmission> =
-      this.submissionRepository.createQueryBuilder('qs');
+    const countQuery = this.submissionRepository
+      .createQueryBuilder('qs')
+      .select('COUNT(DISTINCT u.id)', 'count')
+      .innerJoin(User, 'u', 'qs.userId = u.id')
+      .innerJoin(
+        (subquery) => {
+          return subquery
+            .select([
+              'qs2.userId AS userId',
+              'qs2.quizId AS quizId',
+              'MAX(qs2.score) AS maxScore',
+            ])
+            .from(QuizSubmission, 'qs2')
+            .where('qs2.score IS NOT NULL')
+            .groupBy('qs2.userId')
+            .addGroupBy('qs2.quizId');
+        },
+        'subquery',
+        'qs.userId = subquery.userId AND qs.quizId = subquery.quizId',
+      )
+      .groupBy('u.id');
 
-    const rawLeaderboard = await queryBuilder
+    const totalResult = await countQuery.getRawOne();
+    const total = totalResult ? parseInt(totalResult.count) : 0;
+
+    const dataQuery = this.submissionRepository
+      .createQueryBuilder('qs')
       .select([
         'u.id AS userId',
         'u.firstName AS firstName',
@@ -267,8 +295,9 @@ export class QuizRepository implements QuizRepositoryInterface {
       .groupBy('u.id')
       .orderBy(orderBy, sortOrder === 'ASC' ? 'ASC' : 'DESC')
       .skip(skip)
-      .take(limit)
-      .getRawMany();
+      .take(limit);
+
+    const rawLeaderboard = await dataQuery.getRawMany();
 
     const leaderboard: LeaderboardDto[] = rawLeaderboard.map((entry) => ({
       userId: entry.userId,
@@ -277,13 +306,13 @@ export class QuizRepository implements QuizRepositoryInterface {
       totalScore: Number(entry.totalScore),
     }));
 
-    return leaderboard;
+    return new PaginatedResponseDto(leaderboard, total, page, limit);
   }
 
   async getLeaderboardByLanguageId(
     languageId: string,
     pagination: PaginationDto,
-  ): Promise<LeaderboardDto[]> {
+  ): Promise<PaginatedResponseDto<LeaderboardDto>> {
     const {
       page,
       limit,
@@ -292,10 +321,37 @@ export class QuizRepository implements QuizRepositoryInterface {
     } = pagination;
     const skip = (page - 1) * limit;
 
-    const queryBuilder: SelectQueryBuilder<QuizSubmission> =
-      this.submissionRepository.createQueryBuilder('qs');
+    const countQuery = this.submissionRepository
+      .createQueryBuilder('qs')
+      .select('COUNT(DISTINCT u.id)', 'count')
+      .innerJoin(User, 'u', 'qs.userId = u.id')
+      .innerJoin(Quiz, 'q', 'qs.quizId = q.id')
+      .innerJoin(Lesson, 'l', 'q.lessonId = l.id')
+      .where('l.languageId = :languageId', { languageId })
+      .innerJoin(
+        (subquery) => {
+          return subquery
+            .select([
+              'qs2.userId AS userId',
+              'qs2.quizId AS quizId',
+              'MAX(qs2.score) AS maxScore',
+            ])
+            .from(QuizSubmission, 'qs2')
+            .innerJoin(Quiz, 'q2', 'qs2.quizId = q2.id')
+            .innerJoin(Lesson, 'l2', 'q2.lessonId = l2.id')
+            .where('l2.languageId = :languageId', { languageId })
+            .groupBy('qs2.userId, qs2.quizId');
+        },
+        'subquery',
+        'qs.userId = subquery.userId AND qs.quizId = subquery.quizId',
+      )
+      .groupBy('u.id');
 
-    const rawLeaderboard = await queryBuilder
+    const totalResult = await countQuery.getRawOne();
+    const total = totalResult ? parseInt(totalResult.count) : 0;
+
+    const dataQuery = this.submissionRepository
+      .createQueryBuilder('qs')
       .select([
         'u.id AS userId',
         'u.firstName AS firstName',
@@ -326,8 +382,9 @@ export class QuizRepository implements QuizRepositoryInterface {
       .groupBy('u.id')
       .orderBy(orderBy, sortOrder === 'ASC' ? 'ASC' : 'DESC')
       .skip(skip)
-      .take(limit)
-      .getRawMany();
+      .take(limit);
+
+    const rawLeaderboard = await dataQuery.getRawMany();
 
     const leaderboard: LeaderboardDto[] = rawLeaderboard.map((entry) => ({
       userId: entry.userId,
@@ -336,6 +393,6 @@ export class QuizRepository implements QuizRepositoryInterface {
       totalScore: Number(entry.totalScore),
     }));
 
-    return leaderboard;
+    return new PaginatedResponseDto(leaderboard, total, page, limit);
   }
 }

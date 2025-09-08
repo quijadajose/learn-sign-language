@@ -1,10 +1,15 @@
 import { LeaderboardDto } from 'src/leaderboard/domain/dto/leaderboard/leaderboard';
-import { PaginationDto } from 'src/shared/domain/dto/PaginationDto';
+import {
+  PaginationDto,
+  PaginatedResponseDto,
+} from 'src/shared/domain/dto/PaginationDto';
 
 export interface LeaderboardRepositoryInterface {
-  getGlobalLeaderboard(limit: number): Promise<LeaderboardDto[]>;
+  getGlobalLeaderboard(
+    pagination: PaginationDto,
+  ): Promise<PaginatedResponseDto<LeaderboardDto>>;
   getLeaderboardByLanguage(
     languageId: string,
     pagination: PaginationDto,
-  ): Promise<LeaderboardDto[]>;
+  ): Promise<PaginatedResponseDto<LeaderboardDto>>;
 }
