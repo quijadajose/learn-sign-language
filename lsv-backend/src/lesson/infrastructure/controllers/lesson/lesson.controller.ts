@@ -12,6 +12,7 @@ import {
   UploadedFile,
   UseGuards,
   UseInterceptors,
+  Req,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
@@ -21,8 +22,12 @@ import { Roles } from 'src/auth/infrastructure/decorators/roles.decorator';
 import { RolesGuard } from 'src/auth/infrastructure/guards/roles/roles.guard';
 import { Lesson } from 'src/shared/domain/entities/lesson';
 import * as path from 'path';
-import { PaginatedResponseDto } from 'src/shared/domain/dto/PaginationDto';
+import {
+  PaginatedResponseDto,
+  PaginationDto,
+} from 'src/shared/domain/dto/PaginationDto';
 import { GetLessonsQueryDto } from 'src/lesson/domain/dto/get-lessons-query-dto';
+import { GetLessonsWithSubmissionsQueryDto } from 'src/lesson/domain/dto/get-lessons-with-submissions-query-dto';
 import { AuthGuard } from '@nestjs/passport';
 
 @Controller('lesson')
@@ -79,6 +84,26 @@ export class LessonController {
     );
   }
 
+  @UseGuards(AuthGuard('jwt'))
+  @Get('by-language/:languageId/with-submissions')
+  async getLessonsByLanguageWithSubmissions(
+    @Param('languageId', ParseUUIDPipe) languageId: string,
+    @Query() query: GetLessonsWithSubmissionsQueryDto,
+    @Req() req,
+  ): Promise<PaginatedResponseDto<Lesson>> {
+    const userId = req.user.sub;
+    if (!req.user || !userId) {
+      throw new BadRequestException('User ID is missing from the request.');
+    }
+
+    return this.lessonAdminService.getLessonsByLanguageWithSubmissions(
+      languageId,
+      userId,
+      query,
+      query.stageId,
+    );
+  }
+
   @UseGuards(RolesGuard)
   @Roles('admin')
   @Get(':id')
@@ -96,7 +121,9 @@ export class LessonController {
   }
   @UseGuards(AuthGuard('jwt'))
   @Get(':id/quizzes')
-  async getQuizzesByLessonId(@Param('id', ParseUUIDPipe) id: string): Promise<any> {
+  async getQuizzesByLessonId(
+    @Param('id', ParseUUIDPipe) id: string,
+  ): Promise<any> {
     return this.lessonAdminService.getQuizzesByLessonId(id);
   }
 

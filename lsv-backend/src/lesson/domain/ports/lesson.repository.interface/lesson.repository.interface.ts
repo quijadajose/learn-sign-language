@@ -23,5 +23,11 @@ export interface LessonRepositoryInterface {
     pagination: PaginationDto,
     stageId?: string,
   ): Promise<PaginatedResponseDto<Lesson>>;
+  getLessonsByLanguageWithSubmissions(
+    languageId: string,
+    userId: string,
+    pagination: PaginationDto,
+    stageId?: string,
+  ): Promise<PaginatedResponseDto<Lesson>>;
   findPassedLessonIdsForUser(userId: string): Promise<Set<string>>;
 }

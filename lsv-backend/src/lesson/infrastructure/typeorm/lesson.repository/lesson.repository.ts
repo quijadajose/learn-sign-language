@@ -1,5 +1,5 @@
-import { NotFoundException } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
+import { NotFoundException, Inject, forwardRef } from '@nestjs/common';
+import { InjectRepository, InjectDataSource } from '@nestjs/typeorm';
 import { CreateLessonDto } from 'src/lesson/domain/dto/create-lesson/create-lesson-dto';
 import { LessonRepositoryInterface } from 'src/lesson/domain/ports/lesson.repository.interface/lesson.repository.interface';
 import {
@@ -11,7 +11,8 @@ import { Lesson } from 'src/shared/domain/entities/lesson';
 import { Quiz } from 'src/shared/domain/entities/quiz';
 import { Stages } from 'src/shared/domain/entities/stage';
 import { QuizSubmission } from 'src/shared/domain/entities/quizSubmission';
-import { FindManyOptions, Repository } from 'typeorm';
+import { FindManyOptions, Repository, DataSource } from 'typeorm';
+import { QuizService } from 'src/quiz/application/services/quiz/quiz.service';
 
 export class LessonRepository implements LessonRepositoryInterface {
   constructor(
@@ -23,6 +24,10 @@ export class LessonRepository implements LessonRepositoryInterface {
     private readonly languageRepository: Repository<Language>,
     @InjectRepository(QuizSubmission)
     private readonly quizSubmissionRepository: Repository<QuizSubmission>,
+    @InjectDataSource()
+    private readonly dataSource: DataSource,
+    @Inject(forwardRef(() => QuizService))
+    private readonly quizService: QuizService,
   ) {}
   async findPassedLessonIdsForUser(userId: string): Promise<Set<string>> {
     const submissions = await this.quizSubmissionRepository
@@ -60,7 +65,6 @@ export class LessonRepository implements LessonRepositoryInterface {
       throw new NotFoundException('Lesson not found');
     }
 
-    // Mapea los quizzes para excluir el campo isCorrect de las opciones
     const quizzesToReturn = lesson.quizzes.map((quiz) => ({
       ...quiz,
       questions: quiz.questions.map((question) => ({
@@ -185,6 +189,129 @@ export class LessonRepository implements LessonRepositoryInterface {
       total,
       page,
       pageSize: limit,
+    };
+  }
+
+  async getLessonsByLanguageWithSubmissions(
+    languageId: string,
+    userId: string,
+    pagination: PaginationDto,
+    stageId?: string,
+  ): Promise<PaginatedResponseDto<any>> {
+    const {
+      page,
+      limit,
+      orderBy = 'createdAt',
+      sortOrder = 'DESC',
+    } = pagination;
+
+    const skip = (page - 1) * limit;
+
+    const orderByClause =
+      orderBy === 'createdAt'
+        ? `l.${orderBy} ${sortOrder}, qs.submittedAt DESC`
+        : `l.${orderBy} ${sortOrder}`;
+
+    const queryParams = [userId, languageId];
+
+    if (stageId) {
+      queryParams.push(stageId);
+    }
+
+    const query = `
+      SELECT
+        l.id AS lesson_id,
+        l.name AS lesson_name,
+        l.description AS lesson_description,
+        l.content AS lesson_content,
+        l.languageId AS lesson_languageId,
+        l.stageId AS lesson_stageId,
+        l.createdAt AS lesson_createdAt,
+        l.updatedAt AS lesson_updatedAt,
+        q.id AS quiz_id,
+        qs.id AS submission_id,
+        qs.userId AS submission_userId,
+        qs.quizId AS submission_quizId,
+        qs.score AS submission_score,
+        qs.submittedAt AS submission_submittedAt,
+        qs.answers AS submission_answers
+      FROM
+        lesson AS l
+        LEFT JOIN quiz AS q ON q.lessonId = l.id
+        LEFT JOIN quiz_submission AS qs ON qs.quizId = q.id AND qs.userId = ?
+      WHERE
+        l.languageId = ?
+        ${stageId ? 'AND l.stageId = ?' : ''}
+      ORDER BY ${orderByClause}
+      LIMIT ${limit} OFFSET ${skip}
+    `;
+
+    const results = await this.dataSource.query(query, queryParams);
+
+    const countQuery = `
+      SELECT COUNT(DISTINCT l.id) as total
+      FROM
+        lesson AS l
+      WHERE
+        l.languageId = ?
+        ${stageId ? 'AND l.stageId = ?' : ''}
+    `;
+
+    const countParams = [languageId];
+    if (stageId) {
+      countParams.push(stageId);
+    }
+
+    const countResult = await this.dataSource.query(countQuery, countParams);
+    const total = countResult[0].total;
+
+    const lessonMap = new Map();
+
+    results.forEach((row) => {
+      const lessonId = row.lesson_id;
+
+      if (!lessonMap.has(lessonId)) {
+        lessonMap.set(lessonId, {
+          id: row.lesson_id,
+          name: row.lesson_name,
+          description: row.lesson_description,
+          createdAt: row.lesson_createdAt,
+          updatedAt: row.lesson_updatedAt,
+          maxScore: 0,
+          submissions: [],
+        });
+      }
+
+      const lesson = lessonMap.get(lessonId);
+
+      if (row.submission_id) {
+        if (row.submission_score > lesson.maxScore) {
+          lesson.maxScore = row.submission_score;
+        }
+
+        let submission = lesson.submissions.find(
+          (s) => s.submissionId === row.submission_id,
+        );
+
+        if (!submission) {
+          submission = {
+            submissionId: row.submission_id,
+            score: row.submission_score,
+            submittedAt: row.submission_submittedAt,
+            answers: row.submission_answers,
+          };
+          lesson.submissions.push(submission);
+        }
+      }
+    });
+
+    const data = Array.from(lessonMap.values());
+
+    return {
+      data,
+      total,
+      page: pagination.page,
+      pageSize: pagination.limit,
     };
   }
 }

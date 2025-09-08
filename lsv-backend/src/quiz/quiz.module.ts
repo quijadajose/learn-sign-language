@@ -45,6 +45,10 @@ import { DeleteQuizUseCase } from './application/use-cases/delete-quiz-use-case/
     },
   ],
   controllers: [QuizController],
-  exports: [QuizService, CreateQuizWithQuestionsAndOptionsUseCase, DeleteQuizUseCase],
+  exports: [
+    QuizService,
+    CreateQuizWithQuestionsAndOptionsUseCase,
+    DeleteQuizUseCase,
+  ],
 })
 export class QuizModule {}

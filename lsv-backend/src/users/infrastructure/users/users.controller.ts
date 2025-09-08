@@ -23,7 +23,6 @@ import { Language } from 'src/shared/domain/entities/language';
 import { Lesson } from 'src/shared/domain/entities/lesson';
 import { UserLanguage } from 'src/shared/domain/entities/userLanguage';
 import { UsersService } from 'src/users/application/users/users.service';
-// import { StagesProgressDto } from 'src/users/domain/dto/stages-progress.dto';
 import { EnrollUserInLanguageDto } from './enroll-user-in-language.dto';
 
 @Controller('users')

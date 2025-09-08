@@ -41,8 +41,7 @@ export class LanguageController {
     return this.languageService.createLanguage(createLanguageDto);
   }
 
-  @UseGuards(RolesGuard)
-  @Roles('admin')
+  @UseGuards(AuthGuard('jwt'))
   @Get('/')
   async listLanguages(
     @Query() pagination: PaginationDto,
