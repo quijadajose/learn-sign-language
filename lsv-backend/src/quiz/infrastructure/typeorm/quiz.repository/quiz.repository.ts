@@ -65,6 +65,64 @@ export class QuizRepository implements QuizRepositoryInterface {
     return this.quizRepository.findOne({ where: { id } });
   }
 
+  async updateQuizWithQuestionsAndOptions(
+    id: string,
+    quizDto: QuizDto,
+  ): Promise<Quiz> {
+    const lesson = await this.lessonRepository.findOne({
+      where: { id: quizDto.lessonId },
+    });
+
+    if (!lesson) {
+      throw new NotFoundException('Lesson not found');
+    }
+
+    const existingQuiz = await this.quizRepository.findOne({
+      where: { id },
+      relations: ['questions', 'questions.options'],
+    });
+
+    if (!existingQuiz) {
+      throw new NotFoundException('Quiz not found');
+    }
+
+    if (existingQuiz.questions && existingQuiz.questions.length > 0) {
+      for (const question of existingQuiz.questions) {
+        if (question.options && question.options.length > 0) {
+          await this.optionRepository.delete({ question: { id: question.id } });
+        }
+        await this.questionRepository.delete({ id: question.id });
+      }
+    }
+
+    const questions = await Promise.all(
+      quizDto.questions.map(async (q) => {
+        const question = this.questionRepository.create({
+          text: q.text,
+          quiz: existingQuiz,
+        });
+        const savedQuestion = await this.questionRepository.save(question);
+
+        const options = await Promise.all(
+          q.options.map(async (o) => {
+            const option = this.optionRepository.create({
+              text: o.text,
+              isCorrect: o.isCorrect,
+              question: savedQuestion,
+            });
+            return this.optionRepository.save(option);
+          }),
+        );
+
+        savedQuestion.options = options;
+        return savedQuestion;
+      }),
+    );
+
+    existingQuiz.questions = questions;
+    return await this.quizRepository.save(existingQuiz);
+  }
+
   async saveWithQuestionsAndOptions(quizDto: QuizDto): Promise<Quiz> {
     const lesson = await this.lessonRepository.findOne({
       where: { id: quizDto.lessonId },
@@ -156,6 +214,29 @@ export class QuizRepository implements QuizRepositoryInterface {
           options: {
             id: true,
             text: true,
+          },
+        },
+      },
+    });
+  }
+
+  getQuizForAdmin(quizId: string): Promise<Quiz> {
+    return this.quizRepository.findOne({
+      where: { id: quizId },
+      relations: ['lesson', 'questions', 'questions.options'],
+      select: {
+        id: true,
+        lesson: {
+          id: true,
+          name: true,
+        },
+        questions: {
+          id: true,
+          text: true,
+          options: {
+            id: true,
+            text: true,
+            isCorrect: true,
           },
         },
       },

@@ -17,6 +17,8 @@ import { GetUserByIdUseCase } from 'src/users/application/use-cases/get-user-by-
 import { AuthModule } from 'src/auth/auth.module';
 import { GetSubmissionTestFromUserUseCase } from './application/use-cases/get-submission-test-from-user-use-case/get-submission-test-from-user-use-case';
 import { DeleteQuizUseCase } from './application/use-cases/delete-quiz-use-case/delete-quiz-use-case';
+import { UpdateQuizUseCase } from './application/use-cases/update-quiz-use-case/update-quiz-use-case';
+import { ListQuizUseCase } from './application/use-cases/list-quiz-use-case/list-quiz-use-case';
 
 @Module({
   imports: [
@@ -34,10 +36,12 @@ import { DeleteQuizUseCase } from './application/use-cases/delete-quiz-use-case/
     GetUserByIdUseCase,
     CreateQuizWithQuestionsAndOptionsUseCase,
     listQuizzesByLanguageIdUseCase,
+    ListQuizUseCase,
     GetQuizByIdUseCase,
     SubmissionTestUseCase,
     GetSubmissionTestFromUserUseCase,
     DeleteQuizUseCase,
+    UpdateQuizUseCase,
     QuizService,
     {
       provide: 'QuizRepositoryInterface',
@@ -49,6 +53,7 @@ import { DeleteQuizUseCase } from './application/use-cases/delete-quiz-use-case/
     QuizService,
     CreateQuizWithQuestionsAndOptionsUseCase,
     DeleteQuizUseCase,
+    UpdateQuizUseCase,
   ],
 })
 export class QuizModule {}
