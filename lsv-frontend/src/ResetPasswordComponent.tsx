@@ -2,9 +2,9 @@ import { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { Button, Label, TextInput } from "flowbite-react";
 import { Link } from "react-router-dom";
-import { BACKEND_BASE_URL } from "./config";
 import { Toast } from "flowbite-react";
 import { HiCheck, HiX } from "react-icons/hi";
+import { authApi } from "./services/api";
 
 function ResetPassword() {
   const [searchParams] = useSearchParams();
@@ -62,22 +62,10 @@ function ResetPassword() {
     setIsSubmitting(true);
 
     try {
-      const response = await fetch(
-        `${BACKEND_BASE_URL}/auth/password/reset/confirm`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            newPassword,
-            token,
-          }),
-        },
-      );
-      if (response.ok) {
-        const data = await response.json();
-        const message = data?.message;
+      const response = await authApi.confirmPasswordReset(newPassword, token!);
+
+      if (response.success) {
+        const message = response.message;
         addToast(
           "success",
           message || "Tu contraseña ha sido restablecida correctamente",
@@ -86,10 +74,9 @@ function ResetPassword() {
           navigate("/login");
         }, 3000);
       } else {
-        const errorData = await response.json();
         addToast(
           "error",
-          errorData.message ||
+          response.message ||
             "Ha ocurrido un error al restablecer tu contraseña",
         );
       }

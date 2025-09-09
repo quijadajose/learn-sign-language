@@ -3,10 +3,10 @@ import { useParams, useNavigate } from "react-router-dom";
 import { Card, Spinner, Button, Alert } from "flowbite-react";
 import { useLocalStorage } from "./hooks/useLocalStorage";
 import { useToast } from "./components/ToastProvider";
-import { BACKEND_BASE_URL } from "./config";
 import { HiExclamationCircle, HiArrowLeft } from "react-icons/hi";
 import ReactQuill from "react-quill";
 import "react-quill/dist/quill.snow.css";
+import { lessonApi } from "./services/api";
 
 interface Stage {
   id: string;
@@ -46,38 +46,25 @@ export default function LessonView() {
       }
 
       setLoading(true);
-      try {
-        const res = await fetch(
-          `${BACKEND_BASE_URL}/users/lesson/${lessonId}`,
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          },
+
+      const lessonResponse = await lessonApi.getUserLesson(lessonId);
+
+      if (lessonResponse.success) {
+        setLesson(lessonResponse.data);
+
+        const startResponse = await lessonApi.startLesson(lessonId);
+        if (startResponse.success) {
+          addToast("success", "Lección iniciada correctamente");
+        }
+      } else {
+        setError(lessonResponse.message || "Error al cargar la lección");
+        addToast(
+          "error",
+          lessonResponse.message || "Error al cargar la lección",
         );
-
-        if (!res.ok) throw new Error(await res.text());
-        const lessonData: Lesson = await res.json();
-        setLesson(lessonData);
-
-        await fetch(`${BACKEND_BASE_URL}/user-lesson/start`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({
-            lessonId: lessonId,
-          }),
-        });
-
-        addToast("success", "Lección iniciada correctamente");
-      } catch (err: any) {
-        setError(err.message);
-        addToast("error", err.message);
-      } finally {
-        setLoading(false);
       }
+
+      setLoading(false);
     };
 
     fetchLesson();
@@ -87,26 +74,14 @@ export default function LessonView() {
     if (!token || !lessonId) return;
 
     setUpdatingCompletion(true);
-    try {
-      const newCompletionStatus = !isComplete;
 
-      const res = await fetch(
-        `${BACKEND_BASE_URL}/user-lesson/set-lesson-completion`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({
-            lessonId: lessonId,
-            isComplete: newCompletionStatus,
-          }),
-        },
-      );
+    const newCompletionStatus = !isComplete;
+    const response = await lessonApi.setLessonCompletion(
+      lessonId,
+      newCompletionStatus,
+    );
 
-      if (!res.ok) throw new Error(await res.text());
-
+    if (response.success) {
       setIsComplete(newCompletionStatus);
       addToast(
         "success",
@@ -114,11 +89,14 @@ export default function LessonView() {
           ? "Lección marcada como completada"
           : "Lección desmarcada como completada",
       );
-    } catch (err: any) {
-      addToast("error", err.message);
-    } finally {
-      setUpdatingCompletion(false);
+    } else {
+      addToast(
+        "error",
+        response.message || "Error al actualizar el estado de la lección",
+      );
     }
+
+    setUpdatingCompletion(false);
   };
 
   const handleGoBack = () => {

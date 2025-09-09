@@ -12,11 +12,13 @@ import { AdminRoute } from "./AdminRoute";
 import LanguageCards from "./LanguageCards";
 import LanguageManagement from "./admin/LanguageManagement";
 import LessonManagement from "./admin/LessonManagement";
+import QuizManagement from "./admin/QuizManagement";
 import { ToastProvider } from "./components/ToastProvider";
 import LessonView from "./LessonView";
 import QuizView from "./QuizView";
 import StageManagement from "./admin/stageForm";
 import LeaderboardView from "./LeaderboardView";
+import LessonListView from "./LessonListView";
 
 function PrivateRoute({ children }: { children: JSX.Element }) {
   return localStorage.getItem("auth") ? children : <Navigate to="/login" />;
@@ -66,6 +68,16 @@ function App() {
               }
             />
             <Route
+              path="/lessons/stage/:stageId"
+              element={
+                <PrivateRoute>
+                  <DashboardLayout>
+                    <LessonListView />
+                  </DashboardLayout>
+                </PrivateRoute>
+              }
+            />
+            <Route
               path="/profile"
               element={
                 <DashboardLayout>
@@ -109,6 +121,16 @@ function App() {
                 <AdminRoute>
                   <DashboardLayout>
                     <LessonManagement />
+                  </DashboardLayout>
+                </AdminRoute>
+              }
+            />
+            <Route
+              path="/admin/lessons/:lessonId/quizzes"
+              element={
+                <AdminRoute>
+                  <DashboardLayout>
+                    <QuizManagement />
                   </DashboardLayout>
                 </AdminRoute>
               }

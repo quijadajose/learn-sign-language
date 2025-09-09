@@ -1,11 +1,11 @@
 import { Spinner, Alert } from "flowbite-react";
 import { useEffect, useState } from "react";
-import { BACKEND_BASE_URL } from "./config";
 import { HiExclamationCircle } from "react-icons/hi";
 import { useLocalStorage } from "./hooks/useLocalStorage";
 import { useToast } from "./components/ToastProvider";
 import StageDetailCard from "./components/StageDetailCard";
 import StageSelector from "./components/StageSelector";
+import { lessonApi } from "./services/api";
 
 interface StageProgress {
   id: string;
@@ -49,16 +49,10 @@ export default function StageProgressView({ language }: Props) {
       }
       setLoading(true);
       try {
-        const res = await fetch(
-          `${BACKEND_BASE_URL}/users/stages-progress/${language.id}`,
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          },
-        );
-        if (!res.ok) throw new Error(await res.text());
-        const data: StageProgress[] = await res.json();
+        const response = await lessonApi.getStagesProgress(language.id);
+        if (!response.success)
+          throw new Error(response.message || "Error al cargar progreso");
+        const data: StageProgress[] = response.data;
         setStages(data);
         if (data.length > 0) {
           const initialStage =

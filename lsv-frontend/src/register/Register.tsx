@@ -5,6 +5,7 @@ import { BACKEND_BASE_URL } from "../config";
 import { Toast } from "flowbite-react";
 import { HiCheck, HiX } from "react-icons/hi";
 import { useNavigate } from "react-router-dom";
+import { authApi } from "../services/api";
 
 export default function Register() {
   const [toastMessages, setToastMessages] = useState<
@@ -23,24 +24,17 @@ export default function Register() {
 
   const onReturn = useCallback<OnReturn<Values>>(async (values) => {
     try {
-      const response = await fetch(`${BACKEND_BASE_URL}/auth/register`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(values),
-      });
+      const response = await authApi.register(values);
 
-      if (response.ok) {
-        const data = await response.json();
+      if (response.success && response.data) {
+        const data = response.data;
         localStorage.setItem("auth", data.token);
         localStorage.setItem("user", JSON.stringify(data.user));
         addToast("success", "Registro exitoso");
         navigate("/dashboard");
       } else {
-        const errorData = await response.json();
-        console.error("Error en el registro:", errorData);
-        addToast("error", errorData.message || "Error al registrar");
+        console.error("Error en el registro:", response.message);
+        addToast("error", response.message || "Error al registrar");
       }
     } catch (error) {
       console.error("Error al enviar la solicitud:", error);

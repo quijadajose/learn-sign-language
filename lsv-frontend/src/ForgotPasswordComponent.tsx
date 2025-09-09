@@ -2,9 +2,9 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button, Label, TextInput } from "flowbite-react";
 import { Link } from "react-router-dom";
-import { BACKEND_BASE_URL } from "./config";
 import { Toast } from "flowbite-react";
 import { HiCheck, HiX } from "react-icons/hi";
+import { authApi } from "./services/api";
 
 function ForgoPassword() {
   const [toastMessages, setToastMessages] = useState<
@@ -27,38 +27,25 @@ function ForgoPassword() {
     e.preventDefault();
     setIsSubmitting(true);
 
-    try {
-      const response = await fetch(`${BACKEND_BASE_URL}/auth/password/reset`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ email }),
-      });
+    const response = await authApi.resetPassword(email);
 
-      if (response.ok) {
-        const data = await response.json();
-        const message = data?.message;
-        addToast(
-          "success",
-          message ||
-            "Se ha enviado un correo con instrucciones para restablecer tu contraseña",
-        );
-        setTimeout(() => {
-          navigate("/login");
-        }, 3000);
-      } else {
-        const errorData = await response.json();
-        addToast(
-          "error",
-          errorData.message || "Ha ocurrido un error al procesar tu solicitud",
-        );
-      }
-    } catch (error) {
-      addToast("error", "Ha ocurrido un error inesperado");
-    } finally {
-      setIsSubmitting(false);
+    if (response.success) {
+      addToast(
+        "success",
+        response.message ||
+          "Se ha enviado un correo con instrucciones para restablecer tu contraseña",
+      );
+      setTimeout(() => {
+        navigate("/login");
+      }, 3000);
+    } else {
+      addToast(
+        "error",
+        response.message || "Ha ocurrido un error al procesar tu solicitud",
+      );
     }
+
+    setIsSubmitting(false);
   };
 
   return (

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
-import { BACKEND_BASE_URL } from "./config";
 import { Card, Table, Spinner, Alert, Pagination } from "flowbite-react";
+import { leaderboardApi, languageApi } from "./services/api";
+import { BACKEND_BASE_URL } from "./config";
 
 interface LeaderboardEntry {
   userId: string;
@@ -48,16 +49,9 @@ const LeaderboardView: React.FC = () => {
 
   const fetchLanguages = async () => {
     try {
-      const token = localStorage.getItem("auth");
-      const response = await fetch(`${BACKEND_BASE_URL}/languages`, {
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-      });
-      if (response.ok) {
-        const data = await response.json();
-        setLanguages(data.data || data);
+      const response = await languageApi.getAllLanguages();
+      if (response.success) {
+        setLanguages(response.data.data || response.data);
       }
     } catch (err) {
       console.error("Error fetching languages:", err);
@@ -69,35 +63,30 @@ const LeaderboardView: React.FC = () => {
     setError(null);
 
     try {
-      const token = localStorage.getItem("auth");
-      const url =
+      const response =
         selectedLanguage === "global"
-          ? `${BACKEND_BASE_URL}/leaderboard`
-          : `${BACKEND_BASE_URL}/leaderboard/language/${selectedLanguage}`;
+          ? await leaderboardApi.getLeaderboard(
+              currentPage,
+              pageSize,
+              orderBy,
+              sortOrder,
+            )
+          : await leaderboardApi.getLeaderboardByLanguage(
+              selectedLanguage,
+              currentPage,
+              pageSize,
+              orderBy,
+              sortOrder,
+            );
 
-      const params = new URLSearchParams({
-        page: currentPage.toString(),
-        limit: pageSize.toString(),
-        orderBy,
-        sortOrder,
-      });
-
-      const response = await fetch(`${url}?${params}`, {
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-      });
-
-      if (!response.ok) {
-        throw new Error(`Error ${response.status}: ${response.statusText}`);
+      if (response.success) {
+        const data: PaginatedResponse = response.data;
+        setLeaderboardData(data.data);
+        setTotalEntries(data.total);
+        setTotalPages(Math.ceil(data.total / data.pageSize));
+      } else {
+        setError(response.message || "Error al cargar el leaderboard");
       }
-
-      const data: PaginatedResponse = await response.json();
-
-      setLeaderboardData(data.data);
-      setTotalEntries(data.total);
-      setTotalPages(Math.ceil(data.total / data.pageSize));
     } catch (err) {
       setError(
         err instanceof Error ? err.message : "Error al cargar el leaderboard",
