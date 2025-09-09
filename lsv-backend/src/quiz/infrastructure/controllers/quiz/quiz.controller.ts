@@ -8,6 +8,7 @@ import {
   Param,
   ParseUUIDPipe,
   Post,
+  Put,
   Query,
   Req,
   UseGuards,
@@ -26,6 +27,28 @@ export class QuizController {
   @Post()
   async createQuiz(@Body() quizDto: QuizDto): Promise<Quiz> {
     return this.quizService.createQuiz(quizDto);
+  }
+
+  @Get()
+  async getAllQuizzes(@Query() pagination: PaginationDto) {
+    return this.quizService.getAllQuizzes(pagination);
+  }
+
+  @UseGuards(RolesGuard)
+  @Roles('admin')
+  @Get('admin/:id')
+  async getQuizForAdmin(@Param('id', ParseUUIDPipe) id: string) {
+    return this.quizService.getQuizForAdmin(id);
+  }
+
+  @UseGuards(RolesGuard)
+  @Roles('admin')
+  @Put(':id')
+  async updateQuiz(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() quizDto: QuizDto,
+  ): Promise<Quiz> {
+    return this.quizService.updateQuiz(id, quizDto);
   }
   @Get('/:quizId')
   async getQuizById(@Param('quizId', ParseUUIDPipe) quizId: string) {
