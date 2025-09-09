@@ -2,6 +2,7 @@ import { ReactNode, useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Avatar, DarkThemeToggle, Dropdown, Navbar } from "flowbite-react";
 import { BACKEND_BASE_URL } from "../config";
+import { userApi } from "../services/api";
 
 interface Props {
   children: ReactNode;
@@ -19,6 +20,7 @@ const DashboardLayout = ({ children }: Props) => {
   const navigate = useNavigate();
   const [userData, setUserData] = useState<UserData | null>(null);
   const [avatarError, setAvatarError] = useState(false);
+  const [avatarTimestamp, setAvatarTimestamp] = useState(Date.now());
 
   const handleLogout = () => {
     localStorage.removeItem("auth");
@@ -56,22 +58,18 @@ const DashboardLayout = ({ children }: Props) => {
       }
 
       try {
-        const response = await fetch(`${BACKEND_BASE_URL}/users/me`, {
-          method: "GET",
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-        });
+        const response = await userApi.getMe();
 
-        if (response.ok) {
-          const data: UserData = await response.json();
+        if (response.success && response.data) {
+          const data: UserData = response.data;
           setUserData(data);
           localStorage.setItem("user", JSON.stringify(data));
         } else {
           if (response.status === 401 || response.status === 403) {
             console.warn("Token rejected by backend. Logging out.");
             handleLogout();
+          } else {
+            console.error("Error fetching user data:", response.message);
           }
         }
       } catch (error) {
@@ -82,9 +80,51 @@ const DashboardLayout = ({ children }: Props) => {
     fetchUserData();
   }, [navigate]);
 
+  useEffect(() => {
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === "user" && e.newValue) {
+        try {
+          const updatedUser = JSON.parse(e.newValue);
+          if (updatedUser && updatedUser.id) {
+            setUserData(updatedUser);
+            setAvatarTimestamp(Date.now());
+            setAvatarError(false);
+          }
+        } catch (error) {
+          console.error("Error parsing updated user data:", error);
+        }
+      }
+    };
+
+    window.addEventListener("storage", handleStorageChange);
+
+    const handleCustomStorageChange = () => {
+      const storedUser = localStorage.getItem("user");
+      if (storedUser) {
+        try {
+          const updatedUser = JSON.parse(storedUser);
+          if (updatedUser && updatedUser.id) {
+            setUserData(updatedUser);
+            setAvatarTimestamp(Date.now());
+            setAvatarError(false);
+          }
+        } catch (error) {
+          console.error("Error parsing updated user data:", error);
+        }
+      }
+    };
+
+    window.addEventListener("userDataUpdated", handleCustomStorageChange);
+
+    return () => {
+      window.removeEventListener("storage", handleStorageChange);
+      window.removeEventListener("userDataUpdated", handleCustomStorageChange);
+    };
+  }, []);
+
   const avatarImgSrc =
     userData?.id && !avatarError
-      ? `${BACKEND_BASE_URL}/images/user/${userData?.id}?size=sm&v=${Date.now()}`
+      ? `${BACKEND_BASE_URL}/images/user/${userData?.id}?size=sm&v=${avatarTimestamp}`
       : "/user.svg";
 
   return (

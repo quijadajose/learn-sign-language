@@ -3,6 +3,7 @@ import { Button, TextInput, Card, Label, Spinner, Toast } from "flowbite-react";
 import { HiCheck, HiX } from "react-icons/hi";
 import { BACKEND_BASE_URL } from "./config";
 import { useNavigate } from "react-router-dom";
+import { userApi } from "./services/api";
 
 interface UserProfile {
   id: string;
@@ -75,34 +76,17 @@ export const ResponsiveProfileForm = () => {
         }
       }
 
-      try {
-        const response = await fetch(`${BACKEND_BASE_URL}/users/me`, {
-          method: "GET",
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-        });
+      const response = await userApi.getMe();
 
-        if (response.ok) {
-          const data: UserProfile = await response.json();
-          setProfile(data);
-          localStorage.setItem("user", JSON.stringify(data));
-        } else {
-          const errorData = await response.text();
-          setError(`Failed to fetch profile: ${response.statusText}`);
-          addToast(
-            "error",
-            `Error al cargar el perfil: ${errorData || response.statusText}`,
-          );
-        }
-      } catch (fetchError: any) {
-        console.error("Error fetching profile data:", fetchError);
-        setError("An unexpected error occurred while fetching profile data.");
-        addToast("error", "Ocurrió un error inesperado al cargar tu perfil.");
-      } finally {
-        setLoading(false);
+      if (response.success) {
+        setProfile(response.data);
+        localStorage.setItem("user", JSON.stringify(response.data));
+      } else {
+        setError(`Failed to fetch profile: ${response.message}`);
+        addToast("error", `Error al cargar el perfil: ${response.message}`);
       }
+
+      setLoading(false);
     };
 
     fetchProfileData();
@@ -202,56 +186,29 @@ export const ResponsiveProfileForm = () => {
         profileUpdateBody.newPassword = newPassword;
       }
 
-      const userResponse = await fetch(`${BACKEND_BASE_URL}/users/me`, {
-        method: "PUT",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(profileUpdateBody),
-      });
+      const userResponse = await userApi.updateMe(profileUpdateBody);
 
-      if (!userResponse.ok) {
-        const errorData = await userResponse.json();
-        console.error("User update failed:", errorData);
+      if (!userResponse.success) {
         addToast(
           "error",
-          `Error al actualizar perfil: ${errorData.message || userResponse.statusText}`,
+          `Error al actualizar perfil: ${userResponse.message}`,
         );
-        throw new Error(
-          `User update failed: ${errorData.message || userResponse.statusText}`,
-        );
+        throw new Error(`User update failed: ${userResponse.message}`);
       }
 
-      let updatedProfileData = await userResponse.json();
-
+      let updatedProfileData = userResponse.data;
       if (newPhotoFile) {
-        const formData = new FormData();
         if (!updatedProfileData?.id) {
           throw new Error("User ID missing after profile update.");
         }
-        formData.append("id", updatedProfileData.id);
-        formData.append("format", "png");
-        formData.append("file", newPhotoFile);
 
-        const imageResponse = await fetch(
-          `${BACKEND_BASE_URL}/images/upload/user`,
-          {
-            method: "POST",
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-            body: formData,
-          },
+        const imageResponse = await userApi.uploadUserImage(
+          newPhotoFile,
+          updatedProfileData.id,
         );
 
-        if (!imageResponse.ok) {
-          const errorData = await imageResponse.text();
-          console.error("Image upload failed:", errorData);
-          addToast(
-            "error",
-            `Error al subir la foto: ${errorData || imageResponse.statusText}`,
-          );
+        if (!imageResponse.success) {
+          addToast("error", `Error al subir la foto: ${imageResponse.message}`);
         } else {
           updatedProfileData = {
             ...updatedProfileData,
@@ -272,6 +229,8 @@ export const ResponsiveProfileForm = () => {
       };
       setProfile(finalProfileData);
       localStorage.setItem("user", JSON.stringify(finalProfileData));
+
+      window.dispatchEvent(new CustomEvent("userDataUpdated"));
       setIsEditing(false);
       setNewPhotoFile(null);
       addToast("success", "Perfil actualizado correctamente.");
@@ -380,7 +339,6 @@ export const ResponsiveProfileForm = () => {
           <form className="grid grid-cols-1 gap-4 md:grid-cols-2">
             <div className="col-span-1 flex flex-col items-center justify-center text-center md:col-span-2">
               <img
-                key={preview}
                 src={preview || "/user.svg"}
                 alt="Profile"
                 className="mb-4 size-40 rounded-full border object-cover dark:border-gray-600"

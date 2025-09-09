@@ -10,6 +10,7 @@ import {
   Alert,
   Toast,
   Pagination,
+  Select,
 } from "flowbite-react";
 import {
   HiPlus,
@@ -18,9 +19,10 @@ import {
   HiExclamationCircle,
   HiCheck,
   HiX,
+  HiTranslate,
 } from "react-icons/hi";
 import { useNavigate } from "react-router-dom";
-import { BACKEND_BASE_URL } from "../config";
+import { stageApi, adminApi } from "../services/api";
 
 interface Stage {
   id: string;
@@ -36,6 +38,12 @@ interface StageFormData {
   description: string;
 }
 
+interface Language {
+  id: string;
+  name: string;
+  description?: string;
+}
+
 export default function StageManagement() {
   const navigate = useNavigate();
   const [stages, setStages] = useState<Stage[]>([]);
@@ -43,6 +51,8 @@ export default function StageManagement() {
   const [error, setError] = useState<string | null>(null);
   const [languageId, setLanguageId] = useState<string | null>(null);
   const [languageName, setLanguageName] = useState<string | null>(null);
+  const [languages, setLanguages] = useState<Language[]>([]);
+  const [languagesLoading, setLanguagesLoading] = useState<boolean>(false);
 
   const [currentPage, setCurrentPage] = useState<number>(1);
   const [pageSize, setPageSize] = useState<number>(10);
@@ -76,7 +86,6 @@ export default function StageManagement() {
   const fetchStages = useCallback(
     async (
       langId: string,
-      token: string,
       page: number,
       size: number,
       order: string,
@@ -84,40 +93,17 @@ export default function StageManagement() {
     ) => {
       setLoading(true);
       setError(null);
-      try {
-        const params = new URLSearchParams({
-          page: page.toString(),
-          limit: size.toString(),
-          orderBy: order,
-          sortOrder: sort,
-        });
 
-        const response = await fetch(
-          `${BACKEND_BASE_URL}/stage/${langId}?${params}`,
-          {
-            method: "GET",
-            headers: {
-              Authorization: `Bearer ${token}`,
-              "Content-Type": "application/json",
-            },
-          },
-        );
+      const response = await stageApi.getStages(
+        langId,
+        page,
+        size,
+        order,
+        sort,
+      );
 
-        if (!response.ok) {
-          let errorMsg = `Error ${response.status}: ${response.statusText}`;
-          try {
-            const errorData = await response.json();
-            errorMsg = errorData.message || errorMsg;
-          } catch (jsonError) {
-            console.warn(
-              "Could not parse error response as JSON during fetch:",
-              jsonError,
-            );
-          }
-          throw new Error(errorMsg);
-        }
-
-        const responseData = await response.json();
+      if (response.success) {
+        const responseData = response.data;
         if (
           responseData &&
           responseData.data &&
@@ -134,16 +120,15 @@ export default function StageManagement() {
           setStages(responseData || []);
           setTotalStages(responseData?.length || 0);
         }
-      } catch (err: any) {
-        console.error("Error fetching stages:", err);
+      } else {
         const displayError =
-          err.message || "Ocurrió un error al cargar las etapas.";
+          response.message || "Ocurrió un error al cargar las etapas.";
         setError(displayError);
         addToast("error", displayError);
         setStages([]);
-      } finally {
-        setLoading(false);
       }
+
+      setLoading(false);
     },
     [addToast],
   );
@@ -154,14 +139,7 @@ export default function StageManagement() {
       const token = localStorage.getItem("auth");
       const selectedLangId = localStorage.getItem("selectedLanguageId");
       if (token && selectedLangId) {
-        fetchStages(
-          selectedLangId,
-          token,
-          newPage,
-          pageSize,
-          orderBy,
-          sortOrder,
-        );
+        fetchStages(selectedLangId, newPage, pageSize, orderBy, sortOrder);
       }
     },
     [pageSize, orderBy, sortOrder, fetchStages],
@@ -180,55 +158,79 @@ export default function StageManagement() {
       const token = localStorage.getItem("auth");
       const selectedLangId = localStorage.getItem("selectedLanguageId");
       if (token && selectedLangId) {
-        fetchStages(
-          selectedLangId,
-          token,
-          1,
-          pageSize,
-          newOrderByValue,
-          newSortOrder,
-        );
+        fetchStages(selectedLangId, 1, pageSize, newOrderByValue, newSortOrder);
       }
     },
     [orderBy, sortOrder, pageSize, fetchStages],
   );
 
-  const fetchLanguageName = useCallback(
-    async (langId: string, token: string) => {
-      try {
-        const response = await fetch(
-          `${BACKEND_BASE_URL}/languages/${langId}`,
-          {
-            method: "GET",
-            headers: {
-              Authorization: `Bearer ${token}`,
-              "Content-Type": "application/json",
-            },
-          },
-        );
+  const fetchLanguageName = useCallback(async (langId: string) => {
+    const response = await adminApi.getLanguage(langId);
 
-        if (!response.ok) {
-          let errorMsg = `Error ${response.status}: ${response.statusText}`;
-          try {
-            const errorData = await response.json();
-            errorMsg = errorData.message || errorMsg;
-          } catch (jsonError) {
-            console.warn(
-              "Could not parse error response as JSON during fetch language:",
-              jsonError,
-            );
-          }
-          throw new Error(errorMsg);
+    if (response.success) {
+      const data: { id: string; name: string } = response.data;
+      setLanguageName(data?.name || null);
+    } else {
+      console.error("Error fetching language:", response.message);
+      setLanguageName(null);
+    }
+  }, []);
+
+  const fetchLanguages = useCallback(async () => {
+    setLanguagesLoading(true);
+    try {
+      const response = await adminApi.getLanguages(1, 100);
+
+      if (response.success) {
+        const responseData = response.data;
+        if (
+          responseData &&
+          responseData.data &&
+          Array.isArray(responseData.data)
+        ) {
+          setLanguages(responseData.data);
+        } else if (Array.isArray(responseData)) {
+          setLanguages(responseData);
+        } else {
+          setLanguages([]);
         }
-
-        const data: { id: string; name: string } = await response.json();
-        setLanguageName(data?.name || null);
-      } catch (err: any) {
-        console.error("Error fetching language:", err);
-        setLanguageName(null);
+      } else {
+        console.error("Error fetching languages:", response.message);
+        addToast("error", "Error al cargar la lista de idiomas");
+        setLanguages([]);
       }
+    } catch (error) {
+      console.error("Error fetching languages:", error);
+      addToast("error", "Error al cargar la lista de idiomas");
+      setLanguages([]);
+    } finally {
+      setLanguagesLoading(false);
+    }
+  }, [addToast]);
+
+  const handleLanguageChange = useCallback(
+    async (newLanguageId: string) => {
+      if (newLanguageId === languageId) return;
+
+      setLanguageId(newLanguageId);
+      localStorage.setItem("selectedLanguageId", newLanguageId);
+
+      await fetchLanguageName(newLanguageId);
+
+      setCurrentPage(1);
+      await fetchStages(newLanguageId, 1, pageSize, orderBy, sortOrder);
+
+      addToast("success", "Idioma cambiado correctamente");
     },
-    [],
+    [
+      languageId,
+      fetchLanguageName,
+      fetchStages,
+      pageSize,
+      orderBy,
+      sortOrder,
+      addToast,
+    ],
   );
 
   useEffect(() => {
@@ -256,16 +258,10 @@ export default function StageManagement() {
     }
 
     setLanguageId(selectedLangId);
-    fetchStages(
-      selectedLangId,
-      token,
-      currentPage,
-      pageSize,
-      orderBy,
-      sortOrder,
-    );
-    fetchLanguageName(selectedLangId, token);
-  }, [navigate, fetchStages, addToast, fetchLanguageName]);
+    fetchStages(selectedLangId, currentPage, pageSize, orderBy, sortOrder);
+    fetchLanguageName(selectedLangId);
+    fetchLanguages();
+  }, [navigate, fetchStages, addToast, fetchLanguageName, fetchLanguages]);
 
   const openAddModal = () => {
     setFormData({ name: "", description: "" });
@@ -315,51 +311,26 @@ export default function StageManagement() {
       return;
     }
 
-    try {
-      const response = await fetch(
-        `${BACKEND_BASE_URL}/stage/${currentStage.id}`,
-        {
-          method: "DELETE",
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-        },
-      );
+    const response = await stageApi.deleteStage(currentStage.id);
 
-      if (!response.ok) {
-        let errorMsg = `Error ${response.status}: ${response.statusText}`;
-        try {
-          const errorData = await response.json();
-          errorMsg = errorData.message || errorMsg;
-        } catch (jsonError) {
-          console.warn(
-            "Could not parse error response as JSON during delete:",
-            jsonError,
-          );
-        }
-        throw new Error(errorMsg);
-      }
-
+    if (response.success) {
       addToast("success", "Etapa eliminada correctamente.");
       closeDeleteModal();
 
       if (languageId) {
         await fetchStages(
           languageId,
-          token,
           currentPage,
           pageSize,
           orderBy,
           sortOrder,
         );
       }
-    } catch (err: any) {
-      console.error("Error deleting stage:", err);
-      addToast("error", `Error al eliminar etapa: ${err.message}`);
-    } finally {
-      setIsDeleting(false);
+    } else {
+      addToast("error", `Error al eliminar etapa: ${response.message}`);
     }
+
+    setIsDeleting(false);
   };
 
   const handleInputChange = (
@@ -384,51 +355,25 @@ export default function StageManagement() {
       return;
     }
 
-    try {
-      const response = await fetch(`${BACKEND_BASE_URL}/stage`, {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          ...formData,
-          languageId: languageId,
-        }),
-      });
+    const response = await stageApi.createStage({
+      ...formData,
+      languageId: languageId,
+    });
 
-      if (!response.ok) {
-        let errorMsg = `Error ${response.status}: ${response.statusText}`;
-        try {
-          const errorData = await response.json();
-          errorMsg = errorData.message || errorMsg;
-        } catch (jsonError) {
-          console.warn(
-            "Could not parse error response as JSON during add:",
-            jsonError,
-          );
-        }
-        throw new Error(errorMsg);
-      }
+    if (response.success) {
+      const newStage: Stage = response.data || {
+        ...formData,
+        languageId,
+      };
 
-      const text = await response.text();
-      const newStage: Stage = text
-        ? JSON.parse(text)
-        : {
-            ...formData,
-            languageId,
-          };
-
-      setStages((prev) => [...prev, newStage]);
       setStages((prev) => [...prev, newStage]);
       addToast("success", "Etapa creada correctamente.");
       closeAddModal();
-    } catch (err: any) {
-      console.error("Error adding stage:", err);
-      addToast("error", `Error al crear etapa: ${err.message}`);
-    } finally {
-      setIsSubmitting(false);
+    } else {
+      addToast("error", `Error al crear etapa: ${response.message}`);
     }
+
+    setIsSubmitting(false);
   };
 
   const handleEditSubmit = async (e: React.FormEvent) => {
@@ -446,38 +391,20 @@ export default function StageManagement() {
       return;
     }
 
-    try {
-      const response = await fetch(
-        `${BACKEND_BASE_URL}/stage/${currentStage.id}`,
-        {
-          method: "PUT",
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            ...formData,
-            languageId: languageId,
-          }),
-        },
-      );
+    console.log("Edit stage data:", {
+      currentStage,
+      currentStageId: currentStage.id,
+      formData,
+      languageId,
+    });
 
-      if (!response.ok) {
-        let errorMsg = `Error ${response.status}: ${response.statusText}`;
-        try {
-          const errorData = await response.json();
-          errorMsg = errorData.message || errorMsg;
-        } catch (jsonError) {
-          console.warn(
-            "Could not parse error response as JSON during edit:",
-            jsonError,
-          );
-        }
-        throw new Error(errorMsg);
-      }
+    const response = await stageApi.updateStage(currentStage.id, {
+      ...formData,
+      languageId: languageId,
+    });
 
-      const rawText = await response.text();
-      const updatedStageData = rawText ? JSON.parse(rawText) : {};
+    if (response.success) {
+      const updatedStageData = response.data || {};
       const updatedStage: Stage = {
         ...currentStage,
         name: updatedStageData.name || formData.name,
@@ -492,12 +419,11 @@ export default function StageManagement() {
       );
       addToast("success", "Etapa actualizada correctamente.");
       closeEditModal();
-    } catch (err: any) {
-      console.error("Error editing stage:", err);
-      addToast("error", `Error al editar etapa: ${err.message}`);
-    } finally {
-      setIsSubmitting(false);
+    } else {
+      addToast("error", `Error al editar etapa: ${response.message}`);
     }
+
+    setIsSubmitting(false);
   };
 
   return (
@@ -546,6 +472,42 @@ export default function StageManagement() {
             <HiPlus className="mr-2 size-5" />
             Añadir Etapa
           </Button>
+        </div>
+
+        {/* Selector de idiomas */}
+        <div className="mb-6 rounded-lg bg-gray-50 p-4 dark:bg-gray-800">
+          <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2">
+              <HiTranslate className="size-5 text-gray-600 dark:text-gray-400" />
+              <Label
+                htmlFor="language-select"
+                value="Seleccionar idioma:"
+                className="text-sm font-medium"
+              />
+            </div>
+            <div className="max-w-xs flex-1">
+              <Select
+                id="language-select"
+                value={languageId || ""}
+                onChange={(e) => handleLanguageChange(e.target.value)}
+                disabled={languagesLoading}
+              >
+                <option value="" disabled>
+                  {languagesLoading
+                    ? "Cargando idiomas..."
+                    : "Selecciona un idioma"}
+                </option>
+                {languages.map((language) => (
+                  <option key={language.id} value={language.id}>
+                    {language.name}
+                  </option>
+                ))}
+              </Select>
+            </div>
+            {languagesLoading && (
+              <Spinner size="sm" aria-label="Cargando idiomas..." />
+            )}
+          </div>
         </div>
 
         {loading && (

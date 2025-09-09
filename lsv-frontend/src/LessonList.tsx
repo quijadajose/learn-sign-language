@@ -1,9 +1,9 @@
 import { Card, Button, Spinner, Alert, Progress } from "flowbite-react";
 import { useEffect, useState } from "react";
-import { BACKEND_BASE_URL } from "./config";
 import { HiExclamationCircle } from "react-icons/hi";
 import { useLocalStorage } from "./hooks/useLocalStorage";
 import { useToast } from "./components/ToastProvider";
+import { lessonApi } from "./services/api";
 
 interface StageProgress {
   id: string;
@@ -39,24 +39,22 @@ export default function LessonList({ language }: Props) {
         return;
       }
       setLoading(true);
-      try {
-        const res = await fetch(
-          `${BACKEND_BASE_URL}/users/stages-progress/${language.id}`,
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          },
+
+      const response = await lessonApi.getStagesProgress(language.id);
+
+      if (response.success) {
+        setStages(response.data);
+      } else {
+        setError(
+          response.message || "Error al cargar el progreso de las etapas",
         );
-        if (!res.ok) throw new Error(await res.text());
-        const data: StageProgress[] = await res.json();
-        setStages(data);
-      } catch (err: any) {
-        setError(err.message);
-        addToast("error", err.message);
-      } finally {
-        setLoading(false);
+        addToast(
+          "error",
+          response.message || "Error al cargar el progreso de las etapas",
+        );
       }
+
+      setLoading(false);
     };
     fetchStagesProgress();
   }, [language.id, token, addToast]);

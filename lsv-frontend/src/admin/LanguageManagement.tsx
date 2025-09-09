@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { BACKEND_BASE_URL } from "../config";
+import { adminApi } from "../services/api";
 import {
   Button,
   Modal,
@@ -161,39 +162,17 @@ export default function LanguageManagement() {
 
       if (editSelectedFile) {
         try {
-          const formData = new FormData();
-          formData.append("id", editingLanguage.id);
-          const fileExtension = editSelectedFile.name
-            .split(".")
-            .pop()
-            ?.toLowerCase();
-          const validFormats = ["png", "jpeg", "jpg", "webp"];
-          const format = validFormats.includes(fileExtension || "")
-            ? fileExtension!
-            : "png";
-          formData.append("format", format);
-          formData.append("file", editSelectedFile);
-
-          const uploadResponse = await fetch(
-            `${BACKEND_BASE_URL}/images/upload/language`,
-            {
-              method: "POST",
-              headers: {
-                Authorization: `Bearer ${token}`,
-              },
-              body: formData,
-            },
+          const uploadResponse = await adminApi.uploadLanguageImage(
+            editSelectedFile,
+            editingLanguage.id,
           );
 
-          if (uploadResponse.ok) {
+          if (uploadResponse.success) {
             imageUploadSuccess = true;
             setImageTimestamp(Date.now());
           } else {
-            const uploadErrorData = await uploadResponse
-              .json()
-              .catch(() => ({}));
             const uploadErrorMessage =
-              uploadErrorData.message || "Error desconocido al subir imagen";
+              uploadResponse.message || "Error desconocido al subir imagen";
             addToast("error", `Error al subir imagen: ${uploadErrorMessage}`);
           }
         } catch (uploadErr) {
@@ -338,59 +317,25 @@ export default function LanguageManagement() {
 
     setIsAdding(true);
     try {
-      const token = localStorage.getItem("auth");
+      const createResponse = await adminApi.createLanguage(addForm);
 
-      const createResponse = await fetch(`${BACKEND_BASE_URL}/languages`, {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(addForm),
-      });
-
-      if (!createResponse.ok) {
-        const errorData = await createResponse.json().catch(() => ({}));
-        const errorMessage =
-          errorData.message ||
-          `Error al crear idioma (${createResponse.status})`;
+      if (!createResponse.success) {
+        const errorMessage = createResponse.message || "Error al crear idioma";
         throw new Error(errorMessage);
       }
 
-      const newLanguage = await createResponse.json();
+      const newLanguage = createResponse.data;
 
       if (selectedFile) {
         try {
-          const formData = new FormData();
-          formData.append("id", newLanguage.id);
-          const fileExtension = selectedFile.name
-            .split(".")
-            .pop()
-            ?.toLowerCase();
-          const validFormats = ["png", "jpeg", "jpg", "webp"];
-          const format = validFormats.includes(fileExtension || "")
-            ? fileExtension!
-            : "png";
-          formData.append("format", format);
-          formData.append("file", selectedFile);
-
-          const uploadResponse = await fetch(
-            `${BACKEND_BASE_URL}/images/upload/language`,
-            {
-              method: "POST",
-              headers: {
-                Authorization: `Bearer ${token}`,
-              },
-              body: formData,
-            },
+          const uploadResponse = await adminApi.uploadLanguageImage(
+            selectedFile,
+            newLanguage.id,
           );
 
-          if (!uploadResponse.ok) {
-            const uploadErrorData = await uploadResponse
-              .json()
-              .catch(() => ({}));
+          if (!uploadResponse.success) {
             const uploadErrorMessage =
-              uploadErrorData.message || "Error desconocido al subir imagen";
+              uploadResponse.message || "Error desconocido al subir imagen";
             addToast(
               "error",
               `Idioma creado pero error al subir imagen: ${uploadErrorMessage}`,
@@ -523,9 +468,9 @@ export default function LanguageManagement() {
                     <td className="whitespace-nowrap px-6 py-4">
                       <div className="flex items-center">
                         <img
-                          src={`${BACKEND_BASE_URL}/images/language/${language.id}?size=sm&v=${imageTimestamp}`}
+                          src={`${BACKEND_BASE_URL}/images/languages/${language.id}?size=original&v=${imageTimestamp}`}
                           alt={`Bandera de ${language.name}`}
-                          className="mr-3 h-6 w-8 rounded object-cover"
+                          className="mr-3 h-6 w-8 rounded object-contain"
                           onError={(e) => {
                             e.currentTarget.style.display = "none";
                           }}
@@ -571,19 +516,6 @@ export default function LanguageManagement() {
                             <HiTrash className="mr-1 size-4" />
                             Eliminar
                           </div>
-                        </Button>
-                        <Button
-                          size="sm"
-                          color="blue"
-                          onClick={() => {
-                            localStorage.setItem(
-                              "selectedLanguageId",
-                              language.id,
-                            );
-                            navigate("/admin/stages");
-                          }}
-                        >
-                          Etapas
                         </Button>
                       </div>
                     </td>

@@ -1,9 +1,9 @@
 import { Card, Button, Spinner, Alert, Pagination } from "flowbite-react";
 import { useState, useEffect, useRef } from "react";
-import { BACKEND_BASE_URL } from "./config";
 import { HiExclamationCircle } from "react-icons/hi";
 import { useLocalStorage } from "./hooks/useLocalStorage";
 import { useToast } from "./components/ToastProvider";
+import { languageApi } from "./services/api";
 
 interface Language {
   id: string;
@@ -59,19 +59,17 @@ export default function LanguageSelection({ onLanguageSelected }: Props) {
 
       setLoading(true);
       try {
-        const enrolledRes = await fetch(
-          `${BACKEND_BASE_URL}/users/enrolled-languages`,
-          {
-            headers: { Authorization: `Bearer ${token}` },
-          },
-        );
+        const enrolledResponse = await languageApi.getEnrolledLanguages();
 
-        if (!enrolledRes.ok) {
-          throw new Error("No se pudieron obtener tus idiomas inscritos.");
+        if (!enrolledResponse.success) {
+          throw new Error(
+            enrolledResponse.message ||
+              "No se pudieron obtener tus idiomas inscritos.",
+          );
         }
 
         const enrolledData: PaginatedEnrolledLanguageResponse =
-          await enrolledRes.json();
+          enrolledResponse.data;
 
         if (enrolledData.data.length > 0) {
           if (enrolledData.data.length === 1) {
@@ -87,15 +85,19 @@ export default function LanguageSelection({ onLanguageSelected }: Props) {
             return;
           }
         }
-        const availableRes = await fetch(
-          `${BACKEND_BASE_URL}/languages?page=${currentPage}&limit=${ITEMS_PER_PAGE}&orderBy=name&sortOrder=ASC`,
-          { headers: { Authorization: `Bearer ${token}` } },
+        const availableResponse = await languageApi.getAvailableLanguages(
+          currentPage,
+          ITEMS_PER_PAGE,
         );
 
-        if (!availableRes.ok) throw new Error(await availableRes.text());
+        if (!availableResponse.success) {
+          throw new Error(
+            availableResponse.message ||
+              "No se pudieron obtener los idiomas disponibles.",
+          );
+        }
 
-        const availableData: PaginatedLanguageResponse =
-          await availableRes.json();
+        const availableData: PaginatedLanguageResponse = availableResponse.data;
 
         if (availableData.total === 1 && availableData.data.length === 1) {
           const singleLanguage = availableData.data[0];
@@ -143,32 +145,20 @@ export default function LanguageSelection({ onLanguageSelected }: Props) {
     }
 
     setEnrolling(true);
-    try {
-      const res = await fetch(`${BACKEND_BASE_URL}/users/enroll`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ languageId: selected.id }),
-      });
 
-      if (!res.ok) {
-        const errorData = await res
-          .json()
-          .catch(() => ({ message: "Error al inscribirse en el idioma." }));
-        throw new Error(errorData.message);
-      }
+    const response = await languageApi.enrollInLanguage(selected.id);
+
+    if (response.success) {
       addToast("success", `Inscrito en ${selected.name} correctamente.`);
       onLanguageSelected(selected);
-    } catch (err: any) {
+    } else {
       addToast(
         "error",
-        err.message || "Ocurrió un error inesperado al inscribirte.",
+        response.message || "Ocurrió un error inesperado al inscribirte.",
       );
-    } finally {
-      setEnrolling(false);
     }
+
+    setEnrolling(false);
   };
 
   return (

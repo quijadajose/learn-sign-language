@@ -2,9 +2,10 @@ import { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { Button, Checkbox, Label, TextInput } from "flowbite-react";
 import { Link } from "react-router-dom";
-import { BACKEND_BASE_URL } from "./config";
 import { Toast } from "flowbite-react";
 import { HiCheck, HiX } from "react-icons/hi";
+import { authApi } from "./services/api";
+import { BACKEND_BASE_URL } from "./config";
 
 function Login() {
   const [searchParams] = useSearchParams();
@@ -46,34 +47,22 @@ function Login() {
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    try {
-      const response = await fetch(`${BACKEND_BASE_URL}/auth/login`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ email, password }),
-      });
 
-      if (response.ok) {
-        const json = await response.json();
-        localStorage.setItem("auth", json.data.token);
-        localStorage.setItem("user", JSON.stringify(json.data.user));
+    const response = await authApi.login(email, password);
+    if (response.success && response.data && response.data.data) {
+      localStorage.setItem("auth", response.data.data.token);
+      localStorage.setItem("user", JSON.stringify(response.data.data.user));
 
-        if (rememberMe) {
-          localStorage.setItem("rememberedEmail", email);
-        } else {
-          localStorage.removeItem("rememberedEmail");
-        }
-
-        addToast("success", "Inicio de sesion exitoso");
-        navigate("/dashboard");
+      if (rememberMe) {
+        localStorage.setItem("rememberedEmail", email);
       } else {
-        const errorData = await response.json();
-        addToast("error", errorData.message || "Invalid credentials");
+        localStorage.removeItem("rememberedEmail");
       }
-    } catch (error) {
-      addToast("error", "Ha ocurrido un error inesperado");
+
+      addToast("success", "Inicio de sesion exitoso");
+      navigate("/dashboard");
+    } else {
+      addToast("error", response.message || "Credenciales inválidas");
     }
   };
 

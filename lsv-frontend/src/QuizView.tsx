@@ -3,9 +3,10 @@ import { useParams, useNavigate } from "react-router-dom";
 import { Card, Spinner, Button, Alert } from "flowbite-react";
 import { useLocalStorage } from "./hooks/useLocalStorage";
 import { useToast } from "./components/ToastProvider";
-import { BACKEND_BASE_URL } from "./config";
 import { HiExclamationCircle, HiArrowLeft, HiCheck, HiX } from "react-icons/hi";
 import confetti from "canvas-confetti";
+import { quizApi } from "./services/api";
+import { BACKEND_BASE_URL } from "./config";
 
 interface QuizOption {
   id: string;
@@ -55,31 +56,25 @@ export default function QuizView() {
       }
 
       setLoading(true);
-      try {
-        const res = await fetch(
-          `${BACKEND_BASE_URL}/lesson/${lessonId}/quizzes`,
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          },
-        );
 
-        if (!res.ok) throw new Error(await res.text());
-        const quizData: Quiz[] = await res.json();
+      const response = await quizApi.getQuizByLesson(lessonId);
+
+      if (response.success) {
+        const quizData: Quiz[] = response.data;
 
         if (quizData.length === 0) {
           setError("No hay quizzes disponibles para esta lección.");
+          setLoading(false);
           return;
         }
 
         setQuiz(quizData[0]);
-      } catch (err: any) {
-        setError(err.message);
-        addToast("error", err.message);
-      } finally {
-        setLoading(false);
+      } else {
+        setError(response.message || "Error al cargar el quiz");
+        addToast("error", response.message || "Error al cargar el quiz");
       }
+
+      setLoading(false);
     };
 
     fetchQuiz();
@@ -109,26 +104,12 @@ export default function QuizView() {
       return;
     }
 
-    try {
-      setSubmitting(true);
-      const response = await fetch(
-        `${BACKEND_BASE_URL}/quiz/${quiz.id}/submissions`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({ answers }),
-        },
-      );
+    setSubmitting(true);
 
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.message || "Error al enviar el quiz");
-      }
+    const response = await quizApi.submitQuiz(quiz.id, answers);
 
-      const submissionData: QuizSubmission = await response.json();
+    if (response.success) {
+      const submissionData: QuizSubmission = response.data;
       setSubmission(submissionData);
 
       if (submissionData.score >= 80) {
@@ -144,11 +125,11 @@ export default function QuizView() {
           "Repasa e inténtalo de nuevo. Tu puntuación fue menor al 80%",
         );
       }
-    } catch (err: any) {
-      addToast("error", err.message);
-    } finally {
-      setSubmitting(false);
+    } else {
+      addToast("error", response.message || "Error al enviar el quiz");
     }
+
+    setSubmitting(false);
   };
 
   const handleGoBack = () => {

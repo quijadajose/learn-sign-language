@@ -3,6 +3,7 @@ import ReactQuill from "react-quill";
 
 import "react-quill/dist/quill.snow.css";
 import { BACKEND_BASE_URL } from "../config";
+import { adminApi } from "../services/api";
 
 export interface EditorContentChanged {
   html: string;
@@ -51,19 +52,12 @@ export default function Editor(props: EditorProps) {
       formData.append("file", file);
 
       try {
-        const token = localStorage.getItem("auth");
-        const response = await fetch(
-          `${BACKEND_BASE_URL}/images/upload/lesson`,
-          {
-            method: "POST",
-            headers: { Authorization: `Bearer ${token}` },
-            body: formData,
-          },
-        );
+        const response = await adminApi.uploadLessonImage(file);
 
-        if (!response.ok) throw new Error("Upload failed");
+        if (!response.success)
+          throw new Error(response.message || "Upload failed");
 
-        const data: string[] = await response.json();
+        const data: string[] = response.data;
 
         if (!Array.isArray(data) || data.length === 0) {
           throw new Error("No URLs returned from backend");

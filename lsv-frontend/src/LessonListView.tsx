@@ -3,8 +3,9 @@ import { useParams, useNavigate } from "react-router-dom";
 import { Card, Spinner, Button, Alert, Modal } from "flowbite-react";
 import { useLocalStorage } from "./hooks/useLocalStorage";
 import { useToast } from "./components/ToastProvider";
-import { BACKEND_BASE_URL } from "./config";
 import { HiExclamationCircle, HiClock, HiCheckCircle } from "react-icons/hi";
+import { lessonApi } from "./services/api";
+import { BACKEND_BASE_URL } from "./config";
 
 interface Question {
   questionId: string;
@@ -65,24 +66,20 @@ export default function LessonListView() {
       }
 
       setLoading(true);
-      try {
-        const res = await fetch(
-          `${BACKEND_BASE_URL}/lesson/by-language/${languageId}/with-submissions?stageId=${stageId}&page=1&limit=100&orderBy=name&sortOrder=ASC`,
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          },
-        );
-        if (!res.ok) throw new Error(await res.text());
-        const data: LessonResponse = await res.json();
-        setLessons(data.data);
-      } catch (err: any) {
-        setError(err.message);
-        addToast("error", err.message);
-      } finally {
-        setLoading(false);
+
+      const response = await lessonApi.getLessonsWithSubmissions(
+        languageId,
+        stageId,
+      );
+
+      if (response.success) {
+        setLessons(response.data.data);
+      } else {
+        setError(response.message || "Error al cargar las lecciones");
+        addToast("error", response.message || "Error al cargar las lecciones");
       }
+
+      setLoading(false);
     };
 
     fetchLessons();
