@@ -9,6 +9,7 @@ import {
 import { Stages } from './stage';
 import { Lesson } from './lesson';
 import { UserLanguage } from './userLanguage';
+import { Region } from './region';
 
 @Entity()
 export class Language {
@@ -29,6 +30,11 @@ export class Language {
 
   @OneToMany(() => UserLanguage, (userLanguage) => userLanguage.language)
   userLanguages: UserLanguage[];
+
+  @OneToMany(() => Region, (region) => region.language, {
+    cascade: true,
+  })
+  regions: Region[];
 
   @CreateDateColumn()
   createdAt: Date;

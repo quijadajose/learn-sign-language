@@ -25,6 +25,11 @@ import { UploadPictureUseCase } from './shared/application/use-cases/upload-pict
 import { SeederService } from './seeder/seeder.service';
 import { LanguageModule } from './language/language.module';
 import { UserLanguage } from './shared/domain/entities/userLanguage';
+import { Region } from './shared/domain/entities/region';
+import { LessonVariant } from './shared/domain/entities/lessonVariant';
+import { QuizVariant } from './shared/domain/entities/quizVariant';
+import { QuestionVariant } from './shared/domain/entities/questionVariant';
+import { OptionVariant } from './shared/domain/entities/optionVariant';
 
 @Module({
   imports: [
@@ -52,6 +57,11 @@ import { UserLanguage } from './shared/domain/entities/userLanguage';
           Question,
           Option,
           UserLanguage,
+          Region,
+          LessonVariant,
+          QuizVariant,
+          QuestionVariant,
+          OptionVariant,
         ],
         synchronize: true,
       }),
