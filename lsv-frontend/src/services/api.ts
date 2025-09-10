@@ -1,5 +1,20 @@
 import { BACKEND_BASE_URL } from "../config";
 
+const handleTokenExpiration = () => {
+  localStorage.removeItem("auth");
+  localStorage.removeItem("user");
+  localStorage.removeItem("selectedLanguageId");
+  const event = new CustomEvent('show-toast', {
+    detail: {
+      type: 'error',
+      message: 'Tu sesión ha expirado. Por favor, inicia sesión nuevamente.'
+    }
+  });
+  window.dispatchEvent(event);
+  
+  window.location.href = '/login';
+};
+
 export interface ApiResponse<T = any> {
   data?: T;
   message?: string;
@@ -54,6 +69,15 @@ export class ApiService {
           status: response.status,
         };
       } else {
+        if (response.status === 401) {
+          handleTokenExpiration();
+          return {
+            message: "Tu sesión ha expirado. Por favor, inicia sesión nuevamente.",
+            success: false,
+            status: response.status,
+          };
+        }
+
         return {
           message:
             data?.message ||
