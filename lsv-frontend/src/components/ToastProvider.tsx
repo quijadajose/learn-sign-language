@@ -4,6 +4,7 @@ import {
   useState,
   ReactNode,
   useCallback,
+  useEffect,
 } from "react";
 import { Toast } from "flowbite-react";
 import { HiCheck, HiX, HiInformationCircle } from "react-icons/hi";
@@ -33,6 +34,19 @@ export const ToastProvider = ({ children }: { children: ReactNode }) => {
     },
     [],
   );
+
+  useEffect(() => {
+    const handleCustomToast = (event: CustomEvent) => {
+      const { type, message } = event.detail;
+      addToast(type, message);
+    };
+
+    window.addEventListener('show-toast', handleCustomToast as EventListener);
+    
+    return () => {
+      window.removeEventListener('show-toast', handleCustomToast as EventListener);
+    };
+  }, [addToast]);
 
   return (
     <ToastContext.Provider value={{ addToast }}>
