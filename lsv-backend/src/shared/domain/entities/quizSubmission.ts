@@ -7,6 +7,7 @@ import {
 } from 'typeorm';
 import { User } from './user';
 import { Quiz } from './quiz';
+import { QuizVariant } from './quizVariant';
 
 @Entity()
 export class QuizSubmission {
@@ -21,6 +22,12 @@ export class QuizSubmission {
     onDelete: 'CASCADE',
   })
   quiz?: Quiz;
+
+  @ManyToOne(() => QuizVariant, (quizVariant) => quizVariant.submissions, {
+    nullable: true,
+    onDelete: 'CASCADE',
+  })
+  quizVariant?: QuizVariant;
 
   @Column({ type: 'json', nullable: true, default: null })
   answers: JSON;

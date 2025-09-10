@@ -11,6 +11,7 @@ import { UserLesson } from './userLesson';
 import { Stages } from './stage';
 import { Language } from './language';
 import { Quiz } from './quiz';
+import { LessonVariant } from './lessonVariant';
 
 @Entity()
 export class Lesson {
@@ -45,4 +46,7 @@ export class Lesson {
 
   @OneToMany(() => Quiz, (quiz) => quiz.lesson)
   quizzes: Quiz[];
+
+  @OneToMany(() => LessonVariant, (variant) => variant.baseLesson)
+  variants: LessonVariant[];
 }
