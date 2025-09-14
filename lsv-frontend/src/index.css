@@ -1,3 +1,56 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* Estilos para react-select */
+.react-select-container .react-select__control {
+  @apply border-gray-300 bg-white dark:border-gray-600 dark:bg-gray-700;
+}
+
+.react-select-container .react-select__control:hover {
+  @apply border-gray-400 dark:border-gray-500;
+}
+
+.react-select-container .react-select__control--is-focused {
+  @apply border-blue-500 ring-2 ring-blue-200 dark:border-blue-400 dark:ring-blue-800;
+}
+
+.react-select-container .react-select__value-container {
+  @apply text-gray-900 dark:text-white;
+}
+
+.react-select-container .react-select__placeholder {
+  @apply text-gray-500 dark:text-gray-400;
+}
+
+.react-select-container .react-select__single-value {
+  @apply text-gray-900 dark:text-white;
+}
+
+.react-select-container .react-select__menu {
+  @apply border border-gray-300 bg-white shadow-lg dark:border-gray-600 dark:bg-gray-700;
+}
+
+.react-select-container .react-select__option {
+  @apply text-gray-900 hover:bg-gray-100 dark:text-white dark:hover:bg-gray-600;
+}
+
+.react-select-container .react-select__option--is-focused {
+  @apply bg-gray-100 dark:bg-gray-600;
+}
+
+.react-select-container .react-select__option--is-selected {
+  @apply bg-blue-500 text-white;
+}
+
+.react-select-container .react-select__indicator-separator {
+  @apply bg-gray-300 dark:bg-gray-600;
+}
+
+.react-select-container .react-select__dropdown-indicator {
+  @apply text-gray-400 dark:text-gray-500;
+}
+
+.react-select-container .react-select__clear-indicator {
+  @apply text-gray-400 dark:text-gray-500;
+}

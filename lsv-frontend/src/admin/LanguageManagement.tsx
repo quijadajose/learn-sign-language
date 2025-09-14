@@ -20,14 +20,25 @@ import {
   HiTrash,
   HiPlus,
 } from "react-icons/hi";
-import { useNavigate } from "react-router-dom";
+import Select from "react-select";
 
 interface Language {
   id: string;
   name: string;
   description: string;
+  countryCode?: string;
   createdAt: string;
   updatedAt: string;
+}
+
+interface Country {
+  code: string;
+  name: string;
+}
+
+interface CountryOption {
+  value: string;
+  label: string;
 }
 
 interface LanguagesResponse {
@@ -44,7 +55,11 @@ export default function LanguageManagement() {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [editingLanguage, setEditingLanguage] = useState<Language | null>(null);
-  const [editForm, setEditForm] = useState({ name: "", description: "" });
+  const [editForm, setEditForm] = useState({
+    name: "",
+    description: "",
+    countryCode: "",
+  });
   const [editSelectedFile, setEditSelectedFile] = useState<File | null>(null);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -54,14 +69,23 @@ export default function LanguageManagement() {
   );
   const [isDeleting, setIsDeleting] = useState(false);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
-  const [addForm, setAddForm] = useState({ name: "", description: "" });
+  const [addForm, setAddForm] = useState({
+    name: "",
+    description: "",
+    countryCode: "",
+  });
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isAdding, setIsAdding] = useState(false);
+  const [countries, setCountries] = useState<Country[]>([]);
+  const [selectedCountry, setSelectedCountry] = useState<CountryOption | null>(
+    null,
+  );
+  const [loadingCountries, setLoadingCountries] = useState(false);
+  const [searchTimeout, setSearchTimeout] = useState<number | null>(null);
   const [toastMessages, setToastMessages] = useState<
     { id: number; type: "success" | "error"; message: string }[]
   >([]);
   const [imageTimestamp, setImageTimestamp] = useState<number>(Date.now());
-  const navigate = useNavigate();
 
   const addToast = (type: "success" | "error", message: string) => {
     const id = Date.now();
@@ -108,9 +132,63 @@ export default function LanguageManagement() {
     }
   };
 
+  const searchCountries = async (searchTerm: string) => {
+    if (searchTimeout) {
+      window.clearTimeout(searchTimeout);
+    }
+
+    if (!searchTerm || searchTerm.length < 2) {
+      setCountries([]);
+      return;
+    }
+
+    const timeout = window.setTimeout(async () => {
+      try {
+        setLoadingCountries(true);
+        const token = localStorage.getItem("auth");
+
+        const response = await fetch(
+          `${BACKEND_BASE_URL}/region/countries/search?q=${encodeURIComponent(searchTerm)}`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+              "Content-Type": "application/json",
+            },
+          },
+        );
+
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({}));
+          const errorMessage =
+            errorData.message || `Error al buscar países (${response.status})`;
+          throw new Error(errorMessage);
+        }
+
+        const data: Country[] = await response.json();
+        setCountries(data);
+      } catch (err) {
+        const errorMessage =
+          err instanceof Error ? err.message : "Error searching countries";
+        addToast("error", `Error al buscar países: ${errorMessage}`);
+      } finally {
+        setLoadingCountries(false);
+      }
+    }, 300);
+
+    setSearchTimeout(timeout);
+  };
+
   useEffect(() => {
     fetchLanguages();
   }, []);
+
+  useEffect(() => {
+    return () => {
+      if (searchTimeout) {
+        window.clearTimeout(searchTimeout);
+      }
+    };
+  }, [searchTimeout]);
 
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
@@ -122,6 +200,7 @@ export default function LanguageManagement() {
     setEditForm({
       name: language.name,
       description: language.description,
+      countryCode: language.countryCode || "",
     });
     setEditSelectedFile(null);
     setIsEditModalOpen(true);
@@ -176,7 +255,6 @@ export default function LanguageManagement() {
             addToast("error", `Error al subir imagen: ${uploadErrorMessage}`);
           }
         } catch (uploadErr) {
-          console.warn("Error uploading image:", uploadErr);
           addToast("error", "Error al subir la imagen.");
         }
       }
@@ -193,7 +271,7 @@ export default function LanguageManagement() {
         await fetchLanguages(currentPage);
         setIsEditModalOpen(false);
         setEditingLanguage(null);
-        setEditForm({ name: "", description: "" });
+        setEditForm({ name: "", description: "", countryCode: "" });
         setEditSelectedFile(null);
         setError(null);
       }
@@ -209,7 +287,7 @@ export default function LanguageManagement() {
   const handleCancelEdit = () => {
     setIsEditModalOpen(false);
     setEditingLanguage(null);
-    setEditForm({ name: "", description: "" });
+    setEditForm({ name: "", description: "", countryCode: "" });
     setEditSelectedFile(null);
   };
 
@@ -263,15 +341,33 @@ export default function LanguageManagement() {
   };
 
   const handleAddClick = () => {
-    setAddForm({ name: "", description: "" });
+    setAddForm({ name: "", description: "", countryCode: "" });
     setSelectedFile(null);
+    setSelectedCountry(null);
+    setCountries([]);
     setIsAddModalOpen(true);
+  };
+
+  const handleCountryChange = (selectedOption: CountryOption | null) => {
+    setSelectedCountry(selectedOption);
+    setAddForm((prev) => ({
+      ...prev,
+      countryCode: selectedOption ? selectedOption.value : "",
+    }));
+  };
+
+  const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setAddForm((prev) => ({
+      ...prev,
+      name: e.target.value,
+    }));
   };
 
   const handleCancelAdd = () => {
     setIsAddModalOpen(false);
-    setAddForm({ name: "", description: "" });
+    setAddForm({ name: "", description: "", countryCode: "" });
     setSelectedFile(null);
+    setSelectedCountry(null);
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -314,6 +410,10 @@ export default function LanguageManagement() {
       addToast("error", "El nombre del idioma es obligatorio.");
       return;
     }
+    if (!selectedCountry) {
+      addToast("error", "Debes seleccionar un país.");
+      return;
+    }
 
     setIsAdding(true);
     try {
@@ -344,7 +444,6 @@ export default function LanguageManagement() {
             setImageTimestamp(Date.now());
           }
         } catch (uploadErr) {
-          console.warn("Error uploading image:", uploadErr);
           addToast(
             "error",
             "Idioma creado pero hubo un error al subir la imagen.",
@@ -354,7 +453,7 @@ export default function LanguageManagement() {
 
       await fetchLanguages(currentPage);
       setIsAddModalOpen(false);
-      setAddForm({ name: "", description: "" });
+      setAddForm({ name: "", description: "", countryCode: "" });
       setSelectedFile(null);
       setError(null);
       addToast("success", "Idioma creado correctamente.");
@@ -726,13 +825,49 @@ export default function LanguageManagement() {
               Añadir Nuevo Idioma
             </h3>
             <div>
+              <Label htmlFor="add-country" value="País *" />
+              <Select
+                id="add-country"
+                value={selectedCountry}
+                onChange={handleCountryChange}
+                onInputChange={(inputValue, { action }) => {
+                  if (action === "input-change") {
+                    searchCountries(inputValue);
+                  }
+                }}
+                options={countries.map((country) => ({
+                  value: country.code,
+                  label: country.name,
+                }))}
+                placeholder="Busca y selecciona un país..."
+                isClearable
+                isLoading={loadingCountries}
+                isDisabled={isAdding}
+                isSearchable
+                noOptionsMessage={() =>
+                  "Escribe al menos 2 caracteres para buscar países"
+                }
+                loadingMessage={() => "Buscando países..."}
+                className="react-select-container"
+                classNamePrefix="react-select"
+                styles={{
+                  control: (base) => ({
+                    ...base,
+                    minHeight: "42px",
+                    borderColor: "#d1d5db",
+                    "&:hover": {
+                      borderColor: "#9ca3af",
+                    },
+                  }),
+                }}
+              />
+            </div>
+            <div>
               <Label htmlFor="add-name" value="Nombre del Idioma" />
               <TextInput
                 id="add-name"
                 value={addForm.name}
-                onChange={(e) =>
-                  setAddForm({ ...addForm, name: e.target.value })
-                }
+                onChange={handleNameChange}
                 placeholder="Ej: Lenguaje de señas Chileno"
                 required
                 disabled={isAdding}

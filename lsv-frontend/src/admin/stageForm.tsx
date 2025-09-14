@@ -171,7 +171,6 @@ export default function StageManagement() {
       const data: { id: string; name: string } = response.data;
       setLanguageName(data?.name || null);
     } else {
-      console.error("Error fetching language:", response.message);
       setLanguageName(null);
     }
   }, []);
@@ -195,12 +194,10 @@ export default function StageManagement() {
           setLanguages([]);
         }
       } else {
-        console.error("Error fetching languages:", response.message);
         addToast("error", "Error al cargar la lista de idiomas");
         setLanguages([]);
       }
     } catch (error) {
-      console.error("Error fetching languages:", error);
       addToast("error", "Error al cargar la lista de idiomas");
       setLanguages([]);
     } finally {
@@ -391,13 +388,6 @@ export default function StageManagement() {
       return;
     }
 
-    console.log("Edit stage data:", {
-      currentStage,
-      currentStageId: currentStage.id,
-      formData,
-      languageId,
-    });
-
     const response = await stageApi.updateStage(currentStage.id, {
       ...formData,
       languageId: languageId,
@@ -474,7 +464,6 @@ export default function StageManagement() {
           </Button>
         </div>
 
-        {/* Selector de idiomas */}
         <div className="mb-6 rounded-lg bg-gray-50 p-4 dark:bg-gray-800">
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-2">

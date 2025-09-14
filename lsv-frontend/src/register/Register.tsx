@@ -1,7 +1,6 @@
 import { useState, useCallback } from "react";
 import { Formity, OnReturn } from "@formity/react";
 import { schema, Values } from "./schema";
-import { BACKEND_BASE_URL } from "../config";
 import { Toast } from "flowbite-react";
 import { HiCheck, HiX } from "react-icons/hi";
 import { useNavigate } from "react-router-dom";
@@ -33,11 +32,9 @@ export default function Register() {
         addToast("success", "Registro exitoso");
         navigate("/dashboard");
       } else {
-        console.error("Error en el registro:", response.message);
         addToast("error", response.message || "Error al registrar");
       }
     } catch (error) {
-      console.error("Error al enviar la solicitud:", error);
       addToast("error", "Error al conectar con el servidor");
     }
   }, []);

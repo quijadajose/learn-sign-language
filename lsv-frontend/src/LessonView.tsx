@@ -4,8 +4,7 @@ import { Card, Spinner, Button, Alert } from "flowbite-react";
 import { useLocalStorage } from "./hooks/useLocalStorage";
 import { useToast } from "./components/ToastProvider";
 import { HiExclamationCircle, HiArrowLeft } from "react-icons/hi";
-import ReactQuill from "react-quill";
-import "react-quill/dist/quill.snow.css";
+import QuillEditor from "./components/QuillEditor";
 import { lessonApi } from "./services/api";
 
 interface Stage {
@@ -172,17 +171,14 @@ export default function LessonView() {
             Contenido de la lección
           </h3>
           <div className="rounded-lg border border-gray-200 dark:border-gray-700">
-            <ReactQuill
+            <QuillEditor
               value={lesson.content}
               readOnly={true}
               theme="snow"
               modules={{
                 toolbar: false,
               }}
-              style={{
-                backgroundColor: "#f9fafb",
-                border: "none",
-              }}
+              className="border-none bg-gray-50"
             />
           </div>
         </div>

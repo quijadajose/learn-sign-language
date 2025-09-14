@@ -23,7 +23,6 @@ export function AdminRoute({ children }: Props) {
     try {
       user = JSON.parse(userString);
     } catch (error) {
-      console.error("Failed to parse user data from localStorage:", error);
       localStorage.removeItem("auth");
       localStorage.removeItem("user");
       return <Navigate to="/login" />;
@@ -33,9 +32,6 @@ export function AdminRoute({ children }: Props) {
   if (user && user.role === "admin") {
     return children;
   } else {
-    console.warn(
-      "AdminRoute: Access denied. User is not an admin or user data is invalid.",
-    );
     return <Navigate to="/dashboard" />;
   }
 }

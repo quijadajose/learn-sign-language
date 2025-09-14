@@ -32,13 +32,6 @@ interface Lesson {
   submissions: Submission[];
 }
 
-interface LessonResponse {
-  data: Lesson[];
-  total: number;
-  page: number;
-  pageSize: number;
-}
-
 export default function LessonListView() {
   const { stageId } = useParams<{ stageId: string }>();
   const navigate = useNavigate();
@@ -65,11 +58,16 @@ export default function LessonListView() {
         return;
       }
 
+      const regionId = localStorage.getItem("selectedRegionId");
+
       setLoading(true);
 
       const response = await lessonApi.getLessonsWithSubmissions(
         languageId,
         stageId,
+        1,
+        100,
+        regionId || undefined,
       );
 
       if (response.success) {

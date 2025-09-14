@@ -64,14 +64,9 @@ export const ResponsiveProfileForm = () => {
             setLoading(false);
             return;
           } else {
-            console.warn("Stored user data is invalid. Fetching from backend.");
             localStorage.removeItem("user");
           }
         } catch (parseError) {
-          console.error(
-            "Failed to parse user data from localStorage:",
-            parseError,
-          );
           localStorage.removeItem("user");
         }
       }
@@ -235,7 +230,6 @@ export const ResponsiveProfileForm = () => {
       setNewPhotoFile(null);
       addToast("success", "Perfil actualizado correctamente.");
     } catch (error: any) {
-      console.error("Error saving profile:", error);
       if (!toastMessages.some((t) => t.type === "error")) {
         addToast(
           "error",
@@ -345,9 +339,6 @@ export const ResponsiveProfileForm = () => {
                 onError={(e) => {
                   const target = e.target as HTMLImageElement;
                   if (target.src !== window.location.origin + "/user.svg") {
-                    console.warn(
-                      `Failed to load image: ${target.src}. Falling back to default.`,
-                    );
                     target.src = "/user.svg";
                     setPreview("/user.svg");
                   }
