@@ -1,8 +1,10 @@
 import { ReactNode, useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Avatar, DarkThemeToggle, Dropdown, Navbar } from "flowbite-react";
+import { HiTranslate } from "react-icons/hi";
 import { BACKEND_BASE_URL } from "../config";
 import { userApi } from "../services/api";
+import LanguageSwitcher from "../components/LanguageSwitcher";
 
 interface Props {
   children: ReactNode;
@@ -16,16 +18,31 @@ interface UserData {
   role?: string;
 }
 
+interface Language {
+  id: string;
+  name: string;
+  description: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
 const DashboardLayout = ({ children }: Props) => {
   const navigate = useNavigate();
   const [userData, setUserData] = useState<UserData | null>(null);
   const [avatarError, setAvatarError] = useState(false);
   const [avatarTimestamp, setAvatarTimestamp] = useState(Date.now());
+  const [showLanguageSwitcher, setShowLanguageSwitcher] = useState(false);
 
   const handleLogout = () => {
     localStorage.removeItem("auth");
     localStorage.removeItem("user");
+    localStorage.removeItem("selectedRegionId");
+    localStorage.removeItem("selectedLanguageId");
     navigate("/login");
+  };
+
+  const handleLanguageChanged = (_language: Language) => {
+    window.location.reload();
   };
 
   useEffect(() => {
@@ -34,9 +51,6 @@ const DashboardLayout = ({ children }: Props) => {
       const token = localStorage.getItem("auth");
 
       if (!token || token === "undefined") {
-        console.warn(
-          `Invalid or missing auth token ('${token}') found in DashboardLayout. Logging out.`,
-        );
         handleLogout();
         return;
       }
@@ -48,11 +62,9 @@ const DashboardLayout = ({ children }: Props) => {
             setUserData(parsedUser);
             return;
           } else {
-            console.warn("Stored user data is invalid. Clearing and fetching.");
             localStorage.removeItem("user");
           }
         } catch (error) {
-          console.error("Failed to parse user data from localStorage:", error);
           localStorage.removeItem("user");
         }
       }
@@ -66,14 +78,13 @@ const DashboardLayout = ({ children }: Props) => {
           localStorage.setItem("user", JSON.stringify(data));
         } else {
           if (response.status === 401 || response.status === 403) {
-            console.warn("Token rejected by backend. Logging out.");
             handleLogout();
-          } else {
-            console.error("Error fetching user data:", response.message);
           }
         }
       } catch (error) {
+        if (import.meta.env.DEV) {
         console.error("Error fetching user data:", error);
+      }
       }
     };
 
@@ -91,7 +102,9 @@ const DashboardLayout = ({ children }: Props) => {
             setAvatarError(false);
           }
         } catch (error) {
+          if (import.meta.env.DEV) {
           console.error("Error parsing updated user data:", error);
+        }
         }
       }
     };
@@ -109,7 +122,9 @@ const DashboardLayout = ({ children }: Props) => {
             setAvatarError(false);
           }
         } catch (error) {
+          if (import.meta.env.DEV) {
           console.error("Error parsing updated user data:", error);
+        }
         }
       }
     };
@@ -148,7 +163,6 @@ const DashboardLayout = ({ children }: Props) => {
                   rounded
                   onError={() => {
                     if (!avatarError) {
-                      console.warn(`Failed to load avatar: ${avatarImgSrc}`);
                       setAvatarError(true);
                     }
                   }}
@@ -168,6 +182,10 @@ const DashboardLayout = ({ children }: Props) => {
               </Dropdown.Item>
               <Dropdown.Item onClick={() => navigate("/profile")}>
                 Profile
+              </Dropdown.Item>
+              <Dropdown.Item onClick={() => setShowLanguageSwitcher(true)}>
+                <HiTranslate className="mr-2 size-4" />
+                Cambiar Idioma
               </Dropdown.Item>
               <Dropdown.Divider />
               <Dropdown.Item onClick={handleLogout}>Sign out</Dropdown.Item>
@@ -210,6 +228,12 @@ const DashboardLayout = ({ children }: Props) => {
               >
                 Lessons
               </Navbar.Link>
+              <Navbar.Link
+                href="/admin/regions"
+                active={location.pathname.startsWith("/admin/regions")}
+              >
+                Regions
+              </Navbar.Link>
             </>
           )}
         </Navbar.Collapse>
@@ -221,6 +245,12 @@ const DashboardLayout = ({ children }: Props) => {
           <p className="text-gray-500 dark:text-gray-400">Loading...</p>
         </div>
       )}
+
+      <LanguageSwitcher
+        isOpen={showLanguageSwitcher}
+        onClose={() => setShowLanguageSwitcher(false)}
+        onLanguageChanged={handleLanguageChanged}
+      />
     </>
   );
 };

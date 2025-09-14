@@ -25,7 +25,7 @@ export const ToastProvider = ({ children }: { children: ReactNode }) => {
 
   const addToast = useCallback(
     (type: ToastMessage["type"], message: string) => {
-      const id = Date.now();
+      const id = Date.now() + Math.random() * 1000;
       setToasts((prev) => [...prev, { id, type, message }]);
       setTimeout(
         () => setToasts((prev) => prev.filter((t) => t.id !== id)),
@@ -41,10 +41,13 @@ export const ToastProvider = ({ children }: { children: ReactNode }) => {
       addToast(type, message);
     };
 
-    window.addEventListener('show-toast', handleCustomToast as EventListener);
-    
+    window.addEventListener("show-toast", handleCustomToast as EventListener);
+
     return () => {
-      window.removeEventListener('show-toast', handleCustomToast as EventListener);
+      window.removeEventListener(
+        "show-toast",
+        handleCustomToast as EventListener,
+      );
     };
   }, [addToast]);
 

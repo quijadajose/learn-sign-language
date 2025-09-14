@@ -1,7 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import ReactQuill from "react-quill";
-
-import "react-quill/dist/quill.snow.css";
+import QuillEditor, { QuillEditorRef } from "../components/QuillEditor";
 import { BACKEND_BASE_URL } from "../config";
 import { adminApi } from "../services/api";
 
@@ -17,7 +15,7 @@ export interface EditorProps {
 
 export default function Editor(props: EditorProps) {
   const [value, setValue] = useState<string>(props.value || "");
-  const reactQuillRef = useRef<ReactQuill>(null);
+  const reactQuillRef = useRef<QuillEditorRef>(null);
 
   useEffect(() => {
     if (props.value !== value) {
@@ -78,7 +76,9 @@ export default function Editor(props: EditorProps) {
           editor.insertEmbed(editor.getLength() - 1, "image", imageUrl, "user");
         }
       } catch (err) {
-        console.error(err);
+        if (import.meta.env.DEV) {
+          console.error(err);
+        }
       }
     };
 
@@ -86,7 +86,7 @@ export default function Editor(props: EditorProps) {
   }, []);
 
   return (
-    <ReactQuill
+    <QuillEditor
       ref={reactQuillRef}
       theme="snow"
       placeholder="Contenido de la lección..."

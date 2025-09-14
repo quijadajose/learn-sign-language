@@ -10,6 +10,7 @@ import {
   Textarea,
   Spinner,
   Badge,
+  Tabs,
 } from "flowbite-react";
 import {
   HiPlus,
@@ -22,6 +23,7 @@ import {
 import { useToast } from "../components/ToastProvider";
 import { quizApi } from "../services/api";
 import { BACKEND_BASE_URL } from "../config";
+import QuizVariantManagement from "./QuizVariantManagement";
 
 interface QuizOption {
   id: string;
@@ -82,10 +84,14 @@ export default function QuizManagement() {
       if (response.success) {
         setQuizzes(response.data || []);
       } else {
-        setError(response.message || "Error al cargar los quizzes");
+        const errorMsg = response.message || "Error al cargar los quizzes";
+        setError(errorMsg);
+        addToast("error", errorMsg);
       }
     } catch (err) {
-      setError("Error de conexión");
+      const errorMsg = "Error de conexión al cargar los quizzes";
+      setError(errorMsg);
+      addToast("error", errorMsg);
     } finally {
       setLoading(false);
     }
@@ -362,64 +368,75 @@ export default function QuizManagement() {
         </Alert>
       )}
 
-      {quizzes.length === 0 ? (
-        <Card>
-          <div className="py-8 text-center">
-            <HiExclamationCircle className="mx-auto h-12 w-12 text-gray-400" />
-            <h3 className="mt-4 text-lg font-medium text-gray-900 dark:text-white">
-              No hay quizzes
-            </h3>
-            <p className="mt-2 text-gray-600 dark:text-gray-400">
-              Esta lección no tiene quizzes creados aún.
-            </p>
-            <Button color="success" onClick={handleCreateQuiz} className="mt-4">
-              <HiPlus className="mr-2 h-4 w-4" />
-              Crear Primer Quiz
-            </Button>
-          </div>
-        </Card>
-      ) : (
-        <div className="grid gap-6">
-          {quizzes.map((quiz) => (
-            <Card key={quiz.id}>
-              <div className="flex items-center justify-between">
-                <div className="flex-1">
-                  <h3 className="text-xl font-semibold text-gray-900 dark:text-white">
-                    Quiz #{quiz.id.slice(-8)}
-                  </h3>
-                  <p className="mt-2 text-gray-600 dark:text-gray-400">
-                    {quiz.questions.length} pregunta
-                    {quiz.questions.length !== 1 ? "s" : ""}
-                  </p>
-                  <div className="mt-3 flex flex-wrap gap-2 text-gray-900 dark:text-white">
-                    {quiz.questions.map((question, index) => (
-                      <Badge key={question.id} color="blue">
-                        Pregunta {index + 1}
-                      </Badge>
-                    ))}
-                  </div>
-                </div>
-                <div className="flex gap-2">
-                  <Button
-                    size="sm"
-                    color="blue"
-                    onClick={() => handleEditQuiz(quiz)}
-                  >
-                    <HiPencil className="h-4 w-4" />
-                  </Button>
-                  <Button
-                    size="sm"
-                    color="failure"
-                    onClick={() => handleDeleteQuiz(quiz.id)}
-                  >
-                    <HiTrash className="h-4 w-4" />
-                  </Button>
-                </div>
+      <Tabs>
+        <Tabs.Item title="Quizzes Principales" active>
+          {quizzes.length === 0 ? (
+            <Card>
+              <div className="py-8 text-center">
+                <HiExclamationCircle className="mx-auto h-12 w-12 text-gray-400" />
+                <h3 className="mt-4 text-lg font-medium text-gray-900 dark:text-white">
+                  No hay quizzes
+                </h3>
+                <p className="mt-2 text-gray-600 dark:text-gray-400">
+                  Esta lección no tiene quizzes creados aún.
+                </p>
+                <Button
+                  color="success"
+                  onClick={handleCreateQuiz}
+                  className="mt-4"
+                >
+                  <HiPlus className="mr-2 h-4 w-4" />
+                  Crear Primer Quiz
+                </Button>
               </div>
             </Card>
-          ))}
-        </div>
-      )}
+          ) : (
+            <div className="grid gap-6">
+              {quizzes.map((quiz) => (
+                <Card key={quiz.id}>
+                  <div className="flex items-center justify-between">
+                    <div className="flex-1">
+                      <h3 className="text-xl font-semibold text-gray-900 dark:text-white">
+                        Quiz #{quiz.id.slice(-8)}
+                      </h3>
+                      <p className="mt-2 text-gray-600 dark:text-gray-400">
+                        {quiz.questions.length} pregunta
+                        {quiz.questions.length !== 1 ? "s" : ""}
+                      </p>
+                      <div className="mt-3 flex flex-wrap gap-2 text-gray-900 dark:text-white">
+                        {quiz.questions.map((question, index) => (
+                          <Badge key={question.id} color="blue">
+                            Pregunta {index + 1}
+                          </Badge>
+                        ))}
+                      </div>
+                    </div>
+                    <div className="flex gap-2">
+                      <Button
+                        size="sm"
+                        color="blue"
+                        onClick={() => handleEditQuiz(quiz)}
+                      >
+                        <HiPencil className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        size="sm"
+                        color="failure"
+                        onClick={() => handleDeleteQuiz(quiz.id)}
+                      >
+                        <HiTrash className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
+                </Card>
+              ))}
+            </div>
+          )}
+        </Tabs.Item>
+        <Tabs.Item title="Variantes Regionales">
+          <QuizVariantManagement />
+        </Tabs.Item>
+      </Tabs>
 
       <Modal
         show={showCreateModal}

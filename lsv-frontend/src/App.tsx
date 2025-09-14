@@ -13,6 +13,7 @@ import LanguageCards from "./LanguageCards";
 import LanguageManagement from "./admin/LanguageManagement";
 import LessonManagement from "./admin/LessonManagement";
 import QuizManagement from "./admin/QuizManagement";
+import RegionManagement from "./admin/RegionManagement";
 import { ToastProvider } from "./components/ToastProvider";
 import LessonView from "./LessonView";
 import QuizView from "./QuizView";
@@ -131,6 +132,16 @@ function App() {
                 <AdminRoute>
                   <DashboardLayout>
                     <QuizManagement />
+                  </DashboardLayout>
+                </AdminRoute>
+              }
+            />
+            <Route
+              path="/admin/regions"
+              element={
+                <AdminRoute>
+                  <DashboardLayout>
+                    <RegionManagement />
                   </DashboardLayout>
                 </AdminRoute>
               }

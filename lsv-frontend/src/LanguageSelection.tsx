@@ -3,7 +3,7 @@ import { useState, useEffect, useRef } from "react";
 import { HiExclamationCircle } from "react-icons/hi";
 import { useLocalStorage } from "./hooks/useLocalStorage";
 import { useToast } from "./components/ToastProvider";
-import { languageApi } from "./services/api";
+import { languageApi, regionApi } from "./services/api";
 
 interface Language {
   id: string;
@@ -27,6 +27,24 @@ interface PaginatedEnrolledLanguageResponse {
   data: EnrolledLanguage[];
 }
 
+interface Region {
+  id: string;
+  name: string;
+  code: string;
+  description: string;
+  isDefault: boolean;
+  language: Language;
+  createdAt: string;
+  updatedAt: string;
+}
+
+interface PaginatedRegionResponse {
+  data: Region[];
+  total: number;
+  page: number;
+  pageSize: number;
+}
+
 const ITEMS_PER_PAGE = 8;
 
 interface Props {
@@ -35,6 +53,7 @@ interface Props {
 
 export default function LanguageSelection({ onLanguageSelected }: Props) {
   const [languages, setLanguages] = useState<Language[]>([]);
+  const [regions, setRegions] = useState<Region[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
@@ -42,9 +61,16 @@ export default function LanguageSelection({ onLanguageSelected }: Props) {
   const [selectedLanguageId, setSelectedLanguageId] = useLocalStorage<
     string | null
   >("selectedLanguageId", null);
+  const [selectedRegionId, setSelectedRegionId] = useLocalStorage<
+    string | null
+  >("selectedRegionId", null);
   const [enrolling, setEnrolling] = useState(false);
   const [token] = useLocalStorage<string | null>("auth", null);
   const [title, setTitle] = useState("Quiero aprender:");
+  const [showRegionSelection, setShowRegionSelection] = useState(false);
+  const [selectedLanguage, setSelectedLanguage] = useState<Language | null>(
+    null,
+  );
   const effectRan = useRef(false);
   const addToast = useToast();
 
@@ -55,6 +81,17 @@ export default function LanguageSelection({ onLanguageSelected }: Props) {
         setError("No estás autenticado.");
         setLoading(false);
         return;
+      }
+
+      if (selectedRegionId) {
+        const enrolledResponse = await languageApi.getEnrolledLanguages();
+
+        if (enrolledResponse.success && enrolledResponse.data.data.length > 0) {
+          const enrolledLanguage = enrolledResponse.data.data[0].language;
+          addToast("success", `Continuando con ${enrolledLanguage.name}.`);
+          onLanguageSelected(enrolledLanguage);
+          return;
+        }
       }
 
       setLoading(true);
@@ -124,16 +161,95 @@ export default function LanguageSelection({ onLanguageSelected }: Props) {
     initialize().then(() => {
       effectRan.current = true;
     });
-  }, [token, currentPage]);
+  }, [token, currentPage, selectedRegionId]);
+
+  useEffect(() => {
+    if (showRegionSelection && selectedRegionId && !enrolling) {
+      handleNext();
+    }
+  }, [showRegionSelection, selectedRegionId, enrolling]);
 
   const handleSelect = (lang: Language) => {
     setSelectedLanguageId(lang.id);
+    setSelectedLanguage(lang);
     addToast("success", `Idioma seleccionado: ${lang.name}`);
   };
 
+  const handleRegionSelect = (region: Region) => {
+    setSelectedRegionId(region.id);
+    addToast("success", `Región seleccionada: ${region.name}`);
+  };
+
+  const loadRegions = async (
+    languageId: string,
+    _selectedLanguage?: Language,
+  ) => {
+    try {
+      setLoading(true);
+      const response = await regionApi.getRegions(1, 100, languageId);
+      if (!response.success) {
+        throw new Error(
+          response.message || "No se pudieron obtener las regiones.",
+        );
+      }
+
+      const regionData: PaginatedRegionResponse = response.data;
+      const languageRegions = regionData.data;
+
+      if (languageRegions.length === 0) {
+        addToast(
+          "info",
+          "No hay regiones disponibles. Puedes continuar sin seleccionar región.",
+        );
+        setShowRegionSelection(false);
+        setEnrolling(true);
+
+        const response = await languageApi.enrollInLanguage(languageId);
+
+        if (response.success) {
+          addToast(
+            "success",
+            `Inscrito en ${selectedLanguage?.name} correctamente.`,
+          );
+          onLanguageSelected(selectedLanguage!);
+        } else {
+          addToast(
+            "error",
+            response.message || "Ocurrió un error inesperado al inscribirte.",
+          );
+        }
+
+        setEnrolling(false);
+        return;
+      }
+
+      setRegions(languageRegions);
+
+      if (languageRegions.length === 1) {
+        setSelectedRegionId(languageRegions[0].id);
+        addToast(
+          "info",
+          `Región automáticamente seleccionada: ${languageRegions[0].name}`,
+        );
+      }
+    } catch (err: any) {
+      setError(err.message);
+      addToast("error", err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleNext = async (languageToEnroll?: Language) => {
-    const selected =
-      languageToEnroll || languages.find((l) => l.id === selectedLanguageId);
+    let selected: Language | undefined;
+
+    if (showRegionSelection) {
+      selected = selectedLanguage || undefined;
+    } else {
+      selected =
+        languageToEnroll || languages.find((l) => l.id === selectedLanguageId);
+    }
+
     if (!selected) {
       addToast("error", "Por favor selecciona un idioma.");
       return;
@@ -141,6 +257,14 @@ export default function LanguageSelection({ onLanguageSelected }: Props) {
 
     if (!token) {
       addToast("error", "No estás autenticado.");
+      return;
+    }
+
+    if (!showRegionSelection) {
+      setSelectedLanguage(selected);
+      await loadRegions(selected.id, selected);
+      setShowRegionSelection(true);
+      setTitle("Selecciona tu región:");
       return;
     }
 
@@ -161,6 +285,13 @@ export default function LanguageSelection({ onLanguageSelected }: Props) {
     setEnrolling(false);
   };
 
+  const handleBack = () => {
+    setShowRegionSelection(false);
+    setSelectedRegionId(null);
+    setRegions([]);
+    setTitle("Quiero aprender:");
+  };
+
   return (
     <div className="mx-auto w-full max-w-6xl p-6">
       <h1 className="mb-8 text-center text-2xl font-bold text-gray-900 dark:text-white">
@@ -178,7 +309,7 @@ export default function LanguageSelection({ onLanguageSelected }: Props) {
         </Alert>
       )}
 
-      {!loading && !error && languages.length > 0 && (
+      {!loading && !error && languages.length > 0 && !showRegionSelection && (
         <>
           <div className="mb-8 grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4">
             {languages.map((lang) => (
@@ -212,6 +343,50 @@ export default function LanguageSelection({ onLanguageSelected }: Props) {
               isProcessing={enrolling}
             >
               {enrolling ? "Inscribiendo..." : "Siguiente"}
+            </Button>
+          </div>
+        </>
+      )}
+
+      {!loading && !error && showRegionSelection && regions.length > 0 && (
+        <>
+          <div className="mb-4 text-center">
+            <p className="text-lg text-gray-600 dark:text-gray-300">
+              Idioma seleccionado:{" "}
+              <span className="font-semibold">{selectedLanguage?.name}</span>
+            </p>
+          </div>
+
+          <div className="mb-8 grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4">
+            {regions.map((region) => (
+              <Card
+                key={region.id}
+                onClick={() => handleRegionSelect(region)}
+                className={`cursor-pointer ${selectedRegionId === region.id ? "ring-2 ring-blue-500" : ""}`}
+              >
+                <h5 className="text-xl font-semibold text-gray-900 dark:text-white">
+                  {region.name}
+                </h5>
+                <p className="text-sm text-gray-500 dark:text-gray-400">
+                  {region.description}
+                </p>
+                <p className="text-xs text-gray-400 dark:text-gray-500">
+                  Código: {region.code}
+                </p>
+              </Card>
+            ))}
+          </div>
+
+          <div className="mt-8 flex justify-center gap-4">
+            <Button onClick={handleBack} color="gray" disabled={enrolling}>
+              Atrás
+            </Button>
+            <Button
+              onClick={() => handleNext()}
+              disabled={!selectedRegionId || enrolling}
+              isProcessing={enrolling}
+            >
+              {enrolling ? "Inscribiendo..." : "Continuar"}
             </Button>
           </div>
         </>

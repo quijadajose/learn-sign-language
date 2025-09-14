@@ -10,6 +10,9 @@ import {
   TextInput,
   Textarea,
   Toast,
+  Badge,
+  Table,
+  Label,
 } from "flowbite-react";
 import {
   HiEye,
@@ -20,17 +23,41 @@ import {
   HiTrash,
   HiPlus,
   HiAcademicCap,
+  HiGlobe,
 } from "react-icons/hi";
-import ReactQuill from "react-quill";
-import "react-quill/dist/quill.snow.css";
+import QuillEditor from "../components/QuillEditor";
 import Editor from "./Editor";
 import "../styles/quill-flowbite.css";
-import { adminApi } from "../services/api";
+import { adminApi, regionApi, lessonVariantApi } from "../services/api";
 
 interface Language {
   id: string;
   name: string;
   description: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+interface Region {
+  id: string;
+  name: string;
+  code: string;
+  description: string;
+  isDefault: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+interface LessonVariant {
+  id: string;
+  name: string;
+  description: string;
+  content: string;
+  isRegionalSpecific: boolean;
+  isBase: boolean;
+  regionalNotes?: string;
+  region: Region;
+  baseLesson: Lesson;
   createdAt: string;
   updatedAt: string;
 }
@@ -142,6 +169,23 @@ export default function LessonManagement() {
   const [deletingLesson, setDeletingLesson] = useState<Lesson | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
 
+  const [regions, setRegions] = useState<Region[]>([]);
+  const [selectedLessonId, setSelectedLessonId] = useState<string | null>(null);
+  const [lessonVariants, setLessonVariants] = useState<LessonVariant[]>([]);
+  const [variantsLoading, setVariantsLoading] = useState(false);
+  const [isVariantModalOpen, setIsVariantModalOpen] = useState(false);
+  const [isCreateVariantModalOpen, setIsCreateVariantModalOpen] =
+    useState(false);
+  const [variantForm, setVariantForm] = useState({
+    name: "",
+    description: "",
+    content: "",
+    regionId: "",
+    isRegionalSpecific: false,
+    isBase: false,
+    regionalNotes: "",
+  });
+
   const fetchLanguages = async () => {
     setLoading(true);
     setError(null);
@@ -156,6 +200,19 @@ export default function LessonManagement() {
     }
 
     setLoading(false);
+  };
+
+  const fetchRegions = async () => {
+    try {
+      const response = await regionApi.getRegions();
+      if (response.success) {
+        setRegions(response.data.data || []);
+      } else {
+        addToast("error", response.message || "Error al cargar las regiones");
+      }
+    } catch (err) {
+      addToast("error", "Error de conexión al cargar las regiones");
+    }
   };
 
   const fetchLessonsByLanguage = async (
@@ -392,6 +449,7 @@ export default function LessonManagement() {
 
   useEffect(() => {
     fetchLanguages();
+    fetchRegions();
   }, []);
 
   useEffect(() => {
@@ -481,6 +539,95 @@ export default function LessonManagement() {
     } finally {
       setCreateLoading(false);
     }
+  };
+
+  const loadLessonVariants = async (lessonId: string) => {
+    try {
+      setVariantsLoading(true);
+      const response = await lessonVariantApi.getLessonVariants(lessonId);
+
+      if (response.success) {
+        setLessonVariants(response.data || []);
+      } else {
+        addToast("error", response.message || "Error al cargar las variantes");
+      }
+    } catch (err) {
+      addToast("error", "Error de conexión al cargar las variantes");
+    } finally {
+      setVariantsLoading(false);
+    }
+  };
+
+  const handleCreateVariant = async () => {
+    if (
+      !selectedLessonId ||
+      !variantForm.name.trim() ||
+      !variantForm.description.trim() ||
+      !variantForm.content.trim() ||
+      !variantForm.regionId
+    ) {
+      addToast("error", "Todos los campos son obligatorios");
+      return;
+    }
+
+    try {
+      setCreateLoading(true);
+      const response = await lessonVariantApi.createLessonVariant(
+        selectedLessonId,
+        variantForm,
+      );
+
+      if (response.success) {
+        addToast("success", "Variante regional creada exitosamente");
+        setIsCreateVariantModalOpen(false);
+        setVariantForm({
+          name: "",
+          description: "",
+          content: "",
+          regionId: "",
+          isRegionalSpecific: false,
+          isBase: false,
+          regionalNotes: "",
+        });
+        loadLessonVariants(selectedLessonId);
+      } else {
+        addToast("error", response.message || "Error al crear la variante");
+      }
+    } catch (err) {
+      addToast("error", "Error de conexión al crear la variante");
+    } finally {
+      setCreateLoading(false);
+    }
+  };
+
+  const handleDeleteVariant = async (variantId: string) => {
+    if (!selectedLessonId) return;
+
+    try {
+      const response = await lessonVariantApi.deleteLessonVariant(
+        selectedLessonId,
+        variantId,
+      );
+
+      if (response.success) {
+        addToast("success", "Variante eliminada exitosamente");
+        loadLessonVariants(selectedLessonId);
+      } else {
+        addToast("error", response.message || "Error al eliminar la variante");
+      }
+    } catch (err) {
+      addToast("error", "Error de conexión al eliminar la variante");
+    }
+  };
+
+  const openVariantsModal = (lessonId: string) => {
+    setSelectedLessonId(lessonId);
+    setIsVariantModalOpen(true);
+    loadLessonVariants(lessonId);
+  };
+
+  const openCreateVariantModal = () => {
+    setIsCreateVariantModalOpen(true);
   };
 
   const formatDate = (dateString: string) => {
@@ -700,6 +847,16 @@ export default function LessonManagement() {
                             </Button>
                             <Button
                               size="sm"
+                              color="info"
+                              onClick={() => openVariantsModal(lesson.id)}
+                            >
+                              <div className="flex items-center">
+                                <HiGlobe className="mr-1 size-4" />
+                                Variantes
+                              </div>
+                            </Button>
+                            <Button
+                              size="sm"
                               color="failure"
                               onClick={() => handleOpenDeleteModal(lesson)}
                               disabled={isDeleting}
@@ -796,17 +953,15 @@ export default function LessonManagement() {
               <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
                 Contenido
               </label>
-              <div className="quill-flowbite rounded-md bg-gray-50 dark:bg-gray-700">
-                <ReactQuill
-                  value={createForm.content}
-                  onChange={(value) =>
-                    setCreateForm((p) => ({ ...p, content: value }))
-                  }
-                  modules={quillEditModules}
-                  formats={quillFormats}
-                  theme="snow"
-                />
-              </div>
+              <QuillEditor
+                value={createForm.content}
+                onChange={(value) =>
+                  setCreateForm((p) => ({ ...p, content: value }))
+                }
+                modules={quillEditModules}
+                formats={quillFormats}
+                theme="snow"
+              />
             </div>
 
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
@@ -916,15 +1071,13 @@ export default function LessonManagement() {
                 <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
                   Contenido
                 </label>
-                <div className="quill-flowbite rounded-md bg-gray-50 dark:bg-gray-700">
-                  <ReactQuill
-                    value={selectedLesson.content}
-                    readOnly={true}
-                    modules={quillModules}
-                    formats={quillFormats}
-                    theme="snow"
-                  />
-                </div>
+                <QuillEditor
+                  value={selectedLesson.content}
+                  readOnly={true}
+                  modules={quillModules}
+                  formats={quillFormats}
+                  theme="snow"
+                />
               </div>
 
               {selectedLesson.stage && (
@@ -1135,6 +1288,230 @@ export default function LessonManagement() {
             </div>
           </div>
         </Modal.Body>
+      </Modal>
+
+      <Modal
+        show={isVariantModalOpen}
+        size="6xl"
+        onClose={() => setIsVariantModalOpen(false)}
+      >
+        <Modal.Header>Variantes Regionales</Modal.Header>
+        <Modal.Body>
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                Variantes de la Lección
+              </h3>
+              <Button
+                onClick={openCreateVariantModal}
+                className="bg-green-600 hover:bg-green-700"
+              >
+                <HiPlus className="mr-2 h-4 w-4" />
+                Nueva Variante
+              </Button>
+            </div>
+
+            {variantsLoading ? (
+              <div className="flex h-32 items-center justify-center">
+                <Spinner size="lg" />
+              </div>
+            ) : (
+              <div className="overflow-x-auto">
+                <Table>
+                  <Table.Head>
+                    <Table.HeadCell>Nombre</Table.HeadCell>
+                    <Table.HeadCell>Región</Table.HeadCell>
+                    <Table.HeadCell>Tipo</Table.HeadCell>
+                    <Table.HeadCell>Notas Regionales</Table.HeadCell>
+                    <Table.HeadCell>Acciones</Table.HeadCell>
+                  </Table.Head>
+                  <Table.Body className="divide-y">
+                    {lessonVariants.map((variant) => (
+                      <Table.Row
+                        key={variant.id}
+                        className="bg-white dark:border-gray-700 dark:bg-gray-800"
+                      >
+                        <Table.Cell className="whitespace-nowrap font-medium text-gray-900 dark:text-white">
+                          {variant.name}
+                        </Table.Cell>
+                        <Table.Cell className="text-gray-900 dark:text-white">
+                          {variant.region.name} ({variant.region.code})
+                        </Table.Cell>
+                        <Table.Cell>
+                          <div className="flex flex-wrap gap-1">
+                            {variant.isBase && (
+                              <Badge color="green">Base</Badge>
+                            )}
+                            {variant.isRegionalSpecific && (
+                              <Badge color="blue">Específica</Badge>
+                            )}
+                            {!variant.isBase && !variant.isRegionalSpecific && (
+                              <Badge color="gray">Regional</Badge>
+                            )}
+                          </div>
+                        </Table.Cell>
+                        <Table.Cell className="text-gray-900 dark:text-white">
+                          {variant.regionalNotes || "N/A"}
+                        </Table.Cell>
+                        <Table.Cell>
+                          <div className="flex space-x-2">
+                            <Button
+                              size="sm"
+                              color="failure"
+                              onClick={() => handleDeleteVariant(variant.id)}
+                            >
+                              <HiTrash className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </Table.Cell>
+                      </Table.Row>
+                    ))}
+                  </Table.Body>
+                </Table>
+              </div>
+            )}
+          </div>
+        </Modal.Body>
+        <Modal.Footer>
+          <Button color="gray" onClick={() => setIsVariantModalOpen(false)}>
+            Cerrar
+          </Button>
+        </Modal.Footer>
+      </Modal>
+
+      <Modal
+        show={isCreateVariantModalOpen}
+        size="4xl"
+        onClose={() => setIsCreateVariantModalOpen(false)}
+      >
+        <Modal.Header>Crear Variante Regional</Modal.Header>
+        <Modal.Body>
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="variant-name" value="Nombre" />
+              <TextInput
+                id="variant-name"
+                value={variantForm.name}
+                onChange={(e) =>
+                  setVariantForm({ ...variantForm, name: e.target.value })
+                }
+                placeholder="Nombre de la variante regional"
+                required
+              />
+            </div>
+            <div>
+              <Label htmlFor="variant-description" value="Descripción" />
+              <Textarea
+                id="variant-description"
+                value={variantForm.description}
+                onChange={(e) =>
+                  setVariantForm({
+                    ...variantForm,
+                    description: e.target.value,
+                  })
+                }
+                placeholder="Descripción de la variante"
+                rows={3}
+                required
+              />
+            </div>
+            <div>
+              <Label htmlFor="variant-region" value="Región" />
+              <Select
+                id="variant-region"
+                value={variantForm.regionId}
+                onChange={(e) =>
+                  setVariantForm({ ...variantForm, regionId: e.target.value })
+                }
+                required
+              >
+                <option value="">Selecciona una región</option>
+                {regions.map((region) => (
+                  <option key={region.id} value={region.id}>
+                    {region.name} ({region.code})
+                  </option>
+                ))}
+              </Select>
+            </div>
+            <div>
+              <Label htmlFor="variant-content" value="Contenido" />
+              <div className="mt-1">
+                <QuillEditor
+                  value={variantForm.content}
+                  onChange={(value) =>
+                    setVariantForm({ ...variantForm, content: value })
+                  }
+                  theme="snow"
+                  className="h-48"
+                />
+              </div>
+            </div>
+            <div className="flex items-center">
+              <input
+                type="checkbox"
+                id="variant-specific"
+                checked={variantForm.isRegionalSpecific}
+                onChange={(e) =>
+                  setVariantForm({
+                    ...variantForm,
+                    isRegionalSpecific: e.target.checked,
+                  })
+                }
+                className="mr-2"
+              />
+              <Label
+                htmlFor="variant-specific"
+                value="Específica de la región"
+              />
+            </div>
+            <div className="flex items-center">
+              <input
+                type="checkbox"
+                id="variant-base"
+                checked={variantForm.isBase}
+                onChange={(e) =>
+                  setVariantForm({ ...variantForm, isBase: e.target.checked })
+                }
+                className="mr-2"
+              />
+              <Label
+                htmlFor="variant-base"
+                value="Variante base (solo puede haber una por lección)"
+              />
+            </div>
+            <div>
+              <Label htmlFor="variant-notes" value="Notas Regionales" />
+              <Textarea
+                id="variant-notes"
+                value={variantForm.regionalNotes}
+                onChange={(e) =>
+                  setVariantForm({
+                    ...variantForm,
+                    regionalNotes: e.target.value,
+                  })
+                }
+                placeholder="Notas sobre las diferencias regionales..."
+                rows={2}
+              />
+            </div>
+          </div>
+        </Modal.Body>
+        <Modal.Footer>
+          <Button
+            onClick={handleCreateVariant}
+            disabled={createLoading}
+            className="bg-green-600 hover:bg-green-700"
+          >
+            {createLoading ? <Spinner size="sm" className="mr-2" /> : null}
+            Crear Variante
+          </Button>
+          <Button
+            color="gray"
+            onClick={() => setIsCreateVariantModalOpen(false)}
+          >
+            Cancelar
+          </Button>
+        </Modal.Footer>
       </Modal>
 
       <div className="pointer-events-none fixed right-4 top-4 z-50 flex flex-col gap-2">

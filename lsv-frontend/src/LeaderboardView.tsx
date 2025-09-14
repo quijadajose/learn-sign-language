@@ -54,7 +54,9 @@ const LeaderboardView: React.FC = () => {
         setLanguages(response.data.data || response.data);
       }
     } catch (err) {
-      console.error("Error fetching languages:", err);
+      if (import.meta.env.DEV) {
+        console.error("Error fetching languages:", err);
+      }
     }
   };
 
@@ -91,7 +93,6 @@ const LeaderboardView: React.FC = () => {
       setError(
         err instanceof Error ? err.message : "Error al cargar el leaderboard",
       );
-      console.error("Error fetching leaderboard:", err);
     } finally {
       setLoading(false);
     }

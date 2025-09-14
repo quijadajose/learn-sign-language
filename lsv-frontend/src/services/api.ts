@@ -4,15 +4,15 @@ const handleTokenExpiration = () => {
   localStorage.removeItem("auth");
   localStorage.removeItem("user");
   localStorage.removeItem("selectedLanguageId");
-  const event = new CustomEvent('show-toast', {
+  const event = new CustomEvent("show-toast", {
     detail: {
-      type: 'error',
-      message: 'Tu sesión ha expirado. Por favor, inicia sesión nuevamente.'
-    }
+      type: "error",
+      message: "Tu sesión ha expirado. Por favor, inicia sesión nuevamente.",
+    },
   });
   window.dispatchEvent(event);
-  
-  window.location.href = '/login';
+
+  window.location.href = "/login";
 };
 
 export interface ApiResponse<T = any> {
@@ -72,7 +72,8 @@ export class ApiService {
         if (response.status === 401) {
           handleTokenExpiration();
           return {
-            message: "Tu sesión ha expirado. Por favor, inicia sesión nuevamente.",
+            message:
+              "Tu sesión ha expirado. Por favor, inicia sesión nuevamente.",
             success: false,
             status: response.status,
           };
@@ -215,12 +216,6 @@ export class ApiService {
       formData.append(key, value);
     });
 
-    console.log("Upload request data:", {
-      endpoint,
-      additionalData,
-      fileName: file.name,
-    });
-
     const { onProgress, ...requestConfig } = config;
 
     return this.makeRequest<T>(endpoint, "POST", formData, {
@@ -302,14 +297,20 @@ export const lessonApi = {
     stageId: string,
     page: number = 1,
     limit: number = 100,
+    regionId?: string,
   ) => {
-    const params = {
+    const params: Record<string, string> = {
       stageId,
       page: page.toString(),
       limit: limit.toString(),
       orderBy: "name",
       sortOrder: "ASC",
     };
+
+    if (regionId) {
+      params.regionId = regionId;
+    }
+
     const url = ApiService.buildUrl(
       `/lesson/by-language/${languageId}/with-submissions`,
       params,
@@ -447,7 +448,6 @@ export const stageApi = {
   createStage: (stageData: any) => ApiService.post("/stage", stageData),
 
   updateStage: (stageId: string, stageData: any) => {
-    console.log("Updating stage with ID:", stageId, "Data:", stageData);
     return ApiService.put(`/stage/${stageId}`, stageData);
   },
 
@@ -456,18 +456,14 @@ export const stageApi = {
 
 export const languageApi = {
   getEnrolledLanguages: async () => {
-    console.log("API CALL: getEnrolledLanguages");
     const response = await ApiService.get("/users/enrolled-languages");
-    console.log("API RESPONSE: getEnrolledLanguages", response);
     return response;
   },
 
   getAvailableLanguages: async (page: number = 1, limit: number = 8) => {
     const params = { page, limit, orderBy: "name", sortOrder: "ASC" };
     const url = ApiService.buildUrl("/languages", params);
-    console.log("API CALL: getAvailableLanguages with URL:", url);
     const response = await ApiService.get(url);
-    console.log("API RESPONSE: getAvailableLanguages", response);
     return response;
   },
 
@@ -475,6 +471,89 @@ export const languageApi = {
 
   enrollInLanguage: (languageId: string) =>
     ApiService.post("/users/enroll", { languageId }),
+};
+
+export const regionApi = {
+  getRegions: (page: number = 1, limit: number = 100, languageId?: string) => {
+    const params: any = { page, limit, orderBy: "name", sortOrder: "ASC" };
+    if (languageId) {
+      params.languageId = languageId;
+    }
+    const url = ApiService.buildUrl("/region", params);
+    return ApiService.get(url);
+  },
+
+  getRegion: (regionId: string) => ApiService.get(`/region/${regionId}`),
+
+  createRegion: (regionData: any) => ApiService.post("/region", regionData),
+
+  updateRegion: (regionId: string, regionData: any) =>
+    ApiService.put(`/region/${regionId}`, regionData),
+
+  deleteRegion: (regionId: string) => ApiService.delete(`/region/${regionId}`),
+};
+
+export const lessonVariantApi = {
+  getLessonVariants: (lessonId: string) =>
+    ApiService.get(`/lesson/${lessonId}/variants`),
+
+  getLessonVariant: (lessonId: string, variantId: string) =>
+    ApiService.get(`/lesson/${lessonId}/variants/${variantId}`),
+
+  createLessonVariant: (lessonId: string, variantData: any) =>
+    ApiService.post(`/lesson/${lessonId}/variants`, variantData),
+
+  updateLessonVariant: (
+    lessonId: string,
+    variantId: string,
+    variantData: any,
+  ) => ApiService.put(`/lesson/${lessonId}/variants/${variantId}`, variantData),
+
+  deleteLessonVariant: (lessonId: string, variantId: string) =>
+    ApiService.delete(`/lesson/${lessonId}/variants/${variantId}`),
+
+  getRegionalLesson: (lessonId: string, regionId?: string) => {
+    const params = regionId ? { regionId } : {};
+    const url = ApiService.buildUrl(`/lesson/regional/${lessonId}`, params);
+    return ApiService.get(url);
+  },
+};
+
+export const quizVariantApi = {
+  getQuizVariants: (lessonVariantId: string) =>
+    ApiService.get(`/quiz-variants/lesson-variant/${lessonVariantId}`),
+
+  createQuizVariant: (data: {
+    lessonVariantId: string;
+    questions: Array<{
+      question: string;
+      options: Array<{ text: string; isCorrect: boolean }>;
+    }>;
+  }) => ApiService.post("/quiz-variants", data),
+
+  deleteQuizVariant: (id: string) => ApiService.delete(`/quiz-variants/${id}`),
+};
+
+export const countryDivisionApi = {
+  getCountries: () => ApiService.get("/country-division/countries"),
+
+  getDivisions: () => ApiService.get("/country-division/divisions"),
+
+  searchDivisions: (params: {
+    countryCode?: string;
+    search?: string;
+    page?: number;
+    limit?: number;
+  }) => {
+    const url = ApiService.buildUrl(
+      "/country-division/divisions/search",
+      params,
+    );
+    return ApiService.get(url);
+  },
+
+  getDivisionsByCountry: (countryCode: string) =>
+    ApiService.get(`/country-division/countries/${countryCode}/divisions`),
 };
 
 export default ApiService;
