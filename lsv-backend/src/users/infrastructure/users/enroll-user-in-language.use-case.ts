@@ -18,14 +18,22 @@ export class EnrollUserInLanguageUseCase {
   async execute(userId: string, languageId: string): Promise<UserLanguage> {
     const user = await this.userRepository.findById(userId);
     if (!user) {
+      console.error(
+        '❌ EnrollUserInLanguageUseCase.execute - Usuario no encontrado:',
+        userId,
+      );
       throw new NotFoundException('User not found');
     }
 
     const language = await this.languageRepository.findById(languageId);
     if (!language) {
+      console.error(
+        '❌ EnrollUserInLanguageUseCase.execute - Idioma no encontrado:',
+        languageId,
+      );
       throw new NotFoundException('Language not found');
     }
-
-    return this.userLanguageRepository.save(user, language);
+    const result = await this.userLanguageRepository.save(user, language);
+    return result;
   }
 }

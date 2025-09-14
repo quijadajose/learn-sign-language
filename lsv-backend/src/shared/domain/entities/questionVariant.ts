@@ -15,14 +15,14 @@ export class QuestionVariant {
   @Column('text')
   question: string;
 
-  @Column({ nullable: true })
-  explanation: string;
-
   @ManyToOne(() => QuizVariant, (quizVariant) => quizVariant.questionVariants, {
     onDelete: 'CASCADE',
   })
   quizVariant: QuizVariant;
 
-  @OneToMany('OptionVariant', (optionVariant: any) => optionVariant.questionVariant)
+  @OneToMany(
+    'OptionVariant',
+    (optionVariant: any) => optionVariant.questionVariant,
+  )
   optionVariants: any[];
 }

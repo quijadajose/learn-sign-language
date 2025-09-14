@@ -44,7 +44,6 @@ import { LessonModule } from 'src/lesson/lesson.module';
       provide: 'UserRepositoryInterface',
       useClass: UserRepository,
     },
-    // Removemos la instancia directa del LessonRepository ya que viene del LessonModule
   ],
   controllers: [UserLessonController],
 })

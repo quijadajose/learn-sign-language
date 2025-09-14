@@ -25,10 +25,12 @@ export class LessonVariant {
   content: string;
 
   @Column({ default: false })
-  isRegionalSpecific: boolean; // Si tiene diferencias significativas de la lección base
+  isRegionalSpecific: boolean;
 
+  @Column({ default: false })
+  isBase: boolean;
   @Column('text', { nullable: true })
-  regionalNotes: string; // Notas sobre las diferencias regionales
+  regionalNotes: string;
 
   @ManyToOne(() => Lesson, (lesson) => lesson.variants, {
     onDelete: 'CASCADE',

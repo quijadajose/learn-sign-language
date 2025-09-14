@@ -18,12 +18,18 @@ export class UserLanguageRepository implements UserLanguageRepositoryInterface {
   ) {}
   async save(user: User, language: Language): Promise<UserLanguage> {
     const newUserLanguage = this.userLanguageRepository.create({
+      userId: user.id,
+      languageId: language.id,
       user,
       language,
     });
-    const userLanguage = this.userLanguageRepository.create(newUserLanguage);
-    userLanguage.user = undefined;
-    return userLanguage;
+
+    const savedUserLanguage =
+      await this.userLanguageRepository.save(newUserLanguage);
+    savedUserLanguage.user = undefined;
+    savedUserLanguage.language = undefined;
+
+    return savedUserLanguage;
   }
   async findLanguagesByUserId(
     userId: string,
