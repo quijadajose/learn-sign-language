@@ -1,0 +1,119 @@
+import { Injectable } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository, Like } from 'typeorm';
+import { Country } from '../../domain/entities/iso-3166-2/countries';
+import { Division } from '../../domain/entities/iso-3166-2/divisions';
+import { CountryDivisionRepositoryInterface } from '../../domain/ports/country-division.repository.interface';
+import { SearchDivisionsDto } from '../../domain/dto/search-divisions.dto';
+import { PaginatedResponseDto } from '../../domain/dto/paginated-response.dto';
+
+@Injectable()
+export class CountryDivisionRepository
+  implements CountryDivisionRepositoryInterface
+{
+  constructor(
+    @InjectRepository(Country)
+    private readonly countryRepository: Repository<Country>,
+    @InjectRepository(Division)
+    private readonly divisionRepository: Repository<Division>,
+  ) {}
+
+  async createCountry(countryData: {
+    code: string;
+    name: string;
+  }): Promise<Country> {
+    const country = this.countryRepository.create(countryData);
+    return await this.countryRepository.save(country);
+  }
+
+  async findCountryByCode(code: string): Promise<Country | null> {
+    return await this.countryRepository.findOne({ where: { code } });
+  }
+
+  async findAllCountries(): Promise<Country[]> {
+    return await this.countryRepository.find({
+      relations: ['divisions'],
+      order: { name: 'ASC' },
+    });
+  }
+
+  async searchCountries(search: string): Promise<Country[]> {
+    return await this.countryRepository.find({
+      where: {
+        name: Like(`%${search}%`),
+      },
+      relations: ['divisions'],
+      order: { name: 'ASC' },
+      take: 20,
+    });
+  }
+
+  async createDivision(divisionData: {
+    code: string;
+    name: string;
+    countryCode: string;
+  }): Promise<Division> {
+    const country = await this.findCountryByCode(divisionData.countryCode);
+    if (!country) {
+      throw new Error(
+        `Country with code ${divisionData.countryCode} not found`,
+      );
+    }
+
+    const division = this.divisionRepository.create({
+      ...divisionData,
+      country,
+    });
+    return await this.divisionRepository.save(division);
+  }
+
+  async findDivisionByCode(code: string): Promise<Division | null> {
+    return await this.divisionRepository.findOne({
+      where: { code },
+      relations: ['country'],
+    });
+  }
+
+  async findDivisionsByCountryCode(countryCode: string): Promise<Division[]> {
+    return await this.divisionRepository.find({
+      where: { country: { code: countryCode } },
+      relations: ['country'],
+      order: { name: 'ASC' },
+    });
+  }
+
+  async findAllDivisions(): Promise<Division[]> {
+    return await this.divisionRepository.find({
+      relations: ['country'],
+      order: { name: 'ASC' },
+    });
+  }
+
+  async searchDivisions(
+    searchDto: SearchDivisionsDto,
+  ): Promise<PaginatedResponseDto<Division>> {
+    const { countryCode, search, page = 1, limit = 10 } = searchDto;
+    const skip = (page - 1) * limit;
+
+    const queryBuilder = this.divisionRepository
+      .createQueryBuilder('division')
+      .leftJoinAndSelect('division.country', 'country');
+
+    if (countryCode) {
+      queryBuilder.andWhere('country.code = :countryCode', { countryCode });
+    }
+
+    if (search) {
+      queryBuilder.andWhere(
+        'division.name LIKE :search COLLATE utf8mb4_general_ci',
+        { search: `%${search}%` },
+      );
+    }
+
+    queryBuilder.orderBy('division.name', 'ASC').skip(skip).take(limit);
+
+    const [divisions, total] = await queryBuilder.getManyAndCount();
+
+    return new PaginatedResponseDto(divisions, total, page, limit);
+  }
+}

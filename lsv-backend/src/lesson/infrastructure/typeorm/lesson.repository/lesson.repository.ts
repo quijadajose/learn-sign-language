@@ -1,4 +1,9 @@
-import { NotFoundException, Inject, forwardRef } from '@nestjs/common';
+import {
+  NotFoundException,
+  ConflictException,
+  Inject,
+  forwardRef,
+} from '@nestjs/common';
 import { InjectRepository, InjectDataSource } from '@nestjs/typeorm';
 import { CreateLessonDto } from 'src/lesson/domain/dto/create-lesson/create-lesson-dto';
 import { LessonRepositoryInterface } from 'src/lesson/domain/ports/lesson.repository.interface/lesson.repository.interface';
@@ -11,8 +16,13 @@ import { Lesson } from 'src/shared/domain/entities/lesson';
 import { Quiz } from 'src/shared/domain/entities/quiz';
 import { Stages } from 'src/shared/domain/entities/stage';
 import { QuizSubmission } from 'src/shared/domain/entities/quizSubmission';
+import { LessonVariant } from 'src/shared/domain/entities/lessonVariant';
+import { Region } from 'src/shared/domain/entities/region';
+import { CreateLessonVariantDto } from 'src/lesson/domain/dto/create-lesson-variant/create-lesson-variant-dto';
 import { FindManyOptions, Repository, DataSource } from 'typeorm';
 import { QuizService } from 'src/quiz/application/services/quiz/quiz.service';
+import { LessonVariantRepository } from '../lesson-variant.repository/lesson-variant.repository';
+import { RegionRepository } from '../region.repository/region.repository';
 
 export class LessonRepository implements LessonRepositoryInterface {
   constructor(
@@ -24,6 +34,8 @@ export class LessonRepository implements LessonRepositoryInterface {
     private readonly languageRepository: Repository<Language>,
     @InjectRepository(QuizSubmission)
     private readonly quizSubmissionRepository: Repository<QuizSubmission>,
+    private readonly lessonVariantRepository: LessonVariantRepository,
+    private readonly regionRepository: RegionRepository,
     @InjectDataSource()
     private readonly dataSource: DataSource,
     @Inject(forwardRef(() => QuizService))
@@ -197,6 +209,7 @@ export class LessonRepository implements LessonRepositoryInterface {
     userId: string,
     pagination: PaginationDto,
     stageId?: string,
+    regionId?: string,
   ): Promise<PaginatedResponseDto<any>> {
     const {
       page,
@@ -217,26 +230,128 @@ export class LessonRepository implements LessonRepositoryInterface {
     if (stageId) {
       queryParams.push(stageId);
     }
+    if (!regionId) {
+      const query = `
+        SELECT
+          l.id AS lesson_id,
+          l.name AS lesson_name,
+          l.description AS lesson_description,
+          l.content AS lesson_content,
+          l.languageId AS lesson_languageId,
+          l.stageId AS lesson_stageId,
+          l.createdAt AS lesson_createdAt,
+          l.updatedAt AS lesson_updatedAt,
+          q.id AS quiz_id,
+          qs.id AS submission_id,
+          qs.userId AS submission_userId,
+          qs.quizId AS submission_quizId,
+          qs.score AS submission_score,
+          qs.submittedAt AS submission_submittedAt,
+          qs.answers AS submission_answers
+        FROM
+          lesson AS l
+          LEFT JOIN quiz AS q ON q.lessonId = l.id
+          LEFT JOIN quiz_submission AS qs ON qs.quizId = q.id AND qs.userId = ?
+        WHERE
+          l.languageId = ?
+          ${stageId ? 'AND l.stageId = ?' : ''}
+        ORDER BY ${orderByClause}
+        LIMIT ${limit} OFFSET ${skip}
+      `;
+
+      const results = await this.dataSource.query(query, queryParams);
+
+      const countQuery = `
+        SELECT COUNT(DISTINCT l.id) as total
+        FROM
+          lesson AS l
+        WHERE
+          l.languageId = ?
+          ${stageId ? 'AND l.stageId = ?' : ''}
+      `;
+
+      const countParams = [languageId];
+      if (stageId) {
+        countParams.push(stageId);
+      }
+
+      const countResult = await this.dataSource.query(countQuery, countParams);
+      const total = countResult[0].total;
+
+      const lessonMap = new Map();
+
+      results.forEach((row) => {
+        const lessonId = row.lesson_id;
+
+        if (!lessonMap.has(lessonId)) {
+          lessonMap.set(lessonId, {
+            id: row.lesson_id,
+            name: row.lesson_name,
+            description: row.lesson_description,
+            content: row.lesson_content,
+            languageId: row.lesson_languageId,
+            stageId: row.lesson_stageId,
+            createdAt: row.lesson_createdAt,
+            updatedAt: row.lesson_updatedAt,
+            maxScore: 0,
+            submissions: [],
+          });
+        }
+
+        const lesson = lessonMap.get(lessonId);
+
+        if (row.submission_id) {
+          if (row.submission_score > lesson.maxScore) {
+            lesson.maxScore = row.submission_score;
+          }
+
+          let submission = lesson.submissions.find(
+            (s) => s.submissionId === row.submission_id,
+          );
+
+          if (!submission) {
+            submission = {
+              submissionId: row.submission_id,
+              score: row.submission_score,
+              submittedAt: row.submission_submittedAt,
+              answers: row.submission_answers,
+            };
+            lesson.submissions.push(submission);
+          }
+        }
+      });
+
+      const data = Array.from(lessonMap.values());
+
+      return {
+        data,
+        total,
+        page: pagination.page,
+        pageSize: pagination.limit,
+      };
+    }
 
     const query = `
       SELECT
-        l.id AS lesson_id,
-        l.name AS lesson_name,
-        l.description AS lesson_description,
-        l.content AS lesson_content,
+        COALESCE(lv.id, l.id) AS lesson_id,
+        COALESCE(lv.name, l.name) AS lesson_name,
+        COALESCE(lv.description, l.description) AS lesson_description,
+        COALESCE(lv.content, l.content) AS lesson_content,
         l.languageId AS lesson_languageId,
         l.stageId AS lesson_stageId,
-        l.createdAt AS lesson_createdAt,
-        l.updatedAt AS lesson_updatedAt,
+        COALESCE(lv.createdAt, l.createdAt) AS lesson_createdAt,
+        COALESCE(lv.updatedAt, l.updatedAt) AS lesson_updatedAt,
         q.id AS quiz_id,
         qs.id AS submission_id,
         qs.userId AS submission_userId,
         qs.quizId AS submission_quizId,
         qs.score AS submission_score,
         qs.submittedAt AS submission_submittedAt,
-        qs.answers AS submission_answers
+        qs.answers AS submission_answers,
+        CASE WHEN lv.id IS NOT NULL THEN true ELSE false END AS is_regional_variant
       FROM
         lesson AS l
+        LEFT JOIN lesson_variant AS lv ON lv.baseLessonId = l.id AND lv.regionId = ?
         LEFT JOIN quiz AS q ON q.lessonId = l.id
         LEFT JOIN quiz_submission AS qs ON qs.quizId = q.id AND qs.userId = ?
       WHERE
@@ -246,7 +361,12 @@ export class LessonRepository implements LessonRepositoryInterface {
       LIMIT ${limit} OFFSET ${skip}
     `;
 
-    const results = await this.dataSource.query(query, queryParams);
+    const regionalQueryParams = [regionId, userId, languageId];
+    if (stageId) {
+      regionalQueryParams.push(stageId);
+    }
+
+    const results = await this.dataSource.query(query, regionalQueryParams);
 
     const countQuery = `
       SELECT COUNT(DISTINCT l.id) as total
@@ -275,10 +395,14 @@ export class LessonRepository implements LessonRepositoryInterface {
           id: row.lesson_id,
           name: row.lesson_name,
           description: row.lesson_description,
+          content: row.lesson_content,
+          languageId: row.lesson_languageId,
+          stageId: row.lesson_stageId,
           createdAt: row.lesson_createdAt,
           updatedAt: row.lesson_updatedAt,
           maxScore: 0,
           submissions: [],
+          isRegionalVariant: row.is_regional_variant,
         });
       }
 
@@ -313,5 +437,157 @@ export class LessonRepository implements LessonRepositoryInterface {
       page: pagination.page,
       pageSize: pagination.limit,
     };
+  }
+
+  async findLessonVariants(lessonId: string): Promise<LessonVariant[]> {
+    return await this.lessonVariantRepository.findByLessonId(lessonId);
+  }
+
+  async createLessonVariant(
+    lessonId: string,
+    createVariantDto: CreateLessonVariantDto,
+  ): Promise<LessonVariant> {
+    const lesson = await this.lessonRepository.findOne({
+      where: { id: lessonId },
+    });
+    if (!lesson) {
+      throw new NotFoundException(`Lesson with ID ${lessonId} not found`);
+    }
+
+    const region = await this.regionRepository.findById(
+      createVariantDto.regionId,
+    );
+    if (!region) {
+      throw new NotFoundException(
+        `Region with ID ${createVariantDto.regionId} not found`,
+      );
+    }
+
+    if (createVariantDto.isBase) {
+      const existingBaseVariant =
+        await this.lessonVariantRepository.findByLessonIdAndIsBase(
+          lessonId,
+          true,
+        );
+      if (existingBaseVariant) {
+        throw new ConflictException(
+          `Ya existe una variante base para esta lección. Solo puede haber una variante base por lección.`,
+        );
+      }
+    }
+
+    const variant = new LessonVariant();
+    variant.name = createVariantDto.name;
+    variant.description = createVariantDto.description;
+    variant.content = createVariantDto.content;
+    variant.isRegionalSpecific = createVariantDto.isRegionalSpecific || false;
+    variant.isBase = createVariantDto.isBase || false;
+    variant.regionalNotes = createVariantDto.regionalNotes;
+    variant.baseLesson = lesson;
+    variant.region = region;
+
+    return await this.lessonVariantRepository.save(variant);
+  }
+
+  async findLessonVariant(
+    lessonId: string,
+    variantId: string,
+  ): Promise<LessonVariant> {
+    const variant = await this.lessonVariantRepository.findById(variantId);
+
+    if (!variant || variant.baseLesson.id !== lessonId) {
+      throw new NotFoundException(
+        `Lesson variant with ID ${variantId} not found for lesson ${lessonId}`,
+      );
+    }
+
+    return variant;
+  }
+
+  async updateLessonVariant(
+    lessonId: string,
+    variantId: string,
+    updateVariantDto: CreateLessonVariantDto,
+  ): Promise<LessonVariant> {
+    const variant = await this.findLessonVariant(lessonId, variantId);
+
+    if (
+      updateVariantDto.regionId &&
+      updateVariantDto.regionId !== variant.region.id
+    ) {
+      const region = await this.regionRepository.findById(
+        updateVariantDto.regionId,
+      );
+      if (!region) {
+        throw new NotFoundException(
+          `Region with ID ${updateVariantDto.regionId} not found`,
+        );
+      }
+      variant.region = region;
+    }
+
+    variant.name = updateVariantDto.name;
+    variant.description = updateVariantDto.description;
+    variant.content = updateVariantDto.content;
+    variant.isRegionalSpecific = updateVariantDto.isRegionalSpecific || false;
+    variant.regionalNotes = updateVariantDto.regionalNotes;
+
+    return await this.lessonVariantRepository.save(variant);
+  }
+
+  async deleteLessonVariant(
+    lessonId: string,
+    variantId: string,
+  ): Promise<void> {
+    const variant = await this.findLessonVariant(lessonId, variantId);
+    await this.lessonVariantRepository.delete(variant.id);
+  }
+
+  async findRegionalLesson(
+    lessonId: string,
+    regionId?: string,
+  ): Promise<Lesson | LessonVariant> {
+    if (!regionId) {
+      const lesson = await this.lessonRepository.findOne({
+        where: { id: lessonId },
+        relations: [
+          'language',
+          'stage',
+          'quizzes',
+          'quizzes.questions',
+          'quizzes.questions.options',
+        ],
+      });
+      if (!lesson) {
+        throw new NotFoundException(`Lesson with ID ${lessonId} not found`);
+      }
+      return lesson;
+    }
+
+    const variant = await this.lessonVariantRepository.findByLessonAndRegion(
+      lessonId,
+      regionId,
+    );
+
+    if (variant) {
+      return variant;
+    }
+
+    const lesson = await this.lessonRepository.findOne({
+      where: { id: lessonId },
+      relations: [
+        'language',
+        'stage',
+        'quizzes',
+        'quizzes.questions',
+        'quizzes.questions.options',
+      ],
+    });
+
+    if (!lesson) {
+      throw new NotFoundException(`Lesson with ID ${lessonId} not found`);
+    }
+
+    return lesson;
   }
 }

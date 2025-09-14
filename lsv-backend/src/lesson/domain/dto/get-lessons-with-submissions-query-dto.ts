@@ -5,4 +5,8 @@ export class GetLessonsWithSubmissionsQueryDto extends PaginationDto {
   @IsOptional()
   @IsUUID()
   stageId?: string;
+
+  @IsOptional()
+  @IsUUID()
+  regionId?: string;
 }

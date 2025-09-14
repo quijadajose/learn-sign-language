@@ -4,5 +4,9 @@ import { PaginationDto } from 'src/shared/domain/dto/PaginationDto';
 export class GetLessonsQueryDto extends PaginationDto {
   @IsOptional()
   @IsUUID()
+  languageId?: string;
+
+  @IsOptional()
+  @IsUUID()
   stageId?: string;
 }

@@ -1,9 +1,4 @@
-import {
-  Column,
-  Entity,
-  ManyToOne,
-  PrimaryGeneratedColumn,
-} from 'typeorm';
+import { Column, Entity, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
 import { QuestionVariant } from './questionVariant';
 
 @Entity()
@@ -17,8 +12,12 @@ export class OptionVariant {
   @Column({ default: false })
   isCorrect: boolean;
 
-  @ManyToOne(() => QuestionVariant, (questionVariant) => questionVariant.optionVariants, {
-    onDelete: 'CASCADE',
-  })
+  @ManyToOne(
+    () => QuestionVariant,
+    (questionVariant) => questionVariant.optionVariants,
+    {
+      onDelete: 'CASCADE',
+    },
+  )
   questionVariant: QuestionVariant;
 }

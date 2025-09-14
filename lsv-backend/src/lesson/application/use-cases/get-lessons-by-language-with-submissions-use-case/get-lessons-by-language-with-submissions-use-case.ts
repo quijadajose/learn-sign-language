@@ -18,12 +18,14 @@ export class GetLessonsByLanguageWithSubmissionsUseCase {
     userId: string,
     pagination: PaginationDto,
     stageId?: string,
+    regionId?: string,
   ): Promise<PaginatedResponseDto<Lesson>> {
     return await this.lessonRepository.getLessonsByLanguageWithSubmissions(
       languageId,
       userId,
       pagination,
       stageId,
+      regionId,
     );
   }
 }

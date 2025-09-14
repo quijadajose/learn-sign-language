@@ -8,6 +8,7 @@ import {
   UpdateDateColumn,
 } from 'typeorm';
 import { Language } from './language';
+import { Division } from './iso-3166-2/divisions';
 
 @Entity()
 export class Region {
@@ -24,12 +25,23 @@ export class Region {
   description: string;
 
   @Column({ default: false })
-  isDefault: boolean; // Región base/nacional
+  isDefault: boolean;
+
+  @Column({ nullable: true })
+  languageId: string;
+
+  @Column({ nullable: true })
+  divisionCode: string;
 
   @ManyToOne(() => Language, (language) => language.regions, {
     onDelete: 'CASCADE',
   })
   language: Language;
+
+  @ManyToOne(() => Division, (division) => division.code, {
+    onDelete: 'SET NULL',
+  })
+  division: Division;
 
   @OneToMany('LessonVariant', (variant: any) => variant.region)
   lessonVariants: any[];

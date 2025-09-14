@@ -14,18 +14,15 @@ export class UploadPictureUseCase {
       throw new BadRequestException('No image received');
     }
 
-    // En este caso, validamos que el buffer exista.
     if (!file.buffer) {
       throw new BadRequestException('No image buffer available');
     }
 
     const sizes = { original: null, sm: 64, md: 128, lg: 256 };
 
-    // Asegurar que `uploads` es el directorio base seguro
     const baseUploadDir = path.resolve('./uploads');
     const uploadsDir = path.join(baseUploadDir, folder);
 
-    // Evitar path traversal validando que `uploadsDir` sigue bajo `baseUploadDir`
     if (!uploadsDir.startsWith(baseUploadDir)) {
       throw new BadRequestException('Invalid upload directory');
     }

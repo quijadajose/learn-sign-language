@@ -24,12 +24,16 @@ import { LeaderboardModule } from './leaderboard/leaderboard.module';
 import { UploadPictureUseCase } from './shared/application/use-cases/upload-picture-use-case/upload-picture-use-case';
 import { SeederService } from './seeder/seeder.service';
 import { LanguageModule } from './language/language.module';
+import { RegionModule } from './region/region.module';
+import { CountryDivisionModule } from './shared/country-division.module';
 import { UserLanguage } from './shared/domain/entities/userLanguage';
 import { Region } from './shared/domain/entities/region';
 import { LessonVariant } from './shared/domain/entities/lessonVariant';
 import { QuizVariant } from './shared/domain/entities/quizVariant';
 import { QuestionVariant } from './shared/domain/entities/questionVariant';
 import { OptionVariant } from './shared/domain/entities/optionVariant';
+import { Country } from './shared/domain/entities/iso-3166-2/countries';
+import { Division } from './shared/domain/entities/iso-3166-2/divisions';
 
 @Module({
   imports: [
@@ -62,6 +66,8 @@ import { OptionVariant } from './shared/domain/entities/optionVariant';
           QuizVariant,
           QuestionVariant,
           OptionVariant,
+          Country,
+          Division,
         ],
         synchronize: true,
       }),
@@ -88,6 +94,8 @@ import { OptionVariant } from './shared/domain/entities/optionVariant';
     QuizModule,
     LeaderboardModule,
     LanguageModule,
+    RegionModule,
+    CountryDivisionModule,
   ],
   controllers: [ImagesController],
   providers: [UsersService, UploadPictureUseCase, SeederService],

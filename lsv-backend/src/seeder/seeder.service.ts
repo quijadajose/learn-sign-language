@@ -10,6 +10,9 @@ import { CreateQuizWithQuestionsAndOptionsUseCase } from 'src/quiz/application/u
 import { StageService } from 'src/stage/application/services/stage/stage.service';
 import { CreateStageUseCase } from 'src/stage/application/use-cases/create-stage-use-case/create-stage-use-case';
 import { StageRepositoryInterface } from 'src/stage/domain/ports/stage.repository.interface/stage.repository.interface';
+import { RegionService } from 'src/region/application/services/region/region.service';
+import { CountryDivisionService } from 'src/shared/application/services/country-division.service';
+import * as countriesData from './iso-3166-2.json';
 
 @Injectable()
 export class SeederService implements OnModuleInit {
@@ -33,6 +36,8 @@ export class SeederService implements OnModuleInit {
     @Inject('LessonRepositoryInterface')
     private readonly lessonRepository: LessonRepositoryInterface,
     private readonly createQuizWithQuestionsAndOptionsUseCase: CreateQuizWithQuestionsAndOptionsUseCase,
+    private readonly regionService: RegionService,
+    private readonly countryDivisionService: CountryDivisionService,
   ) {}
   onModuleInit() {
     this.seed();
@@ -41,6 +46,8 @@ export class SeederService implements OnModuleInit {
     console.log('Seeding...');
     await this.seedAdminUser();
     await this.seedLanguages();
+    await this.seedRegions();
+    await this.seedCountriesAndDivisions();
     await this.seedStages();
     await this.seedLessons();
     await this.seedQuiz();
@@ -78,6 +85,67 @@ export class SeederService implements OnModuleInit {
       });
 
       this.languageId = language.id;
+    }
+  }
+
+  private async seedRegions() {
+    if (!this.languageId) {
+      console.log('No language ID available for seeding regions');
+      return;
+    }
+
+    const regions = [
+      {
+        name: 'Mérida',
+        code: 'MD',
+        description: 'Estado Mérida - Región andina venezolana',
+        isDefault: false,
+        languageId: this.languageId,
+      },
+      {
+        name: 'Nueva Esparta',
+        code: 'NV',
+        description: 'Estado Nueva Esparta - Isla de Margarita',
+        isDefault: true,
+        languageId: this.languageId,
+      },
+      {
+        name: 'Caracas',
+        code: 'CCS',
+        description: 'Distrito Capital - Caracas',
+        isDefault: false,
+        languageId: this.languageId,
+      },
+      {
+        name: 'Zulia',
+        code: 'ZU',
+        description: 'Estado Zulia - Maracaibo',
+        isDefault: false,
+        languageId: this.languageId,
+      },
+      {
+        name: 'Lara',
+        code: 'LA',
+        description: 'Estado Lara - Barquisimeto',
+        isDefault: false,
+        languageId: this.languageId,
+      },
+    ];
+
+    for (const regionData of regions) {
+      try {
+        await this.regionService.createRegion(regionData);
+        console.log(`Created region: ${regionData.name}`);
+      } catch (error) {
+        if (error.message.includes('already exists')) {
+          console.log(`Region ${regionData.name} already exists, skipping...`);
+        } else {
+          console.log(
+            `Error creating region ${regionData.name}:`,
+            error.message,
+          );
+        }
+      }
     }
   }
   private async seedStages() {
@@ -196,5 +264,50 @@ export class SeederService implements OnModuleInit {
         ],
       });
     }
+  }
+  private async seedCountriesAndDivisions() {
+    let countriesInserted = 0;
+    let divisionsInserted = 0;
+
+    for (const [countryCode, countryData] of Object.entries(countriesData)) {
+      try {
+        const country = await this.countryDivisionService.createCountry({
+          code: countryCode,
+          name: countryData.name,
+        });
+        countriesInserted++;
+
+        for (const [divisionCode, divisionName] of Object.entries(
+          countryData.divisions,
+        )) {
+          try {
+            await this.countryDivisionService.createDivision({
+              code: divisionCode,
+              name: divisionName as string,
+              countryCode: country.code,
+            });
+            divisionsInserted++;
+          } catch (error) {
+            if (!error.message.includes('already exists')) {
+              console.error(
+                `Error creating division ${divisionCode}:`,
+                error.message,
+              );
+            }
+          }
+        }
+      } catch (error) {
+        if (!error.message.includes('already exists')) {
+          console.error(
+            `Error creating country ${countryCode}:`,
+            error.message,
+          );
+        }
+      }
+    }
+
+    console.log(
+      `${countriesInserted} países insertados, ${divisionsInserted} divisiones insertadas`,
+    );
   }
 }

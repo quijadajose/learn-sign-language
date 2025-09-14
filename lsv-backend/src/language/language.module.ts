@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Module, forwardRef } from '@nestjs/common';
 import { LanguageService } from './application/services/language/language-admin.service';
 import { GetLanguageUseCase } from './application/use-cases/get-language-use-case/get-language-use-case';
 import { ListLanguagesUseCase } from './application/use-cases/list-languages-use-case/list-languages-use-case';
@@ -20,11 +20,13 @@ import { CreateStageUseCase } from 'src/stage/application/use-cases/create-stage
 import { UpdateStageUseCase } from 'src/stage/application/use-cases/update-stage-use-case/update-stage-use-case';
 import { DeleteStageUseCase } from 'src/stage/application/use-cases/delete-stage-use-case/delete-stage-use-case';
 import { QuizModule } from 'src/quiz/quiz.module';
+import { LessonModule } from 'src/lesson/lesson.module';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([Language, Stages, Lesson, QuizSubmission]),
     QuizModule,
+    forwardRef(() => LessonModule),
   ],
   providers: [
     LanguageService,
