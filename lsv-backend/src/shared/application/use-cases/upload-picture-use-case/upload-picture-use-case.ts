@@ -19,8 +19,13 @@ export class UploadPictureUseCase {
     }
 
     const type = await fileTypeFromBuffer(file.buffer);
-    if (!type || !['image/png', 'image/jpeg', 'image/webp'].includes(type.mime)) {
-      throw new BadRequestException('Formato de imagen no soportado. Use PNG, JPEG o WebP');
+    if (
+      !type ||
+      !['image/png', 'image/jpeg', 'image/webp'].includes(type.mime)
+    ) {
+      throw new BadRequestException(
+        'Formato de imagen no soportado. Use PNG, JPEG o WebP',
+      );
     }
 
     const format = this.mapMimeToFormat(type.mime);
@@ -42,15 +47,17 @@ export class UploadPictureUseCase {
 
     try {
       const metadata = await sharp(file.buffer).metadata();
-      
+
       if (!metadata.format) {
-        throw new BadRequestException('No se pudo procesar la imagen con Sharp');
+        throw new BadRequestException(
+          'No se pudo procesar la imagen con Sharp',
+        );
       }
 
       for (const [key, size] of Object.entries(sizes)) {
         const fileName = `${id}-${key}.${format}`;
         const filePath = path.join(uploadsDir, fileName);
-        
+
         if (key === 'original') {
           await fs.promises.writeFile(filePath, file.buffer);
         } else {
@@ -67,7 +74,9 @@ export class UploadPictureUseCase {
       if (error instanceof BadRequestException) {
         throw error;
       }
-      throw new BadRequestException('Error procesando la imagen. Verifique que sea un archivo de imagen válido');
+      throw new BadRequestException(
+        'Error procesando la imagen. Verifique que sea un archivo de imagen válido',
+      );
     }
   }
 

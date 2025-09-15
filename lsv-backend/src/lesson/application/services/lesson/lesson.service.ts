@@ -46,11 +46,7 @@ export class LessonService {
     return await this.createLessonUseCase.execute(createLessonDto);
   }
   async saveLessonImage(lessonId: string, file: Express.Multer.File) {
-    return await this.uploadPictureUseCase.execute(
-      lessonId,
-      'lessons',
-      file,
-    );
+    return await this.uploadPictureUseCase.execute(lessonId, 'lessons', file);
   }
   async getLessonsByLanguage(
     languageId: string,

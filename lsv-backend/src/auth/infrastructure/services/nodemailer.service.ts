@@ -13,7 +13,7 @@ export class NodeMailerService implements EmailService {
     const mailOptions = {
       to: params.to,
       subject: params.subject,
-      text: params.body,
+      html: params.body, // Cambiar de 'text' a 'html'
     };
 
     await this.mailService.sendMail(mailOptions);

@@ -1,4 +1,9 @@
-import { Injectable, BadRequestException, Inject } from '@nestjs/common';
+import {
+  Injectable,
+  BadRequestException,
+  ConflictException,
+  Inject,
+} from '@nestjs/common';
 import { CreateUserDto } from 'src/auth/domain/dto/create-user/create-user';
 import { User } from 'src/shared/domain/entities/user';
 import { UserRepositoryInterface } from '../../ports/user.repository.interface/user.repository.interface.interface';
@@ -19,7 +24,7 @@ export class RegisterUserUseCase {
 
     const existingUser = await this.userRepository.findByEmail(email);
     if (existingUser) {
-      throw new BadRequestException('Email already in use');
+      throw new ConflictException('Email already in use');
     }
 
     const newUser = new User();
@@ -38,7 +43,7 @@ export class RegisterUserUseCase {
 
     const existingUser = await this.userRepository.findByEmail(email);
     if (existingUser) {
-      throw new BadRequestException('Email already in use');
+      throw new ConflictException('Email already in use');
     }
 
     const newUser = new User();

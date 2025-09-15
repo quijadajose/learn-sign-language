@@ -70,7 +70,7 @@ export class AuthService {
   async sendPasswordResetToken(email: string): Promise<void> {
     const user = await this.findUserUseCase.findByEmail(email);
     if (!user) {
-      throw new BadRequestException('User not found');
+      return;
     }
 
     const resetToken = this.generateToken(user, '15m');
@@ -79,8 +79,8 @@ export class AuthService {
 
     const emailParams: EmailParams = {
       to: email,
-      subject: 'Password Reset',
-      body: `Please click the following link to reset your password: ${resetUrl}`,
+      subject: '🔐 Restablecer Contraseña - LSV',
+      body: this.generatePasswordResetEmailHTML(resetUrl),
     };
 
     await this.sendEmailUseCase.execute(emailParams);
@@ -157,5 +157,79 @@ export class AuthService {
       updateUserDto,
     );
     return updatedUser;
+  }
+
+  private generatePasswordResetEmailHTML(resetUrl: string): string {
+    return `
+  <!DOCTYPE html>
+  <html lang="es">
+  <head>
+    <meta charset="UTF-8">
+    <title>Restablecer Contraseña - LSV</title>
+  </head>
+  <body style="margin:0; padding:0; background-color:#f4f4f4; font-family: Arial, sans-serif; color:#333;">
+    <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%">
+      <tr>
+        <td align="center" style="padding:20px 0;">
+          <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="600" style="background-color:#ffffff; border-radius:8px; overflow:hidden;">
+            
+            <tr>
+              <td align="center" bgcolor="#667eea" style="padding:30px 20px; color:#ffffff; font-size:28px; font-weight:bold;">
+                🔐 LSV
+              </td>
+            </tr>
+  
+            <tr>
+              <td style="padding:40px 30px;">
+                <h2 style="color:#2c3e50; font-size:22px; margin:0 0 20px 0;">Restablecer tu Contraseña</h2>
+                <p style="font-size:16px; color:#555; margin:0 0 20px 0;">Hola,</p>
+                <p style="font-size:16px; color:#555; margin:0 0 20px 0;">
+                  Hemos recibido una solicitud para restablecer la contraseña de tu cuenta en LSV. 
+                  Si fuiste tú quien hizo esta solicitud, haz clic en el botón de abajo para crear una nueva contraseña.
+                </p>
+  
+                <table role="presentation" border="0" cellpadding="0" cellspacing="0" align="center" style="margin:20px auto;">
+                  <tr>
+                    <td bgcolor="#667eea" style="border-radius:25px;">
+                      <a href="${resetUrl}" target="_blank" 
+                        style="display:inline-block; padding:15px 30px; font-size:16px; font-weight:bold; 
+                        color:#ffffff; text-decoration:none; border-radius:25px; background-color:#667eea;">
+                        Restablecer Contraseña
+                      </a>
+                    </td>
+                  </tr>
+                </table>
+  
+                <table role="presentation" border="0" cellpadding="15" cellspacing="0" width="100%" style="background-color:#f8f9fa; border-left:4px solid #28a745; margin:20px 0;">
+                  <tr>
+                    <td style="font-size:14px; color:#666;">
+                      <strong style="color:#28a745; font-size:16px;">🛡️ Información de Seguridad</strong>
+                      <p style="margin:10px 0 0 0;">• Este enlace expirará en <span style="color:#dc3545; font-weight:bold;">15 minutos</span>.</p>
+                      <p style="margin:5px 0 0 0;">• Si no solicitaste este cambio, puedes ignorar este email.</p>
+                      <p style="margin:5px 0 0 0;">• Tu contraseña actual seguirá siendo válida hasta que la cambies.</p>
+                    </td>
+                  </tr>
+                </table>
+  
+                <p style="font-size:14px; color:#555;">Si el botón no funciona, copia y pega este enlace en tu navegador:</p>
+                <p style="font-size:12px; font-family: monospace; word-break:break-all; background-color:#f8f9fa; padding:10px; border-radius:5px;">
+                  ${resetUrl}
+                </p>
+              </td>
+            </tr>
+  
+            <tr>
+              <td align="center" bgcolor="#f8f9fa" style="padding:20px 30px; font-size:14px; color:#666; border-top:1px solid #e9ecef;">
+                Este es un email automático, por favor no respondas a este mensaje.
+              </td>
+            </tr>
+  
+          </table>
+        </td>
+      </tr>
+    </table>
+  </body>
+  </html>
+    `;
   }
 }
