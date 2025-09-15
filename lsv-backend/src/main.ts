@@ -6,17 +6,24 @@ import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
-  const config = new DocumentBuilder()
-    .setTitle('API LSV')
-    .setDescription('Documentación de la API del backend LSV')
-    .setVersion('1.0')
-    .addBearerAuth()
-    .build();
-
-  const document = SwaggerModule.createDocument(app, config);
-  SwaggerModule.setup('api/docs', app, document);
-
   const configService = app.get(ConfigService);
+  
+  // Swagger disponible solo en modo desarrollo
+  const nodeEnv = configService.get<string>('NODE_ENV') || 'development';
+  if (nodeEnv === 'development') {
+    const config = new DocumentBuilder()
+      .setTitle('API LSV')
+      .setDescription('Documentación de la API del backend LSV')
+      .setVersion('1.0')
+      .addBearerAuth()
+      .build();
+
+    const document = SwaggerModule.createDocument(app, config);
+    SwaggerModule.setup('api/docs', app, document);
+    
+    console.log(`📚 Swagger UI disponible en: http://localhost:${configService.get<number>('PORT') ?? 3000}/api/docs`);
+  }
+  
   const port = configService.get<number>('PORT') ?? 3000;
   const frontendUrl =
     configService.get<string>('FRONTEND_URL') ?? 'http://localhost:8080';
