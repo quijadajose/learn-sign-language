@@ -28,7 +28,6 @@ export class LessonService {
     return await this.uploadPictureUseCase.execute(
       lessonId,
       'lessons',
-      'png',
       file,
     );
   }

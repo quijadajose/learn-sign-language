@@ -49,7 +49,6 @@ export class LessonService {
     return await this.uploadPictureUseCase.execute(
       lessonId,
       'lessons',
-      'png',
       file,
     );
   }
@@ -98,8 +97,6 @@ export class LessonService {
   async deleteLesson(id: string) {
     return await this.deleteLessonUseCase.execute(id);
   }
-
-  // ===== MÉTODOS PARA VARIANTES REGIONALES =====
 
   async getLessonVariants(lessonId: string): Promise<LessonVariant[]> {
     return await this.getLessonVariantsUseCase.execute(lessonId);
