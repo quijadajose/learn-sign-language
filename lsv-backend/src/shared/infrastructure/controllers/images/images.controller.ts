@@ -44,7 +44,8 @@ export class ImagesController {
   @Get(':folder/:filename')
   @ApiOperation({
     summary: 'Obtener imagen',
-    description: 'Obtiene una imagen desde el sistema de archivos con diferentes tamaños disponibles',
+    description:
+      'Obtiene una imagen desde el sistema de archivos con diferentes tamaños disponibles',
   })
   @ApiParam({
     name: 'folder',
@@ -134,7 +135,8 @@ export class ImagesController {
   @UseInterceptors(FileInterceptor('file'))
   @ApiOperation({
     summary: 'Subir imagen',
-    description: 'Sube una imagen y genera diferentes tamaños (sm, md, lg, original). El formato se detecta automáticamente del archivo.',
+    description:
+      'Sube una imagen y genera diferentes tamaños (sm, md, lg, original). El formato se detecta automáticamente del archivo.',
   })
   @ApiParam({
     name: 'folder',
