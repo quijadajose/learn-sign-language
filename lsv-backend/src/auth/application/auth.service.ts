@@ -105,8 +105,8 @@ export class AuthService {
 
     const emailParams: EmailParams = {
       to: user.email,
-      subject: 'Password Changed',
-      body: 'Your password has been successfully updated.',
+      subject: '✅ Contraseña Actualizada - LSV',
+      body: this.generatePasswordChangedEmailHTML(),
     };
     await this.sendEmailUseCase.execute(emailParams);
   }
@@ -157,6 +157,67 @@ export class AuthService {
       updateUserDto,
     );
     return updatedUser;
+  }
+
+  private generatePasswordChangedEmailHTML(): string {
+    return `
+  <!DOCTYPE html>
+  <html lang="es">
+  <head>
+    <meta charset="UTF-8">
+    <title>Contraseña Actualizada - LSV</title>
+  </head>
+  <body style="margin:0; padding:0; background-color:#f4f4f4; font-family: Arial, sans-serif; color:#333;">
+    <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%">
+      <tr>
+        <td align="center" style="padding:20px 0;">
+          <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="600" style="background-color:#ffffff; border-radius:8px; overflow:hidden;">
+            
+            <tr>
+              <td align="center" bgcolor="#28a745" style="padding:30px 20px; color:#ffffff; font-size:28px; font-weight:bold;">
+                ✅ LSV
+              </td>
+            </tr>
+  
+            <tr>
+              <td style="padding:40px 30px;">
+                <h2 style="color:#2c3e50; font-size:22px; margin:0 0 20px 0;">Contraseña Actualizada Exitosamente</h2>
+                <p style="font-size:16px; color:#555; margin:0 0 20px 0;">Hola,</p>
+                <p style="font-size:16px; color:#555; margin:0 0 20px 0;">
+                  Te confirmamos que tu contraseña ha sido actualizada exitosamente en tu cuenta de LSV. 
+                  Tu cuenta ahora está protegida con la nueva contraseña que configuraste.
+                </p>
+  
+                <table role="presentation" border="0" cellpadding="15" cellspacing="0" width="100%" style="background-color:#d4edda; border-left:4px solid #28a745; margin:20px 0;">
+                  <tr>
+                    <td style="font-size:14px; color:#155724;">
+                      <strong style="color:#28a745; font-size:16px;">🔒 Información de Seguridad</strong>
+                      <p style="margin:10px 0 0 0;">• Tu contraseña ha sido cambiada exitosamente.</p>
+                      <p style="margin:5px 0 0 0;">• Si no realizaste este cambio, contacta inmediatamente con soporte.</p>
+                      <p style="margin:5px 0 0 0;">• Mantén tu contraseña segura y no la compartas con nadie.</p>
+                    </td>
+                  </tr>
+                </table>
+  
+                <p style="font-size:16px; color:#555; margin:20px 0;">
+                  Si tienes alguna pregunta o necesitas ayuda, no dudes en contactar con nuestro equipo de soporte.
+                </p>
+              </td>
+            </tr>
+  
+            <tr>
+              <td align="center" bgcolor="#f8f9fa" style="padding:20px 30px; font-size:14px; color:#666; border-top:1px solid #e9ecef;">
+                Este es un email automático, por favor no respondas a este mensaje.
+              </td>
+            </tr>
+  
+          </table>
+        </td>
+      </tr>
+    </table>
+  </body>
+  </html>
+    `;
   }
 
   private generatePasswordResetEmailHTML(resetUrl: string): string {
