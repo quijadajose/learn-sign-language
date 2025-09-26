@@ -22,7 +22,7 @@ async function bootstrap() {
     SwaggerModule.setup('api/docs', app, document);
 
     console.log(
-      `📚 Swagger UI disponible en: http://localhost:${configService.get<number>('PORT') ?? 3000}/api/docs`,
+      `Swagger UI disponible en: http://localhost:${configService.get<number>('PORT') ?? 3000}/api/docs`,
     );
   }
 

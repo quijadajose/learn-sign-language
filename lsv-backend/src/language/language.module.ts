@@ -15,7 +15,7 @@ import { Stages } from 'src/shared/domain/entities/stage';
 import { Lesson } from 'src/shared/domain/entities/lesson';
 import { QuizSubmission } from 'src/shared/domain/entities/quizSubmission';
 import { StageService } from 'src/stage/application/services/stage/stage.service';
-import { LanguageController } from './infrastructure/controllers/language-admin/language-admin.controller';
+import { LanguageController } from './infrastructure/controllers/language/language.controller';
 import { CreateStageUseCase } from 'src/stage/application/use-cases/create-stage-use-case/create-stage-use-case';
 import { UpdateStageUseCase } from 'src/stage/application/use-cases/update-stage-use-case/update-stage-use-case';
 import { DeleteStageUseCase } from 'src/stage/application/use-cases/delete-stage-use-case/delete-stage-use-case';

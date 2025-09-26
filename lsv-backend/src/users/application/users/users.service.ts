@@ -34,7 +34,11 @@ export class UsersService {
     return this.enrollUserInLanguageUseCase.execute(userId, languageId);
   }
 
-  async getStagesProgress(userId: string, languageId: string): Promise<any> {
-    return this.stageRepository.getStagesProgressForUser(userId, languageId);
+  async getStagesProgress(
+    userId: string,
+    languageId: string,
+    pagination: PaginationDto,
+  ): Promise<PaginatedResponseDto<any>> {
+    return this.stageRepository.getStagesProgressForUser(userId, languageId, pagination);
   }
 }

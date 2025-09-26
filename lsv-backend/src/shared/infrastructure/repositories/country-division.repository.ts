@@ -6,6 +6,7 @@ import { Division } from '../../domain/entities/iso-3166-2/divisions';
 import { CountryDivisionRepositoryInterface } from '../../domain/ports/country-division.repository.interface';
 import { SearchDivisionsDto } from '../../domain/dto/search-divisions.dto';
 import { PaginatedResponseDto } from '../../domain/dto/paginated-response.dto';
+import { CountryWithDivisionsDto } from '../../domain/dto/country-with-divisions.dto';
 
 @Injectable()
 export class CountryDivisionRepository
@@ -42,10 +43,29 @@ export class CountryDivisionRepository
       where: {
         name: Like(`%${search}%`),
       },
+      order: { name: 'ASC' },
+      take: 20,
+    });
+  }
+
+  async searchCountriesWithDivisions(search: string): Promise<CountryWithDivisionsDto[]> {
+    const countries = await this.countryRepository.find({
+      where: {
+        name: Like(`%${search}%`),
+      },
       relations: ['divisions'],
       order: { name: 'ASC' },
       take: 20,
     });
+
+    return countries.map(country => ({
+      code: country.code,
+      name: country.name,
+      divisions: country.divisions.map(division => ({
+        code: division.code,
+        name: division.name,
+      })),
+    }));
   }
 
   async createDivision(divisionData: {

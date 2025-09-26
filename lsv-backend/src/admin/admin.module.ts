@@ -2,7 +2,7 @@ import { Module } from '@nestjs/common';
 import { LanguageRepository } from '../language/infrastructure/typeorm/language.repository/language.repository';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { Language } from 'src/shared/domain/entities/language';
-import { LanguageController } from '../language/infrastructure/controllers/language-admin/language-admin.controller';
+import { LanguageController } from '../language/infrastructure/controllers/language/language.controller';
 import { LanguageService } from '../language/application/services/language/language-admin.service';
 import { CreateLanguageUseCase } from '../language/application/use-cases/create-language-use-case/create-language-use-case';
 import { APP_GUARD } from '@nestjs/core';

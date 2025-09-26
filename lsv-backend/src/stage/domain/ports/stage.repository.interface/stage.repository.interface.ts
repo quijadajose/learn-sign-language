@@ -20,5 +20,9 @@ export interface StageRepositoryInterface {
     pagination: PaginationDto,
   ): Promise<PaginatedResponseDto<Stages>>;
   findByLanguageId(languageId: string): Promise<Stages[]>;
-  getStagesProgressForUser(userId: string, languageId: string): Promise<any[]>;
+  getStagesProgressForUser(
+    userId: string,
+    languageId: string,
+    pagination: PaginationDto,
+  ): Promise<PaginatedResponseDto<any>>;
 }

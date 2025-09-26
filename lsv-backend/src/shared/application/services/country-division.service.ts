@@ -8,6 +8,7 @@ import { CountryDivisionRepositoryInterface } from '../../domain/ports/country-d
 import { CreateCountryDto } from '../../domain/dto/create-country.dto';
 import { CreateDivisionDto } from '../../domain/dto/create-division.dto';
 import { SearchDivisionsDto } from '../../domain/dto/search-divisions.dto';
+import { SearchCountriesDto } from '../../domain/dto/search-countries.dto';
 import { PaginatedResponseDto } from '../../domain/dto/paginated-response.dto';
 import { Country } from '../../domain/entities/iso-3166-2/countries';
 import { Division } from '../../domain/entities/iso-3166-2/divisions';
@@ -47,11 +48,12 @@ export class CountryDivisionService {
     return await this.countryDivisionRepository.findAllCountries();
   }
 
-  async searchCountries(search: string): Promise<Country[]> {
-    if (!search || search.trim().length < 2) {
-      return [];
-    }
-    return await this.countryDivisionRepository.searchCountries(search.trim());
+  async searchCountries(searchDto: SearchCountriesDto): Promise<Country[]> {
+    return await this.countryDivisionRepository.searchCountries(searchDto.name);
+  }
+
+  async searchCountriesWithDivisions(searchDto: SearchCountriesDto): Promise<CountryWithDivisionsDto[]> {
+    return await this.countryDivisionRepository.searchCountriesWithDivisions(searchDto.name);
   }
 
   async createDivision(
@@ -122,27 +124,4 @@ export class CountryDivisionService {
     return await this.countryDivisionRepository.searchDivisions(searchDto);
   }
 
-  async getCountriesWithDivisions(): Promise<CountryWithDivisionsDto[]> {
-    const countries = await this.countryDivisionRepository.findAllCountries();
-
-    const countriesWithDivisions: CountryWithDivisionsDto[] = [];
-
-    for (const country of countries) {
-      const divisions =
-        await this.countryDivisionRepository.findDivisionsByCountryCode(
-          country.code,
-        );
-
-      countriesWithDivisions.push({
-        code: country.code,
-        name: country.name,
-        divisions: divisions.map((division) => ({
-          code: division.code,
-          name: division.name,
-        })),
-      });
-    }
-
-    return countriesWithDivisions;
-  }
 }
