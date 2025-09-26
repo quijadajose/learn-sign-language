@@ -102,8 +102,12 @@ export class StageRepository implements StageRepositoryInterface {
   async getStagesProgressForUser(
     userId: string,
     languageId: string,
-  ): Promise<any[]> {
-    return this.stageRepository
+    pagination: PaginationDto,
+  ): Promise<PaginatedResponseDto<any>> {
+    const { page, limit, orderBy = 'name', sortOrder = 'ASC' } = pagination;
+    const skip = (page - 1) * limit;
+
+    const queryBuilder = this.stageRepository
       .createQueryBuilder('s')
       .select('s.id', 'id')
       .addSelect('s.name', 'name')
@@ -123,8 +127,34 @@ export class StageRepository implements StageRepositoryInterface {
       .where('s.languageId = :languageId', { languageId })
       .groupBy('s.id')
       .addGroupBy('s.name')
-      .addGroupBy('s.description')
-      .orderBy('s.name', 'ASC')
-      .getRawMany();
+      .addGroupBy('s.description');
+
+    if (orderBy && sortOrder) {
+      queryBuilder.orderBy(`s.${orderBy}`, sortOrder);
+    } else {
+      queryBuilder.orderBy('s.name', 'ASC');
+    }
+
+    queryBuilder.skip(skip).take(limit);
+
+    const [data, total] = await Promise.all([
+      queryBuilder.getRawMany(),
+      this.stageRepository
+        .createQueryBuilder('s')
+        .select('COUNT(DISTINCT s.id)', 'count')
+        .leftJoin('s.lessons', 'l')
+        .leftJoin('l.quizzes', 'q')
+        .leftJoin('q.submissions', 'qs', 'qs.userId = :userId', { userId })
+        .where('s.languageId = :languageId', { languageId })
+        .getRawOne()
+        .then(result => parseInt(result.count) || 0),
+    ]);
+
+    return {
+      data,
+      total,
+      page,
+      pageSize: limit,
+    };
   }
 }

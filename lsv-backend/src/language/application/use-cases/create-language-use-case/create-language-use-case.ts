@@ -21,6 +21,7 @@ export class CreateLanguageUseCase {
     const language = new Language();
     language.name = createLanguageDto.name;
     language.description = createLanguageDto.description;
+    language.countryCode = createLanguageDto.countryCode;
     const createdLanguage = await this.languageRepository.save(language);
     return createdLanguage;
   }

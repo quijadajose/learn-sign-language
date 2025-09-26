@@ -609,36 +609,49 @@ export class UsersController {
     status: 200,
     description: 'Progreso de etapas obtenido exitosamente',
     schema: {
-      type: 'array',
-      items: {
-        type: 'object',
-        properties: {
-          id: { type: 'string', format: 'uuid', example: 'b01fab95-1d2e-43b1-99aa-20fd4afbf5e1' },
-          name: { type: 'string', example: 'A I' },
-          description: { type: 'string', example: 'Puede utilizar señas básicas para comunicarse en tareas sencillas y rutinarias' },
-          totalLessons: { type: 'string', example: '2' },
-          completedLessons: { type: 'string', example: '1' },
-          progress: { type: 'string', nullable: true, example: '50.00' },
+      type: 'object',
+      properties: {
+        data: {
+          type: 'array',
+          items: {
+            type: 'object',
+            properties: {
+              id: { type: 'string', format: 'uuid', example: 'b01fab95-1d2e-43b1-99aa-20fd4afbf5e1' },
+              name: { type: 'string', example: 'A I' },
+              description: { type: 'string', example: 'Puede utilizar señas básicas para comunicarse en tareas sencillas y rutinarias' },
+              totalLessons: { type: 'string', example: '2' },
+              completedLessons: { type: 'string', example: '1' },
+              progress: { type: 'string', nullable: true, example: '50.00' },
+            },
+          },
         },
+        total: { type: 'number', description: 'Total de etapas' },
+        page: { type: 'number', description: 'Página actual' },
+        pageSize: { type: 'number', description: 'Tamaño de la página' },
       },
-      example: [
-        {
-          id: 'b01fab95-1d2e-43b1-99aa-20fd4afbf5e1',
-          name: 'A I',
-          description: 'Puede utilizar señas básicas para comunicarse en tareas sencillas y rutinarias',
-          totalLessons: '2',
-          completedLessons: '1',
-          progress: '50.00'
-        },
-        {
-          id: '113155d1-a897-49a7-afde-568b2281bc8a',
-          name: 'A II',
-          description: 'Puede comprender señas frecuentes relacionadas con áreas de experiencia relevantes',
-          totalLessons: '0',
-          completedLessons: '0',
-          progress: null
-        }
-      ],
+      example: {
+        data: [
+          {
+            id: 'b01fab95-1d2e-43b1-99aa-20fd4afbf5e1',
+            name: 'A I',
+            description: 'Puede utilizar señas básicas para comunicarse en tareas sencillas y rutinarias',
+            totalLessons: '2',
+            completedLessons: '1',
+            progress: '50.00'
+          },
+          {
+            id: '113155d1-a897-49a7-afde-568b2281bc8a',
+            name: 'A II',
+            description: 'Puede comprender señas frecuentes relacionadas con áreas de experiencia relevantes',
+            totalLessons: '0',
+            completedLessons: '0',
+            progress: null
+          }
+        ],
+        total: 2,
+        page: 1,
+        pageSize: 10
+      },
     },
   })
   @ApiResponse({
@@ -656,8 +669,9 @@ export class UsersController {
   getStagesProgress(
     @Req() req,
     @Param('languageId', ParseUUIDPipe) languageId: string,
-  ): Promise<any> {
+    @Query() pagination: PaginationDto,
+  ): Promise<PaginatedResponseDto<any>> {
     const userId = req.user.sub;
-    return this.usersService.getStagesProgress(userId, languageId);
+    return this.usersService.getStagesProgress(userId, languageId, pagination);
   }
 }
