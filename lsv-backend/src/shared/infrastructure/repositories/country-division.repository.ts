@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, Like } from 'typeorm';
+import { Repository, Like, In } from 'typeorm';
 import { Country } from '../../domain/entities/iso-3166-2/countries';
 import { Division } from '../../domain/entities/iso-3166-2/divisions';
 import { CountryDivisionRepositoryInterface } from '../../domain/ports/country-division.repository.interface';
@@ -27,6 +27,21 @@ export class CountryDivisionRepository
     return await this.countryRepository.save(country);
   }
 
+  async createCountries(
+    countriesData: { code: string; name: string }[],
+  ): Promise<Country[]> {
+    if (!countriesData || countriesData.length === 0) return [];
+    const codes = countriesData.map((c) => c.code);
+    const existing = await this.countryRepository.findBy({
+      code: In(codes as any),
+    } as any);
+    const existingCodes = new Set(existing.map((e) => e.code));
+    const toCreate = countriesData.filter((c) => !existingCodes.has(c.code));
+    if (toCreate.length === 0) return existing;
+    const entities = this.countryRepository.create(toCreate);
+    return await this.countryRepository.save(entities);
+  }
+
   async findCountryByCode(code: string): Promise<Country | null> {
     return await this.countryRepository.findOne({ where: { code } });
   }
@@ -48,7 +63,9 @@ export class CountryDivisionRepository
     });
   }
 
-  async searchCountriesWithDivisions(search: string): Promise<CountryWithDivisionsDto[]> {
+  async searchCountriesWithDivisions(
+    search: string,
+  ): Promise<CountryWithDivisionsDto[]> {
     const countries = await this.countryRepository.find({
       where: {
         name: Like(`%${search}%`),
@@ -58,10 +75,10 @@ export class CountryDivisionRepository
       take: 20,
     });
 
-    return countries.map(country => ({
+    return countries.map((country) => ({
       code: country.code,
       name: country.name,
-      divisions: country.divisions.map(division => ({
+      divisions: country.divisions.map((division) => ({
         code: division.code,
         name: division.name,
       })),
@@ -85,6 +102,42 @@ export class CountryDivisionRepository
       country,
     });
     return await this.divisionRepository.save(division);
+  }
+
+  async createDivisions(
+    divisionsData: {
+      code: string;
+      name: string;
+      countryCode: string;
+    }[],
+  ): Promise<Division[]> {
+    if (!divisionsData || divisionsData.length === 0) return [];
+    const codes = divisionsData.map((d) => d.code);
+    const existing = await this.divisionRepository.findBy({
+      code: In(codes as any),
+    } as any);
+    const existingCodes = new Set(existing.map((e) => e.code));
+
+    // Load countries for mapping
+    const countryCodes = Array.from(
+      new Set(divisionsData.map((d) => d.countryCode)),
+    );
+    const countries = await this.countryRepository.findBy({
+      code: In(countryCodes as any),
+    } as any);
+    const countryMap = new Map(countries.map((c) => [c.code, c]));
+
+    const toCreate = divisionsData.filter(
+      (d) => !existingCodes.has(d.code) && countryMap.has(d.countryCode),
+    );
+    const entities = toCreate.map((d) =>
+      this.divisionRepository.create({
+        ...d,
+        country: countryMap.get(d.countryCode),
+      }),
+    );
+    if (entities.length === 0) return existing;
+    return await this.divisionRepository.save(entities);
   }
 
   async findDivisionByCode(code: string): Promise<Division | null> {
