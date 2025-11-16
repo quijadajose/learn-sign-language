@@ -9,6 +9,7 @@ import {
 import { UserLesson } from './userLesson';
 import { QuizSubmission } from './quizSubmission';
 import { UserLanguage } from './userLanguage';
+import { UserRegion } from './userRegion';
 
 @Entity()
 export class User {
@@ -53,4 +54,7 @@ export class User {
 
   @OneToMany(() => UserLanguage, (userLanguage) => userLanguage.user)
   userLanguages: UserLanguage[];
+
+  @OneToMany(() => UserRegion, (userRegion) => userRegion.user)
+  userRegions: UserRegion[];
 }

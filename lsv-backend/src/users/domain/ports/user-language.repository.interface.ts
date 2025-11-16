@@ -12,4 +12,6 @@ export interface UserLanguageRepositoryInterface {
     pagination: PaginationDto,
   ): Promise<PaginatedResponseDto<UserLanguage>>;
   save(user: User, language: Language): Promise<UserLanguage>;
+  delete(userId: string, languageId: string): Promise<void>;
+  countByUserId(userId: string): Promise<number>;
 }
