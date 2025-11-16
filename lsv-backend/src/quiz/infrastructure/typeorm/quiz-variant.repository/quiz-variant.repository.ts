@@ -4,6 +4,9 @@ import { Repository } from 'typeorm';
 import { QuizVariant } from 'src/shared/domain/entities/quizVariant';
 import { QuestionVariant } from 'src/shared/domain/entities/questionVariant';
 import { OptionVariant } from 'src/shared/domain/entities/optionVariant';
+import { QuizSubmission } from 'src/shared/domain/entities/quizSubmission';
+import { User } from 'src/shared/domain/entities/user';
+import { SubmissionDto } from 'src/quiz/application/dto/submission/submission-dto';
 
 @Injectable()
 export class QuizVariantRepository {
@@ -14,6 +17,8 @@ export class QuizVariantRepository {
     private readonly questionVariantRepository: Repository<QuestionVariant>,
     @InjectRepository(OptionVariant)
     private readonly optionVariantRepository: Repository<OptionVariant>,
+    @InjectRepository(QuizSubmission)
+    private readonly submissionRepository: Repository<QuizSubmission>,
   ) {}
 
   async findByLessonVariantId(lessonVariantId: string): Promise<QuizVariant[]> {
@@ -83,5 +88,48 @@ export class QuizVariantRepository {
     }
 
     return await this.findById(quizVariant.id);
+  }
+
+  async submissionTest(
+    user: User,
+    quizVariant: QuizVariant,
+    submissionDto: SubmissionDto,
+  ) {
+    const correctOptions = await this.optionVariantRepository.find({
+      where: {
+        questionVariant: {
+          quizVariant: { id: quizVariant.id },
+        },
+        isCorrect: true,
+      },
+      relations: ['questionVariant'],
+    });
+
+    const correctAnswersMap = new Map<string, string>(); // questionId -> optionId
+    correctOptions.forEach((option) => {
+      correctAnswersMap.set(option.questionVariant.id, option.id);
+    });
+
+    let correctCount = 0;
+    for (const submission of submissionDto.answers) {
+      if (
+        correctAnswersMap.get(submission.questionId) === submission.optionId
+      ) {
+        correctCount++;
+      }
+    }
+
+    const totalQuestions = correctOptions.length;
+    const score =
+      totalQuestions > 0 ? (correctCount / totalQuestions) * 100 : 0;
+    const submission = this.submissionRepository.create({
+      user: user,
+      quizVariant: quizVariant,
+      answers: JSON.stringify(submissionDto.answers) as any,
+      score: Math.round(score),
+    });
+    const savedSubmission = await this.submissionRepository.save(submission);
+    const { id, submittedAt } = savedSubmission;
+    return { id, submittedAt, score };
   }
 }
