@@ -23,9 +23,13 @@ export class UserLessonController {
   }
 
   @Post('start')
-  startLesson(@Req() req, @Body('lessonId') lessonId: string) {
+  startLesson(
+    @Req() req,
+    @Body('lessonId') lessonId: string,
+    @Body('regionId') regionId?: string,
+  ) {
     const userId = req.user.sub;
-    return this.userLessonService.startLesson(userId, lessonId);
+    return this.userLessonService.startLesson(userId, lessonId, regionId);
   }
 
   @Post('set-lesson-completion')

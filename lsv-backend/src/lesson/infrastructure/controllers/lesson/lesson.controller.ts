@@ -162,8 +162,9 @@ export class LessonController {
   @Get(':id/quizzes')
   async getQuizzesByLessonId(
     @Param('id', ParseUUIDPipe) id: string,
+    @Query('regionId') regionId?: string,
   ): Promise<any> {
-    return this.lessonAdminService.getQuizzesByLessonId(id);
+    return this.lessonAdminService.getQuizzesByLessonId(id, regionId);
   }
 
   @UseGuards(RolesGuard)
@@ -248,6 +249,7 @@ export class LessonController {
     return { message: 'Lesson variant deleted successfully' };
   }
 
+  @UseGuards(AuthGuard('jwt'))
   @Get('regional/:id')
   async getRegionalLesson(
     @Param('id', ParseUUIDPipe) lessonId: string,

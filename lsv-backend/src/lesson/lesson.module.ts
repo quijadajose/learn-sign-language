@@ -76,6 +76,7 @@ import { RegionRepository } from './infrastructure/typeorm/region.repository/reg
     GetLessonWithQuizzesUseCase,
     GetQuizzesByLessonIdUseCase,
     GetLessonsByLanguageWithSubmissionsUseCase,
+    GetRegionalLessonUseCase,
     LessonVariantRepository,
     RegionRepository,
     {
