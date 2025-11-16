@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import { Card, Spinner, Button, Alert } from "flowbite-react";
 import { useLocalStorage } from "./hooks/useLocalStorage";
 import { useToast } from "./components/ToastProvider";
@@ -37,6 +37,7 @@ interface Answer {
 
 export default function QuizView() {
   const { lessonId } = useParams<{ lessonId: string }>();
+  const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const [quiz, setQuiz] = useState<Quiz | null>(null);
   const [loading, setLoading] = useState(true);
@@ -57,7 +58,11 @@ export default function QuizView() {
 
       setLoading(true);
 
-      const response = await quizApi.getQuizByLesson(lessonId);
+      const regionId = searchParams.get("regionId");
+      const response = await quizApi.getQuizByLesson(
+        lessonId,
+        regionId || undefined,
+      );
 
       if (response.success) {
         const quizData: Quiz[] = response.data;
@@ -78,7 +83,7 @@ export default function QuizView() {
     };
 
     fetchQuiz();
-  }, [lessonId, token, addToast]);
+  }, [lessonId, token, addToast, searchParams]);
 
   const handleAnswerSelect = (questionId: string, optionId: string) => {
     setAnswers((prev) => {
@@ -232,8 +237,10 @@ export default function QuizView() {
             </h2>
             <p className="mb-4 text-lg text-gray-600 dark:text-gray-400">
               Has sacado{" "}
-              <span className="font-semibold">{submission.score}</span> de 100
-              puntos
+              <span className="font-semibold">
+                {submission.score.toFixed(2)}
+              </span>{" "}
+              de 100 puntos
             </p>
             <p className="text-sm text-gray-500 dark:text-gray-400">
               Enviado el:{" "}

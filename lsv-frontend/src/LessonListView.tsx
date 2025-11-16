@@ -1,9 +1,22 @@
 import { useEffect, useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
-import { Card, Spinner, Button, Alert, Modal } from "flowbite-react";
+import { useParams, useNavigate, useLocation } from "react-router-dom";
+import {
+  Card,
+  Spinner,
+  Button,
+  Alert,
+  Modal,
+  Progress,
+  Dropdown,
+} from "flowbite-react";
 import { useLocalStorage } from "./hooks/useLocalStorage";
 import { useToast } from "./components/ToastProvider";
-import { HiExclamationCircle, HiClock, HiCheckCircle } from "react-icons/hi";
+import {
+  HiExclamationCircle,
+  HiClock,
+  HiCheckCircle,
+  HiArrowLeft,
+} from "react-icons/hi";
 import { lessonApi } from "./services/api";
 import { BACKEND_BASE_URL } from "./config";
 
@@ -30,11 +43,22 @@ interface Lesson {
   description: string;
   maxScore: number;
   submissions: Submission[];
+  regionId?: string;
+}
+
+interface StageProgress {
+  id: string;
+  name: string;
+  description: string;
+  totalLessons: string;
+  completedLessons: string;
+  progress: string | null;
 }
 
 export default function LessonListView() {
   const { stageId } = useParams<{ stageId: string }>();
   const navigate = useNavigate();
+  const location = useLocation();
   const [lessons, setLessons] = useState<Lesson[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -42,6 +66,9 @@ export default function LessonListView() {
   const addToast = useToast();
   const [selectedLesson, setSelectedLesson] = useState<Lesson | null>(null);
   const [showModal, setShowModal] = useState(false);
+  const [currentStage, setCurrentStage] = useState<StageProgress | null>(null);
+  const [allStages, setAllStages] = useState<StageProgress[]>([]);
+  const [loadingStage, setLoadingStage] = useState(true);
 
   useEffect(() => {
     const fetchLessons = async () => {
@@ -51,14 +78,25 @@ export default function LessonListView() {
         return;
       }
 
-      const languageId = localStorage.getItem("selectedLanguageId");
+      const { languageId, regionId: regionIdFromState } = location.state || {};
+      // Fallback a localStorage si no viene en el estado de navegación
+      const regionId =
+        regionIdFromState || localStorage.getItem("selectedRegionId");
+
+      // Log temporal para depuración
+      console.log("LessonListView - regionId:", {
+        fromState: regionIdFromState,
+        fromLocalStorage: localStorage.getItem("selectedRegionId"),
+        final: regionId,
+        willSend: regionId || undefined,
+      });
+
       if (!languageId) {
-        setError("No se ha seleccionado un idioma.");
+        setError("No se ha proporcionado un idioma para cargar las lecciones.");
         setLoading(false);
+        addToast("error", "Error de navegación: Falta el ID del idioma.");
         return;
       }
-
-      const regionId = localStorage.getItem("selectedRegionId");
 
       setLoading(true);
 
@@ -80,15 +118,82 @@ export default function LessonListView() {
       setLoading(false);
     };
 
-    fetchLessons();
-  }, [stageId, token, addToast]);
+    const fetchStageInfo = async () => {
+      if (!token || !stageId) {
+        setLoadingStage(false);
+        return;
+      }
 
-  const handleViewLesson = (lessonId: string) => {
-    navigate(`/lesson/${lessonId}`);
+      const { languageId } = location.state || {};
+      const languageIdFromStorage = localStorage.getItem("selectedLanguageId");
+      const finalLanguageId = languageId || languageIdFromStorage;
+
+      if (!finalLanguageId) {
+        setLoadingStage(false);
+        return;
+      }
+
+      setLoadingStage(true);
+      try {
+        const response = await lessonApi.getStagesProgress(finalLanguageId);
+        if (response.success) {
+          const stages: StageProgress[] = response.data.data;
+          setAllStages(stages);
+          const stage = stages.find((s) => s.id === stageId);
+          if (stage) {
+            setCurrentStage(stage);
+          }
+        }
+      } catch (err: any) {
+        console.error("Error al cargar información de la etapa:", err);
+      } finally {
+        setLoadingStage(false);
+      }
+    };
+
+    fetchLessons();
+    fetchStageInfo();
+  }, [stageId, token, addToast, location.state]);
+
+  const handleViewLesson = (lesson: Lesson) => {
+    const lessonId = lesson.id;
+    if (lesson.regionId) {
+      navigate(`/lesson/${lessonId}?regionId=${lesson.regionId}`);
+    } else {
+      navigate(`/lesson/${lessonId}`);
+    }
   };
 
-  const handleTakeExam = (lessonId: string) => {
-    navigate(`/quiz/${lessonId}`);
+  const handleTakeExam = (lesson: Lesson) => {
+    const lessonId = lesson.id;
+    if (lesson.regionId) {
+      navigate(`/quiz/${lessonId}?regionId=${lesson.regionId}`);
+    } else {
+      navigate(`/quiz/${lessonId}`);
+    }
+  };
+
+  const handleChangeStage = (newStageId: string) => {
+    const { languageId } = location.state || {};
+    const languageIdFromStorage = localStorage.getItem("selectedLanguageId");
+    const finalLanguageId = languageId || languageIdFromStorage;
+    const regionId = localStorage.getItem("selectedRegionId");
+
+    if (finalLanguageId) {
+      // Guardar la nueva sección seleccionada
+      localStorage.setItem(`selectedStageId_${finalLanguageId}`, newStageId);
+    }
+
+    navigate(`/lessons/stage/${newStageId}`, {
+      state: {
+        languageId: finalLanguageId,
+        regionId: regionId,
+      },
+    });
+  };
+
+  const handleBackToDashboard = () => {
+    navigate("/dashboard");
   };
 
   const handleShowSubmissions = (lesson: Lesson) => {
@@ -146,9 +251,49 @@ export default function LessonListView() {
 
   return (
     <div className="mx-auto w-full max-w-6xl p-6">
+      <div className="mb-6 flex items-center justify-end">
+        {allStages.length > 1 && (
+          <Dropdown label="Cambiar Sección" dismissOnClick={true} color="blue">
+            {allStages.map((stage) => (
+              <Dropdown.Item
+                key={stage.id}
+                onClick={() => handleChangeStage(stage.id)}
+                disabled={stage.id === stageId}
+              >
+                {stage.name}: {stage.description}
+              </Dropdown.Item>
+            ))}
+          </Dropdown>
+        )}
+      </div>
+
       <h1 className="mb-8 text-center text-2xl font-bold text-gray-900 dark:text-white">
         Lecciones de la Etapa
       </h1>
+
+      {!loadingStage && currentStage && (
+        <Card className="mb-8">
+          <h2 className="text-2xl font-bold tracking-tight text-gray-900 dark:text-white">
+            {currentStage.name}: {currentStage.description}
+          </h2>
+          <div className="mt-4">
+            <div className="mb-1 flex justify-between">
+              <span className="text-base font-medium text-gray-700 dark:text-gray-400">
+                Progreso General
+              </span>
+              <span className="text-sm font-medium text-gray-700 dark:text-gray-400">
+                {currentStage.completedLessons} de {currentStage.totalLessons}{" "}
+                lecciones
+              </span>
+            </div>
+            <Progress
+              progress={parseFloat(currentStage.progress || "0")}
+              color="blue"
+              size="lg"
+            />
+          </div>
+        </Card>
+      )}
 
       {loading && (
         <div className="text-center">
@@ -191,15 +336,12 @@ export default function LessonListView() {
                 </div>
               </div>
               <div className="mt-4 flex flex-col gap-2">
-                <Button
-                  color="blue"
-                  onClick={() => handleViewLesson(lesson.id)}
-                >
+                <Button color="blue" onClick={() => handleViewLesson(lesson)}>
                   Ver lección
                 </Button>
                 <Button
                   color="success"
-                  onClick={() => handleTakeExam(lesson.id)}
+                  onClick={() => handleTakeExam(lesson)}
                   disabled={lesson.maxScore === 100}
                 >
                   {lesson.maxScore === 100

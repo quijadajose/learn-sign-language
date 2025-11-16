@@ -148,7 +148,7 @@ export default function LanguageManagement() {
         const token = localStorage.getItem("auth");
 
         const response = await fetch(
-          `${BACKEND_BASE_URL}/region/countries/search?q=${encodeURIComponent(searchTerm)}`,
+          `${BACKEND_BASE_URL}/region/countries-with-divisions?name=${encodeURIComponent(searchTerm)}`,
           {
             headers: {
               Authorization: `Bearer ${token}`,

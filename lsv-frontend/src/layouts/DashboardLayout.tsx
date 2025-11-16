@@ -1,5 +1,5 @@
 import { ReactNode, useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { Avatar, DarkThemeToggle, Dropdown, Navbar } from "flowbite-react";
 import { HiTranslate } from "react-icons/hi";
 import { BACKEND_BASE_URL } from "../config";
@@ -28,6 +28,7 @@ interface Language {
 
 const DashboardLayout = ({ children }: Props) => {
   const navigate = useNavigate();
+  const location = useLocation();
   const [userData, setUserData] = useState<UserData | null>(null);
   const [avatarError, setAvatarError] = useState(false);
   const [avatarTimestamp, setAvatarTimestamp] = useState(Date.now());
@@ -83,8 +84,8 @@ const DashboardLayout = ({ children }: Props) => {
         }
       } catch (error) {
         if (import.meta.env.DEV) {
-        console.error("Error fetching user data:", error);
-      }
+          console.error("Error fetching user data:", error);
+        }
       }
     };
 
@@ -103,8 +104,8 @@ const DashboardLayout = ({ children }: Props) => {
           }
         } catch (error) {
           if (import.meta.env.DEV) {
-          console.error("Error parsing updated user data:", error);
-        }
+            console.error("Error parsing updated user data:", error);
+          }
         }
       }
     };
@@ -123,8 +124,8 @@ const DashboardLayout = ({ children }: Props) => {
           }
         } catch (error) {
           if (import.meta.env.DEV) {
-          console.error("Error parsing updated user data:", error);
-        }
+            console.error("Error parsing updated user data:", error);
+          }
         }
       }
     };
@@ -209,32 +210,56 @@ const DashboardLayout = ({ children }: Props) => {
             Leaderboard
           </Navbar.Link>
           {userData?.role === "admin" && (
-            <>
-              <Navbar.Link
-                href="/admin/stages"
-                active={location.pathname.startsWith("/admin/stages")}
+            <Dropdown
+              arrowIcon={true}
+              inline
+              label={
+                <span className="block rounded py-2 pl-3 pr-4 text-gray-700 hover:bg-gray-100 dark:border-gray-700 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white md:border-0 md:p-0 md:hover:bg-transparent md:hover:text-blue-700 md:dark:hover:bg-transparent md:dark:hover:text-white">
+                  Admin
+                </span>
+              }
+            >
+              <Dropdown.Item
+                onClick={() => navigate("/admin/stages")}
+                className={
+                  location.pathname.startsWith("/admin/stages")
+                    ? "bg-blue-50 dark:bg-gray-700"
+                    : ""
+                }
               >
                 Stages
-              </Navbar.Link>
-              <Navbar.Link
-                href="/admin/languages"
-                active={location.pathname.startsWith("/admin/languages")}
+              </Dropdown.Item>
+              <Dropdown.Item
+                onClick={() => navigate("/admin/languages")}
+                className={
+                  location.pathname.startsWith("/admin/languages")
+                    ? "bg-blue-50 dark:bg-gray-700"
+                    : ""
+                }
               >
                 Languages
-              </Navbar.Link>
-              <Navbar.Link
-                href="/admin/lessons"
-                active={location.pathname.startsWith("/admin/lessons")}
+              </Dropdown.Item>
+              <Dropdown.Item
+                onClick={() => navigate("/admin/lessons")}
+                className={
+                  location.pathname.startsWith("/admin/lessons")
+                    ? "bg-blue-50 dark:bg-gray-700"
+                    : ""
+                }
               >
                 Lessons
-              </Navbar.Link>
-              <Navbar.Link
-                href="/admin/regions"
-                active={location.pathname.startsWith("/admin/regions")}
+              </Dropdown.Item>
+              <Dropdown.Item
+                onClick={() => navigate("/admin/regions")}
+                className={
+                  location.pathname.startsWith("/admin/regions")
+                    ? "bg-blue-50 dark:bg-gray-700"
+                    : ""
+                }
               >
                 Regions
-              </Navbar.Link>
-            </>
+              </Dropdown.Item>
+            </Dropdown>
           )}
         </Navbar.Collapse>
       </Navbar>
