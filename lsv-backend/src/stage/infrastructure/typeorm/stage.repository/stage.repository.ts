@@ -147,7 +147,7 @@ export class StageRepository implements StageRepositoryInterface {
         .leftJoin('q.submissions', 'qs', 'qs.userId = :userId', { userId })
         .where('s.languageId = :languageId', { languageId })
         .getRawOne()
-        .then(result => parseInt(result.count) || 0),
+        .then((result) => parseInt(result.count) || 0),
     ]);
 
     return {
