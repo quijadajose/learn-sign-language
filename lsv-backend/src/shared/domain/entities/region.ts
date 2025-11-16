@@ -9,6 +9,7 @@ import {
 } from 'typeorm';
 import { Language } from './language';
 import { Division } from './iso-3166-2/divisions';
+import { UserRegion } from './userRegion';
 
 @Entity()
 export class Region {
@@ -45,6 +46,9 @@ export class Region {
 
   @OneToMany('LessonVariant', (variant: any) => variant.region)
   lessonVariants: any[];
+
+  @OneToMany(() => UserRegion, (userRegion) => userRegion.region)
+  userRegions: UserRegion[];
 
   @CreateDateColumn()
   createdAt: Date;

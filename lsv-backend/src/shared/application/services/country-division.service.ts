@@ -21,6 +21,18 @@ export class CountryDivisionService {
     private readonly countryDivisionRepository: CountryDivisionRepositoryInterface,
   ) {}
 
+  async createCountries(
+    countriesData: { code: string; name: string }[],
+  ): Promise<Country[]> {
+    return await this.countryDivisionRepository.createCountries(countriesData);
+  }
+
+  async createDivisions(
+    divisionsData: { code: string; name: string; countryCode: string }[],
+  ): Promise<Division[]> {
+    return await this.countryDivisionRepository.createDivisions(divisionsData);
+  }
+
   async createCountry(createCountryDto: CreateCountryDto): Promise<Country> {
     const existingCountry =
       await this.countryDivisionRepository.findCountryByCode(
@@ -52,8 +64,12 @@ export class CountryDivisionService {
     return await this.countryDivisionRepository.searchCountries(searchDto.name);
   }
 
-  async searchCountriesWithDivisions(searchDto: SearchCountriesDto): Promise<CountryWithDivisionsDto[]> {
-    return await this.countryDivisionRepository.searchCountriesWithDivisions(searchDto.name);
+  async searchCountriesWithDivisions(
+    searchDto: SearchCountriesDto,
+  ): Promise<CountryWithDivisionsDto[]> {
+    return await this.countryDivisionRepository.searchCountriesWithDivisions(
+      searchDto.name,
+    );
   }
 
   async createDivision(
@@ -123,5 +139,4 @@ export class CountryDivisionService {
 
     return await this.countryDivisionRepository.searchDivisions(searchDto);
   }
-
 }

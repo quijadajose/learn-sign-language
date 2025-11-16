@@ -11,12 +11,7 @@ import {
   UseGuards,
   Inject,
 } from '@nestjs/common';
-import {
-  ApiTags,
-  ApiOperation,
-  ApiResponse,
-  ApiQuery,
-} from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiResponse, ApiQuery } from '@nestjs/swagger';
 import { Roles } from 'src/auth/infrastructure/decorators/roles.decorator';
 import { RolesGuard } from 'src/auth/infrastructure/guards/roles/roles.guard';
 import { CreateRegionDto } from 'src/region/domain/create-region.dto';
@@ -49,7 +44,8 @@ export class RegionController {
   @Get('countries')
   @ApiOperation({
     summary: 'Buscar países por nombre',
-    description: 'Busca países por nombre y retorna una lista con código y nombre del país. Útil para obtener el countryCode necesario para crear lenguajes.',
+    description:
+      'Busca países por nombre y retorna una lista con código y nombre del país. Útil para obtener el countryCode necesario para crear lenguajes.',
   })
   @ApiQuery({
     name: 'name',
@@ -83,12 +79,16 @@ export class RegionController {
     status: 400,
     description: 'Parámetros de búsqueda inválidos',
   })
-  async getCountries(@Query() searchDto: SearchCountriesDto): Promise<Country[]> {
+  async getCountries(
+    @Query() searchDto: SearchCountriesDto,
+  ): Promise<Country[]> {
     return this.countryDivisionService.searchCountries(searchDto);
   }
 
   @Get('countries-with-divisions')
-  async getCountriesWithDivisions(@Query() searchDto: SearchCountriesDto): Promise<CountryWithDivisionsDto[]> {
+  async getCountriesWithDivisions(
+    @Query() searchDto: SearchCountriesDto,
+  ): Promise<CountryWithDivisionsDto[]> {
     return this.countryDivisionService.searchCountriesWithDivisions(searchDto);
   }
 
