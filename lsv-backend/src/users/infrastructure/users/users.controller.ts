@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
   Param,
   ParseUUIDPipe,
@@ -32,8 +33,10 @@ import {
 import { Language } from 'src/shared/domain/entities/language';
 import { Lesson } from 'src/shared/domain/entities/lesson';
 import { UserLanguage } from 'src/shared/domain/entities/userLanguage';
+import { UserRegion } from 'src/shared/domain/entities/userRegion';
 import { UsersService } from 'src/users/application/users/users.service';
 import { EnrollUserInLanguageDto } from './enroll-user-in-language.dto';
+import { GetUserRegionsQueryDto } from './get-user-regions-query.dto';
 
 @ApiTags('Usuarios')
 @Controller('users')
@@ -50,7 +53,8 @@ export class UsersController {
   @ApiBearerAuth()
   @ApiOperation({
     summary: 'Obtener perfil del usuario autenticado',
-    description: 'Retorna la información del perfil del usuario actualmente autenticado',
+    description:
+      'Retorna la información del perfil del usuario actualmente autenticado',
   })
   @ApiResponse({
     status: 200,
@@ -75,7 +79,7 @@ export class UsersController {
         createdAt: '2025-09-15T05:21:13.511Z',
         age: 30,
         isRightHanded: true,
-        role: 'user'
+        role: 'user',
       },
     },
   })
@@ -96,7 +100,8 @@ export class UsersController {
   @ApiBearerAuth()
   @ApiOperation({
     summary: 'Actualizar perfil del usuario autenticado',
-    description: 'Permite actualizar la información del perfil del usuario actualmente autenticado',
+    description:
+      'Permite actualizar la información del perfil del usuario actualmente autenticado',
   })
   @ApiBody({
     type: UpdateUserDto,
@@ -112,8 +117,8 @@ export class UsersController {
           lastName: 'Doe',
           age: 25,
           isRightHanded: true,
-          role: 'admin'
-        }
+          role: 'admin',
+        },
       },
       'cambio-contraseña': {
         summary: 'Actualización con cambio de contraseña',
@@ -127,21 +132,41 @@ export class UsersController {
           lastName: 'Doe',
           age: 25,
           isRightHanded: true,
-          role: 'admin'
-        }
-      }
+          role: 'admin',
+        },
+      },
     },
     schema: {
       type: 'object',
       properties: {
-        email: { type: 'string', format: 'email', description: 'Nuevo email del usuario' },
-        googleId: { type: 'string', description: 'Nuevo Google ID del usuario' },
+        email: {
+          type: 'string',
+          format: 'email',
+          description: 'Nuevo email del usuario',
+        },
+        googleId: {
+          type: 'string',
+          description: 'Nuevo Google ID del usuario',
+        },
         firstName: { type: 'string', description: 'Nuevo nombre del usuario' },
         lastName: { type: 'string', description: 'Nuevo apellido del usuario' },
-        age: { type: 'number', minimum: 0, description: 'Nueva edad del usuario' },
-        isRightHanded: { type: 'boolean', description: 'Si el usuario es diestro' },
-        role: { type: 'string', description: 'Rol del usuario (se ignora en la actualización)' },
-        oldPassword: { type: 'string', description: 'Contraseña actual (requerida para cambiar contraseña)' },
+        age: {
+          type: 'number',
+          minimum: 0,
+          description: 'Nueva edad del usuario',
+        },
+        isRightHanded: {
+          type: 'boolean',
+          description: 'Si el usuario es diestro',
+        },
+        role: {
+          type: 'string',
+          description: 'Rol del usuario (se ignora en la actualización)',
+        },
+        oldPassword: {
+          type: 'string',
+          description: 'Contraseña actual (requerida para cambiar contraseña)',
+        },
         newPassword: { type: 'string', description: 'Nueva contraseña' },
       },
     },
@@ -169,7 +194,7 @@ export class UsersController {
         createdAt: '2025-09-15T05:21:13.511Z',
         age: 25,
         isRightHanded: true,
-        role: 'user'
+        role: 'user',
       },
     },
   })
@@ -186,7 +211,7 @@ export class UsersController {
       example: {
         message: 'Current password does not match',
         error: 'Bad Request',
-        statusCode: 400
+        statusCode: 400,
       },
     },
   })
@@ -211,7 +236,8 @@ export class UsersController {
   @ApiBearerAuth()
   @ApiOperation({
     summary: 'Obtener lista de idiomas disponibles',
-    description: 'Retorna una lista paginada de todos los idiomas disponibles en el sistema',
+    description:
+      'Retorna una lista paginada de todos los idiomas disponibles en el sistema',
   })
   @ApiQuery({
     name: 'page',
@@ -224,7 +250,8 @@ export class UsersController {
     name: 'limit',
     required: false,
     type: Number,
-    description: 'Número de elementos por página (por defecto: 10, máximo: 100)',
+    description:
+      'Número de elementos por página (por defecto: 10, máximo: 100)',
     example: 10,
   })
   @ApiQuery({
@@ -271,7 +298,7 @@ export class UsersController {
             description: 'lenguaje de señas de mexico',
             countryCode: null,
             createdAt: '2025-09-12T05:14:31.116Z',
-            updatedAt: '2025-09-12T05:14:31.116Z'
+            updatedAt: '2025-09-12T05:14:31.116Z',
           },
           {
             id: '8dc31a49-64ae-4c94-b867-d818ce9441e6',
@@ -279,26 +306,28 @@ export class UsersController {
             description: 'Lenguaje de sena de chile',
             countryCode: 'CL',
             createdAt: '2025-09-12T04:20:16.738Z',
-            updatedAt: '2025-09-12T05:12:03.566Z'
+            updatedAt: '2025-09-12T05:12:03.566Z',
           },
           {
             id: 'fc36a7cf-c448-46c1-a191-2ceb5c60a3b4',
             name: 'Lenguaje de señas Venezolano',
-            description: 'El sistema de comunicación visual usado por la comunidad sorda',
+            description:
+              'El sistema de comunicación visual usado por la comunidad sorda',
             countryCode: 'VE',
             createdAt: '2025-09-11T04:27:29.233Z',
-            updatedAt: '2025-09-12T05:12:03.571Z'
-          }
+            updatedAt: '2025-09-12T05:12:03.571Z',
+          },
         ],
         total: 3,
         page: 1,
-        pageSize: 10
+        pageSize: 10,
       },
     },
   })
   @ApiResponse({
     status: 401,
-    description: 'No autorizado - Token JWT inválido, expirado o no proporcionado',
+    description:
+      'No autorizado - Token JWT inválido, expirado o no proporcionado',
     schema: {
       type: 'object',
       properties: {
@@ -309,7 +338,7 @@ export class UsersController {
       example: {
         message: 'No token provided',
         error: 'Unauthorized',
-        statusCode: 401
+        statusCode: 401,
       },
     },
   })
@@ -323,7 +352,8 @@ export class UsersController {
   @ApiSecurity('admin')
   @ApiOperation({
     summary: 'Obtener idioma por ID (Solo Administradores)',
-    description: 'Retorna la información de un idioma específico por su ID. Requiere rol de administrador.',
+    description:
+      'Retorna la información de un idioma específico por su ID. Requiere rol de administrador.',
   })
   @ApiParam({
     name: 'id',
@@ -341,17 +371,22 @@ export class UsersController {
         id: { type: 'string', format: 'uuid' },
         name: { type: 'string', description: 'Nombre del idioma' },
         description: { type: 'string', description: 'Descripción del idioma' },
-        countryCode: { type: 'string', nullable: true, description: 'Código del país' },
+        countryCode: {
+          type: 'string',
+          nullable: true,
+          description: 'Código del país',
+        },
         createdAt: { type: 'string', format: 'date-time' },
         updatedAt: { type: 'string', format: 'date-time' },
       },
       example: {
         id: 'fc36a7cf-c448-46c1-a191-2ceb5c60a3b4',
         name: 'Lenguaje de señas Venezolano',
-        description: 'El sistema de comunicación visual usado por la comunidad sorda',
+        description:
+          'El sistema de comunicación visual usado por la comunidad sorda',
         countryCode: 'VE',
         createdAt: '2025-09-11T04:27:29.233Z',
-        updatedAt: '2025-09-12T05:12:03.571Z'
+        updatedAt: '2025-09-12T05:12:03.571Z',
       },
     },
   })
@@ -376,7 +411,7 @@ export class UsersController {
       example: {
         message: 'Forbidden resource',
         error: 'Forbidden',
-        statusCode: 403
+        statusCode: 403,
       },
     },
   })
@@ -389,7 +424,8 @@ export class UsersController {
   @ApiBearerAuth()
   @ApiOperation({
     summary: 'Obtener lección por ID',
-    description: 'Retorna la información completa de una lección específica por su ID',
+    description:
+      'Retorna la información completa de una lección específica por su ID',
   })
   @ApiParam({
     name: 'id',
@@ -406,8 +442,15 @@ export class UsersController {
       properties: {
         id: { type: 'string', format: 'uuid' },
         title: { type: 'string', description: 'Título de la lección' },
-        description: { type: 'string', description: 'Descripción de la lección' },
-        languageId: { type: 'string', format: 'uuid', description: 'ID del idioma' },
+        description: {
+          type: 'string',
+          description: 'Descripción de la lección',
+        },
+        languageId: {
+          type: 'string',
+          format: 'uuid',
+          description: 'ID del idioma',
+        },
         content: { type: 'string', description: 'Contenido de la lección' },
         createdAt: { type: 'string', format: 'date-time' },
       },
@@ -433,7 +476,8 @@ export class UsersController {
   @ApiBearerAuth()
   @ApiOperation({
     summary: 'Obtener idiomas inscritos del usuario',
-    description: 'Retorna una lista paginada de los idiomas en los que el usuario autenticado está inscrito',
+    description:
+      'Retorna una lista paginada de los idiomas en los que el usuario autenticado está inscrito, incluyendo las regiones enroladas para cada idioma',
   })
   @ApiQuery({
     name: 'page',
@@ -446,7 +490,8 @@ export class UsersController {
     name: 'limit',
     required: false,
     type: Number,
-    description: 'Número de elementos por página (por defecto: 10, máximo: 100)',
+    description:
+      'Número de elementos por página (por defecto: 10, máximo: 100)',
     example: 10,
   })
   @ApiQuery({
@@ -463,7 +508,8 @@ export class UsersController {
   })
   @ApiResponse({
     status: 200,
-    description: 'Lista de idiomas inscritos obtenida exitosamente',
+    description:
+      'Lista de idiomas inscritos obtenida exitosamente con sus regiones enroladas',
     schema: {
       type: 'object',
       properties: {
@@ -472,19 +518,114 @@ export class UsersController {
           items: {
             type: 'object',
             properties: {
-              userId: { type: 'string', format: 'uuid', example: '5319d099-5c98-48ce-b44d-dbe273196d30' },
-              languageId: { type: 'string', format: 'uuid', example: '140e9331-e7ca-495f-9f74-c471d685d91a' },
-              createdAt: { type: 'string', format: 'date-time', example: '2025-09-13T00:30:40.143Z' },
-              updatedAt: { type: 'string', format: 'date-time', example: '2025-09-13T00:30:40.143Z' },
+              userId: {
+                type: 'string',
+                format: 'uuid',
+                example: '5319d099-5c98-48ce-b44d-dbe273196d30',
+              },
+              languageId: {
+                type: 'string',
+                format: 'uuid',
+                example: '140e9331-e7ca-495f-9f74-c471d685d91a',
+              },
+              createdAt: {
+                type: 'string',
+                format: 'date-time',
+                example: '2025-09-13T00:30:40.143Z',
+              },
+              updatedAt: {
+                type: 'string',
+                format: 'date-time',
+                example: '2025-09-13T00:30:40.143Z',
+              },
               language: {
                 type: 'object',
                 properties: {
-                  id: { type: 'string', format: 'uuid', example: '140e9331-e7ca-495f-9f74-c471d685d91a' },
-                  name: { type: 'string', example: 'Lenguaje de señas Mexicano' },
-                  description: { type: 'string', example: 'lenguaje de señas de mexico' },
+                  id: {
+                    type: 'string',
+                    format: 'uuid',
+                    example: '140e9331-e7ca-495f-9f74-c471d685d91a',
+                  },
+                  name: {
+                    type: 'string',
+                    example: 'Lenguaje de señas Mexicano',
+                  },
+                  description: {
+                    type: 'string',
+                    example: 'lenguaje de señas de mexico',
+                  },
                   countryCode: { type: 'string', example: 'MX' },
-                  createdAt: { type: 'string', format: 'date-time', example: '2025-09-12T05:14:31.116Z' },
-                  updatedAt: { type: 'string', format: 'date-time', example: '2025-09-12T05:14:31.116Z' },
+                  createdAt: {
+                    type: 'string',
+                    format: 'date-time',
+                    example: '2025-09-12T05:14:31.116Z',
+                  },
+                  updatedAt: {
+                    type: 'string',
+                    format: 'date-time',
+                    example: '2025-09-12T05:14:31.116Z',
+                  },
+                },
+              },
+              enrolledRegions: {
+                type: 'array',
+                description: 'Array de regiones enroladas para este idioma',
+                items: {
+                  type: 'object',
+                  properties: {
+                    userId: {
+                      type: 'string',
+                      format: 'uuid',
+                      example: '5319d099-5c98-48ce-b44d-dbe273196d30',
+                    },
+                    regionId: {
+                      type: 'string',
+                      format: 'uuid',
+                      example: '250e9331-e7ca-495f-9f74-c471d685d91b',
+                    },
+                    createdAt: {
+                      type: 'string',
+                      format: 'date-time',
+                      example: '2025-09-13T00:30:40.143Z',
+                    },
+                    updatedAt: {
+                      type: 'string',
+                      format: 'date-time',
+                      example: '2025-09-13T00:30:40.143Z',
+                    },
+                    region: {
+                      type: 'object',
+                      properties: {
+                        id: {
+                          type: 'string',
+                          format: 'uuid',
+                          example: '250e9331-e7ca-495f-9f74-c471d685d91b',
+                        },
+                        name: { type: 'string', example: 'Ciudad de México' },
+                        code: { type: 'string', example: 'CDMX' },
+                        description: {
+                          type: 'string',
+                          example: 'Región de Ciudad de México',
+                        },
+                        isDefault: { type: 'boolean', example: true },
+                        languageId: {
+                          type: 'string',
+                          format: 'uuid',
+                          example: '140e9331-e7ca-495f-9f74-c471d685d91a',
+                        },
+                        createdAt: {
+                          type: 'string',
+                          format: 'date-time',
+                          example: '2025-09-12T05:14:31.116Z',
+                        },
+                        updatedAt: {
+                          type: 'string',
+                          format: 'date-time',
+                          example: '2025-09-12T05:14:31.116Z',
+                        },
+                      },
+                    },
+                  },
                 },
               },
             },
@@ -503,7 +644,7 @@ export class UsersController {
   findUserLanguages(
     @Req() req,
     @Query() pagination: PaginationDto,
-  ): Promise<PaginatedResponseDto<UserLanguage>> {
+  ): Promise<PaginatedResponseDto<any>> {
     return this.usersService.findUserLanguages(req.user.sub, pagination);
   }
 
@@ -512,7 +653,8 @@ export class UsersController {
   @ApiBearerAuth()
   @ApiOperation({
     summary: 'Inscribir usuario en un idioma',
-    description: 'Permite al usuario autenticado inscribirse en un idioma específico',
+    description:
+      'Permite al usuario autenticado inscribirse en un idioma específico',
   })
   @ApiBody({
     type: EnrollUserInLanguageDto,
@@ -527,9 +669,16 @@ export class UsersController {
           description: 'ID único del idioma en el que se desea inscribir',
           example: '8dc31a49-64ae-4c94-b867-d818ce9441e6',
         },
+        regionId: {
+          type: 'string',
+          format: 'uuid',
+          description: 'ID único de la región (opcional)',
+          example: '8dc31a49-64ae-4c94-b867-d818ce9441e7',
+        },
       },
       example: {
         languageId: '8dc31a49-64ae-4c94-b867-d818ce9441e6',
+        regionId: '8dc31a49-64ae-4c94-b867-d818ce9441e7',
       },
     },
   })
@@ -539,8 +688,16 @@ export class UsersController {
     schema: {
       type: 'object',
       properties: {
-        userId: { type: 'string', format: 'uuid', example: '5319d099-5c98-48ce-b44d-dbe273196d30' },
-        languageId: { type: 'string', format: 'uuid', example: '8dc31a49-64ae-4c94-b867-d818ce9441e6' },
+        userId: {
+          type: 'string',
+          format: 'uuid',
+          example: '5319d099-5c98-48ce-b44d-dbe273196d30',
+        },
+        languageId: {
+          type: 'string',
+          format: 'uuid',
+          example: '8dc31a49-64ae-4c94-b867-d818ce9441e6',
+        },
       },
       example: {
         userId: '5319d099-5c98-48ce-b44d-dbe273196d30',
@@ -550,7 +707,8 @@ export class UsersController {
   })
   @ApiResponse({
     status: 400,
-    description: 'Datos de entrada inválidos o usuario ya inscrito en el idioma',
+    description:
+      'Datos de entrada inválidos o usuario ya inscrito en el idioma',
   })
   @ApiResponse({
     status: 401,
@@ -560,14 +718,24 @@ export class UsersController {
     status: 404,
     description: 'Idioma no encontrado',
   })
-  enroll(
+  async enroll(
     @Req() req,
     @Body() enrollDto: EnrollUserInLanguageDto,
   ): Promise<UserLanguage> {
-    return this.usersService.enrollUserInLanguage(
+    const userLanguage = await this.usersService.enrollUserInLanguage(
       req.user.sub,
       enrollDto.languageId,
     );
+
+    // Si se proporciona una región, también inscribir al usuario en esa región
+    if (enrollDto.regionId) {
+      await this.usersService.enrollUserInRegion(
+        req.user.sub,
+        enrollDto.regionId,
+      );
+    }
+
+    return userLanguage;
   }
 
   @UseGuards(AuthGuard('jwt'))
@@ -575,7 +743,8 @@ export class UsersController {
   @ApiBearerAuth()
   @ApiOperation({
     summary: 'Obtener progreso de etapas por idioma',
-    description: 'Retorna el progreso del usuario autenticado en las diferentes etapas de un idioma específico',
+    description:
+      'Retorna el progreso del usuario autenticado en las diferentes etapas de un idioma específico',
   })
   @ApiParam({
     name: 'languageId',
@@ -595,7 +764,8 @@ export class UsersController {
     name: 'limit',
     required: false,
     type: Number,
-    description: 'Número de elementos por página (por defecto: 10, máximo: 100)',
+    description:
+      'Número de elementos por página (por defecto: 10, máximo: 100)',
     example: 100,
   })
   @ApiQuery({
@@ -616,9 +786,17 @@ export class UsersController {
           items: {
             type: 'object',
             properties: {
-              id: { type: 'string', format: 'uuid', example: 'b01fab95-1d2e-43b1-99aa-20fd4afbf5e1' },
+              id: {
+                type: 'string',
+                format: 'uuid',
+                example: 'b01fab95-1d2e-43b1-99aa-20fd4afbf5e1',
+              },
               name: { type: 'string', example: 'A I' },
-              description: { type: 'string', example: 'Puede utilizar señas básicas para comunicarse en tareas sencillas y rutinarias' },
+              description: {
+                type: 'string',
+                example:
+                  'Puede utilizar señas básicas para comunicarse en tareas sencillas y rutinarias',
+              },
               totalLessons: { type: 'string', example: '2' },
               completedLessons: { type: 'string', example: '1' },
               progress: { type: 'string', nullable: true, example: '50.00' },
@@ -634,23 +812,25 @@ export class UsersController {
           {
             id: 'b01fab95-1d2e-43b1-99aa-20fd4afbf5e1',
             name: 'A I',
-            description: 'Puede utilizar señas básicas para comunicarse en tareas sencillas y rutinarias',
+            description:
+              'Puede utilizar señas básicas para comunicarse en tareas sencillas y rutinarias',
             totalLessons: '2',
             completedLessons: '1',
-            progress: '50.00'
+            progress: '50.00',
           },
           {
             id: '113155d1-a897-49a7-afde-568b2281bc8a',
             name: 'A II',
-            description: 'Puede comprender señas frecuentes relacionadas con áreas de experiencia relevantes',
+            description:
+              'Puede comprender señas frecuentes relacionadas con áreas de experiencia relevantes',
             totalLessons: '0',
             completedLessons: '0',
-            progress: null
-          }
+            progress: null,
+          },
         ],
         total: 2,
         page: 1,
-        pageSize: 10
+        pageSize: 10,
       },
     },
   })
@@ -673,5 +853,188 @@ export class UsersController {
   ): Promise<PaginatedResponseDto<any>> {
     const userId = req.user.sub;
     return this.usersService.getStagesProgress(userId, languageId, pagination);
+  }
+
+  @UseGuards(AuthGuard('jwt'))
+  @Get('enrolled-regions')
+  @ApiBearerAuth()
+  @ApiOperation({
+    summary: 'Obtener regiones inscritas del usuario',
+    description:
+      'Retorna una lista paginada de las regiones en las que el usuario autenticado está inscrito',
+  })
+  @ApiQuery({
+    name: 'page',
+    required: false,
+    type: Number,
+    description: 'Número de página (por defecto: 1)',
+    example: 1,
+  })
+  @ApiQuery({
+    name: 'limit',
+    required: false,
+    type: Number,
+    description:
+      'Número de elementos por página (por defecto: 10, máximo: 100)',
+    example: 10,
+  })
+  @ApiQuery({
+    name: 'languageId',
+    required: false,
+    type: String,
+    format: 'uuid',
+    description: 'ID del idioma para filtrar regiones (opcional)',
+    example: '8dc31a49-64ae-4c94-b867-d818ce9441e6',
+  })
+  @ApiQuery({
+    name: 'orderBy',
+    required: false,
+    type: String,
+    description: 'Campo por el cual ordenar los resultados',
+  })
+  @ApiQuery({
+    name: 'sortOrder',
+    required: false,
+    enum: ['ASC', 'DESC'],
+    description: 'Orden de clasificación (por defecto: DESC)',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Regiones inscritas obtenidas exitosamente',
+  })
+  @ApiResponse({
+    status: 401,
+    description: 'No autorizado - Token JWT inválido o expirado',
+  })
+  findUserRegions(
+    @Req() req,
+    @Query() query: GetUserRegionsQueryDto,
+  ): Promise<PaginatedResponseDto<UserRegion>> {
+    return this.usersService.findUserRegions(
+      req.user.sub,
+      query,
+      query.languageId,
+    );
+  }
+
+  @UseGuards(AuthGuard('jwt'))
+  @Post('enroll-region')
+  @ApiBearerAuth()
+  @ApiOperation({
+    summary: 'Inscribir usuario en una región',
+    description:
+      'Permite al usuario autenticado inscribirse en una región específica',
+  })
+  @ApiBody({
+    schema: {
+      type: 'object',
+      required: ['regionId'],
+      properties: {
+        regionId: {
+          type: 'string',
+          format: 'uuid',
+          description: 'ID único de la región en la que se desea inscribir',
+          example: '8dc31a49-64ae-4c94-b867-d818ce9441e7',
+        },
+      },
+    },
+  })
+  @ApiResponse({
+    status: 201,
+    description: 'Usuario inscrito exitosamente en la región',
+  })
+  @ApiResponse({
+    status: 400,
+    description:
+      'Datos de entrada inválidos o usuario ya inscrito en la región',
+  })
+  @ApiResponse({
+    status: 401,
+    description: 'No autorizado - Token JWT inválido o expirado',
+  })
+  @ApiResponse({
+    status: 404,
+    description: 'Región no encontrada',
+  })
+  enrollRegion(
+    @Req() req,
+    @Body('regionId', ParseUUIDPipe) regionId: string,
+  ): Promise<UserRegion> {
+    return this.usersService.enrollUserInRegion(req.user.sub, regionId);
+  }
+
+  @UseGuards(AuthGuard('jwt'))
+  @Delete('enrolled-languages/:languageId')
+  @ApiBearerAuth()
+  @ApiOperation({
+    summary: 'Desinscribirse de un idioma',
+    description:
+      'Permite al usuario autenticado desinscribirse de un idioma. No se puede desinscribir del último idioma.',
+  })
+  @ApiParam({
+    name: 'languageId',
+    type: String,
+    format: 'uuid',
+    description: 'ID del idioma del que se desea desinscribirse',
+    example: '8dc31a49-64ae-4c94-b867-d818ce9441e6',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Usuario desinscrito exitosamente del idioma',
+  })
+  @ApiResponse({
+    status: 400,
+    description:
+      'No se puede desinscribir del último idioma. Debes tener al menos un idioma inscrito.',
+  })
+  @ApiResponse({
+    status: 401,
+    description: 'No autorizado - Token JWT inválido o expirado',
+  })
+  @ApiResponse({
+    status: 404,
+    description: 'Idioma no encontrado o no estás inscrito en este idioma',
+  })
+  async unenrollFromLanguage(
+    @Req() req,
+    @Param('languageId', ParseUUIDPipe) languageId: string,
+  ): Promise<{ message: string }> {
+    await this.usersService.unenrollUserFromLanguage(req.user.sub, languageId);
+    return { message: 'Te has desinscrito del idioma exitosamente.' };
+  }
+
+  @UseGuards(AuthGuard('jwt'))
+  @Delete('enrolled-regions/:regionId')
+  @ApiBearerAuth()
+  @ApiOperation({
+    summary: 'Desinscribirse de una región',
+    description:
+      'Permite al usuario autenticado desinscribirse de una región específica',
+  })
+  @ApiParam({
+    name: 'regionId',
+    type: String,
+    format: 'uuid',
+    description: 'ID de la región de la que se desea desinscribirse',
+    example: '8dc31a49-64ae-4c94-b867-d818ce9441e7',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Usuario desinscrito exitosamente de la región',
+  })
+  @ApiResponse({
+    status: 401,
+    description: 'No autorizado - Token JWT inválido o expirado',
+  })
+  @ApiResponse({
+    status: 404,
+    description: 'Región no encontrada o no estás inscrito en esta región',
+  })
+  async unenrollFromRegion(
+    @Req() req,
+    @Param('regionId', ParseUUIDPipe) regionId: string,
+  ): Promise<{ message: string }> {
+    await this.usersService.unenrollUserFromRegion(req.user.sub, regionId);
+    return { message: 'Te has desinscrito de la región exitosamente.' };
   }
 }

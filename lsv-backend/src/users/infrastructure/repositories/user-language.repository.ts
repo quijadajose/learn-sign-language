@@ -66,4 +66,17 @@ export class UserLanguageRepository implements UserLanguageRepositoryInterface {
       pageSize: limit,
     };
   }
+
+  async delete(userId: string, languageId: string): Promise<void> {
+    await this.userLanguageRepository.delete({
+      userId,
+      languageId,
+    });
+  }
+
+  async countByUserId(userId: string): Promise<number> {
+    return this.userLanguageRepository.count({
+      where: { userId },
+    });
+  }
 }
