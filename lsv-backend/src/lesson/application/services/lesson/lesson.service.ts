@@ -1,4 +1,5 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Inject, forwardRef } from '@nestjs/common';
+import { QuizVariantService } from 'src/quiz/application/services/quiz-variant.service';
 import { CreateLessonUseCase } from '../../use-cases/create-lesson-use-case/create-lesson-use-case';
 import { CreateLessonDto } from '../../../domain/dto/create-lesson/create-lesson-dto';
 import { UploadPictureUseCase } from 'src/shared/application/use-cases/upload-picture-use-case/upload-picture-use-case';
@@ -41,6 +42,8 @@ export class LessonService {
     private readonly updateLessonVariantUseCase: UpdateLessonVariantUseCase,
     private readonly deleteLessonVariantUseCase: DeleteLessonVariantUseCase,
     private readonly getRegionalLessonUseCase: GetRegionalLessonUseCase,
+    @Inject(forwardRef(() => QuizVariantService))
+    private readonly quizVariantService: QuizVariantService,
   ) {}
   async createLesson(createLessonDto: CreateLessonDto) {
     return await this.createLessonUseCase.execute(createLessonDto);
@@ -67,7 +70,43 @@ export class LessonService {
     return await this.getLessonWithQuizzesUseCase.execute(id);
   }
 
-  async getQuizzesByLessonId(id: string) {
+  async getQuizzesByLessonId(id: string, regionId?: string) {
+    // Si hay regionId, buscar quiz variants de la variante regional
+    if (regionId) {
+      try {
+        const lessonOrVariant = await this.getRegionalLessonUseCase.execute(
+          id,
+          regionId,
+        );
+
+        // Si es una variante, obtener sus quiz variants
+        if ('baseLesson' in lessonOrVariant && lessonOrVariant.baseLesson) {
+          const quizVariants = await this.quizVariantService.getQuizVariants(
+            lessonOrVariant.id,
+          );
+
+          // Convertir quiz variants al formato de quizzes normales
+          return quizVariants.map((qv: any) => ({
+            id: qv.id,
+            questions: (qv.questionVariants || []).map((qvQuestion: any) => ({
+              id: qvQuestion.id,
+              text: qvQuestion.question,
+              options: (qvQuestion.optionVariants || []).map(
+                (qvOption: any) => ({
+                  id: qvOption.id,
+                  text: qvOption.text,
+                  // No incluir isCorrect para el frontend
+                }),
+              ),
+            })),
+          }));
+        }
+      } catch (error) {
+        // Si falla, intentar con la lección base
+      }
+    }
+
+    // Si no hay regionId o no se encontró variante, usar el método normal
     return await this.getQuizzesByLessonIdUseCase.execute(id);
   }
 

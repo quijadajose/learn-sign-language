@@ -400,6 +400,7 @@ export class LessonRepository implements LessonRepositoryInterface {
           stageId: row.lesson_stageId,
           createdAt: row.lesson_createdAt,
           updatedAt: row.lesson_updatedAt,
+          regionId: regionId,
           maxScore: 0,
           submissions: [],
           isRegionalVariant: row.is_regional_variant,
@@ -547,9 +548,28 @@ export class LessonRepository implements LessonRepositoryInterface {
     lessonId: string,
     regionId?: string,
   ): Promise<Lesson | LessonVariant> {
+    // Primero verificar si el ID es de una variante
+    const variantById = await this.lessonVariantRepository.findById(lessonId);
+    let baseLessonId = lessonId;
+
+    if (variantById) {
+      // Si el ID es de una variante, usar el ID de la lección base
+      baseLessonId = variantById.baseLesson.id;
+
+      // Si hay regionId y coincide con la variante, retornar la variante
+      if (regionId && variantById.region.id === regionId) {
+        return variantById;
+      }
+
+      // Si no hay regionId, retornar la variante encontrada
+      if (!regionId) {
+        return variantById;
+      }
+    }
+
     if (!regionId) {
       const lesson = await this.lessonRepository.findOne({
-        where: { id: lessonId },
+        where: { id: baseLessonId },
         relations: [
           'language',
           'stage',
@@ -564,8 +584,9 @@ export class LessonRepository implements LessonRepositoryInterface {
       return lesson;
     }
 
+    // Buscar variante por lección base y región
     const variant = await this.lessonVariantRepository.findByLessonAndRegion(
-      lessonId,
+      baseLessonId,
       regionId,
     );
 
@@ -573,8 +594,9 @@ export class LessonRepository implements LessonRepositoryInterface {
       return variant;
     }
 
+    // Si no hay variante, retornar la lección base
     const lesson = await this.lessonRepository.findOne({
-      where: { id: lessonId },
+      where: { id: baseLessonId },
       relations: [
         'language',
         'stage',
