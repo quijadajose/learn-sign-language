@@ -1,11 +1,11 @@
 import { useEffect, useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import { Card, Spinner, Button, Alert } from "flowbite-react";
 import { useLocalStorage } from "./hooks/useLocalStorage";
 import { useToast } from "./components/ToastProvider";
 import { HiExclamationCircle, HiArrowLeft } from "react-icons/hi";
 import QuillEditor from "./components/QuillEditor";
-import { lessonApi } from "./services/api";
+import { lessonApi, lessonVariantApi } from "./services/api";
 
 interface Stage {
   id: string;
@@ -25,10 +25,30 @@ interface Lesson {
   stage: Stage;
 }
 
+interface LessonVariant {
+  id: string;
+  name: string;
+  description: string;
+  content: string;
+  region?: {
+    id: string;
+    name: string;
+  };
+  baseLesson?: {
+    id: string;
+  };
+  createdAt: string;
+  updatedAt: string;
+}
+
 export default function LessonView() {
   const { lessonId } = useParams<{ lessonId: string }>();
+  const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const [lesson, setLesson] = useState<Lesson | null>(null);
+  const [lessonVariant, setLessonVariant] = useState<LessonVariant | null>(
+    null,
+  );
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isComplete, setIsComplete] = useState(false);
@@ -45,29 +65,84 @@ export default function LessonView() {
       }
 
       setLoading(true);
+      const regionId = searchParams.get("regionId");
 
-      const lessonResponse = await lessonApi.getUserLesson(lessonId);
+      try {
+        let lessonData: Lesson | LessonVariant | null = null;
+        let actualLessonId = lessonId;
 
-      if (lessonResponse.success) {
-        setLesson(lessonResponse.data);
+        // Si hay regionId, intentar obtener la lección regional
+        if (regionId) {
+          const variantResponse = await lessonVariantApi.getRegionalLesson(
+            lessonId,
+            regionId,
+          );
 
-        const startResponse = await lessonApi.startLesson(lessonId);
-        if (startResponse.success) {
-          addToast("success", "Lección iniciada correctamente");
+          if (variantResponse.success && variantResponse.data) {
+            const data = variantResponse.data;
+            // Verificar si es una variante: tiene propiedad 'region' o 'baseLesson'
+            if ("region" in data || "baseLesson" in data) {
+              // Es una variante regional
+              lessonData = data as LessonVariant;
+              setLessonVariant(data as LessonVariant);
+              setLesson(null);
+              // Usar el ID de la lección base para startLesson
+              actualLessonId =
+                (data as LessonVariant).baseLesson?.id || lessonId;
+            } else {
+              // Es una lección normal
+              lessonData = data as Lesson;
+              setLesson(data as Lesson);
+              setLessonVariant(null);
+            }
+          } else {
+            // Si falla, intentar obtener la lección normal
+            const lessonResponse = await lessonApi.getUserLesson(lessonId);
+            if (lessonResponse.success) {
+              lessonData = lessonResponse.data;
+              setLesson(lessonResponse.data);
+              setLessonVariant(null);
+            } else {
+              throw new Error(
+                lessonResponse.message || "Error al cargar la lección",
+              );
+            }
+          }
+        } else {
+          // Sin regionId, obtener la lección normal
+          const lessonResponse = await lessonApi.getUserLesson(lessonId);
+          if (lessonResponse.success) {
+            lessonData = lessonResponse.data;
+            setLesson(lessonResponse.data);
+            setLessonVariant(null);
+          } else {
+            throw new Error(
+              lessonResponse.message || "Error al cargar la lección",
+            );
+          }
         }
-      } else {
-        setError(lessonResponse.message || "Error al cargar la lección");
-        addToast(
-          "error",
-          lessonResponse.message || "Error al cargar la lección",
-        );
-      }
 
-      setLoading(false);
+        if (lessonData) {
+          // Iniciar la lección usando el ID base si es una variante
+          const startResponse = await lessonApi.startLesson(
+            actualLessonId,
+            regionId || undefined,
+          );
+          if (startResponse.success) {
+            addToast("success", "Lección iniciada correctamente");
+          }
+        }
+      } catch (err: any) {
+        const errorMessage = err.message || "Error al cargar la lección";
+        setError(errorMessage);
+        addToast("error", errorMessage);
+      } finally {
+        setLoading(false);
+      }
     };
 
     fetchLesson();
-  }, [lessonId, token, addToast]);
+  }, [lessonId, token, addToast, searchParams]);
 
   const handleMarkAsComplete = async () => {
     if (!token || !lessonId) return;
@@ -131,7 +206,7 @@ export default function LessonView() {
     );
   }
 
-  if (!lesson) {
+  if (!lesson && !lessonVariant) {
     return (
       <div className="mx-auto w-full max-w-4xl p-6">
         <Alert color="failure" icon={HiExclamationCircle}>
@@ -159,10 +234,10 @@ export default function LessonView() {
       <Card className="mb-6">
         <div className="mb-6">
           <h1 className="mb-4 text-3xl font-bold text-gray-900 dark:text-white">
-            {lesson.name}
+            {lesson?.name || lessonVariant?.name}
           </h1>
           <p className="mb-6 text-lg text-gray-700 dark:text-gray-300">
-            {lesson.description}
+            {lesson?.description || lessonVariant?.description}
           </p>
         </div>
 
@@ -172,7 +247,7 @@ export default function LessonView() {
           </h3>
           <div className="rounded-lg border border-gray-200 dark:border-gray-700">
             <QuillEditor
-              value={lesson.content}
+              value={lesson?.content || lessonVariant?.content || ""}
               readOnly={true}
               theme="snow"
               modules={{

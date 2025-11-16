@@ -45,6 +45,17 @@ interface PaginatedRegionResponse {
   pageSize: number;
 }
 
+interface EnrolledRegion {
+  region: Region;
+}
+
+interface PaginatedEnrolledRegionResponse {
+  data: EnrolledRegion[];
+  total: number;
+  page: number;
+  pageSize: number;
+}
+
 const ITEMS_PER_PAGE = 8;
 
 interface Props {
@@ -71,6 +82,8 @@ export default function LanguageSelection({ onLanguageSelected }: Props) {
   const [selectedLanguage, setSelectedLanguage] = useState<Language | null>(
     null,
   );
+  const [isLanguageFromEnrollment, setIsLanguageFromEnrollment] =
+    useState(false);
   const effectRan = useRef(false);
   const addToast = useToast();
 
@@ -83,19 +96,9 @@ export default function LanguageSelection({ onLanguageSelected }: Props) {
         return;
       }
 
-      if (selectedRegionId) {
-        const enrolledResponse = await languageApi.getEnrolledLanguages();
-
-        if (enrolledResponse.success && enrolledResponse.data.data.length > 0) {
-          const enrolledLanguage = enrolledResponse.data.data[0].language;
-          addToast("success", `Continuando con ${enrolledLanguage.name}.`);
-          onLanguageSelected(enrolledLanguage);
-          return;
-        }
-      }
-
       setLoading(true);
       try {
+        // Verificar si el usuario tiene idiomas y regiones inscritos
         const enrolledResponse = await languageApi.getEnrolledLanguages();
 
         if (!enrolledResponse.success) {
@@ -109,12 +112,96 @@ export default function LanguageSelection({ onLanguageSelected }: Props) {
           enrolledResponse.data;
 
         if (enrolledData.data.length > 0) {
+          // Verificar si hay un idioma ya seleccionado en localStorage
+          const storedLanguageId = localStorage.getItem("selectedLanguageId");
+          const storedRegionId = localStorage.getItem("selectedRegionId");
+
+          // Buscar el idioma seleccionado en los idiomas inscritos
+          let selectedLanguage = null;
+          if (storedLanguageId) {
+            selectedLanguage = enrolledData.data.find(
+              (el) => el.language.id === storedLanguageId,
+            )?.language;
+          }
+
+          // Si hay un idioma seleccionado válido, verificar si tiene regiones
+          if (selectedLanguage) {
+            const enrolledRegionsResponse =
+              await languageApi.getEnrolledRegions(1, 100, selectedLanguage.id);
+
+            if (
+              enrolledRegionsResponse.success &&
+              enrolledRegionsResponse.data.data.length > 0
+            ) {
+              // El usuario tiene el idioma seleccionado y tiene regiones inscritas
+              // Si hay una región almacenada y está en las regiones del idioma, usarla
+              let selectedRegion = enrolledRegionsResponse.data.data[0].region;
+              if (storedRegionId) {
+                const storedEnrolledRegion =
+                  enrolledRegionsResponse.data.data.find(
+                    (er: EnrolledRegion) => er.region.id === storedRegionId,
+                  );
+                if (storedEnrolledRegion) {
+                  selectedRegion = storedEnrolledRegion.region;
+                }
+              }
+
+              setSelectedLanguageId(selectedLanguage.id);
+              setSelectedRegionId(selectedRegion.id);
+              localStorage.setItem("selectedLanguageId", selectedLanguage.id);
+              localStorage.setItem("selectedRegionId", selectedRegion.id);
+              addToast(
+                "success",
+                `Continuando con ${selectedLanguage.name} - ${selectedRegion.name}.`,
+              );
+              onLanguageSelected(selectedLanguage);
+              setLoading(false);
+              return;
+            }
+          }
+
+          // Si no hay idioma seleccionado válido o no tiene regiones, usar el primer idioma
+          const firstLanguage = enrolledData.data[0].language;
+          const enrolledRegionsResponse = await languageApi.getEnrolledRegions(
+            1,
+            100,
+            firstLanguage.id,
+          );
+
+          if (
+            enrolledRegionsResponse.success &&
+            enrolledRegionsResponse.data.data.length > 0
+          ) {
+            // El usuario tiene idioma y región inscritos
+            // Precargar sin mostrar el panel
+            const firstRegion = enrolledRegionsResponse.data.data[0].region;
+            setSelectedLanguageId(firstLanguage.id);
+            setSelectedRegionId(firstRegion.id);
+            localStorage.setItem("selectedLanguageId", firstLanguage.id);
+            localStorage.setItem("selectedRegionId", firstRegion.id);
+            addToast(
+              "success",
+              `Continuando con ${firstLanguage.name} - ${firstRegion.name}.`,
+            );
+            onLanguageSelected(firstLanguage);
+            return;
+          }
+
+          // Si tiene idioma pero no región, mostrar el panel de selección de región
           if (enrolledData.data.length === 1) {
             const enrolledLanguage = enrolledData.data[0].language;
-            addToast("success", `Continuando con ${enrolledLanguage.name}.`);
-            onLanguageSelected(enrolledLanguage);
+            setSelectedLanguageId(enrolledLanguage.id);
+            setSelectedLanguage(enrolledLanguage);
+            setIsLanguageFromEnrollment(true); // El idioma viene de inscripción previa
+            localStorage.setItem("selectedLanguageId", enrolledLanguage.id);
+            // Cargar regiones para este idioma y mostrar el panel de selección
+            await loadRegions(enrolledLanguage.id, enrolledLanguage);
+            setShowRegionSelection(true);
+            setTitle("Selecciona tu región:");
+            setLoading(false);
             return;
           } else {
+            // Múltiples idiomas inscritos: mostrar selector solo si no hay idioma válido seleccionado
             setTitle("Continuar aprendiendo:");
             setLanguages(enrolledData.data.map((el) => el.language));
             setTotalPages(1);
@@ -204,9 +291,12 @@ export default function LanguageSelection({ onLanguageSelected }: Props) {
         setShowRegionSelection(false);
         setEnrolling(true);
 
+        // Inscribir sin región si no hay regiones disponibles
         const response = await languageApi.enrollInLanguage(languageId);
 
         if (response.success) {
+          // Guardar en localStorage
+          localStorage.setItem("selectedLanguageId", languageId);
           addToast(
             "success",
             `Inscrito en ${selectedLanguage?.name} correctamente.`,
@@ -262,6 +352,7 @@ export default function LanguageSelection({ onLanguageSelected }: Props) {
 
     if (!showRegionSelection) {
       setSelectedLanguage(selected);
+      setIsLanguageFromEnrollment(false); // El idioma fue seleccionado en el asistente
       await loadRegions(selected.id, selected);
       setShowRegionSelection(true);
       setTitle("Selecciona tu región:");
@@ -270,9 +361,19 @@ export default function LanguageSelection({ onLanguageSelected }: Props) {
 
     setEnrolling(true);
 
-    const response = await languageApi.enrollInLanguage(selected.id);
+    // Inscribir en el idioma con la región seleccionada (si existe)
+    const response = await languageApi.enrollInLanguage(
+      selected.id,
+      selectedRegionId || undefined,
+    );
 
     if (response.success) {
+      // Guardar en localStorage
+      localStorage.setItem("selectedLanguageId", selected.id);
+      if (selectedRegionId) {
+        localStorage.setItem("selectedRegionId", selectedRegionId);
+      }
+
       addToast("success", `Inscrito en ${selected.name} correctamente.`);
       onLanguageSelected(selected);
     } else {
@@ -289,6 +390,7 @@ export default function LanguageSelection({ onLanguageSelected }: Props) {
     setShowRegionSelection(false);
     setSelectedRegionId(null);
     setRegions([]);
+    setIsLanguageFromEnrollment(false);
     setTitle("Quiero aprender:");
   };
 
@@ -350,12 +452,14 @@ export default function LanguageSelection({ onLanguageSelected }: Props) {
 
       {!loading && !error && showRegionSelection && regions.length > 0 && (
         <>
-          <div className="mb-4 text-center">
-            <p className="text-lg text-gray-600 dark:text-gray-300">
-              Idioma seleccionado:{" "}
-              <span className="font-semibold">{selectedLanguage?.name}</span>
-            </p>
-          </div>
+          {!isLanguageFromEnrollment && (
+            <div className="mb-4 text-center">
+              <p className="text-lg text-gray-600 dark:text-gray-300">
+                Idioma seleccionado:{" "}
+                <span className="font-semibold">{selectedLanguage?.name}</span>
+              </p>
+            </div>
+          )}
 
           <div className="mb-8 grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4">
             {regions.map((region) => (

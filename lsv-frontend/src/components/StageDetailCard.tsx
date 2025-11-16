@@ -1,5 +1,5 @@
 import { Card, Button, Progress } from "flowbite-react";
-import { Link } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 
 interface StageProgress {
   id: string;
@@ -15,6 +15,22 @@ interface Props {
 }
 
 export default function StageDetailCard({ stage }: Props) {
+  const navigate = useNavigate();
+
+  const handleViewLessons = () => {
+    const languageId = localStorage.getItem("selectedLanguageId");
+    const regionId = localStorage.getItem("selectedRegionId");
+    // Guardar la sección seleccionada en localStorage
+    if (languageId) {
+      localStorage.setItem(`selectedStageId_${languageId}`, stage.id);
+    }
+    navigate(`/lessons/stage/${stage.id}`, {
+      state: {
+        languageId,
+        regionId,
+      },
+    });
+  };
   return (
     <Card className="mb-8">
       <h2 className="text-2xl font-bold tracking-tight text-gray-900 dark:text-white">
@@ -38,11 +54,9 @@ export default function StageDetailCard({ stage }: Props) {
           size="lg"
         />
       </div>
-      <Link to={`/lessons/stage/${stage.id}`} className="mt-4">
-        <Button color="blue" className="w-full">
-          Ver Lecciones
-        </Button>
-      </Link>
+      <Button color="blue" className="mt-4 w-full" onClick={handleViewLessons}>
+        Ver Lecciones
+      </Button>
     </Card>
   );
 }

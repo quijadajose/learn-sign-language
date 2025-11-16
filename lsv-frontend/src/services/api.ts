@@ -277,8 +277,8 @@ export const lessonApi = {
   getUserLesson: (lessonId: string) =>
     ApiService.get(`/users/lesson/${lessonId}`),
 
-  startLesson: (lessonId: string) =>
-    ApiService.post("/user-lesson/start", { lessonId }),
+  startLesson: (lessonId: string, regionId?: string) =>
+    ApiService.post("/user-lesson/start", { lessonId, regionId }),
 
   setLessonCompletion: (lessonId: string, isComplete: boolean) =>
     ApiService.post("/user-lesson/set-lesson-completion", {
@@ -348,8 +348,11 @@ export const leaderboardApi = {
 };
 
 export const quizApi = {
-  getQuizByLesson: (lessonId: string) =>
-    ApiService.get(`/lesson/${lessonId}/quizzes`),
+  getQuizByLesson: (lessonId: string, regionId?: string) => {
+    const params = regionId ? { regionId } : {};
+    const url = ApiService.buildUrl(`/lesson/${lessonId}/quizzes`, params);
+    return ApiService.get(url);
+  },
 
   getQuizForAdmin: (quizId: string) => ApiService.get(`/quiz/admin/${quizId}`),
 
@@ -469,8 +472,35 @@ export const languageApi = {
 
   getAllLanguages: () => ApiService.get("/languages"),
 
-  enrollInLanguage: (languageId: string) =>
-    ApiService.post("/users/enroll", { languageId }),
+  enrollInLanguage: (languageId: string, regionId?: string) =>
+    ApiService.post("/users/enroll", { languageId, regionId }),
+
+  getEnrolledRegions: async (
+    page: number = 1,
+    limit: number = 100,
+    languageId?: string,
+  ) => {
+    const params: any = {
+      page,
+      limit,
+      orderBy: "createdAt",
+      sortOrder: "DESC",
+    };
+    if (languageId) {
+      params.languageId = languageId;
+    }
+    const url = ApiService.buildUrl("/users/enrolled-regions", params);
+    return ApiService.get(url);
+  },
+
+  enrollInRegion: (regionId: string) =>
+    ApiService.post("/users/enroll-region", { regionId }),
+
+  unenrollFromLanguage: (languageId: string) =>
+    ApiService.delete(`/users/enrolled-languages/${languageId}`),
+
+  unenrollFromRegion: (regionId: string) =>
+    ApiService.delete(`/users/enrolled-regions/${regionId}`),
 };
 
 export const regionApi = {

@@ -5,6 +5,7 @@ import { useLocalStorage } from "./hooks/useLocalStorage";
 import { useToast } from "./components/ToastProvider";
 import StageDetailCard from "./components/StageDetailCard";
 import StageSelector from "./components/StageSelector";
+import { useNavigate } from "react-router-dom";
 import { lessonApi } from "./services/api";
 
 interface StageProgress {
@@ -35,6 +36,7 @@ export default function StageProgressView({ language }: Props) {
   const [error, setError] = useState<string | null>(null);
   const [token] = useLocalStorage<string | null>("auth", null);
   const addToast = useToast();
+  const navigate = useNavigate();
 
   useEffect(() => {
     if (language?.id) {
@@ -52,12 +54,33 @@ export default function StageProgressView({ language }: Props) {
         const response = await lessonApi.getStagesProgress(language.id);
         if (!response.success)
           throw new Error(response.message || "Error al cargar progreso");
-        const data: StageProgress[] = response.data;
+        const data: StageProgress[] = response.data.data;
         setStages(data);
         if (data.length > 0) {
-          const initialStage =
-            data.find((s) => parseFloat(s.progress || "0") > 0) || data[0];
-          setSelectedStage(initialStage);
+          // Intentar cargar la sección guardada desde localStorage
+          const savedStageId = localStorage.getItem(
+            `selectedStageId_${language.id}`,
+          );
+          let initialStage: StageProgress | undefined;
+
+          if (savedStageId) {
+            initialStage = data.find((s) => s.id === savedStageId);
+          }
+
+          // Si no se encontró la sección guardada o no hay guardada, usar la lógica original
+          if (!initialStage) {
+            initialStage =
+              data.find((s) => parseFloat(s.progress || "0") > 0) || data[0];
+          }
+
+          if (initialStage) {
+            setSelectedStage(initialStage);
+            // Guardar la sección seleccionada en localStorage
+            localStorage.setItem(
+              `selectedStageId_${language.id}`,
+              initialStage.id,
+            );
+          }
         }
       } catch (err: any) {
         setError(err.message);
@@ -72,7 +95,16 @@ export default function StageProgressView({ language }: Props) {
   const handleSelectStage = (stageId: string) => {
     const stage = stages.find((s) => s.id === stageId);
     if (stage) {
+      // Guardar la sección seleccionada en localStorage
+      localStorage.setItem(`selectedStageId_${language.id}`, stageId);
       setSelectedStage(stage);
+      const regionId = localStorage.getItem("selectedRegionId");
+      navigate(`/lessons/stage/${stageId}`, {
+        state: {
+          languageId: language.id,
+          regionId: regionId,
+        },
+      });
     }
   };
 
