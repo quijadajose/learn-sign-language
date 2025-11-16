@@ -19,6 +19,8 @@ import { DeleteQuizUseCase } from '../../use-cases/delete-quiz-use-case/delete-q
 import { UpdateQuizUseCase } from '../../use-cases/update-quiz-use-case/update-quiz-use-case';
 import { ListQuizUseCase } from '../../use-cases/list-quiz-use-case/list-quiz-use-case';
 import { QuizRepositoryInterface } from '../../../domain/ports/quiz.repository.interface/quiz.repository.interface';
+import { QuizVariantRepository } from 'src/quiz/infrastructure/typeorm/quiz-variant.repository/quiz-variant.repository';
+// import { QuizVariantRepository } from '../../infrastructure/typeorm/quiz-variant.repository/quiz-variant.repository';
 
 @Injectable()
 export class QuizService {
@@ -34,6 +36,8 @@ export class QuizService {
     private readonly updateQuizUseCase: UpdateQuizUseCase,
     @Inject('QuizRepositoryInterface')
     private readonly quizRepository: QuizRepositoryInterface,
+    @Inject('QuizVariantRepositoryInterface')
+    private readonly quizVariantRepository: QuizVariantRepository,
   ) {}
   createQuiz(quizDto: QuizDto) {
     return this.createQuizWithQuestionsAndOptionsUseCase.execute(quizDto);
@@ -61,12 +65,32 @@ export class QuizService {
       throw new NotFoundException('User not found.');
     }
 
-    const quiz = await this.getQuizByIdUseCase.execute(quizId);
-    if (!quiz) {
-      throw new NotFoundException('Quiz not found.');
+    // Primero intentar obtener un quiz normal
+    let quiz: Quiz | null = null;
+    try {
+      quiz = await this.getQuizByIdUseCase.execute(quizId);
+    } catch (error) {
+      // Si no se encuentra el quiz normal, continuar para buscar quiz variant
+      quiz = null;
     }
 
-    return this.submissionTestUseCase.execute(user, quiz, submission);
+    if (quiz) {
+      return this.submissionTestUseCase.execute(user, quiz, submission);
+    }
+
+    // Si no se encuentra quiz normal, intentar obtener un quiz variant
+    const quizVariant = await this.quizVariantRepository.findById(quizId);
+    if (quizVariant) {
+      return this.quizVariantRepository.submissionTest(
+        user,
+        quizVariant,
+        submission,
+      );
+    }
+
+    throw new NotFoundException(
+      `Quiz with ID ${quizId} not found (neither as Quiz nor as QuizVariant).`,
+    );
   }
   async getQuizSubmissionTestFromUser(
     userId: string,
