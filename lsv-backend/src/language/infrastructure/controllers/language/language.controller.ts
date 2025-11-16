@@ -49,7 +49,8 @@ export class LanguageController {
   @ApiBearerAuth()
   @ApiOperation({
     summary: 'Crear un nuevo lenguaje de señas',
-    description: 'Crea un nuevo lenguaje de señas con nombre, descripción y código de país. El código de país se puede obtener del endpoint /region/countries. Solo accesible para administradores.',
+    description:
+      'Crea un nuevo lenguaje de señas con nombre, descripción y código de país. El código de país se puede obtener del endpoint /region/countries. Solo accesible para administradores.',
   })
   @ApiBody({
     description: 'Datos del lenguaje de señas a crear',
@@ -64,11 +65,13 @@ export class LanguageController {
         description: {
           type: 'string',
           description: 'Descripción del lenguaje de señas',
-          example: 'El sistema de comunicación visual usado por la comunidad sorda.',
+          example:
+            'El sistema de comunicación visual usado por la comunidad sorda.',
         },
         countryCode: {
           type: 'string',
-          description: 'Código ISO del país (opcional). Se puede obtener del endpoint /region/countries',
+          description:
+            'Código ISO del país (opcional). Se puede obtener del endpoint /region/countries',
           example: 'CO',
         },
       },
@@ -81,32 +84,33 @@ export class LanguageController {
     schema: {
       type: 'object',
       properties: {
-        id: { 
-          type: 'string', 
+        id: {
+          type: 'string',
           format: 'uuid',
-          example: '35931093-952c-44ae-803e-b26d0e72dd24'
+          example: '35931093-952c-44ae-803e-b26d0e72dd24',
         },
-        name: { 
+        name: {
           type: 'string',
-          example: 'Lenguaje de señas Colombiano'
+          example: 'Lenguaje de señas Colombiano',
         },
-        description: { 
+        description: {
           type: 'string',
-          example: 'El sistema de comunicación visual usado por la comunidad sorda.'
+          example:
+            'El sistema de comunicación visual usado por la comunidad sorda.',
         },
-        countryCode: { 
+        countryCode: {
           type: 'string',
-          example: 'CO'
+          example: 'CO',
         },
-        createdAt: { 
-          type: 'string', 
+        createdAt: {
+          type: 'string',
           format: 'date-time',
-          example: '2025-09-18T22:12:52.512Z'
+          example: '2025-09-18T22:12:52.512Z',
         },
-        updatedAt: { 
-          type: 'string', 
+        updatedAt: {
+          type: 'string',
           format: 'date-time',
-          example: '2025-09-18T22:12:52.512Z'
+          example: '2025-09-18T22:12:52.512Z',
         },
       },
     },
@@ -132,7 +136,8 @@ export class LanguageController {
   @ApiBearerAuth()
   @ApiOperation({
     summary: 'Listar todos los lenguajes de señas',
-    description: 'Obtiene una lista paginada de todos los lenguajes de señas disponibles en el sistema.',
+    description:
+      'Obtiene una lista paginada de todos los lenguajes de señas disponibles en el sistema.',
   })
   @ApiQuery({
     name: 'page',
@@ -212,7 +217,8 @@ export class LanguageController {
             {
               id: '35931093-952c-44ae-803e-b26d0e72dd24',
               name: 'Lenguaje de señas Colombiano',
-              description: 'El sistema de comunicación visual usado por la comunidad sorda.',
+              description:
+                'El sistema de comunicación visual usado por la comunidad sorda.',
               countryCode: 'CO',
               createdAt: '2025-09-18T22:12:52.512Z',
               updatedAt: '2025-09-18T22:12:52.512Z',
@@ -228,7 +234,8 @@ export class LanguageController {
             {
               id: 'fc36a7cf-c448-46c1-a191-2ceb5c60a3b4',
               name: 'Lenguaje de señas Venezolano',
-              description: 'El sistema de comunicación visual usado por la comunidad sorda',
+              description:
+                'El sistema de comunicación visual usado por la comunidad sorda',
               countryCode: 'VE',
               createdAt: '2025-09-11T04:27:29.233Z',
               updatedAt: '2025-09-12T05:12:03.571Z',
@@ -269,7 +276,8 @@ export class LanguageController {
   @ApiBearerAuth()
   @ApiOperation({
     summary: 'Obtener un lenguaje por ID',
-    description: 'Obtiene los detalles de un lenguaje de señas específico por su ID. Solo accesible para administradores.',
+    description:
+      'Obtiene los detalles de un lenguaje de señas específico por su ID. Solo accesible para administradores.',
   })
   @ApiResponse({
     status: 200,
@@ -297,7 +305,8 @@ export class LanguageController {
   @ApiBearerAuth()
   @ApiOperation({
     summary: 'Actualizar un lenguaje de señas',
-    description: 'Actualiza los datos de un lenguaje de señas existente. Solo accesible para administradores.',
+    description:
+      'Actualiza los datos de un lenguaje de señas existente. Solo accesible para administradores.',
   })
   @ApiBody({
     description: 'Datos del lenguaje de señas a actualizar',
@@ -312,11 +321,13 @@ export class LanguageController {
         description: {
           type: 'string',
           description: 'Descripción del lenguaje de señas',
-          example: 'El sistema de comunicación visual usado por la comunidad sorda.',
+          example:
+            'El sistema de comunicación visual usado por la comunidad sorda.',
         },
         countryCode: {
           type: 'string',
-          description: 'Código ISO del país (opcional). Se puede obtener del endpoint /region/countries',
+          description:
+            'Código ISO del país (opcional). Se puede obtener del endpoint /region/countries',
           example: 'AR',
         },
       },
@@ -340,7 +351,8 @@ export class LanguageController {
         },
         description: {
           type: 'string',
-          example: 'El sistema de comunicación visual usado por la comunidad sorda.',
+          example:
+            'El sistema de comunicación visual usado por la comunidad sorda.',
         },
         countryCode: {
           type: 'string',
@@ -389,11 +401,13 @@ export class LanguageController {
   @ApiBearerAuth()
   @ApiOperation({
     summary: 'Eliminar un lenguaje de señas',
-    description: 'Elimina permanentemente un lenguaje de señas del sistema. Solo accesible para administradores.',
+    description:
+      'Elimina permanentemente un lenguaje de señas del sistema. Solo accesible para administradores.',
   })
   @ApiResponse({
     status: 204,
-    description: 'Lenguaje eliminado exitosamente - Sin contenido en la respuesta',
+    description:
+      'Lenguaje eliminado exitosamente - Sin contenido en la respuesta',
   })
   @ApiResponse({
     status: 401,
@@ -416,7 +430,8 @@ export class LanguageController {
   @ApiBearerAuth()
   @ApiOperation({
     summary: 'Obtener etapas de un lenguaje',
-    description: 'Obtiene las etapas asociadas a un lenguaje de señas específico. Solo accesible para administradores.',
+    description:
+      'Obtiene las etapas asociadas a un lenguaje de señas específico. Solo accesible para administradores.',
   })
   @ApiQuery({
     name: 'id',
@@ -446,7 +461,8 @@ export class LanguageController {
               },
               description: {
                 type: 'string',
-                example: 'Puede desenvolverse en situaciones comunes usando lenguaje de señas con fluidez básica',
+                example:
+                  'Puede desenvolverse en situaciones comunes usando lenguaje de señas con fluidez básica',
               },
             },
           },
@@ -454,32 +470,38 @@ export class LanguageController {
             {
               id: '0ece0b95-bdc0-49ab-8eb8-9067a4a6afdb',
               name: 'B I',
-              description: 'Puede desenvolverse en situaciones comunes usando lenguaje de señas con fluidez básica',
+              description:
+                'Puede desenvolverse en situaciones comunes usando lenguaje de señas con fluidez básica',
             },
             {
               id: '111450c9-a3db-4472-98f5-5ee0935f4742',
               name: 'C II',
-              description: 'Puede expresarse espontáneamente en lenguaje de señas con gran precisión y matices sutiles',
+              description:
+                'Puede expresarse espontáneamente en lenguaje de señas con gran precisión y matices sutiles',
             },
             {
               id: '1f0e722c-2e2b-45e5-8916-e242664bf37d',
               name: 'A I',
-              description: 'Puede utilizar señas básicas para comunicarse en tareas sencillas y rutinarias',
+              description:
+                'Puede utilizar señas básicas para comunicarse en tareas sencillas y rutinarias',
             },
             {
               id: 'd937b359-d7d6-46ea-a457-a453610be8b0',
               name: 'A II',
-              description: 'Puede comprender señas frecuentes relacionadas con áreas de experiencia relevantes',
+              description:
+                'Puede comprender señas frecuentes relacionadas con áreas de experiencia relevantes',
             },
             {
               id: 'fcef7675-7b94-435e-bc66-3f2055d40838',
               name: 'B II',
-              description: 'Puede interactuar con usuarios nativos de lenguaje de señas con fluidez y naturalidad',
+              description:
+                'Puede interactuar con usuarios nativos de lenguaje de señas con fluidez y naturalidad',
             },
             {
               id: 'fecb82ca-9ac5-4c7c-b64c-3296197058fe',
               name: 'C I',
-              description: 'Puede comprender señas complejas y expresarse con claridad y estructura',
+              description:
+                'Puede comprender señas complejas y expresarse con claridad y estructura',
             },
           ],
         },
@@ -525,7 +547,8 @@ export class LanguageController {
   @ApiBearerAuth()
   @ApiOperation({
     summary: 'Obtener quizzes de un lenguaje',
-    description: 'Obtiene los quizzes asociados a un lenguaje de señas específico. Requiere autenticación JWT. Ejemplo: GET /languages/49d5adb5-50f0-40e1-aa32-ffee377d1542/quizzes',
+    description:
+      'Obtiene los quizzes asociados a un lenguaje de señas específico. Requiere autenticación JWT. Ejemplo: GET /languages/49d5adb5-50f0-40e1-aa32-ffee377d1542/quizzes',
   })
   @ApiQuery({
     name: 'page',
@@ -603,7 +626,8 @@ export class LanguageController {
                   },
                   description: {
                     type: 'string',
-                    example: 'El sistema de comunicación visual usado por la comunidad sorda',
+                    example:
+                      'El sistema de comunicación visual usado por la comunidad sorda',
                   },
                   countryCode: {
                     type: 'string',
@@ -639,7 +663,8 @@ export class LanguageController {
             language: {
               id: '49d5adb5-50f0-40e1-aa32-ffee377d1542',
               name: 'Lenguaje de señas Venezolano',
-              description: 'El sistema de comunicación visual usado por la comunidad sorda',
+              description:
+                'El sistema de comunicación visual usado por la comunidad sorda',
               countryCode: 'VE',
               createdAt: '2025-09-20T00:20:12.221Z',
               updatedAt: '2025-09-20T00:20:12.221Z',
@@ -658,7 +683,8 @@ export class LanguageController {
             language: {
               id: '49d5adb5-50f0-40e1-aa32-ffee377d1542',
               name: 'Lenguaje de señas Venezolano',
-              description: 'El sistema de comunicación visual usado por la comunidad sorda',
+              description:
+                'El sistema de comunicación visual usado por la comunidad sorda',
               countryCode: 'VE',
               createdAt: '2025-09-20T00:20:12.221Z',
               updatedAt: '2025-09-20T00:20:12.221Z',
@@ -670,7 +696,8 @@ export class LanguageController {
   })
   @ApiResponse({
     status: 401,
-    description: 'No autorizado - Token JWT requerido. Incluir header: Authorization: Bearer {token}',
+    description:
+      'No autorizado - Token JWT requerido. Incluir header: Authorization: Bearer {token}',
   })
   @ApiResponse({
     status: 404,
