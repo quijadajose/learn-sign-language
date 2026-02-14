@@ -5,17 +5,11 @@ import { HiTranslate } from "react-icons/hi";
 import { BACKEND_BASE_URL } from "../config";
 import { userApi } from "../services/api";
 import LanguageSwitcher from "../components/LanguageSwitcher";
+import { usePermissions } from "../hooks/usePermissions";
+import { useAuth } from "../context/AuthContext";
 
 interface Props {
   children: ReactNode;
-}
-interface UserData {
-  id: string;
-  email: string;
-  firstName: string;
-  lastName: string;
-  photo?: string;
-  role?: string;
 }
 
 interface Language {
@@ -29,16 +23,18 @@ interface Language {
 const DashboardLayout = ({ children }: Props) => {
   const navigate = useNavigate();
   const location = useLocation();
-  const [userData, setUserData] = useState<UserData | null>(null);
+  const { user, logout, refreshUser, token } = useAuth();
   const [avatarError, setAvatarError] = useState(false);
   const [avatarTimestamp, setAvatarTimestamp] = useState(Date.now());
   const [showLanguageSwitcher, setShowLanguageSwitcher] = useState(false);
+  const {
+    isAdmin,
+    isModerator,
+    hasAnyLanguagePermission,
+  } = usePermissions();
 
   const handleLogout = () => {
-    localStorage.removeItem("auth");
-    localStorage.removeItem("user");
-    localStorage.removeItem("selectedRegionId");
-    localStorage.removeItem("selectedLanguageId");
+    logout();
     navigate("/login");
   };
 
@@ -48,99 +44,36 @@ const DashboardLayout = ({ children }: Props) => {
 
   useEffect(() => {
     const fetchUserData = async () => {
-      const storedUser = localStorage.getItem("user");
-      const token = localStorage.getItem("auth");
-
       if (!token || token === "undefined") {
         handleLogout();
         return;
       }
 
-      if (storedUser) {
+      if (!user) {
         try {
-          const parsedUser = JSON.parse(storedUser);
-          if (parsedUser && parsedUser.id && parsedUser.email) {
-            setUserData(parsedUser);
-            return;
-          } else {
-            localStorage.removeItem("user");
-          }
-        } catch (error) {
-          localStorage.removeItem("user");
-        }
-      }
-
-      try {
-        const response = await userApi.getMe();
-
-        if (response.success && response.data) {
-          const data: UserData = response.data;
-          setUserData(data);
-          localStorage.setItem("user", JSON.stringify(data));
-        } else {
-          if (response.status === 401 || response.status === 403) {
+          const response = await userApi.getMe();
+          if (response.success && response.data) {
+            refreshUser(); // Esto forzará al AuthContext a leer de nuevo o podemos extenderlo
+          } else if (response.status === 401 || response.status === 403) {
             handleLogout();
           }
-        }
-      } catch (error) {
-        if (import.meta.env.DEV) {
+        } catch (error) {
           console.error("Error fetching user data:", error);
         }
       }
     };
 
     fetchUserData();
-  }, [navigate]);
+  }, [navigate, token, user]);
 
   useEffect(() => {
-    const handleStorageChange = (e: StorageEvent) => {
-      if (e.key === "user" && e.newValue) {
-        try {
-          const updatedUser = JSON.parse(e.newValue);
-          if (updatedUser && updatedUser.id) {
-            setUserData(updatedUser);
-            setAvatarTimestamp(Date.now());
-            setAvatarError(false);
-          }
-        } catch (error) {
-          if (import.meta.env.DEV) {
-            console.error("Error parsing updated user data:", error);
-          }
-        }
-      }
-    };
-
-    window.addEventListener("storage", handleStorageChange);
-
-    const handleCustomStorageChange = () => {
-      const storedUser = localStorage.getItem("user");
-      if (storedUser) {
-        try {
-          const updatedUser = JSON.parse(storedUser);
-          if (updatedUser && updatedUser.id) {
-            setUserData(updatedUser);
-            setAvatarTimestamp(Date.now());
-            setAvatarError(false);
-          }
-        } catch (error) {
-          if (import.meta.env.DEV) {
-            console.error("Error parsing updated user data:", error);
-          }
-        }
-      }
-    };
-
-    window.addEventListener("userDataUpdated", handleCustomStorageChange);
-
-    return () => {
-      window.removeEventListener("storage", handleStorageChange);
-      window.removeEventListener("userDataUpdated", handleCustomStorageChange);
-    };
-  }, []);
+    setAvatarTimestamp(Date.now());
+    setAvatarError(false);
+  }, [user?.id]);
 
   const avatarImgSrc =
-    userData?.id && !avatarError
-      ? `${BACKEND_BASE_URL}/images/user/${userData?.id}?size=sm&v=${avatarTimestamp}`
+    user?.id && !avatarError
+      ? `${BACKEND_BASE_URL}/images/user/${user?.id}?size=sm&v=${avatarTimestamp}`
       : "/user.svg";
 
   return (
@@ -152,7 +85,7 @@ const DashboardLayout = ({ children }: Props) => {
         <div className="flex md:order-2">
           <DarkThemeToggle />
 
-          {userData ? (
+          {user ? (
             <Dropdown
               arrowIcon={false}
               inline
@@ -172,10 +105,10 @@ const DashboardLayout = ({ children }: Props) => {
             >
               <Dropdown.Header>
                 <span className="block text-sm">
-                  {userData?.firstName} {userData?.lastName}
+                  {user?.firstName} {user?.lastName}
                 </span>
                 <span className="block truncate text-sm font-medium">
-                  {userData?.email}
+                  {user?.email}
                 </span>
               </Dropdown.Header>
               <Dropdown.Item onClick={() => navigate("/dashboard")}>
@@ -209,36 +142,41 @@ const DashboardLayout = ({ children }: Props) => {
           >
             Leaderboard
           </Navbar.Link>
-          {userData?.role === "admin" && (
+          {(isAdmin || isModerator) && (
             <Dropdown
               arrowIcon={true}
               inline
               label={
                 <span className="block rounded py-2 pl-3 pr-4 text-gray-700 hover:bg-gray-100 dark:border-gray-700 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white md:border-0 md:p-0 md:hover:bg-transparent md:hover:text-blue-700 md:dark:hover:bg-transparent md:dark:hover:text-white">
-                  Admin
+                  Gestión
                 </span>
               }
             >
-              <Dropdown.Item
-                onClick={() => navigate("/admin/stages")}
-                className={
-                  location.pathname.startsWith("/admin/stages")
-                    ? "bg-blue-50 dark:bg-gray-700"
-                    : ""
-                }
-              >
-                Stages
-              </Dropdown.Item>
-              <Dropdown.Item
-                onClick={() => navigate("/admin/languages")}
-                className={
-                  location.pathname.startsWith("/admin/languages")
-                    ? "bg-blue-50 dark:bg-gray-700"
-                    : ""
-                }
-              >
-                Languages
-              </Dropdown.Item>
+              {hasAnyLanguagePermission() && (
+                <>
+
+                  <Dropdown.Item
+                    onClick={() => navigate("/admin/languages")}
+                    className={
+                      location.pathname.startsWith("/admin/languages")
+                        ? "bg-blue-50 dark:bg-gray-700"
+                        : ""
+                    }
+                  >
+                    Languages
+                  </Dropdown.Item>
+                  <Dropdown.Item
+                    onClick={() => navigate("/admin/stages")}
+                    className={
+                      location.pathname.startsWith("/admin/stages")
+                        ? "bg-blue-50 dark:bg-gray-700"
+                        : ""
+                    }
+                  >
+                    Stages
+                  </Dropdown.Item>
+                </>
+              )}
               <Dropdown.Item
                 onClick={() => navigate("/admin/lessons")}
                 className={
@@ -259,11 +197,23 @@ const DashboardLayout = ({ children }: Props) => {
               >
                 Regions
               </Dropdown.Item>
+              {isAdmin && (
+                <Dropdown.Item
+                  onClick={() => navigate("/admin/moderators")}
+                  className={
+                    location.pathname.startsWith("/admin/moderators")
+                      ? "bg-blue-50 dark:bg-gray-700"
+                      : ""
+                  }
+                >
+                  Moderators
+                </Dropdown.Item>
+              )}
             </Dropdown>
           )}
         </Navbar.Collapse>
       </Navbar>
-      {userData ? (
+      {user ? (
         <main className="min-h-screen p-4 dark:bg-gray-800">{children}</main>
       ) : (
         <div className="flex min-h-screen items-center justify-center dark:bg-gray-800">

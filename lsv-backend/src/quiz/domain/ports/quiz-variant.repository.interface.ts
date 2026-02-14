@@ -13,4 +13,12 @@ export interface QuizVariantRepositoryInterface {
       options: Array<{ text: string; isCorrect: boolean }>;
     }>,
   ): Promise<QuizVariant>;
+  updateWithQuestions(
+    id: string,
+    lessonVariantId: string,
+    questions: Array<{
+      question: string;
+      options: Array<{ text: string; isCorrect: boolean }>;
+    }>,
+  ): Promise<QuizVariant>;
 }

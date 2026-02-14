@@ -7,6 +7,7 @@ import StageDetailCard from "./components/StageDetailCard";
 import StageSelector from "./components/StageSelector";
 import { useNavigate } from "react-router-dom";
 import { lessonApi } from "./services/api";
+import { useAuth } from "./context/AuthContext";
 
 interface StageProgress {
   id: string;
@@ -34,13 +35,17 @@ export default function StageProgressView({ language }: Props) {
   );
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [token] = useLocalStorage<string | null>("auth", null);
+  const { token } = useAuth();
+  const [, setSelectedLanguageId] = useLocalStorage<string | null>("selectedLanguageId", null);
+  const [selectedRegionId] = useLocalStorage<string | null>("selectedRegionId", null);
+  const stageStorageKey = `selectedStageId_${language.id}`;
+  const [persistedStageId, setPersistedStageId] = useLocalStorage<string | null>(stageStorageKey, null);
   const addToast = useToast();
   const navigate = useNavigate();
 
   useEffect(() => {
     if (language?.id) {
-      localStorage.setItem("selectedLanguageId", language.id);
+      setSelectedLanguageId(language.id);
     }
 
     const fetchStagesProgress = async () => {
@@ -57,17 +62,12 @@ export default function StageProgressView({ language }: Props) {
         const data: StageProgress[] = response.data.data;
         setStages(data);
         if (data.length > 0) {
-          // Intentar cargar la sección guardada desde localStorage
-          const savedStageId = localStorage.getItem(
-            `selectedStageId_${language.id}`,
-          );
           let initialStage: StageProgress | undefined;
 
-          if (savedStageId) {
-            initialStage = data.find((s) => s.id === savedStageId);
+          if (persistedStageId) {
+            initialStage = data.find((s) => s.id === persistedStageId);
           }
 
-          // Si no se encontró la sección guardada o no hay guardada, usar la lógica original
           if (!initialStage) {
             initialStage =
               data.find((s) => parseFloat(s.progress || "0") > 0) || data[0];
@@ -75,11 +75,7 @@ export default function StageProgressView({ language }: Props) {
 
           if (initialStage) {
             setSelectedStage(initialStage);
-            // Guardar la sección seleccionada en localStorage
-            localStorage.setItem(
-              `selectedStageId_${language.id}`,
-              initialStage.id,
-            );
+            setPersistedStageId(initialStage.id);
           }
         }
       } catch (err: any) {
@@ -95,14 +91,12 @@ export default function StageProgressView({ language }: Props) {
   const handleSelectStage = (stageId: string) => {
     const stage = stages.find((s) => s.id === stageId);
     if (stage) {
-      // Guardar la sección seleccionada en localStorage
-      localStorage.setItem(`selectedStageId_${language.id}`, stageId);
+      setPersistedStageId(stageId);
       setSelectedStage(stage);
-      const regionId = localStorage.getItem("selectedRegionId");
       navigate(`/lessons/stage/${stageId}`, {
         state: {
           languageId: language.id,
-          regionId: regionId,
+          regionId: selectedRegionId,
         },
       });
     }

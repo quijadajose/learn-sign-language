@@ -12,6 +12,7 @@ import {
   PaginatedResponseDto,
 } from 'src/shared/domain/dto/PaginationDto';
 import { LanguageService } from 'src/language/application/services/language/language-admin.service';
+import { CountryDivisionService } from 'src/shared/application/services/country-division.service';
 
 @Injectable()
 export class RegionService {
@@ -19,7 +20,8 @@ export class RegionService {
     @Inject('RegionRepositoryInterface')
     private readonly regionRepository: RegionRepositoryInterface,
     private readonly languageService: LanguageService,
-  ) {}
+    private readonly countryDivisionService: CountryDivisionService,
+  ) { }
 
   async getAllRegions(
     pagination: PaginationDto,
@@ -57,6 +59,32 @@ export class RegionService {
       throw new Error('languageId is required to create a region');
     }
 
+    if (createRegionDto.isDefault) {
+      const existingDefault =
+        await this.regionRepository.findDefaultByLanguageId(languageId);
+      if (existingDefault) {
+        throw new ConflictException(
+          `Ya existe una región base para este idioma (${existingDefault.name}). Solo puede haber una región base por idioma.`,
+        );
+      }
+    }
+
+    if (createRegionDto.divisionCode) {
+      // Validate division code against ISO data
+      try {
+        await this.countryDivisionService.getDivisionByCode(
+          createRegionDto.divisionCode,
+        );
+      } catch (error) {
+        if (error instanceof NotFoundException) {
+          throw new NotFoundException(
+            `Division with code ${createRegionDto.divisionCode} not found in ISO-3166-2 records`,
+          );
+        }
+        throw error;
+      }
+    }
+
     const regionData = {
       ...createRegionDto,
       languageId,
@@ -83,6 +111,33 @@ export class RegionService {
         throw new ConflictException(
           `Region with code ${updateRegionDto.code} already exists`,
         );
+      }
+    }
+
+    if (updateRegionDto.isDefault) {
+      const languageId = updateRegionDto.languageId || existingRegion.languageId;
+      const existingDefault =
+        await this.regionRepository.findDefaultByLanguageId(languageId);
+
+      if (existingDefault && existingDefault.id !== id) {
+        throw new ConflictException(
+          `Ya existe una región base para este idioma (${existingDefault.name}). Solo puede haber una región base por idioma.`,
+        );
+      }
+    }
+
+    if (updateRegionDto.divisionCode) {
+      try {
+        await this.countryDivisionService.getDivisionByCode(
+          updateRegionDto.divisionCode,
+        );
+      } catch (error) {
+        if (error instanceof NotFoundException) {
+          throw new NotFoundException(
+            `Division with code ${updateRegionDto.divisionCode} not found in ISO-3166-2 records`,
+          );
+        }
+        throw error;
       }
     }
 

@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Button,
   Card,
@@ -11,10 +11,19 @@ import {
   Badge,
   Spinner,
 } from "flowbite-react";
-import { HiPlus, HiPencil, HiTrash, HiEye } from "react-icons/hi";
+import {
+  HiPlus,
+  HiPencil,
+  HiTrash,
+  HiEye,
+  HiChevronDown,
+  HiChevronRight,
+} from "react-icons/hi";
 import Select, { SingleValue } from "react-select";
 import AsyncSelect from "react-select/async";
-import { regionApi, countryDivisionApi } from "../services/api";
+import { regionApi, countryDivisionApi, adminApi } from "../services/api";
+import { usePermissions } from "../hooks/usePermissions";
+import { useLocalStorage } from "../hooks/useLocalStorage";
 
 interface Region {
   id: string;
@@ -24,6 +33,12 @@ interface Region {
   isDefault: boolean;
   createdAt: string;
   updatedAt: string;
+  divisionCode?: string;
+  language?: {
+    id: string;
+    name: string;
+    countryCode: string;
+  };
 }
 
 interface Country {
@@ -56,15 +71,32 @@ interface DivisionOption extends SelectOption {
   data: Division;
 }
 
+interface GroupedRegion {
+  countryCode: string;
+  countryName: string;
+  languages: {
+    languageId: string;
+    languageName: string;
+    regions: Region[];
+  }[];
+}
+
 export default function RegionManagement() {
+  const { hasRegionPermission, hasLanguagePermission, isAdmin } =
+    usePermissions();
+  const [selectedLanguageId] = useLocalStorage<string | null>("selectedLanguageId", null);
   const [regions, setRegions] = useState<Region[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [currentPage, setCurrentPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
   const [totalRegions, setTotalRegions] = useState(0);
   const [toasts, setToasts] = useState<ToastMessage[]>([]);
   const [isDarkMode, setIsDarkMode] = useState(false);
+  const [expandedCountries, setExpandedCountries] = useState<Set<string>>(
+    new Set(),
+  );
+  const [expandedLanguages, setExpandedLanguages] = useState<Set<string>>(
+    new Set(),
+  );
 
   const [countries, setCountries] = useState<Country[]>([]);
   const [countryOptions, setCountryOptions] = useState<CountryOption[]>([]);
@@ -125,20 +157,14 @@ export default function RegionManagement() {
 
   const loadDivisionsByLanguage = async () => {
     try {
-      const languageId = localStorage.getItem("selectedLanguageId");
+      if (!selectedLanguageId) {
+        return;
+      }
 
-      const response = await fetch(
-        `${import.meta.env.VITE_BACKEND_URL || "http://localhost:3000"}/languages/${languageId}`,
-        {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem("auth")}`,
-            "Content-Type": "application/json",
-          },
-        },
-      );
+      const response = await adminApi.getLanguage(selectedLanguageId);
 
-      if (response.ok) {
-        const language = await response.json();
+      if (response.success && response.data) {
+        const language = response.data;
         if (language.countryCode) {
           const country = countries.find(
             (c) => c.code === language.countryCode,
@@ -216,6 +242,36 @@ export default function RegionManagement() {
     }
   };
 
+  const loadEditDivisionOptions = async (
+    inputValue: string,
+  ): Promise<DivisionOption[]> => {
+    if (!editSelectedCountry || inputValue.length < 2) {
+      return [];
+    }
+
+    try {
+      const response = await countryDivisionApi.searchDivisions({
+        search: inputValue,
+        countryCode: editSelectedCountry.value,
+        limit: 10,
+      });
+
+      if (response.success) {
+        return response.data.data.map((division: Division) => ({
+          value: division.code,
+          label: division.name,
+          data: division,
+        }));
+      }
+      return [];
+    } catch (error) {
+      if (import.meta.env.DEV) {
+        console.error("Error searching divisions for edit:", error);
+      }
+      return [];
+    }
+  };
+
   const handleCountryChange = async (
     selectedOption: SingleValue<CountryOption>,
   ) => {
@@ -255,10 +311,6 @@ export default function RegionManagement() {
         code: "",
       }));
     }
-  };
-
-  const handleEditCountryChange = async () => {
-    return;
   };
 
   const handleEditDivisionChange = (
@@ -379,22 +431,44 @@ export default function RegionManagement() {
       setLoading(true);
       setError(null);
 
-      const languageId = localStorage.getItem("selectedLanguageId");
+      const languageId = isAdmin
+        ? undefined
+        : selectedLanguageId;
 
-      const response = await regionApi.getRegions(
-        currentPage,
-        10,
-        languageId || undefined,
-      );
+      // Cargar todas las regiones haciendo paginación hasta obtener todas
+      let allRegions: Region[] = [];
+      let currentPage = 1;
+      const pageSize = 100;
+      let hasMore = true;
+      let total = 0;
 
-      if (response.success) {
-        setRegions(response.data.data || []);
-        setTotalRegions(response.data.total || 0);
-        setTotalPages(Math.ceil((response.data.total || 0) / 10));
-      } else {
-        setError(response.message || "Error al cargar las regiones");
-        addToast("error", response.message || "Error al cargar las regiones");
+      while (hasMore) {
+        const response = await regionApi.getRegions(
+          currentPage,
+          pageSize,
+          languageId || undefined,
+        );
+
+        if (response.success && response.data) {
+          const pageData = response.data.data || [];
+          allRegions = [...allRegions, ...pageData];
+          total = response.data.total || 0;
+
+          // Si hay más páginas, continuar cargando
+          const totalPages = Math.ceil(total / pageSize);
+          hasMore = currentPage < totalPages;
+          currentPage++;
+        } else {
+          hasMore = false;
+          if (!response.success) {
+            setError(response.message || "Error al cargar las regiones");
+            addToast("error", response.message || "Error al cargar las regiones");
+          }
+        }
       }
+
+      setRegions(allRegions);
+      setTotalRegions(total);
     } catch (err) {
       const errorMessage = "Error de conexión al cargar las regiones";
       setError(errorMessage);
@@ -404,29 +478,147 @@ export default function RegionManagement() {
     }
   };
 
+  // Función para agrupar regiones por país e idioma
+  const groupRegionsByCountryAndLanguage = (): GroupedRegion[] => {
+    const grouped = new Map<string, GroupedRegion>();
+
+    regions.forEach((region) => {
+      if (!region.language) return;
+
+      const hasCountry = !!region.language!.countryCode;
+      // Si tiene país, agrupamos por código de país. Si no, usamos el ID del idioma (pseudopaís)
+      const groupKey = hasCountry
+        ? region.language!.countryCode
+        : region.language!.id;
+
+      let groupName = "";
+      if (hasCountry) {
+        const country = countries.find(
+          (c) => c.code === region.language!.countryCode,
+        );
+        groupName = country?.name || region.language!.countryCode;
+      } else {
+        groupName = region.language!.name;
+      }
+
+      if (!grouped.has(groupKey)) {
+        grouped.set(groupKey, {
+          countryCode: groupKey,
+          countryName: groupName,
+          languages: [],
+        });
+      }
+
+      const countryGroup = grouped.get(groupKey)!;
+      let languageGroup = countryGroup.languages.find(
+        (l) => l.languageId === region.language!.id,
+      );
+
+      if (!languageGroup) {
+        languageGroup = {
+          languageId: region.language!.id,
+          languageName: region.language!.name,
+          regions: [],
+        };
+        countryGroup.languages.push(languageGroup);
+      }
+
+      languageGroup.regions.push(region);
+    });
+
+    // Ordenar idiomas dentro de cada país
+    grouped.forEach((countryGroup) => {
+      countryGroup.languages.sort((a, b) =>
+        a.languageName.localeCompare(b.languageName),
+      );
+    });
+
+    // Ordenar por nombre de grupo (País o Idioma)
+    return Array.from(grouped.values()).sort((a, b) =>
+      a.countryName.localeCompare(b.countryName),
+    );
+  };
+
+  const toggleCountry = (countryCode: string) => {
+    setExpandedCountries((prev) => {
+      const newSet = new Set(prev);
+      if (newSet.has(countryCode)) {
+        newSet.delete(countryCode);
+      } else {
+        newSet.add(countryCode);
+      }
+      return newSet;
+    });
+  };
+
+  const toggleLanguage = (languageKey: string) => {
+    setExpandedLanguages((prev) => {
+      const newSet = new Set(prev);
+      if (newSet.has(languageKey)) {
+        newSet.delete(languageKey);
+      } else {
+        newSet.add(languageKey);
+      }
+      return newSet;
+    });
+  };
+
+  const groupedRegions = groupRegionsByCountryAndLanguage();
+
   useEffect(() => {
     loadRegions();
     loadCountries();
-  }, [currentPage]);
+  }, []);
+
+  // Expandir todos los países por defecto cuando se cargan las regiones
+  // Solo expandir idiomas si hay múltiples idiomas por país
+  useEffect(() => {
+    if (regions.length > 0 && countries.length > 0) {
+      const countrySet = new Set<string>();
+      const languageSet = new Set<string>();
+
+      // Agrupar regiones por país para ver cuántos idiomas hay por país
+      const languagesByCountry = new Map<string, Set<string>>();
+
+      regions.forEach((region) => {
+        if (region.language) {
+          const countryCode = region.language.countryCode;
+          countrySet.add(countryCode);
+
+          if (!languagesByCountry.has(countryCode)) {
+            languagesByCountry.set(countryCode, new Set());
+          }
+          languagesByCountry.get(countryCode)!.add(region.language.id);
+        }
+      });
+
+      // Solo expandir idiomas si hay múltiples idiomas en el país
+      languagesByCountry.forEach((languageIds, countryCode) => {
+        if (languageIds.size > 1) {
+          languageIds.forEach((languageId) => {
+            languageSet.add(`${countryCode}-${languageId}`);
+          });
+        }
+      });
+
+      setExpandedCountries(countrySet);
+      setExpandedLanguages(languageSet);
+    }
+  }, [regions, countries]);
 
   useEffect(() => {
     const handleLanguageChange = () => {
       loadRegions();
     };
 
-    window.addEventListener("storage", (e) => {
-      if (e.key === "selectedLanguageId") {
-        handleLanguageChange();
-      }
-    });
+    // window.addEventListener("storage", ... handled by useLocalStorage
 
     window.addEventListener("userDataUpdated", handleLanguageChange);
 
     return () => {
-      window.removeEventListener("storage", handleLanguageChange);
       window.removeEventListener("userDataUpdated", handleLanguageChange);
     };
-  }, []);
+  }, [selectedLanguageId]);
 
   useEffect(() => {
     if (countries.length > 0) {
@@ -464,8 +656,7 @@ export default function RegionManagement() {
       return;
     }
 
-    const languageId = localStorage.getItem("selectedLanguageId");
-    if (!languageId) {
+    if (!selectedLanguageId) {
       addToast("error", "No se encontró el idioma seleccionado");
       return;
     }
@@ -474,7 +665,7 @@ export default function RegionManagement() {
       setCreateLoading(true);
       const regionData = {
         ...createForm,
-        languageId: languageId,
+        languageId: selectedLanguageId,
       };
       const response = await regionApi.createRegion(regionData);
 
@@ -506,7 +697,12 @@ export default function RegionManagement() {
       return;
     }
 
-    if (!editSelectedDivision) {
+    // Only require division if a country is selected (via language) and we don't have a division code
+    if (
+      editSelectedCountry &&
+      !editSelectedDivision &&
+      !selectedRegion.divisionCode
+    ) {
       addToast("error", "Debes seleccionar una división");
       return;
     }
@@ -518,9 +714,15 @@ export default function RegionManagement() {
 
     try {
       setEditLoading(true);
+      const regionData = {
+        ...editForm,
+        divisionCode: editSelectedDivision
+          ? editSelectedDivision.value
+          : selectedRegion.divisionCode || undefined,
+      };
       const response = await regionApi.updateRegion(
         selectedRegion.id,
-        editForm,
+        regionData,
       );
 
       if (response.success) {
@@ -561,6 +763,9 @@ export default function RegionManagement() {
   };
 
   const openEditModal = async (region: Region) => {
+    // Resetear primero
+    setEditSelectedCountry(null);
+    setEditSelectedDivision(null);
     setSelectedRegion(region);
     setEditForm({
       name: region.name,
@@ -569,30 +774,24 @@ export default function RegionManagement() {
       isDefault: region.isDefault,
     });
 
-    await loadEditDivisionsByLanguage();
-
     setIsEditModalOpen(true);
+
+    // Cargar la división después de abrir el modal
+    await loadEditDivisionsByLanguage(region);
   };
 
-  const loadEditDivisionsByLanguage = async () => {
+  const loadEditDivisionsByLanguage = async (region: Region) => {
     try {
-      const languageId = localStorage.getItem("selectedLanguageId");
+      const languageId =
+        region.language?.id || selectedLanguageId;
       if (!languageId) {
         return;
       }
 
-      const response = await fetch(
-        `${import.meta.env.VITE_BACKEND_URL || "http://localhost:3000"}/languages/${languageId}`,
-        {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem("auth")}`,
-            "Content-Type": "application/json",
-          },
-        },
-      );
+      const response = await adminApi.getLanguage(languageId);
 
-      if (response.ok) {
-        const language = await response.json();
+      if (response.success && response.data) {
+        const language = response.data;
         if (language.countryCode) {
           const country = countries.find(
             (c) => c.code === language.countryCode,
@@ -604,6 +803,53 @@ export default function RegionManagement() {
               data: country,
             };
             setEditSelectedCountry(countryOption);
+
+            // Si la región tiene divisionCode, cargar esa división
+            if (region.divisionCode) {
+              try {
+                const divisionResponse =
+                  await countryDivisionApi.getDivisionsByCountry(country.code);
+
+                if (divisionResponse.success && divisionResponse.data) {
+                  // Buscar la división exacta por código
+                  const division = divisionResponse.data.find(
+                    (d: Division) => d.code === region.divisionCode,
+                  );
+
+                  if (division) {
+                    const divisionOption = {
+                      value: division.code,
+                      label: division.name,
+                      data: division,
+                    };
+                    setEditSelectedDivision(divisionOption);
+                    if (import.meta.env.DEV) {
+                      console.log("División cargada para edición:", divisionOption);
+                    }
+                  } else {
+                    if (import.meta.env.DEV) {
+                      console.warn(
+                        "No se encontró la división con código:",
+                        region.divisionCode,
+                        "en el país:",
+                        country.code,
+                      );
+                    }
+                  }
+                }
+              } catch (error) {
+                if (import.meta.env.DEV) {
+                  console.error(
+                    "Error loading division for edit:",
+                    error,
+                  );
+                }
+              }
+            } else {
+              if (import.meta.env.DEV) {
+                console.warn("La región no tiene divisionCode:", region);
+              }
+            }
           }
         }
       }
@@ -660,6 +906,9 @@ export default function RegionManagement() {
       )}
 
       <Card>
+        <div className="mb-4 text-sm text-gray-700 dark:text-gray-400">
+          Mostrando {totalRegions} regiones agrupadas por país e idioma
+        </div>
         <div className="overflow-x-auto">
           <Table>
             <Table.Head>
@@ -670,88 +919,237 @@ export default function RegionManagement() {
               <Table.HeadCell>Acciones</Table.HeadCell>
             </Table.Head>
             <Table.Body className="divide-y">
-              {regions.map((region) => (
-                <Table.Row
-                  key={region.id}
-                  className="bg-white dark:border-gray-700 dark:bg-gray-800"
-                >
-                  <Table.Cell className="whitespace-nowrap font-medium text-gray-900 dark:text-white">
-                    {region.name}
-                  </Table.Cell>
-                  <Table.Cell className="whitespace-nowrap text-gray-900 dark:text-white">
-                    {region.code}
-                  </Table.Cell>
-                  <Table.Cell className="text-gray-900 dark:text-white">
-                    {region.description.length > 50
-                      ? `${region.description.substring(0, 50)}...`
-                      : region.description}
-                  </Table.Cell>
-                  <Table.Cell>
-                    {region.isDefault ? (
-                      <Badge color="blue">Base</Badge>
-                    ) : (
-                      <Badge color="gray">Regional</Badge>
-                    )}
-                  </Table.Cell>
-                  <Table.Cell>
-                    <div className="flex space-x-2">
-                      <Button
-                        size="sm"
-                        color="light"
-                        onClick={() => openViewModal(region)}
-                      >
-                        <HiEye className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        size="sm"
-                        color="light"
-                        onClick={() => openEditModal(region)}
-                      >
-                        <HiPencil className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        size="sm"
-                        color="failure"
-                        onClick={() => openDeleteModal(region)}
-                      >
-                        <HiTrash className="h-4 w-4" />
-                      </Button>
-                    </div>
+              {groupedRegions.length === 0 ? (
+                <Table.Row>
+                  <Table.Cell
+                    colSpan={5}
+                    className="text-center text-gray-500 dark:text-gray-400"
+                  >
+                    No hay regiones disponibles
                   </Table.Cell>
                 </Table.Row>
-              ))}
+              ) : (
+                groupedRegions.map((countryGroup) => {
+                  const isCountryExpanded = expandedCountries.has(
+                    countryGroup.countryCode,
+                  );
+                  const countryKey = countryGroup.countryCode;
+
+                  return (
+                    <React.Fragment key={countryKey}>
+                      {/* Fila de País */}
+                      <Table.Row className="bg-gray-100 dark:bg-gray-700">
+                        <Table.Cell
+                          colSpan={5}
+                          className="font-semibold text-gray-900 dark:text-white"
+                        >
+                          <button
+                            onClick={() => toggleCountry(countryKey)}
+                            className="flex items-center space-x-2 hover:text-blue-600 dark:hover:text-blue-400"
+                          >
+                            {isCountryExpanded ? (
+                              <HiChevronDown className="h-5 w-5" />
+                            ) : (
+                              <HiChevronRight className="h-5 w-5" />
+                            )}
+                            <span>
+                              {countryGroup.languages.length === 1
+                                ? countryGroup.languages[0].languageName
+                                : `${countryGroup.countryName} (${countryGroup.countryCode})`}
+                            </span>
+                            <span className="ml-2 text-sm font-normal text-gray-500 dark:text-gray-400">
+                              ({countryGroup.languages.length === 1
+                                ? countryGroup.languages[0].regions.length
+                                : countryGroup.languages.length}{" "}
+                              {countryGroup.languages.length === 1
+                                ? countryGroup.languages[0].regions.length === 1
+                                  ? "región"
+                                  : "regiones"
+                                : countryGroup.languages.length === 1
+                                  ? "idioma"
+                                  : "idiomas"}
+                              )
+                            </span>
+                          </button>
+                        </Table.Cell>
+                      </Table.Row>
+
+                      {/* Filas de Idiomas y Regiones */}
+                      {isCountryExpanded &&
+                        (countryGroup.languages.length === 1 ? (
+                          // Si solo hay un idioma, mostrar regiones directamente sin nivel de idioma
+                          countryGroup.languages[0].regions.map((region) => (
+                            <Table.Row
+                              key={region.id}
+                              className="bg-white dark:border-gray-700 dark:bg-gray-900"
+                            >
+                              <Table.Cell className="pl-8 whitespace-nowrap font-medium text-gray-900 dark:text-white">
+                                {region.name}
+                              </Table.Cell>
+                              <Table.Cell className="whitespace-nowrap text-gray-900 dark:text-white">
+                                {region.code}
+                              </Table.Cell>
+                              <Table.Cell className="text-gray-900 dark:text-white">
+                                {region.description.length > 50
+                                  ? `${region.description.substring(0, 50)}...`
+                                  : region.description}
+                              </Table.Cell>
+                              <Table.Cell>
+                                {region.isDefault ? (
+                                  <Badge color="blue">Base</Badge>
+                                ) : (
+                                  <Badge color="gray">Regional</Badge>
+                                )}
+                              </Table.Cell>
+                              <Table.Cell>
+                                <div className="flex space-x-2">
+                                  <Button
+                                    size="sm"
+                                    color="light"
+                                    onClick={() => openViewModal(region)}
+                                  >
+                                    <HiEye className="h-4 w-4" />
+                                  </Button>
+                                  {hasRegionPermission(region.id) && (
+                                    <>
+                                      <Button
+                                        size="sm"
+                                        color="light"
+                                        onClick={() => openEditModal(region)}
+                                      >
+                                        <HiPencil className="h-4 w-4" />
+                                      </Button>
+                                      {hasLanguagePermission(
+                                        region.language?.id || "",
+                                      ) && (
+                                          <Button
+                                            size="sm"
+                                            color="failure"
+                                            onClick={() =>
+                                              openDeleteModal(region)
+                                            }
+                                          >
+                                            <HiTrash className="h-4 w-4" />
+                                          </Button>
+                                        )}
+                                    </>
+                                  )}
+                                </div>
+                              </Table.Cell>
+                            </Table.Row>
+                          ))
+                        ) : (
+                          // Si hay múltiples idiomas, mostrar el nivel de idioma
+                          countryGroup.languages.map((languageGroup) => {
+                            const languageKey = `${countryKey}-${languageGroup.languageId}`;
+                            const isLanguageExpanded = expandedLanguages.has(
+                              languageKey,
+                            );
+
+                            return (
+                              <React.Fragment key={languageKey}>
+                                {/* Fila de Idioma */}
+                                <Table.Row className="bg-gray-50 dark:bg-gray-800">
+                                  <Table.Cell
+                                    colSpan={5}
+                                    className="pl-8 font-medium text-gray-800 dark:text-gray-200"
+                                  >
+                                    <button
+                                      onClick={() => toggleLanguage(languageKey)}
+                                      className="flex items-center space-x-2 hover:text-blue-600 dark:hover:text-blue-400"
+                                    >
+                                      {isLanguageExpanded ? (
+                                        <HiChevronDown className="h-4 w-4" />
+                                      ) : (
+                                        <HiChevronRight className="h-4 w-4" />
+                                      )}
+                                      <span>{languageGroup.languageName}</span>
+                                      <span className="ml-2 text-sm font-normal text-gray-500 dark:text-gray-400">
+                                        ({languageGroup.regions.length}{" "}
+                                        {languageGroup.regions.length === 1
+                                          ? "región"
+                                          : "regiones"}
+                                        )
+                                      </span>
+                                    </button>
+                                  </Table.Cell>
+                                </Table.Row>
+
+                                {/* Filas de Regiones */}
+                                {isLanguageExpanded &&
+                                  languageGroup.regions.map((region) => (
+                                    <Table.Row
+                                      key={region.id}
+                                      className="bg-white dark:border-gray-700 dark:bg-gray-900"
+                                    >
+                                      <Table.Cell className="pl-12 whitespace-nowrap font-medium text-gray-900 dark:text-white">
+                                        {region.name}
+                                      </Table.Cell>
+                                      <Table.Cell className="whitespace-nowrap text-gray-900 dark:text-white">
+                                        {region.code}
+                                      </Table.Cell>
+                                      <Table.Cell className="text-gray-900 dark:text-white">
+                                        {region.description.length > 50
+                                          ? `${region.description.substring(0, 50)}...`
+                                          : region.description}
+                                      </Table.Cell>
+                                      <Table.Cell>
+                                        {region.isDefault ? (
+                                          <Badge color="blue">Base</Badge>
+                                        ) : (
+                                          <Badge color="gray">Regional</Badge>
+                                        )}
+                                      </Table.Cell>
+                                      <Table.Cell>
+                                        <div className="flex space-x-2">
+                                          <Button
+                                            size="sm"
+                                            color="light"
+                                            onClick={() => openViewModal(region)}
+                                          >
+                                            <HiEye className="h-4 w-4" />
+                                          </Button>
+                                          {hasRegionPermission(region.id) && (
+                                            <>
+                                              <Button
+                                                size="sm"
+                                                color="light"
+                                                onClick={() =>
+                                                  openEditModal(region)
+                                                }
+                                              >
+                                                <HiPencil className="h-4 w-4" />
+                                              </Button>
+                                              {hasLanguagePermission(
+                                                region.language?.id || "",
+                                              ) && (
+                                                  <Button
+                                                    size="sm"
+                                                    color="failure"
+                                                    onClick={() =>
+                                                      openDeleteModal(region)
+                                                    }
+                                                  >
+                                                    <HiTrash className="h-4 w-4" />
+                                                  </Button>
+                                                )}
+                                            </>
+                                          )}
+                                        </div>
+                                      </Table.Cell>
+                                    </Table.Row>
+                                  ))}
+                              </React.Fragment>
+                            );
+                          })
+                        ))}
+                    </React.Fragment>
+                  );
+                })
+              )}
             </Table.Body>
           </Table>
         </div>
-
-        {totalPages > 1 && (
-          <div className="mt-4 flex items-center justify-between">
-            <div className="text-sm text-gray-700 dark:text-gray-400">
-              Mostrando {regions.length} de {totalRegions} regiones
-            </div>
-            <div className="flex space-x-2">
-              <Button
-                size="sm"
-                color="light"
-                disabled={currentPage === 1}
-                onClick={() => setCurrentPage(currentPage - 1)}
-              >
-                Anterior
-              </Button>
-              <span className="px-3 py-1 text-sm text-gray-700 dark:text-gray-400">
-                Página {currentPage} de {totalPages}
-              </span>
-              <Button
-                size="sm"
-                color="light"
-                disabled={currentPage === totalPages}
-                onClick={() => setCurrentPage(currentPage + 1)}
-              >
-                Siguiente
-              </Button>
-            </div>
-          </div>
-        )}
       </Card>
 
       <Modal
@@ -866,35 +1264,13 @@ export default function RegionManagement() {
         show={isEditModalOpen}
         onClose={() => {
           setIsEditModalOpen(false);
-          setEditSelectedCountry(null);
-          setEditSelectedDivision(null);
+          // No resetear aquí porque puede estar en proceso de carga
+          // Se reseteará cuando se abra el modal de nuevo
         }}
       >
         <Modal.Header>Editar Región</Modal.Header>
         <Modal.Body>
           <div className="space-y-4">
-            <div>
-              <Label htmlFor="edit-country" value="País" />
-              <Select
-                id="edit-country"
-                value={editSelectedCountry}
-                onChange={handleEditCountryChange}
-                options={countryOptions}
-                placeholder="Seleccionar país..."
-                isSearchable={false}
-                isClearable={false}
-                isDisabled={true}
-                className="react-select-container"
-                classNamePrefix="react-select"
-                styles={getSelectStyles()}
-                theme={getSelectTheme()}
-              />
-              <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-                País determinado por el idioma seleccionado (no se puede
-                cambiar)
-              </p>
-            </div>
-
             {editSelectedCountry && (
               <div>
                 <Label htmlFor="edit-division" value="División/Estado" />
@@ -902,7 +1278,7 @@ export default function RegionManagement() {
                   id="edit-division"
                   value={editSelectedDivision}
                   onChange={handleEditDivisionChange}
-                  loadOptions={loadDivisionOptions}
+                  loadOptions={loadEditDivisionOptions}
                   placeholder="Buscar división o estado..."
                   isSearchable
                   isClearable
@@ -1051,15 +1427,14 @@ export default function RegionManagement() {
         </Modal.Footer>
       </Modal>
 
-      <div className="fixed right-4 top-4 z-50 space-y-2">
+      <div className="fixed right-4 top-4 z-[100] space-y-2">
         {toasts.map((toast) => (
           <Toast key={toast.id}>
             <div
-              className={`inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg ${
-                toast.type === "success"
-                  ? "bg-green-100 text-green-500 dark:bg-green-800 dark:text-green-200"
-                  : "bg-red-100 text-red-500 dark:bg-red-800 dark:text-red-200"
-              }`}
+              className={`inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg ${toast.type === "success"
+                ? "bg-green-100 text-green-500 dark:bg-green-800 dark:text-green-200"
+                : "bg-red-100 text-red-500 dark:bg-red-800 dark:text-red-200"
+                }`}
             >
               {toast.type === "success" ? "✓" : "✕"}
             </div>

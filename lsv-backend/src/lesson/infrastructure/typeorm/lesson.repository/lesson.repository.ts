@@ -40,7 +40,7 @@ export class LessonRepository implements LessonRepositoryInterface {
     private readonly dataSource: DataSource,
     @Inject(forwardRef(() => QuizService))
     private readonly quizService: QuizService,
-  ) {}
+  ) { }
   async findPassedLessonIdsForUser(userId: string): Promise<Set<string>> {
     const submissions = await this.quizSubmissionRepository
       .createQueryBuilder('submission')
@@ -475,6 +475,18 @@ export class LessonRepository implements LessonRepositoryInterface {
           `Ya existe una variante base para esta lección. Solo puede haber una variante base por lección.`,
         );
       }
+    }
+
+    const existingRegionVariant =
+      await this.lessonVariantRepository.findByLessonAndRegion(
+        lessonId,
+        createVariantDto.regionId,
+      );
+
+    if (existingRegionVariant) {
+      throw new ConflictException(
+        `Ya existe una variante para esta región en esta lección.`,
+      );
     }
 
     const variant = new LessonVariant();

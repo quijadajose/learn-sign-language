@@ -17,4 +17,5 @@ export interface RegionRepositoryInterface {
   update(id: string, region: CreateRegionDto): Promise<Region>;
   findByCode(code: string): Promise<Region | null>;
   findDefaultRegion(): Promise<Region | null>;
+  findDefaultByLanguageId(languageId: string): Promise<Region | null>;
 }

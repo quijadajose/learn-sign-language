@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Module, forwardRef } from '@nestjs/common';
 import { AuthService } from './application/auth.service';
 import { AuthController } from './infrastructure/auth.controller';
 import { TypeOrmModule } from '@nestjs/typeorm';
@@ -17,10 +17,27 @@ import { UpdateUserUseCase } from './domain/use-cases/update-user/update-user';
 import { SendEmailUseCase } from './domain/use-cases/send-email/send-email';
 import { APP_GUARD } from '@nestjs/core';
 import { JwtAuthGuard } from './infrastructure/guards/jwt-auth/jwt-auth.guard';
+import { ResourceIdResolver } from './infrastructure/guards/resource-access/resource-id-resolver';
+import { ResourceAccessGuard } from './infrastructure/guards/resource-access/resource-access.guard';
+import { Lesson } from 'src/shared/domain/entities/lesson';
+import { Region } from 'src/shared/domain/entities/region';
+import { Stages } from 'src/shared/domain/entities/stage';
+import { LessonVariant } from 'src/shared/domain/entities/lessonVariant';
+import { Quiz } from 'src/shared/domain/entities/quiz';
+import { QuizVariant } from 'src/shared/domain/entities/quizVariant';
+import { ModeratorModule } from '../moderator/moderator.module';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([User]),
+    TypeOrmModule.forFeature([
+      User,
+      Lesson,
+      Region,
+      Stages,
+      LessonVariant,
+      Quiz,
+      QuizVariant,
+    ]),
     JwtModule.registerAsync({
       useFactory: async (configService: ConfigService) => ({
         secret: configService.get<string>('JWT_SECRET'),
@@ -28,6 +45,7 @@ import { JwtAuthGuard } from './infrastructure/guards/jwt-auth/jwt-auth.guard';
       }),
       inject: [ConfigService],
     }),
+    forwardRef(() => ModeratorModule),
   ],
   providers: [
     GoogleStrategy,
@@ -57,6 +75,8 @@ import { JwtAuthGuard } from './infrastructure/guards/jwt-auth/jwt-auth.guard';
       provide: 'UserRepositoryInterface',
       useClass: UserRepository,
     },
+    ResourceIdResolver,
+    ResourceAccessGuard,
   ],
   controllers: [AuthController],
   exports: [
@@ -68,6 +88,8 @@ import { JwtAuthGuard } from './infrastructure/guards/jwt-auth/jwt-auth.guard';
     'TokenService',
     'HashService',
     'UserRepositoryInterface',
+    ResourceIdResolver,
+    ResourceAccessGuard,
   ],
 })
 export class AuthModule {}

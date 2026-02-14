@@ -10,6 +10,7 @@ import { UserLesson } from './userLesson';
 import { QuizSubmission } from './quizSubmission';
 import { UserLanguage } from './userLanguage';
 import { UserRegion } from './userRegion';
+import { ModeratorPermission } from './moderatorPermission';
 
 @Entity()
 export class User {
@@ -57,4 +58,10 @@ export class User {
 
   @OneToMany(() => UserRegion, (userRegion) => userRegion.user)
   userRegions: UserRegion[];
+
+  @OneToMany(
+    () => ModeratorPermission,
+    (moderatorPermission) => moderatorPermission.user,
+  )
+  moderatorPermissions: ModeratorPermission[];
 }

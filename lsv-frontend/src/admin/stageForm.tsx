@@ -23,6 +23,10 @@ import {
 } from "react-icons/hi";
 import { useNavigate } from "react-router-dom";
 import { stageApi, adminApi } from "../services/api";
+import { usePermissions } from "../hooks/usePermissions";
+import { useAuth } from "../context/AuthContext";
+import { useLocalStorage } from "../hooks/useLocalStorage";
+import { useRef } from "react";
 
 interface Stage {
   id: string;
@@ -45,7 +49,10 @@ interface Language {
 }
 
 export default function StageManagement() {
+  const { isAdmin, isModerator, user } = usePermissions();
+  const { token, isAuthenticated } = useAuth();
   const navigate = useNavigate();
+  const [selectedLanguageIdByHook, setSelectedLanguageIdByHook] = useLocalStorage<string | null>("selectedLanguageId", null);
   const [stages, setStages] = useState<Stage[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
@@ -74,6 +81,8 @@ export default function StageManagement() {
   const [toastMessages, setToastMessages] = useState<
     { id: number; type: "success" | "error"; message: string }[]
   >([]);
+
+  const isInitialized = useRef(false);
 
   const addToast = useCallback((type: "success" | "error", message: string) => {
     const id = Date.now();
@@ -136,10 +145,8 @@ export default function StageManagement() {
   const handlePageChange = useCallback(
     (newPage: number) => {
       setCurrentPage(newPage);
-      const token = localStorage.getItem("auth");
-      const selectedLangId = localStorage.getItem("selectedLanguageId");
-      if (token && selectedLangId) {
-        fetchStages(selectedLangId, newPage, pageSize, orderBy, sortOrder);
+      if (token && selectedLanguageIdByHook) {
+        fetchStages(selectedLanguageIdByHook, newPage, pageSize, orderBy, sortOrder);
       }
     },
     [pageSize, orderBy, sortOrder, fetchStages],
@@ -155,10 +162,8 @@ export default function StageManagement() {
       setSortOrder(newSortOrder);
       setCurrentPage(1);
 
-      const token = localStorage.getItem("auth");
-      const selectedLangId = localStorage.getItem("selectedLanguageId");
-      if (token && selectedLangId) {
-        fetchStages(selectedLangId, 1, pageSize, newOrderByValue, newSortOrder);
+      if (token && selectedLanguageIdByHook) {
+        fetchStages(selectedLanguageIdByHook, 1, pageSize, newOrderByValue, newSortOrder);
       }
     },
     [orderBy, sortOrder, pageSize, fetchStages],
@@ -178,39 +183,74 @@ export default function StageManagement() {
   const fetchLanguages = useCallback(async () => {
     setLanguagesLoading(true);
     try {
+      // Si es moderador y no es admin, filtramos por sus permisos
+      if (isModerator && !isAdmin && user?.moderatorPermissions) {
+        const moderatorLanguages: Language[] = [];
+        const seenIds = new Set<string>();
+
+        user.moderatorPermissions.forEach((p) => {
+          if (p.scope === "language" && p.language && !seenIds.has(p.language.id)) {
+            moderatorLanguages.push({
+              id: p.language.id,
+              name: p.language.name,
+              description: p.language.description,
+            });
+            seenIds.add(p.language.id);
+          } else if (
+            p.scope === "region" &&
+            p.region?.language &&
+            !seenIds.has(p.region.language.id)
+          ) {
+            moderatorLanguages.push({
+              id: p.region.language.id,
+              name: p.region.language.name,
+              description: p.region.language.description,
+            });
+            seenIds.add(p.region.language.id);
+          }
+        });
+        setLanguages(moderatorLanguages);
+        setLanguagesLoading(false);
+        return moderatorLanguages;
+      }
+
       const response = await adminApi.getLanguages(1, 100);
 
       if (response.success) {
         const responseData = response.data;
+        let fetchedLanguages: Language[] = [];
         if (
           responseData &&
           responseData.data &&
           Array.isArray(responseData.data)
         ) {
-          setLanguages(responseData.data);
+          fetchedLanguages = responseData.data;
         } else if (Array.isArray(responseData)) {
-          setLanguages(responseData);
-        } else {
-          setLanguages([]);
+          fetchedLanguages = responseData;
         }
+        setLanguages(fetchedLanguages);
+        setLanguagesLoading(false);
+        return fetchedLanguages;
       } else {
         addToast("error", "Error al cargar la lista de idiomas");
         setLanguages([]);
+        setLanguagesLoading(false);
+        return [];
       }
     } catch (error) {
       addToast("error", "Error al cargar la lista de idiomas");
       setLanguages([]);
-    } finally {
       setLanguagesLoading(false);
+      return [];
     }
-  }, [addToast]);
+  }, [addToast, isAdmin, isModerator, user?.moderatorPermissions]);
 
   const handleLanguageChange = useCallback(
     async (newLanguageId: string) => {
       if (newLanguageId === languageId) return;
 
       setLanguageId(newLanguageId);
-      localStorage.setItem("selectedLanguageId", newLanguageId);
+      setSelectedLanguageIdByHook(newLanguageId);
 
       await fetchLanguageName(newLanguageId);
 
@@ -227,38 +267,62 @@ export default function StageManagement() {
       orderBy,
       sortOrder,
       addToast,
+      setSelectedLanguageIdByHook,
     ],
   );
 
   useEffect(() => {
-    const token = localStorage.getItem("auth");
-    const selectedLangId = localStorage.getItem("selectedLanguageId");
-
-    if (!token || token === "undefined") {
+    if (!isAuthenticated) {
       setError("No estás autenticado. Redirigiendo al login...");
       addToast("error", "No estás autenticado. Redirigiendo al login...");
       setLoading(false);
-      setTimeout(() => navigate("/login"), 3000);
-      return;
+      const timer = setTimeout(() => navigate("/login"), 3000);
+      return () => clearTimeout(timer);
     }
 
-    const uuidRegex =
-      /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-    if (!selectedLangId || !uuidRegex.test(selectedLangId)) {
-      setError(
-        "No se ha seleccionado un idioma válido. Por favor, vuelve a la gestión de idiomas y selecciona uno.",
-      );
-      addToast("error", "ID de idioma no válido.");
-      setLoading(false);
-      setStages([]);
-      return;
-    }
+    const initialize = async () => {
+      if (isInitialized.current) return;
+      isInitialized.current = true;
 
-    setLanguageId(selectedLangId);
-    fetchStages(selectedLangId, currentPage, pageSize, orderBy, sortOrder);
-    fetchLanguageName(selectedLangId);
-    fetchLanguages();
-  }, [navigate, fetchStages, addToast, fetchLanguageName, fetchLanguages]);
+      try {
+        const fetchedLangs = await fetchLanguages();
+        let currentLangId = selectedLanguageIdByHook;
+
+        const uuidRegex =
+          /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+        if (
+          (!currentLangId || !uuidRegex.test(currentLangId)) &&
+          fetchedLangs &&
+          fetchedLangs.length > 0
+        ) {
+          currentLangId = fetchedLangs[0].id;
+          setSelectedLanguageIdByHook(currentLangId);
+        }
+
+        if (!currentLangId || !uuidRegex.test(currentLangId)) {
+          setError(
+            "No se ha seleccionado un idioma válido. Por favor, vuelve a la gestión de idiomas y selecciona uno.",
+          );
+          addToast("error", "ID de idioma no válido.");
+          setLoading(false);
+          setStages([]);
+          return;
+        }
+
+        setLanguageId(currentLangId);
+        await Promise.all([
+          fetchStages(currentLangId, currentPage, pageSize, orderBy, sortOrder),
+          fetchLanguageName(currentLangId),
+        ]);
+      } catch (err) {
+        console.error("Error during initialization:", err);
+        setLoading(false);
+      }
+    };
+
+    initialize();
+  }, [navigate, fetchStages, addToast, fetchLanguageName, fetchLanguages, currentPage, pageSize, orderBy, sortOrder]);
 
   const openAddModal = () => {
     setFormData({ name: "", description: "" });
@@ -300,9 +364,8 @@ export default function StageManagement() {
     }
 
     setIsDeleting(true);
-    const token = localStorage.getItem("auth");
 
-    if (!token || token === "undefined") {
+    if (!isAuthenticated) {
       addToast("error", "Autenticación requerida.");
       setIsDeleting(false);
       return;
@@ -344,9 +407,7 @@ export default function StageManagement() {
       return;
     }
     setIsSubmitting(true);
-    const token = localStorage.getItem("auth");
-
-    if (!token || token === "undefined") {
+    if (!isAuthenticated) {
       addToast("error", "Autenticación requerida.");
       setIsSubmitting(false);
       return;
@@ -380,9 +441,8 @@ export default function StageManagement() {
       return;
     }
     setIsSubmitting(true);
-    const token = localStorage.getItem("auth");
 
-    if (!token || token === "undefined") {
+    if (!isAuthenticated) {
       addToast("error", "Autenticación requerida.");
       setIsSubmitting(false);
       return;
@@ -422,11 +482,10 @@ export default function StageManagement() {
         {toastMessages.map((toast) => (
           <Toast key={toast.id}>
             <div
-              className={`inline-flex size-8 shrink-0 items-center justify-center rounded-lg ${
-                toast.type === "success"
-                  ? "bg-green-100 text-green-500 dark:bg-green-800 dark:text-green-200"
-                  : "bg-red-100 text-red-500 dark:bg-red-800 dark:text-red-200"
-              }`}
+              className={`inline-flex size-8 shrink-0 items-center justify-center rounded-lg ${toast.type === "success"
+                ? "bg-green-100 text-green-500 dark:bg-green-800 dark:text-green-200"
+                : "bg-red-100 text-red-500 dark:bg-red-800 dark:text-red-200"
+                }`}
             >
               {toast.type === "success" ? (
                 <HiCheck className="size-5" />

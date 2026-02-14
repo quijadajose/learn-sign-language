@@ -1,6 +1,7 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { BACKEND_BASE_URL } from "../config";
+import { usePermissions } from "../hooks/usePermissions";
+import { useLocalStorage } from "../hooks/useLocalStorage";
 import {
   Button,
   Select,
@@ -91,13 +92,6 @@ interface StageItem {
   description: string;
 }
 
-interface StagesResponse {
-  data: StageItem[];
-  total: number;
-  page: number;
-  pageSize: number;
-}
-
 type ToastMessage = { id: number; type: "success" | "error"; message: string };
 
 interface LanguagesResponse {
@@ -116,21 +110,33 @@ interface LessonsResponse {
 
 export default function LessonManagement() {
   const navigate = useNavigate();
+  const {
+    isAdmin,
+    isModerator,
+    user,
+    hasLanguagePermission,
+    hasRegionPermission,
+    hasAnyPermissionForLanguage,
+  } = usePermissions();
+  const [selectedLanguageId, setSelectedLanguageId] = useLocalStorage<string>("selectedLanguageId", "");
   const [languages, setLanguages] = useState<Language[]>([]);
   const [lessons, setLessons] = useState<Lesson[]>([]);
-  const [selectedLanguageId, setSelectedLanguageId] = useState<string>("");
   const [loading, setLoading] = useState(true);
   const [lessonsLoading, setLessonsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [totalLessons, setTotalLessons] = useState(0);
+  const [filterStageId, setFilterStageId] = useState<string>("");
+  const [filterStages, setFilterStages] = useState<StageItem[]>([]);
+  const [filterStagesLoading, setFilterStagesLoading] = useState(false);
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
   const [selectedLesson, setSelectedLesson] = useState<LessonDetail | null>(
     null,
   );
   const [viewLoading, setViewLoading] = useState(false);
   const [toasts, setToasts] = useState<ToastMessage[]>([]);
+  const isInitialized = useRef(false);
 
   const addToast = (type: "success" | "error", message: string) => {
     const id = Date.now();
@@ -185,26 +191,67 @@ export default function LessonManagement() {
     isBase: false,
     regionalNotes: "",
   });
+  const [editingVariantId, setEditingVariantId] = useState<string | null>(null);
 
   const fetchLanguages = async () => {
     setLoading(true);
     setError(null);
+
+    // Si es moderador y no es admin, filtramos por sus permisos
+    if (isModerator && !isAdmin && user?.moderatorPermissions) {
+      const moderatorLanguages: Language[] = [];
+      const seenIds = new Set<string>();
+
+      user.moderatorPermissions.forEach((p) => {
+        if (p.scope === "language" && p.language && !seenIds.has(p.language.id)) {
+          moderatorLanguages.push({
+            id: p.language.id,
+            name: p.language.name,
+            description: p.language.description || "",
+            createdAt: p.language.createdAt || "",
+            updatedAt: p.language.updatedAt || "",
+          });
+          seenIds.add(p.language.id);
+        } else if (
+          p.scope === "region" &&
+          p.region?.language &&
+          !seenIds.has(p.region.language.id)
+        ) {
+          moderatorLanguages.push({
+            id: p.region.language.id,
+            name: p.region.language.name,
+            description: p.region.language.description || "",
+            createdAt: p.region.language.createdAt || "",
+            updatedAt: p.region.language.updatedAt || "",
+          });
+          seenIds.add(p.region.language.id);
+        }
+      });
+      setLanguages(moderatorLanguages);
+      setLoading(false);
+      return moderatorLanguages;
+    }
 
     const response = await adminApi.getLanguages();
 
     if (response.success) {
       const data: LanguagesResponse = response.data;
       setLanguages(data.data);
+      setLoading(false);
+      return data.data;
     } else {
       setError(response.message || "Error al cargar idiomas");
+      setLoading(false);
+      return [];
     }
-
-    setLoading(false);
   };
 
-  const fetchRegions = async () => {
+  const fetchRegions = async (languageId?: string) => {
     try {
-      const response = await regionApi.getRegions();
+      // If no language is selected, we might want to clear regions or fetch all (but fetching all causes the issue)
+      // For now, let's only fetch if languageId is present, or fetch all if not (but user wants filtering).
+      // Actually, simply passing languageId to getRegions is enough.
+      const response = await regionApi.getRegions(1, 100, languageId);
       if (response.success) {
         setRegions(response.data.data || []);
       } else {
@@ -218,13 +265,19 @@ export default function LessonManagement() {
   const fetchLessonsByLanguage = async (
     languageId: string,
     page: number = 1,
+    stageId?: string,
   ) => {
     if (!languageId) return;
 
     setLessonsLoading(true);
     setError(null);
 
-    const response = await adminApi.getLessonsByLanguage(languageId, page);
+    const response = await adminApi.getLessonsByLanguage(
+      languageId,
+      page,
+      100,
+      stageId,
+    );
 
     if (response.success) {
       const data: LessonsResponse = response.data;
@@ -290,33 +343,40 @@ export default function LessonManagement() {
     try {
       setStagesLoading(true);
       setError(null);
-      const token = localStorage.getItem("auth");
 
-      const response = await fetch(
-        `${BACKEND_BASE_URL}/stage/${languageId}?page=1&limit=5&orderBy=name&sortOrder=ASC`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-        },
-      );
+      const response = await adminApi.getStagesByLanguage(languageId, 1, 5);
 
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        const errorMessage =
-          errorData.message || `Error al cargar etapas (${response.status})`;
-        throw new Error(errorMessage);
+      if (!response.success) {
+        throw new Error(response.message || "Error al cargar etapas");
       }
 
-      const data: StagesResponse = await response.json();
-      setStages(data.data);
+      setStages(response.data.data);
     } catch (err) {
       const errorMessage =
         err instanceof Error ? err.message : "Error al cargar etapas";
       setError(errorMessage);
     } finally {
       setStagesLoading(false);
+    }
+  };
+
+  const fetchFilterStages = async (languageId: string) => {
+    if (!languageId) return;
+    try {
+      setFilterStagesLoading(true);
+
+      const response = await adminApi.getStagesByLanguage(languageId, 1, 100);
+
+      if (!response.success) {
+        throw new Error(response.message || "Error al cargar etapas");
+      }
+
+      setFilterStages(response.data.data);
+    } catch (err) {
+      console.error(err);
+      addToast("error", "Error al cargar las etapas para el filtro");
+    } finally {
+      setFilterStagesLoading(false);
     }
   };
 
@@ -372,7 +432,11 @@ export default function LessonManagement() {
       setIsDeleteModalOpen(false);
       setDeletingLesson(null);
       if (selectedLanguageId) {
-        await fetchLessonsByLanguage(selectedLanguageId, currentPage);
+        await fetchLessonsByLanguage(
+          selectedLanguageId,
+          currentPage,
+          filterStageId,
+        );
       }
     } else {
       setError(response.message || "Error al eliminar lección");
@@ -396,35 +460,25 @@ export default function LessonManagement() {
     try {
       setEditLoading(true);
       setError(null);
-      const token = localStorage.getItem("auth");
-      const response = await fetch(
-        `${BACKEND_BASE_URL}/lesson/${editLessonId}`,
-        {
-          method: "PUT",
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            name: editForm.name,
-            description: editForm.description,
-            content: editForm.content,
-            languageId: editForm.languageId,
-            stageId: editForm.stageId,
-          }),
-        },
-      );
+      const response = await adminApi.updateLesson(editLessonId, {
+        name: editForm.name,
+        description: editForm.description,
+        content: editForm.content,
+        languageId: editForm.languageId,
+        stageId: editForm.stageId,
+      });
 
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        const errorMessage =
-          errorData.message ||
-          `Error al actualizar lección (${response.status})`;
-        throw new Error(errorMessage);
+      if (!response.success) {
+        throw new Error(response.message || "Error al actualizar lección");
       }
 
       if (editForm.languageId) {
-        await fetchLessonsByLanguage(editForm.languageId, 1);
+        const isSameLang = editForm.languageId === selectedLanguageId;
+        await fetchLessonsByLanguage(
+          editForm.languageId,
+          1,
+          isSameLang ? filterStageId : undefined,
+        );
       }
       handleCloseEditModal();
       addToast("success", "Lección actualizada correctamente");
@@ -448,15 +502,44 @@ export default function LessonManagement() {
   };
 
   useEffect(() => {
-    fetchLanguages();
-    fetchRegions();
+    const initialize = async () => {
+      if (isInitialized.current) return;
+      isInitialized.current = true;
+
+      const fetchedLangs = await fetchLanguages();
+      let langId = selectedLanguageId;
+
+      const uuidRegex =
+        /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+      // Si no hay idioma seleccionado o es inválido, y tenemos idiomas disponibles, seleccionamos el primero
+      if (
+        (!langId || !uuidRegex.test(langId)) &&
+        fetchedLangs &&
+        fetchedLangs.length > 0
+      ) {
+        langId = fetchedLangs[0].id;
+        setSelectedLanguageId(langId);
+      }
+
+      if (langId && uuidRegex.test(langId)) {
+        setSelectedLanguageId(langId);
+      }
+    };
+
+    initialize();
   }, []);
 
   useEffect(() => {
     if (selectedLanguageId) {
-      fetchLessonsByLanguage(selectedLanguageId, 1);
+      fetchLessonsByLanguage(selectedLanguageId, 1, filterStageId);
+      fetchRegions(selectedLanguageId);
+      fetchFilterStages(selectedLanguageId);
     } else {
       setLessons([]);
+      setFilterStages([]);
+      setFilterStageId("");
+      setRegions([]);
       setTotalPages(1);
       setCurrentPage(1);
       setTotalLessons(0);
@@ -465,11 +548,19 @@ export default function LessonManagement() {
 
   const handleLanguageChange = (languageId: string) => {
     setSelectedLanguageId(languageId);
+    setFilterStageId(""); // Reset stage when language changes
+  };
+
+  const handleStageChange = (stageId: string) => {
+    setFilterStageId(stageId);
+    if (selectedLanguageId) {
+      fetchLessonsByLanguage(selectedLanguageId, 1, stageId);
+    }
   };
 
   const handlePageChange = (page: number) => {
     if (selectedLanguageId) {
-      fetchLessonsByLanguage(selectedLanguageId, page);
+      fetchLessonsByLanguage(selectedLanguageId, page, filterStageId);
     }
   };
 
@@ -526,7 +617,15 @@ export default function LessonManagement() {
       }
 
       if (createForm.languageId) {
-        await fetchLessonsByLanguage(createForm.languageId, 1);
+        const isSameLang = createForm.languageId === selectedLanguageId;
+        if (!isSameLang) {
+          setFilterStageId("");
+        }
+        await fetchLessonsByLanguage(
+          createForm.languageId,
+          1,
+          isSameLang ? filterStageId : undefined,
+        );
         setSelectedLanguageId(createForm.languageId);
       }
       handleCloseCreateModal();
@@ -572,14 +671,26 @@ export default function LessonManagement() {
 
     try {
       setCreateLoading(true);
-      const response = await lessonVariantApi.createLessonVariant(
-        selectedLessonId,
-        variantForm,
-      );
+      const response = editingVariantId
+        ? await lessonVariantApi.updateLessonVariant(
+          selectedLessonId,
+          editingVariantId,
+          variantForm,
+        )
+        : await lessonVariantApi.createLessonVariant(
+          selectedLessonId,
+          variantForm,
+        );
 
       if (response.success) {
-        addToast("success", "Variante regional creada exitosamente");
+        addToast(
+          "success",
+          editingVariantId
+            ? "Variante regional actualizada exitosamente"
+            : "Variante regional creada exitosamente",
+        );
         setIsCreateVariantModalOpen(false);
+        setEditingVariantId(null);
         setVariantForm({
           name: "",
           description: "",
@@ -591,13 +702,34 @@ export default function LessonManagement() {
         });
         loadLessonVariants(selectedLessonId);
       } else {
-        addToast("error", response.message || "Error al crear la variante");
+        addToast(
+          "error",
+          response.message ||
+          `Error al ${editingVariantId ? "actualizar" : "crear"} la variante`,
+        );
       }
     } catch (err) {
-      addToast("error", "Error de conexión al crear la variante");
+      addToast(
+        "error",
+        `Error de conexión al ${editingVariantId ? "actualizar" : "crear"} la variante`,
+      );
     } finally {
       setCreateLoading(false);
     }
+  };
+
+  const handleOpenVariantEditModal = (variant: LessonVariant) => {
+    setEditingVariantId(variant.id);
+    setVariantForm({
+      name: variant.name,
+      description: variant.description,
+      content: variant.content,
+      regionId: variant.region.id,
+      isRegionalSpecific: variant.isRegionalSpecific,
+      isBase: variant.isBase,
+      regionalNotes: variant.regionalNotes || "",
+    });
+    setIsCreateVariantModalOpen(true);
   };
 
   const handleDeleteVariant = async (variantId: string) => {
@@ -627,6 +759,16 @@ export default function LessonManagement() {
   };
 
   const openCreateVariantModal = () => {
+    setEditingVariantId(null);
+    setVariantForm({
+      name: "",
+      description: "",
+      content: "",
+      regionId: "",
+      isRegionalSpecific: false,
+      isBase: false,
+      regionalNotes: "",
+    });
     setIsCreateVariantModalOpen(true);
   };
 
@@ -706,12 +848,12 @@ export default function LessonManagement() {
         <div className="overflow-hidden rounded-lg bg-white shadow-lg dark:bg-gray-800">
           <div className="border-b border-gray-200 px-6 py-4 dark:border-gray-700">
             <h2 className="text-xl font-bold text-gray-900 dark:text-white">
-              Selección de Idioma
+              Selección de Idioma y Etapa
             </h2>
           </div>
 
           <div className="p-2">
-            <div className="space-y-4">
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
               <div>
                 <label
                   htmlFor="language-select"
@@ -733,6 +875,30 @@ export default function LessonManagement() {
                   ))}
                 </Select>
               </div>
+
+              {selectedLanguageId && (
+                <div>
+                  <label
+                    htmlFor="stage-select"
+                    className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300"
+                  >
+                    Filtrar por Etapa
+                  </label>
+                  <Select
+                    id="stage-select"
+                    value={filterStageId}
+                    onChange={(e) => handleStageChange(e.target.value)}
+                    disabled={filterStagesLoading}
+                  >
+                    <option value="">Todas las etapas</option>
+                    {filterStages.map((stage) => (
+                      <option key={stage.id} value={stage.id}>
+                        {stage.name}
+                      </option>
+                    ))}
+                  </Select>
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -744,10 +910,13 @@ export default function LessonManagement() {
                 <h2 className="text-xl font-bold text-gray-900 dark:text-white">
                   Lista de Lecciones
                 </h2>
-                <Button color="blue" onClick={handleOpenCreateModal}>
-                  <HiPlus className="mr-2 size-5" />
-                  Agregar lección
-                </Button>
+                {selectedLanguageId &&
+                  hasAnyPermissionForLanguage(selectedLanguageId) && (
+                    <Button color="blue" onClick={handleOpenCreateModal}>
+                      <HiPlus className="mr-2 size-5" />
+                      Agregar lección
+                    </Button>
+                  )}
               </div>
             </div>
 
@@ -822,50 +991,64 @@ export default function LessonManagement() {
                                 Ver
                               </div>
                             </Button>
-                            <Button
-                              size="sm"
-                              color="info"
-                              onClick={() => handleOpenEditModal(lesson)}
-                              disabled={editLoading}
-                            >
-                              <div className="flex items-center">
-                                <HiPencilAlt className="mr-1 size-4" />
-                                Editar
-                              </div>
-                            </Button>
-                            <Button
-                              size="sm"
-                              color="purple"
-                              onClick={() =>
-                                navigate(`/admin/lessons/${lesson.id}/quizzes`)
-                              }
-                            >
-                              <div className="flex items-center">
-                                <HiAcademicCap className="mr-1 size-4" />
-                                Quiz
-                              </div>
-                            </Button>
-                            <Button
-                              size="sm"
-                              color="info"
-                              onClick={() => openVariantsModal(lesson.id)}
-                            >
-                              <div className="flex items-center">
-                                <HiGlobe className="mr-1 size-4" />
-                                Variantes
-                              </div>
-                            </Button>
-                            <Button
-                              size="sm"
-                              color="failure"
-                              onClick={() => handleOpenDeleteModal(lesson)}
-                              disabled={isDeleting}
-                            >
-                              <div className="flex items-center">
-                                <HiTrash className="mr-1 size-4" />
-                                Eliminar
-                              </div>
-                            </Button>
+                            {hasAnyPermissionForLanguage(
+                              lesson.languageId || selectedLanguageId,
+                            ) && (
+                                <>
+                                  {hasLanguagePermission(
+                                    lesson.languageId || selectedLanguageId,
+                                  ) && (
+                                      <Button
+                                        size="sm"
+                                        color="info"
+                                        onClick={() => handleOpenEditModal(lesson)}
+                                        disabled={editLoading}
+                                      >
+                                        <div className="flex items-center">
+                                          <HiPencilAlt className="mr-1 size-4" />
+                                          Editar
+                                        </div>
+                                      </Button>
+                                    )}
+                                  <Button
+                                    size="sm"
+                                    color="info"
+                                    onClick={() => openVariantsModal(lesson.id)}
+                                  >
+                                    <div className="flex items-center">
+                                      <HiGlobe className="mr-1 size-4" />
+                                      Variantes
+                                    </div>
+                                  </Button>
+                                  <Button
+                                    size="sm"
+                                    color="purple"
+                                    onClick={() =>
+                                      navigate(`/admin/lessons/${lesson.id}/quizzes`)
+                                    }
+                                  >
+                                    <div className="flex items-center">
+                                      <HiAcademicCap className="mr-1 size-4" />
+                                      Quiz
+                                    </div>
+                                  </Button>
+                                  {hasLanguagePermission(
+                                    lesson.languageId || selectedLanguageId,
+                                  ) && (
+                                      <Button
+                                        size="sm"
+                                        color="failure"
+                                        onClick={() => handleOpenDeleteModal(lesson)}
+                                        disabled={isDeleting}
+                                      >
+                                        <div className="flex items-center">
+                                          <HiTrash className="mr-1 size-4" />
+                                          Eliminar
+                                        </div>
+                                      </Button>
+                                    )}
+                                </>
+                              )}
                           </div>
                         </td>
                       </tr>
@@ -1259,7 +1442,7 @@ export default function LessonManagement() {
           <div className="text-center">
             <HiExclamationCircle className="mx-auto mb-4 size-14 text-gray-400 dark:text-gray-200" />
             <h3 className="mb-5 text-lg font-normal text-gray-500 dark:text-gray-400">
-              ¿Estás seguro de que quieres eliminar la lección{" "}
+              Estás seguro de que quieres eliminar la lección{" "}
               <span className="font-semibold text-gray-900 dark:text-white">
                 "{deletingLesson?.name}"
               </span>
@@ -1355,13 +1538,25 @@ export default function LessonManagement() {
                         </Table.Cell>
                         <Table.Cell>
                           <div className="flex space-x-2">
-                            <Button
-                              size="sm"
-                              color="failure"
-                              onClick={() => handleDeleteVariant(variant.id)}
-                            >
-                              <HiTrash className="h-4 w-4" />
-                            </Button>
+                            {(hasLanguagePermission(selectedLanguageId) ||
+                              hasRegionPermission(variant.region.id)) && (
+                                <>
+                                  <Button
+                                    size="sm"
+                                    color="info"
+                                    onClick={() => handleOpenVariantEditModal(variant)}
+                                  >
+                                    <HiPencilAlt className="h-4 w-4" />
+                                  </Button>
+                                  <Button
+                                    size="sm"
+                                    color="failure"
+                                    onClick={() => handleDeleteVariant(variant.id)}
+                                  >
+                                    <HiTrash className="h-4 w-4" />
+                                  </Button>
+                                </>
+                              )}
                           </div>
                         </Table.Cell>
                       </Table.Row>
@@ -1382,9 +1577,14 @@ export default function LessonManagement() {
       <Modal
         show={isCreateVariantModalOpen}
         size="4xl"
-        onClose={() => setIsCreateVariantModalOpen(false)}
+        onClose={() => {
+          setIsCreateVariantModalOpen(false);
+          setEditingVariantId(null);
+        }}
       >
-        <Modal.Header>Crear Variante Regional</Modal.Header>
+        <Modal.Header>
+          {editingVariantId ? "Editar Variante Regional" : "Crear Variante Regional"}
+        </Modal.Header>
         <Modal.Body>
           <div className="space-y-4">
             <div>
@@ -1426,11 +1626,21 @@ export default function LessonManagement() {
                 required
               >
                 <option value="">Selecciona una región</option>
-                {regions.map((region) => (
-                  <option key={region.id} value={region.id}>
-                    {region.name} ({region.code})
-                  </option>
-                ))}
+                {regions
+                  .filter(
+                    (region) =>
+                      (hasLanguagePermission(selectedLanguageId) ||
+                        hasRegionPermission(region.id)) &&
+                      (!lessonVariants.some((v) => v.region.id === region.id) ||
+                        (editingVariantId &&
+                          lessonVariants.find((v) => v.id === editingVariantId)
+                            ?.region.id === region.id))
+                  )
+                  .map((region) => (
+                    <option key={region.id} value={region.id}>
+                      {region.name} ({region.code})
+                    </option>
+                  ))}
               </Select>
             </div>
             <div>
@@ -1464,21 +1674,28 @@ export default function LessonManagement() {
                 value="Específica de la región"
               />
             </div>
-            <div className="flex items-center">
-              <input
-                type="checkbox"
-                id="variant-base"
-                checked={variantForm.isBase}
-                onChange={(e) =>
-                  setVariantForm({ ...variantForm, isBase: e.target.checked })
-                }
-                className="mr-2"
-              />
-              <Label
-                htmlFor="variant-base"
-                value="Variante base (solo puede haber una por lección)"
-              />
-            </div>
+            {lessonVariants.some((v) => v.isBase) ? (
+              <div className="rounded-md bg-gray-50 p-3 text-sm text-gray-500 dark:bg-gray-700 dark:text-gray-400">
+                <span className="font-medium">Nota:</span> Ya existe una
+                variante base para esta lección. solo puede haber una.
+              </div>
+            ) : (
+              <div className="flex items-center">
+                <input
+                  type="checkbox"
+                  id="variant-base"
+                  checked={variantForm.isBase}
+                  onChange={(e) =>
+                    setVariantForm({ ...variantForm, isBase: e.target.checked })
+                  }
+                  className="mr-2"
+                />
+                <Label
+                  htmlFor="variant-base"
+                  value="Variante base (solo puede haber una por lección)"
+                />
+              </div>
+            )}
             <div>
               <Label htmlFor="variant-notes" value="Notas Regionales" />
               <Textarea
@@ -1503,7 +1720,7 @@ export default function LessonManagement() {
             className="bg-green-600 hover:bg-green-700"
           >
             {createLoading ? <Spinner size="sm" className="mr-2" /> : null}
-            Crear Variante
+            {editingVariantId ? "Actualizar Variante" : "Crear Variante"}
           </Button>
           <Button
             color="gray"
@@ -1519,11 +1736,10 @@ export default function LessonManagement() {
           <div key={t.id} className="pointer-events-auto">
             <Toast>
               <div
-                className={`inline-flex size-8 shrink-0 items-center justify-center rounded-lg ${
-                  t.type === "success"
-                    ? "bg-green-100 text-green-500 dark:bg-green-800 dark:text-green-200"
-                    : "bg-red-100 text-red-500 dark:bg-red-800 dark:text-red-200"
-                }`}
+                className={`inline-flex size-8 shrink-0 items-center justify-center rounded-lg ${t.type === "success"
+                  ? "bg-green-100 text-green-500 dark:bg-green-800 dark:text-green-200"
+                  : "bg-red-100 text-red-500 dark:bg-red-800 dark:text-red-200"
+                  }`}
               >
                 {t.type === "success" ? (
                   <HiCheck className="size-5" />

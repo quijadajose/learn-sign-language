@@ -21,12 +21,16 @@ import { UpdateStageUseCase } from 'src/stage/application/use-cases/update-stage
 import { DeleteStageUseCase } from 'src/stage/application/use-cases/delete-stage-use-case/delete-stage-use-case';
 import { QuizModule } from 'src/quiz/quiz.module';
 import { LessonModule } from 'src/lesson/lesson.module';
+import { ModeratorModule } from 'src/moderator/moderator.module';
+import { AuthModule } from 'src/auth/auth.module';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([Language, Stages, Lesson, QuizSubmission]),
     QuizModule,
     forwardRef(() => LessonModule),
+    forwardRef(() => ModeratorModule),
+    forwardRef(() => AuthModule),
   ],
   providers: [
     LanguageService,
