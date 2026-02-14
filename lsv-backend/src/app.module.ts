@@ -34,6 +34,8 @@ import { OptionVariant } from './shared/domain/entities/optionVariant';
 import { Country } from './shared/domain/entities/iso-3166-2/countries';
 import { Division } from './shared/domain/entities/iso-3166-2/divisions';
 import { SeederService } from './seeder/seeder.service';
+import { ModeratorPermission } from './shared/domain/entities/moderatorPermission';
+import { ModeratorModule } from './moderator/moderator.module';
 
 @Module({
   imports: [
@@ -69,6 +71,7 @@ import { SeederService } from './seeder/seeder.service';
           OptionVariant,
           Country,
           Division,
+          ModeratorPermission,
         ],
         synchronize: true,
       }),
@@ -97,6 +100,7 @@ import { SeederService } from './seeder/seeder.service';
     LanguageModule,
     RegionModule,
     CountryDivisionModule,
+    ModeratorModule,
   ],
   controllers: [ImagesController],
   providers: [UploadPictureUseCase, SeederService],

@@ -28,6 +28,8 @@ import { LessonController } from './infrastructure/controllers/lesson/lesson.con
 import { LessonRepository } from './infrastructure/typeorm/lesson.repository/lesson.repository';
 import { LessonVariantRepository } from './infrastructure/typeorm/lesson-variant.repository/lesson-variant.repository';
 import { RegionRepository } from './infrastructure/typeorm/region.repository/region.repository';
+import { ModeratorModule } from 'src/moderator/moderator.module';
+import { AuthModule } from 'src/auth/auth.module';
 
 @Module({
   imports: [
@@ -41,6 +43,8 @@ import { RegionRepository } from './infrastructure/typeorm/region.repository/reg
     ]),
     forwardRef(() => LanguageModule),
     forwardRef(() => QuizModule),
+    forwardRef(() => ModeratorModule),
+    forwardRef(() => AuthModule),
   ],
   providers: [
     LessonService,

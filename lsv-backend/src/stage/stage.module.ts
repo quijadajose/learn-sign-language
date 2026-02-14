@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Module, forwardRef } from '@nestjs/common';
 import { StageController } from './infrastructure/controllers/stage-admin/stage-admin.controller';
 import { StageService } from './application/services/stage/stage.service';
 import { GetStagesFromLanguageUseCase } from './application/use-cases/get-stages-from-language-use-case/get-stages-from-language-use-case';
@@ -7,9 +7,16 @@ import { UpdateStageUseCase } from './application/use-cases/update-stage-use-cas
 import { DeleteStageUseCase } from './application/use-cases/delete-stage-use-case/delete-stage-use-case';
 import { LessonModule } from 'src/lesson/lesson.module';
 import { LanguageModule } from 'src/language/language.module';
+import { ModeratorModule } from 'src/moderator/moderator.module';
+import { AuthModule } from 'src/auth/auth.module';
 
 @Module({
-  imports: [LessonModule, LanguageModule, StageModule],
+  imports: [
+    forwardRef(() => LessonModule),
+    LanguageModule,
+    forwardRef(() => ModeratorModule),
+    forwardRef(() => AuthModule),
+  ],
   providers: [
     StageService,
     GetStagesFromLanguageUseCase,

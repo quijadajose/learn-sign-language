@@ -19,7 +19,7 @@ export class QuizVariantRepository {
     private readonly optionVariantRepository: Repository<OptionVariant>,
     @InjectRepository(QuizSubmission)
     private readonly submissionRepository: Repository<QuizSubmission>,
-  ) {}
+  ) { }
 
   async findByLessonVariantId(lessonVariantId: string): Promise<QuizVariant[]> {
     return await this.quizVariantRepository.find({
@@ -88,6 +88,63 @@ export class QuizVariantRepository {
     }
 
     return await this.findById(quizVariant.id);
+  }
+
+  async updateWithQuestions(
+    id: string,
+    lessonVariantId: string,
+    questions: Array<{
+      question: string;
+      options: Array<{ text: string; isCorrect: boolean }>;
+    }>,
+  ): Promise<QuizVariant> {
+    const existingQuizVariant = await this.quizVariantRepository.findOne({
+      where: { id },
+      relations: ['questionVariants', 'questionVariants.optionVariants'],
+    });
+
+    if (!existingQuizVariant) {
+      throw new Error('Quiz variant not found');
+    }
+
+    // Delete existing questions and options
+    if (
+      existingQuizVariant.questionVariants &&
+      existingQuizVariant.questionVariants.length > 0
+    ) {
+      for (const question of existingQuizVariant.questionVariants) {
+        if (question.optionVariants && question.optionVariants.length > 0) {
+          await this.optionVariantRepository.delete({
+            questionVariant: { id: question.id },
+          });
+        }
+        await this.questionVariantRepository.delete({ id: question.id });
+      }
+    }
+
+    // Update lesson variant if provided
+    if (lessonVariantId) {
+      existingQuizVariant.lessonVariant = { id: lessonVariantId } as any;
+      await this.quizVariantRepository.save(existingQuizVariant);
+    }
+
+    // Create new questions and options
+    for (const questionData of questions) {
+      const questionVariant = await this.questionVariantRepository.save({
+        question: questionData.question,
+        quizVariant: { id: existingQuizVariant.id } as any,
+      });
+
+      for (const optionData of questionData.options) {
+        await this.optionVariantRepository.save({
+          text: optionData.text,
+          isCorrect: optionData.isCorrect,
+          questionVariant: { id: questionVariant.id } as any,
+        });
+      }
+    }
+
+    return await this.findById(existingQuizVariant.id);
   }
 
   async submissionTest(

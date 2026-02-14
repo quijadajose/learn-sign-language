@@ -24,6 +24,9 @@ import { LanguageService } from 'src/language/application/services/language/lang
 import { StageService } from 'src/stage/application/services/stage/stage.service';
 import { Roles } from 'src/auth/infrastructure/decorators/roles.decorator';
 import { RolesGuard } from 'src/auth/infrastructure/guards/roles/roles.guard';
+import { RequireResourcePermission } from 'src/auth/infrastructure/decorators/require-resource-permission.decorator';
+import { PermissionScope } from 'src/shared/domain/entities/moderatorPermission';
+import { ResourceAccessGuard } from 'src/auth/infrastructure/guards/resource-access/resource-access.guard';
 import {
   PaginatedResponseDto,
   PaginationDto,
@@ -41,7 +44,7 @@ export class LanguageController {
     private readonly languageService: LanguageService,
     private readonly stageService: StageService,
     private readonly quizService: QuizService,
-  ) {}
+  ) { }
 
   @UseGuards(RolesGuard)
   @Roles('admin')
@@ -270,8 +273,8 @@ export class LanguageController {
     return this.languageService.getAllLanguages(pagination);
   }
 
-  @UseGuards(RolesGuard)
-  @Roles('admin')
+  @UseGuards(ResourceAccessGuard)
+  @RequireResourcePermission(PermissionScope.LANGUAGE, { param: 'id' })
   @Get(':id')
   @ApiBearerAuth()
   @ApiOperation({
@@ -299,8 +302,8 @@ export class LanguageController {
     return this.languageService.getLanguage(id);
   }
 
-  @UseGuards(RolesGuard)
-  @Roles('admin')
+  @UseGuards(ResourceAccessGuard)
+  @RequireResourcePermission(PermissionScope.LANGUAGE, { param: 'id' })
   @Put(':id')
   @ApiBearerAuth()
   @ApiOperation({
@@ -424,8 +427,8 @@ export class LanguageController {
   async remove(@Param('id', ParseUUIDPipe) id: string): Promise<void> {
     return this.languageService.removeLanguage(id);
   }
-  @UseGuards(RolesGuard)
-  @Roles('admin')
+  @UseGuards(ResourceAccessGuard)
+  @RequireResourcePermission(PermissionScope.LANGUAGE, { param: 'id' })
   @Get(':id/stages')
   @ApiBearerAuth()
   @ApiOperation({

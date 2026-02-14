@@ -4,6 +4,7 @@ import { HiCheck, HiX } from "react-icons/hi";
 import { BACKEND_BASE_URL } from "./config";
 import { useNavigate } from "react-router-dom";
 import { userApi } from "./services/api";
+import { useAuth } from "./context/AuthContext";
 
 interface UserProfile {
   id: string;
@@ -21,8 +22,9 @@ interface UserProfile {
 }
 
 export const ResponsiveProfileForm = () => {
+  const { user, token, login } = useAuth();
   const [profile, setProfile] = useState<UserProfile | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isEditing, setIsEditing] = useState(false);
   const [preview, setPreview] = useState<string | null>(null);
@@ -42,50 +44,31 @@ export const ResponsiveProfileForm = () => {
   };
 
   useEffect(() => {
-    const fetchProfileData = async () => {
-      setLoading(true);
-      setError(null);
-      const token = localStorage.getItem("auth");
+    if (!token) {
+      setError("Authentication token not found. Please log in again.");
+      addToast("error", "No estás autenticado. Redirigiendo al login...");
+      setTimeout(() => navigate("/login"), 3000);
+      return;
+    }
 
-      if (!token || token === "undefined") {
-        setError("Authentication token not found. Please log in again.");
-        addToast("error", "No estás autenticado. Redirigiendo al login...");
-        setLoading(false);
-        setTimeout(() => navigate("/login"), 3000);
-        return;
-      }
-
-      const storedUser = localStorage.getItem("user");
-      if (storedUser) {
-        try {
-          const parsedUser: UserProfile = JSON.parse(storedUser);
-          if (parsedUser && parsedUser.id && parsedUser.email) {
-            setProfile(parsedUser);
-            setLoading(false);
-            return;
-          } else {
-            localStorage.removeItem("user");
-          }
-        } catch (parseError) {
-          localStorage.removeItem("user");
+    if (user) {
+      setProfile(user as unknown as UserProfile);
+    } else {
+      const fetchProfileData = async () => {
+        setLoading(true);
+        const response = await userApi.getMe();
+        if (response.success) {
+          setProfile(response.data);
+          login(response.data, token);
+        } else {
+          setError(`Failed to fetch profile: ${response.message}`);
+          addToast("error", `Error al cargar el perfil: ${response.message}`);
         }
-      }
-
-      const response = await userApi.getMe();
-
-      if (response.success) {
-        setProfile(response.data);
-        localStorage.setItem("user", JSON.stringify(response.data));
-      } else {
-        setError(`Failed to fetch profile: ${response.message}`);
-        addToast("error", `Error al cargar el perfil: ${response.message}`);
-      }
-
-      setLoading(false);
-    };
-
-    fetchProfileData();
-  }, [navigate]);
+        setLoading(false);
+      };
+      fetchProfileData();
+    }
+  }, [user, token, navigate]);
 
   useEffect(() => {
     if (!profile) return;
@@ -133,7 +116,6 @@ export const ResponsiveProfileForm = () => {
       return;
     }
 
-    const token = localStorage.getItem("auth");
     if (!token || token === "undefined") {
       addToast(
         "error",
@@ -223,9 +205,10 @@ export const ResponsiveProfileForm = () => {
         confirmPassword: "",
       };
       setProfile(finalProfileData);
-      localStorage.setItem("user", JSON.stringify(finalProfileData));
 
-      window.dispatchEvent(new CustomEvent("userDataUpdated"));
+      // Actualizamos el contexto
+      login(finalProfileData as any, token!);
+
       setIsEditing(false);
       setNewPhotoFile(null);
       addToast("success", "Perfil actualizado correctamente.");
@@ -257,11 +240,10 @@ export const ResponsiveProfileForm = () => {
           {toastMessages.map((toast) => (
             <Toast key={toast.id}>
               <div
-                className={`inline-flex size-8 shrink-0 items-center justify-center rounded-lg ${
-                  toast.type === "success"
-                    ? "bg-green-100 text-green-500 dark:bg-green-800 dark:text-green-200"
-                    : "bg-red-100 text-red-500 dark:bg-red-800 dark:text-red-200"
-                }`}
+                className={`inline-flex size-8 shrink-0 items-center justify-center rounded-lg ${toast.type === "success"
+                  ? "bg-green-100 text-green-500 dark:bg-green-800 dark:text-green-200"
+                  : "bg-red-100 text-red-500 dark:bg-red-800 dark:text-red-200"
+                  }`}
               >
                 {toast.type === "success" ? (
                   <HiCheck className="size-5" />
@@ -301,11 +283,10 @@ export const ResponsiveProfileForm = () => {
         {toastMessages.map((toast) => (
           <Toast key={toast.id}>
             <div
-              className={`inline-flex size-8 shrink-0 items-center justify-center rounded-lg ${
-                toast.type === "success"
-                  ? "bg-green-100 text-green-500 dark:bg-green-800 dark:text-green-200"
-                  : "bg-red-100 text-red-500 dark:bg-red-800 dark:text-red-200"
-              }`}
+              className={`inline-flex size-8 shrink-0 items-center justify-center rounded-lg ${toast.type === "success"
+                ? "bg-green-100 text-green-500 dark:bg-green-800 dark:text-green-200"
+                : "bg-red-100 text-red-500 dark:bg-red-800 dark:text-red-200"
+                }`}
             >
               {toast.type === "success" ? (
                 <HiCheck className="size-5" />

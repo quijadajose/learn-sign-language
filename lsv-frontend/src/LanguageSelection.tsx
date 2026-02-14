@@ -4,6 +4,7 @@ import { HiExclamationCircle } from "react-icons/hi";
 import { useLocalStorage } from "./hooks/useLocalStorage";
 import { useToast } from "./components/ToastProvider";
 import { languageApi, regionApi } from "./services/api";
+import { useAuth } from "./context/AuthContext";
 
 interface Language {
   id: string;
@@ -49,12 +50,6 @@ interface EnrolledRegion {
   region: Region;
 }
 
-interface PaginatedEnrolledRegionResponse {
-  data: EnrolledRegion[];
-  total: number;
-  page: number;
-  pageSize: number;
-}
 
 const ITEMS_PER_PAGE = 8;
 
@@ -76,7 +71,7 @@ export default function LanguageSelection({ onLanguageSelected }: Props) {
     string | null
   >("selectedRegionId", null);
   const [enrolling, setEnrolling] = useState(false);
-  const [token] = useLocalStorage<string | null>("auth", null);
+  const { token } = useAuth();
   const [title, setTitle] = useState("Quiero aprender:");
   const [showRegionSelection, setShowRegionSelection] = useState(false);
   const [selectedLanguage, setSelectedLanguage] = useState<Language | null>(
@@ -104,7 +99,7 @@ export default function LanguageSelection({ onLanguageSelected }: Props) {
         if (!enrolledResponse.success) {
           throw new Error(
             enrolledResponse.message ||
-              "No se pudieron obtener tus idiomas inscritos.",
+            "No se pudieron obtener tus idiomas inscritos.",
           );
         }
 
@@ -112,9 +107,9 @@ export default function LanguageSelection({ onLanguageSelected }: Props) {
           enrolledResponse.data;
 
         if (enrolledData.data.length > 0) {
-          // Verificar si hay un idioma ya seleccionado en localStorage
-          const storedLanguageId = localStorage.getItem("selectedLanguageId");
-          const storedRegionId = localStorage.getItem("selectedRegionId");
+          // Ya no necesitamos leer manualmente de localStorage
+          const storedLanguageId = selectedLanguageId;
+          const storedRegionId = selectedRegionId;
 
           // Buscar el idioma seleccionado en los idiomas inscritos
           let selectedLanguage = null;
@@ -148,8 +143,6 @@ export default function LanguageSelection({ onLanguageSelected }: Props) {
 
               setSelectedLanguageId(selectedLanguage.id);
               setSelectedRegionId(selectedRegion.id);
-              localStorage.setItem("selectedLanguageId", selectedLanguage.id);
-              localStorage.setItem("selectedRegionId", selectedRegion.id);
               addToast(
                 "success",
                 `Continuando con ${selectedLanguage.name} - ${selectedRegion.name}.`,
@@ -177,8 +170,6 @@ export default function LanguageSelection({ onLanguageSelected }: Props) {
             const firstRegion = enrolledRegionsResponse.data.data[0].region;
             setSelectedLanguageId(firstLanguage.id);
             setSelectedRegionId(firstRegion.id);
-            localStorage.setItem("selectedLanguageId", firstLanguage.id);
-            localStorage.setItem("selectedRegionId", firstRegion.id);
             addToast(
               "success",
               `Continuando con ${firstLanguage.name} - ${firstRegion.name}.`,
@@ -191,11 +182,8 @@ export default function LanguageSelection({ onLanguageSelected }: Props) {
           if (enrolledData.data.length === 1) {
             const enrolledLanguage = enrolledData.data[0].language;
             setSelectedLanguageId(enrolledLanguage.id);
-            setSelectedLanguage(enrolledLanguage);
-            setIsLanguageFromEnrollment(true); // El idioma viene de inscripción previa
-            localStorage.setItem("selectedLanguageId", enrolledLanguage.id);
             // Cargar regiones para este idioma y mostrar el panel de selección
-            await loadRegions(enrolledLanguage.id, enrolledLanguage);
+            await loadRegions(enrolledLanguage.id);
             setShowRegionSelection(true);
             setTitle("Selecciona tu región:");
             setLoading(false);
@@ -217,7 +205,7 @@ export default function LanguageSelection({ onLanguageSelected }: Props) {
         if (!availableResponse.success) {
           throw new Error(
             availableResponse.message ||
-              "No se pudieron obtener los idiomas disponibles.",
+            "No se pudieron obtener los idiomas disponibles.",
           );
         }
 
@@ -227,7 +215,7 @@ export default function LanguageSelection({ onLanguageSelected }: Props) {
           const singleLanguage = availableData.data[0];
           addToast(
             "info",
-            `Inscribiéndote en el único idioma disponible: ${singleLanguage.name}`,
+            `Inscribiéndote en el único idioma disponible: ${singleLanguage.name} `,
           );
           setSelectedLanguageId(singleLanguage.id);
           await handleNext(singleLanguage);
@@ -259,17 +247,16 @@ export default function LanguageSelection({ onLanguageSelected }: Props) {
   const handleSelect = (lang: Language) => {
     setSelectedLanguageId(lang.id);
     setSelectedLanguage(lang);
-    addToast("success", `Idioma seleccionado: ${lang.name}`);
+    addToast("success", `Idioma seleccionado: ${lang.name} `);
   };
 
   const handleRegionSelect = (region: Region) => {
     setSelectedRegionId(region.id);
-    addToast("success", `Región seleccionada: ${region.name}`);
+    addToast("success", `Región seleccionada: ${region.name} `);
   };
 
   const loadRegions = async (
     languageId: string,
-    _selectedLanguage?: Language,
   ) => {
     try {
       setLoading(true);
@@ -295,8 +282,7 @@ export default function LanguageSelection({ onLanguageSelected }: Props) {
         const response = await languageApi.enrollInLanguage(languageId);
 
         if (response.success) {
-          // Guardar en localStorage
-          localStorage.setItem("selectedLanguageId", languageId);
+          setSelectedLanguageId(languageId);
           addToast(
             "success",
             `Inscrito en ${selectedLanguage?.name} correctamente.`,
@@ -319,7 +305,7 @@ export default function LanguageSelection({ onLanguageSelected }: Props) {
         setSelectedRegionId(languageRegions[0].id);
         addToast(
           "info",
-          `Región automáticamente seleccionada: ${languageRegions[0].name}`,
+          `Región automáticamente seleccionada: ${languageRegions[0].name} `,
         );
       }
     } catch (err: any) {
@@ -353,7 +339,7 @@ export default function LanguageSelection({ onLanguageSelected }: Props) {
     if (!showRegionSelection) {
       setSelectedLanguage(selected);
       setIsLanguageFromEnrollment(false); // El idioma fue seleccionado en el asistente
-      await loadRegions(selected.id, selected);
+      await loadRegions(selected.id);
       setShowRegionSelection(true);
       setTitle("Selecciona tu región:");
       return;
@@ -368,10 +354,9 @@ export default function LanguageSelection({ onLanguageSelected }: Props) {
     );
 
     if (response.success) {
-      // Guardar en localStorage
-      localStorage.setItem("selectedLanguageId", selected.id);
+      setSelectedLanguageId(selected.id);
       if (selectedRegionId) {
-        localStorage.setItem("selectedRegionId", selectedRegionId);
+        setSelectedRegionId(selectedRegionId);
       }
 
       addToast("success", `Inscrito en ${selected.name} correctamente.`);
@@ -418,7 +403,7 @@ export default function LanguageSelection({ onLanguageSelected }: Props) {
               <Card
                 key={lang.id}
                 onClick={() => handleSelect(lang)}
-                className={`cursor-pointer ${selectedLanguageId === lang.id ? "ring-2 ring-blue-500" : ""}`}
+                className={`cursor - pointer ${selectedLanguageId === lang.id ? "ring-2 ring-blue-500" : ""} `}
               >
                 <h5 className="text-xl font-semibold text-gray-900 dark:text-white">
                   {lang.name}
@@ -466,7 +451,7 @@ export default function LanguageSelection({ onLanguageSelected }: Props) {
               <Card
                 key={region.id}
                 onClick={() => handleRegionSelect(region)}
-                className={`cursor-pointer ${selectedRegionId === region.id ? "ring-2 ring-blue-500" : ""}`}
+                className={`cursor - pointer ${selectedRegionId === region.id ? "ring-2 ring-blue-500" : ""} `}
               >
                 <h5 className="text-xl font-semibold text-gray-900 dark:text-white">
                   {region.name}

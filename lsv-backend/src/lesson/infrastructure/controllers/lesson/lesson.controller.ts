@@ -20,6 +20,9 @@ import { CreateLessonDto } from 'src/lesson/domain/dto/create-lesson/create-less
 import { LessonService } from 'src/lesson/application/services/lesson/lesson.service';
 import { Roles } from 'src/auth/infrastructure/decorators/roles.decorator';
 import { RolesGuard } from 'src/auth/infrastructure/guards/roles/roles.guard';
+import { RequireResourcePermission } from 'src/auth/infrastructure/decorators/require-resource-permission.decorator';
+import { PermissionScope } from 'src/shared/domain/entities/moderatorPermission';
+import { ResourceAccessGuard } from 'src/auth/infrastructure/guards/resource-access/resource-access.guard';
 import { Lesson } from 'src/shared/domain/entities/lesson';
 import * as path from 'path';
 import {
@@ -34,7 +37,7 @@ import { LessonVariant } from 'src/shared/domain/entities/lessonVariant';
 
 @Controller('lesson')
 export class LessonController {
-  constructor(private readonly lessonAdminService: LessonService) {}
+  constructor(private readonly lessonAdminService: LessonService) { }
 
   @UseGuards(AuthGuard('jwt'))
   @Get('by-language/:languageId')
@@ -86,15 +89,18 @@ export class LessonController {
     );
   }
 
-  @UseGuards(RolesGuard)
-  @Roles('admin')
+  @UseGuards(ResourceAccessGuard)
+  @RequireResourcePermission(PermissionScope.LANGUAGE, { body: 'languageId' }, { allowRegionModerators: true })
   @Post()
   async create(@Body() createLessonDto: CreateLessonDto): Promise<Lesson> {
     return this.lessonAdminService.createLesson(createLessonDto);
   }
 
-  @UseGuards(RolesGuard)
-  @Roles('admin')
+  @UseGuards(ResourceAccessGuard)
+  @RequireResourcePermission(PermissionScope.LANGUAGE, {
+    param: 'id',
+    resolve: 'lesson.languageId',
+  }, { allowRegionModerators: true })
   @Post(':id/image')
   @UseInterceptors(
     FileInterceptor('file', {
@@ -167,8 +173,11 @@ export class LessonController {
     return this.lessonAdminService.getQuizzesByLessonId(id, regionId);
   }
 
-  @UseGuards(RolesGuard)
-  @Roles('admin')
+  @UseGuards(ResourceAccessGuard)
+  @RequireResourcePermission(PermissionScope.LANGUAGE, {
+    param: 'id',
+    resolve: 'lesson.languageId',
+  }, { allowRegionModerators: true })
   @Put(':id')
   async update(
     @Param('id', ParseUUIDPipe) id: string,
@@ -177,22 +186,31 @@ export class LessonController {
     return this.lessonAdminService.updateLesson(id, createLessonDto);
   }
 
-  @UseGuards(RolesGuard)
-  @Roles('admin')
+  @UseGuards(ResourceAccessGuard)
+  @RequireResourcePermission(PermissionScope.LANGUAGE, {
+    param: 'id',
+    resolve: 'lesson.languageId',
+  }, { allowRegionModerators: true })
   @Delete(':id')
   async remove(@Param('id', ParseUUIDPipe) id: string): Promise<void> {
     return this.lessonAdminService.deleteLesson(id);
   }
 
-  @UseGuards(RolesGuard)
-  @Roles('admin')
+  @UseGuards(ResourceAccessGuard)
+  @RequireResourcePermission(PermissionScope.LANGUAGE, {
+    param: 'id',
+    resolve: 'lesson.languageId',
+  }, { allowRegionModerators: true })
   @Get(':id')
   async findOne(@Param('id', ParseUUIDPipe) id: string): Promise<Lesson> {
     return this.lessonAdminService.getLessonById(id);
   }
 
-  @UseGuards(RolesGuard)
-  @Roles('admin')
+  @UseGuards(ResourceAccessGuard)
+  @RequireResourcePermission(PermissionScope.LANGUAGE, {
+    param: 'id',
+    resolve: 'lesson.languageId',
+  }, { allowRegionModerators: true })
   @Get(':id/variants')
   async getLessonVariants(
     @Param('id', ParseUUIDPipe) lessonId: string,
@@ -200,8 +218,8 @@ export class LessonController {
     return this.lessonAdminService.getLessonVariants(lessonId);
   }
 
-  @UseGuards(RolesGuard)
-  @Roles('admin')
+  @UseGuards(ResourceAccessGuard)
+  @RequireResourcePermission(PermissionScope.REGION, { body: 'regionId' })
   @Post(':id/variants')
   async createLessonVariant(
     @Param('id', ParseUUIDPipe) lessonId: string,
@@ -223,8 +241,11 @@ export class LessonController {
     return this.lessonAdminService.getLessonVariant(lessonId, variantId);
   }
 
-  @UseGuards(RolesGuard)
-  @Roles('admin')
+  @UseGuards(ResourceAccessGuard)
+  @RequireResourcePermission(PermissionScope.REGION, {
+    param: 'variantId',
+    resolve: 'variant.regionId',
+  })
   @Put(':id/variants/:variantId')
   async updateLessonVariant(
     @Param('id', ParseUUIDPipe) lessonId: string,
@@ -238,8 +259,11 @@ export class LessonController {
     );
   }
 
-  @UseGuards(RolesGuard)
-  @Roles('admin')
+  @UseGuards(ResourceAccessGuard)
+  @RequireResourcePermission(PermissionScope.REGION, {
+    param: 'variantId',
+    resolve: 'variant.regionId',
+  })
   @Delete(':id/variants/:variantId')
   async deleteLessonVariant(
     @Param('id', ParseUUIDPipe) lessonId: string,

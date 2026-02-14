@@ -227,7 +227,7 @@ export class SeederService implements OnModuleInit {
     private readonly quizVariantService: QuizVariantService,
     private readonly regionService: RegionService,
     private readonly countryDivisionService: CountryDivisionService,
-  ) {}
+  ) { }
 
   onModuleInit() {
     this.seed();
@@ -238,6 +238,7 @@ export class SeederService implements OnModuleInit {
     try {
       await this.seedAdminUser();
       await this.seedNormalUser();
+      await this.seedothersUsers();
       await this.seedCountriesAndDivisions();
       await this.seedLanguages();
       await this.seedStages();
@@ -246,9 +247,8 @@ export class SeederService implements OnModuleInit {
       await this.seedQuizzes();
       await this.seedLessonVariants();
       await this.seedQuizVariants();
-      console.log('=== Seeder V2 completado exitosamente ===');
     } catch (error) {
-      console.error('Error en Seeder V2:', error?.message ?? error);
+      console.error('Error en Seeder:', error?.message ?? error);
       throw error;
     }
   }
@@ -306,6 +306,46 @@ export class SeederService implements OnModuleInit {
     await this.registerUserUseCase.register({
       age: 20,
       email: normalUserEmail,
+      firstName: 'Usuario',
+      lastName: 'Normal',
+      password: normalUserPassword,
+      isRightHanded: true,
+      role: 'user',
+    });
+    console.log('Usuario normal creado exitosamente');
+  }
+  private async seedothersUsers() {
+    console.log('Seeding usuario normal...');
+    const normalUserEmail = 'moderator@gmail.com';
+    const normalUserPassword =
+      this.configService.get<string>('API_USER_PASSWORD');
+
+    if (!normalUserEmail || !normalUserPassword) {
+      console.warn(
+        'API_USER_EMAIL o API_USER_PASSWORD no configurados, saltando creación de usuario normal',
+      );
+      return;
+    }
+
+    const existingUser =
+      await this.findUserUseCase.findByEmail(normalUserEmail);
+    if (existingUser) {
+      console.log('Usuario normal ya existe, saltando...');
+      return;
+    }
+
+    await this.registerUserUseCase.register({
+      age: 20,
+      email: normalUserEmail,
+      firstName: 'Usuario',
+      lastName: 'Normal',
+      password: normalUserPassword,
+      isRightHanded: true,
+      role: 'user',
+    });
+    await this.registerUserUseCase.register({
+      age: 20,
+      email: "localModeratorEmail@gmail.com",
       firstName: 'Usuario',
       lastName: 'Normal',
       password: normalUserPassword,

@@ -383,6 +383,12 @@ export const adminApi = {
   createLanguage: (languageData: any) =>
     ApiService.post("/languages", languageData),
 
+  updateLanguage: (languageId: string, languageData: any) =>
+    ApiService.put(`/languages/${languageId}`, languageData),
+
+  deleteLanguage: (languageId: string) =>
+    ApiService.delete(`/languages/${languageId}`),
+
   uploadLanguageImage: (file: File, languageId: string) => {
     const fileExtension = file.name.split(".").pop()?.toLowerCase();
     const validFormats = ["png", "jpeg", "jpg", "webp"];
@@ -403,8 +409,12 @@ export const adminApi = {
     languageId: string,
     page: number = 1,
     limit: number = 100,
+    stageId?: string,
   ) => {
-    const params = { page, limit, orderBy: "name", sortOrder: "ASC" };
+    const params: any = { page, limit, orderBy: "name", sortOrder: "ASC" };
+    if (stageId) {
+      params.stageId = stageId;
+    }
     const url = ApiService.buildUrl(
       `/lesson/by-language/${languageId}`,
       params,
@@ -561,6 +571,17 @@ export const quizVariantApi = {
     }>;
   }) => ApiService.post("/quiz-variants", data),
 
+  updateQuizVariant: (
+    id: string,
+    data: {
+      lessonVariantId: string;
+      questions: Array<{
+        question: string;
+        options: Array<{ text: string; isCorrect: boolean }>;
+      }>;
+    },
+  ) => ApiService.put(`/quiz-variants/${id}`, data),
+
   deleteQuizVariant: (id: string) => ApiService.delete(`/quiz-variants/${id}`),
 };
 
@@ -584,6 +605,45 @@ export const countryDivisionApi = {
 
   getDivisionsByCountry: (countryCode: string) =>
     ApiService.get(`/country-division/countries/${countryCode}/divisions`),
+
+  getCountriesWithDivisions: (name: string) => {
+    const url = ApiService.buildUrl("/region/countries-with-divisions", {
+      name,
+    });
+    return ApiService.get(url);
+  },
+};
+
+export interface ModeratorPaginationParams {
+  page?: number;
+  limit?: number;
+  orderBy?: string;
+  sortOrder?: "ASC" | "DESC";
+  languageId?: string;
+  regionId?: string;
+}
+
+export const moderatorApi = {
+  listModerators: (params?: ModeratorPaginationParams) => {
+    const url = ApiService.buildUrl("/admin/moderators", params || {});
+    return ApiService.get(url);
+  },
+
+  searchUsers: (query: string) => {
+    const url = ApiService.buildUrl("/admin/moderators/users/search", {
+      q: query,
+    });
+    return ApiService.get(url);
+  },
+
+  assignPermission: (data: {
+    userId: string;
+    scope: "language" | "region";
+    targetId: string;
+  }) => ApiService.post("/admin/moderators", data),
+
+  revokePermission: (permissionId: string) =>
+    ApiService.delete(`/admin/moderators/${permissionId}`),
 };
 
 export default ApiService;

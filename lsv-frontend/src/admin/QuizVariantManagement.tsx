@@ -15,12 +15,14 @@ import {
 import {
   HiPlus,
   HiTrash,
+  HiPencil,
   HiExclamationCircle,
   HiPhotograph,
 } from "react-icons/hi";
 import { useToast } from "../components/ToastProvider";
 import { quizVariantApi, lessonVariantApi, quizApi } from "../services/api";
 import { BACKEND_BASE_URL } from "../config";
+import { usePermissions } from "../hooks/usePermissions";
 
 interface QuizOption {
   id: string;
@@ -78,7 +80,11 @@ const QuizVariantManagement = () => {
   const [creating, setCreating] = useState(false);
   const [uploadingImage, setUploadingImage] = useState<string | null>(null);
   const [loadingQuestions, setLoadingQuestions] = useState(false);
+  const [editingQuizVariantId, setEditingQuizVariantId] = useState<string | null>(
+    null,
+  );
   const addToast = useToast();
+  const { isAdmin, hasRegionPermission } = usePermissions();
 
   useEffect(() => {
     if (lessonId) {
@@ -123,7 +129,7 @@ const QuizVariantManagement = () => {
     }
   };
 
-  const handleCreateQuizVariant = async () => {
+  const handleSaveQuizVariant = async () => {
     if (!selectedLessonVariantId || questions.length === 0) {
       addToast(
         "error",
@@ -138,7 +144,7 @@ const QuizVariantManagement = () => {
 
     try {
       setCreating(true);
-      const response = await quizVariantApi.createQuizVariant({
+      const data = {
         lessonVariantId: selectedLessonVariantId,
         questions: questions.map((q) => ({
           question: q.question,
@@ -149,25 +155,52 @@ const QuizVariantManagement = () => {
               isCorrect: opt.isCorrect,
             })),
         })),
-      });
+      };
+
+      const response = editingQuizVariantId
+        ? await quizVariantApi.updateQuizVariant(editingQuizVariantId, data)
+        : await quizVariantApi.createQuizVariant(data);
 
       if (response.success) {
-        addToast("success", "Variante de quiz creada exitosamente");
+        addToast(
+          "success",
+          `Variante de quiz ${editingQuizVariantId ? "actualizada" : "creada"} exitosamente`,
+        );
         setShowCreateModal(false);
+        setEditingQuizVariantId(null);
         setQuestions([]);
         setSelectedLessonVariantId("");
         loadData();
       } else {
         addToast(
           "error",
-          response.message || "Error al crear la variante de quiz",
+          response.message ||
+          `Error al ${editingQuizVariantId ? "actualizar" : "crear"} la variante de quiz`,
         );
       }
     } catch (err) {
-      addToast("error", "Error al crear la variante de quiz");
+      addToast(
+        "error",
+        `Error al ${editingQuizVariantId ? "actualizar" : "crear"} la variante de quiz`,
+      );
     } finally {
       setCreating(false);
     }
+  };
+
+  const handleOpenEditModal = (variant: QuizVariant) => {
+    setEditingQuizVariantId(variant.id);
+    setSelectedLessonVariantId(variant.lessonVariant.id);
+    setQuestions(
+      variant.questionVariants.map((q) => ({
+        question: q.question,
+        options: q.optionVariants.map((o) => ({
+          text: o.text,
+          isCorrect: o.isCorrect,
+        })),
+      })),
+    );
+    setShowCreateModal(true);
   };
 
   const handleDeleteQuizVariant = async (id: string) => {
@@ -396,7 +429,12 @@ const QuizVariantManagement = () => {
           Gestión de Variantes de Quizzes
         </h2>
         <Button
-          onClick={() => setShowCreateModal(true)}
+          onClick={() => {
+            setEditingQuizVariantId(null);
+            setQuestions([]);
+            setSelectedLessonVariantId("");
+            setShowCreateModal(true);
+          }}
           className="bg-blue-600 hover:bg-blue-700"
         >
           <HiPlus className="mr-2 h-4 w-4" />
@@ -441,13 +479,26 @@ const QuizVariantManagement = () => {
                   </Table.Cell>
                   <Table.Cell>
                     <div className="flex space-x-2">
-                      <Button
-                        size="sm"
-                        color="failure"
-                        onClick={() => handleDeleteQuizVariant(variant.id)}
-                      >
-                        <HiTrash className="h-4 w-4" />
-                      </Button>
+                      {(isAdmin ||
+                        (variant.lessonVariant?.region?.id &&
+                          hasRegionPermission(variant.lessonVariant.region.id))) && (
+                          <>
+                            <Button
+                              size="sm"
+                              color="info"
+                              onClick={() => handleOpenEditModal(variant)}
+                            >
+                              <HiPencil className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              size="sm"
+                              color="failure"
+                              onClick={() => handleDeleteQuizVariant(variant.id)}
+                            >
+                              <HiTrash className="h-4 w-4" />
+                            </Button>
+                          </>
+                        )}
                     </div>
                   </Table.Cell>
                 </Table.Row>
@@ -468,12 +519,15 @@ const QuizVariantManagement = () => {
         show={showCreateModal}
         onClose={() => {
           setShowCreateModal(false);
+          setEditingQuizVariantId(null);
           setQuestions([]);
           setSelectedLessonVariantId("");
         }}
         size="4xl"
       >
-        <Modal.Header>Crear Variante de Quiz</Modal.Header>
+        <Modal.Header>
+          {editingQuizVariantId ? "Editar Variante de Quiz" : "Crear Variante de Quiz"}
+        </Modal.Header>
         <Modal.Body>
           <div className="space-y-6">
             <div>
@@ -487,12 +541,17 @@ const QuizVariantManagement = () => {
                   disabled={loadingQuestions}
                 >
                   <option value="">Selecciona una variante de lección</option>
-                  {lessonVariants.map((variant) => (
-                    <option key={variant.id} value={variant.id}>
-                      {variant.name} - {variant.region.name} (
-                      {variant.region.code})
-                    </option>
-                  ))}
+                  {lessonVariants
+                    .filter(
+                      (variant) =>
+                        isAdmin || hasRegionPermission(variant.region.id),
+                    )
+                    .map((variant) => (
+                      <option key={variant.id} value={variant.id}>
+                        {variant.name} - {variant.region.name} (
+                        {variant.region.code})
+                      </option>
+                    ))}
                 </select>
                 {loadingQuestions && (
                   <div className="absolute right-3 top-1/2 -translate-y-1/2 transform">
@@ -689,24 +748,19 @@ const QuizVariantManagement = () => {
         <Modal.Footer>
           <Button
             color="success"
-            onClick={handleCreateQuizVariant}
+            onClick={handleSaveQuizVariant}
+            isProcessing={creating}
             disabled={
               creating || !selectedLessonVariantId || questions.length === 0
             }
           >
-            {creating ? (
-              <>
-                <Spinner size="sm" className="mr-2" />
-                Creando...
-              </>
-            ) : (
-              "Crear Variante"
-            )}
+            {editingQuizVariantId ? "Actualizar Variante" : "Crear Variante"}
           </Button>
           <Button
             color="gray"
             onClick={() => {
               setShowCreateModal(false);
+              setEditingQuizVariantId(null);
               setQuestions([]);
               setSelectedLessonVariantId("");
             }}

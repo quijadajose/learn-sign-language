@@ -1,5 +1,6 @@
 import { Card, Button, Progress } from "flowbite-react";
 import { useNavigate } from "react-router-dom";
+import { useLocalStorage } from "../hooks/useLocalStorage";
 
 interface StageProgress {
   id: string;
@@ -16,18 +17,19 @@ interface Props {
 
 export default function StageDetailCard({ stage }: Props) {
   const navigate = useNavigate();
+  const [selectedLanguageId] = useLocalStorage<string | null>("selectedLanguageId", null);
+  const [selectedRegionId] = useLocalStorage<string | null>("selectedRegionId", null);
+  const [, setPersistedStageId] = useLocalStorage<string | null>(`selectedStageId_${selectedLanguageId}`, null);
 
   const handleViewLessons = () => {
-    const languageId = localStorage.getItem("selectedLanguageId");
-    const regionId = localStorage.getItem("selectedRegionId");
-    // Guardar la sección seleccionada en localStorage
-    if (languageId) {
-      localStorage.setItem(`selectedStageId_${languageId}`, stage.id);
+    // Guardar la sección seleccionada
+    if (selectedLanguageId) {
+      setPersistedStageId(stage.id);
     }
     navigate(`/lessons/stage/${stage.id}`, {
       state: {
-        languageId,
-        regionId,
+        languageId: selectedLanguageId,
+        regionId: selectedRegionId,
       },
     });
   };

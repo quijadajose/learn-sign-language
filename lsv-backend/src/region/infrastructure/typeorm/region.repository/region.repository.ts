@@ -14,7 +14,7 @@ export class RegionRepository implements RegionRepositoryInterface {
   constructor(
     @InjectRepository(Region)
     private readonly regionRepository: Repository<Region>,
-  ) {}
+  ) { }
 
   async findById(id: string): Promise<Region | null> {
     return await this.regionRepository.findOne({
@@ -97,6 +97,13 @@ export class RegionRepository implements RegionRepositoryInterface {
   async findDefaultRegion(): Promise<Region | null> {
     return await this.regionRepository.findOne({
       where: { isDefault: true },
+      relations: ['language'],
+    });
+  }
+
+  async findDefaultByLanguageId(languageId: string): Promise<Region | null> {
+    return await this.regionRepository.findOne({
+      where: { isDefault: true, languageId },
       relations: ['language'],
     });
   }

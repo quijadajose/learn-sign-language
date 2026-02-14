@@ -15,10 +15,10 @@ import {
   HiExclamationCircle,
   HiClock,
   HiCheckCircle,
-  HiArrowLeft,
 } from "react-icons/hi";
 import { lessonApi } from "./services/api";
 import { BACKEND_BASE_URL } from "./config";
+import { useAuth } from "./context/AuthContext";
 
 interface Question {
   questionId: string;
@@ -62,7 +62,10 @@ export default function LessonListView() {
   const [lessons, setLessons] = useState<Lesson[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [token] = useLocalStorage<string | null>("auth", null);
+  const { token } = useAuth();
+  const [selectedLanguageId] = useLocalStorage<string | null>("selectedLanguageId", null);
+  const [selectedRegionId] = useLocalStorage<string | null>("selectedRegionId", null);
+  const [, setPersistedStageId] = useLocalStorage<string | null>(`selectedStageId_${selectedLanguageId}`, null);
   const addToast = useToast();
   const [selectedLesson, setSelectedLesson] = useState<Lesson | null>(null);
   const [showModal, setShowModal] = useState(false);
@@ -79,18 +82,7 @@ export default function LessonListView() {
       }
 
       const { languageId, regionId: regionIdFromState } = location.state || {};
-      // Fallback a localStorage si no viene en el estado de navegación
-      const regionId =
-        regionIdFromState || localStorage.getItem("selectedRegionId");
-
-      // Log temporal para depuración
-      console.log("LessonListView - regionId:", {
-        fromState: regionIdFromState,
-        fromLocalStorage: localStorage.getItem("selectedRegionId"),
-        final: regionId,
-        willSend: regionId || undefined,
-      });
-
+      const regionId = regionIdFromState || selectedRegionId;
       if (!languageId) {
         setError("No se ha proporcionado un idioma para cargar las lecciones.");
         setLoading(false);
@@ -125,8 +117,7 @@ export default function LessonListView() {
       }
 
       const { languageId } = location.state || {};
-      const languageIdFromStorage = localStorage.getItem("selectedLanguageId");
-      const finalLanguageId = languageId || languageIdFromStorage;
+      const finalLanguageId = languageId || selectedLanguageId;
 
       if (!finalLanguageId) {
         setLoadingStage(false);
@@ -174,27 +165,22 @@ export default function LessonListView() {
   };
 
   const handleChangeStage = (newStageId: string) => {
-    const { languageId } = location.state || {};
-    const languageIdFromStorage = localStorage.getItem("selectedLanguageId");
-    const finalLanguageId = languageId || languageIdFromStorage;
-    const regionId = localStorage.getItem("selectedRegionId");
+    const { languageId, regionId: regionIdFromState } = location.state || {};
+    const finalLanguageId = languageId || selectedLanguageId;
+    const finalRegionId = regionIdFromState || selectedRegionId;
 
-    if (finalLanguageId) {
-      // Guardar la nueva sección seleccionada
-      localStorage.setItem(`selectedStageId_${finalLanguageId}`, newStageId);
+    if (finalLanguageId === selectedLanguageId) {
+      setPersistedStageId(newStageId);
     }
 
     navigate(`/lessons/stage/${newStageId}`, {
       state: {
         languageId: finalLanguageId,
-        regionId: regionId,
+        regionId: finalRegionId,
       },
     });
   };
 
-  const handleBackToDashboard = () => {
-    navigate("/dashboard");
-  };
 
   const handleShowSubmissions = (lesson: Lesson) => {
     setSelectedLesson(lesson);
@@ -388,13 +374,12 @@ export default function LessonListView() {
                       {formatDate(submission.submittedAt)}
                     </span>
                     <span
-                      className={`rounded-full px-3 py-1 text-sm font-medium ${
-                        submission.score === 100
-                          ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200"
-                          : submission.score >= 80
-                            ? "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200"
-                            : "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200"
-                      }`}
+                      className={`rounded-full px-3 py-1 text-sm font-medium ${submission.score === 100
+                        ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200"
+                        : submission.score >= 80
+                          ? "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200"
+                          : "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200"
+                        }`}
                     >
                       {submission.score}/100
                     </span>

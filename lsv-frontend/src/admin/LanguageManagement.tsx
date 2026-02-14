@@ -1,6 +1,9 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
+import { useNavigate } from "react-router-dom";
 import { BACKEND_BASE_URL } from "../config";
-import { adminApi } from "../services/api";
+import { adminApi, countryDivisionApi } from "../services/api";
+import { usePermissions } from "../hooks/usePermissions";
+import { useLocalStorage } from "../hooks/useLocalStorage";
 import {
   Button,
   Modal,
@@ -19,6 +22,7 @@ import {
   HiX,
   HiTrash,
   HiPlus,
+  HiCollection,
 } from "react-icons/hi";
 import Select from "react-select";
 
@@ -41,14 +45,11 @@ interface CountryOption {
   label: string;
 }
 
-interface LanguagesResponse {
-  data: Language[];
-  total: number;
-  page: number;
-  pageSize: number;
-}
-
 export default function LanguageManagement() {
+  const navigate = useNavigate();
+  const { isAdmin, isModerator, canCreateLanguage, hasLanguagePermission } =
+    usePermissions();
+  const [, setSelectedLanguageId] = useLocalStorage<string | null>("selectedLanguageId", null);
   const [languages, setLanguages] = useState<Language[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -86,6 +87,7 @@ export default function LanguageManagement() {
     { id: number; type: "success" | "error"; message: string }[]
   >([]);
   const [imageTimestamp, setImageTimestamp] = useState<number>(Date.now());
+  const isInitialized = useRef(false);
 
   const addToast = (type: "success" | "error", message: string) => {
     const id = Date.now();
@@ -95,31 +97,32 @@ export default function LanguageManagement() {
     }, 4000);
   };
 
+  const handleManageStages = (languageId: string) => {
+    setSelectedLanguageId(languageId);
+    navigate("/admin/stages");
+  };
+
   const fetchLanguages = async (page: number = 1) => {
     try {
       setLoading(true);
       setError(null);
-      const token = localStorage.getItem("auth");
 
-      const response = await fetch(
-        `${BACKEND_BASE_URL}/languages?page=${page}&limit=100&orderBy=name&sortOrder=ASC`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-        },
-      );
+      const response = await adminApi.getLanguages(page, 100);
 
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        const errorMessage =
-          errorData.message || `Error al cargar idiomas (${response.status})`;
-        throw new Error(errorMessage);
+      if (!response.success) {
+        throw new Error(response.message || "Error al cargar idiomas");
       }
 
-      const data: LanguagesResponse = await response.json();
-      setLanguages(data.data);
+      const data = response.data;
+      let fetchedLanguages = data.data || [];
+
+      if (isModerator && !isAdmin) {
+        fetchedLanguages = fetchedLanguages.filter((lang: any) =>
+          hasLanguagePermission(lang.id),
+        );
+      }
+
+      setLanguages(fetchedLanguages);
       setTotalPages(Math.ceil(data.total / data.pageSize));
       setCurrentPage(data.page);
     } catch (err) {
@@ -145,27 +148,14 @@ export default function LanguageManagement() {
     const timeout = window.setTimeout(async () => {
       try {
         setLoadingCountries(true);
-        const token = localStorage.getItem("auth");
 
-        const response = await fetch(
-          `${BACKEND_BASE_URL}/region/countries-with-divisions?name=${encodeURIComponent(searchTerm)}`,
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-              "Content-Type": "application/json",
-            },
-          },
-        );
+        const response = await countryDivisionApi.getCountriesWithDivisions(searchTerm);
 
-        if (!response.ok) {
-          const errorData = await response.json().catch(() => ({}));
-          const errorMessage =
-            errorData.message || `Error al buscar países (${response.status})`;
-          throw new Error(errorMessage);
+        if (!response.success) {
+          throw new Error(response.message || "Error al buscar países");
         }
 
-        const data: Country[] = await response.json();
-        setCountries(data);
+        setCountries(response.data);
       } catch (err) {
         const errorMessage =
           err instanceof Error ? err.message : "Error searching countries";
@@ -179,6 +169,8 @@ export default function LanguageManagement() {
   };
 
   useEffect(() => {
+    if (isInitialized.current) return;
+    isInitialized.current = true;
     fetchLanguages();
   }, []);
 
@@ -215,27 +207,14 @@ export default function LanguageManagement() {
     let imageUploadSuccess = false;
 
     try {
-      const token = localStorage.getItem("auth");
 
-      const response = await fetch(
-        `${BACKEND_BASE_URL}/languages/${editingLanguage.id}`,
-        {
-          method: "PUT",
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(editForm),
-        },
-      );
+      const response = await adminApi.updateLanguage(editingLanguage.id, editForm);
 
-      if (response.ok) {
+      if (response.success) {
         languageUpdateSuccess = true;
       } else {
-        const errorData = await response.json().catch(() => ({}));
         const errorMessage =
-          errorData.message ||
-          `Error al actualizar idioma (${response.status})`;
+          response.message || "Error al actualizar idioma";
         addToast("error", `Error al actualizar idioma: ${errorMessage}`);
       }
 
@@ -306,23 +285,10 @@ export default function LanguageManagement() {
 
     setIsDeleting(true);
     try {
-      const token = localStorage.getItem("auth");
-      const response = await fetch(
-        `${BACKEND_BASE_URL}/languages/${deletingLanguage.id}`,
-        {
-          method: "DELETE",
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-        },
-      );
+      const response = await adminApi.deleteLanguage(deletingLanguage.id);
 
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        const errorMessage =
-          errorData.message || `Error al eliminar idioma (${response.status})`;
-        throw new Error(errorMessage);
+      if (!response.success) {
+        throw new Error(response.message || "Error al eliminar idioma");
       }
 
       await fetchLanguages(currentPage);
@@ -484,11 +450,10 @@ export default function LanguageManagement() {
         {toastMessages.map((toast) => (
           <Toast key={toast.id}>
             <div
-              className={`inline-flex size-8 shrink-0 items-center justify-center rounded-lg ${
-                toast.type === "success"
-                  ? "bg-green-100 text-green-500 dark:bg-green-800 dark:text-green-200"
-                  : "bg-red-100 text-red-500 dark:bg-red-800 dark:text-red-200"
-              }`}
+              className={`inline-flex size-8 shrink-0 items-center justify-center rounded-lg ${toast.type === "success"
+                ? "bg-green-100 text-green-500 dark:bg-green-800 dark:text-green-200"
+                : "bg-red-100 text-red-500 dark:bg-red-800 dark:text-red-200"
+                }`}
             >
               {toast.type === "success" ? (
                 <HiCheck className="size-5" />
@@ -518,10 +483,12 @@ export default function LanguageManagement() {
               Gestiona los idiomas disponibles en la plataforma
             </p>
           </div>
-          <Button onClick={handleAddClick} color="blue">
-            <HiPlus className="mr-2 size-5" />
-            Añadir Idioma
-          </Button>
+          {canCreateLanguage() && (
+            <Button onClick={handleAddClick} color="blue">
+              <HiPlus className="mr-2 size-5" />
+              Añadir Idioma
+            </Button>
+          )}
         </div>
 
         {error && (
@@ -595,28 +562,40 @@ export default function LanguageManagement() {
                       </div>
                     </td>
                     <td className="whitespace-nowrap px-6 py-4">
-                      <div className="flex gap-2">
-                        <Button
-                          size="sm"
-                          color="light"
-                          onClick={() => handleEditClick(language)}
-                        >
-                          <div className="flex items-center">
-                            <HiPencil className="mr-1 size-4" />
-                            Editar
-                          </div>
-                        </Button>
-                        <Button
-                          size="sm"
-                          color="failure"
-                          onClick={() => handleDeleteClick(language)}
-                        >
-                          <div className="flex items-center">
-                            <HiTrash className="mr-1 size-4" />
-                            Eliminar
-                          </div>
-                        </Button>
-                      </div>
+                      {hasLanguagePermission(language.id) && (
+                        <div className="flex gap-2">
+                          <Button
+                            size="sm"
+                            color="blue"
+                            onClick={() => handleManageStages(language.id)}
+                          >
+                            <div className="flex items-center">
+                              <HiCollection className="mr-1 size-4" />
+                              Gestionar
+                            </div>
+                          </Button>
+                          <Button
+                            size="sm"
+                            color="light"
+                            onClick={() => handleEditClick(language)}
+                          >
+                            <div className="flex items-center">
+                              <HiPencil className="mr-1 size-4" />
+                              Editar
+                            </div>
+                          </Button>
+                          <Button
+                            size="sm"
+                            color="failure"
+                            onClick={() => handleDeleteClick(language)}
+                          >
+                            <div className="flex items-center">
+                              <HiTrash className="mr-1 size-4" />
+                              Eliminar
+                            </div>
+                          </Button>
+                        </div>
+                      )}
                     </td>
                   </tr>
                 ))}

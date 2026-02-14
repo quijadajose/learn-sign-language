@@ -1,37 +1,23 @@
 import { Navigate } from "react-router-dom";
+import { useAuth } from "./context/AuthContext";
 
 type Props = {
   children: JSX.Element;
 };
 
-interface StoredUser {
-  id: string;
-  email: string;
-  role?: string;
-}
-
 export function AdminRoute({ children }: Props) {
-  const token = localStorage.getItem("auth");
-  const userString = localStorage.getItem("user");
+  const { user, token, logout } = useAuth();
 
   if (!token || token === "undefined") {
     return <Navigate to="/login" />;
   }
 
-  let user: StoredUser | null = null;
-  if (userString) {
-    try {
-      user = JSON.parse(userString);
-    } catch (error) {
-      localStorage.removeItem("auth");
-      localStorage.removeItem("user");
-      return <Navigate to="/login" />;
-    }
-  }
-
   if (user && user.role === "admin") {
     return children;
-  } else {
+  } else if (user) {
     return <Navigate to="/dashboard" />;
+  } else {
+    logout();
+    return <Navigate to="/login" />;
   }
 }
