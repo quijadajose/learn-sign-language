@@ -34,7 +34,7 @@ function App() {
   return (
     <AuthProvider>
       <Flowbite>
-        <main className="h-screen bg-gray-50 dark:bg-gray-900">
+        <main className="min-h-screen bg-gradient-to-br from-gray-50 to-primary-50 dark:from-gray-900 dark:to-gray-800 transition-colors duration-500">
           <ToastProvider>
             <Routes>
               <Route path="/" element={<LandingPageComponent />} />

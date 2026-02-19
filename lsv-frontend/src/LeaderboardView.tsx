@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Card, Table, Spinner, Alert, Pagination } from "flowbite-react";
+import { Table, Spinner, Alert, Pagination } from "flowbite-react";
 import { leaderboardApi, languageApi } from "./services/api";
 import { BACKEND_BASE_URL } from "./config";
 
@@ -68,18 +68,18 @@ const LeaderboardView: React.FC = () => {
       const response =
         selectedLanguage === "global"
           ? await leaderboardApi.getLeaderboard(
-              currentPage,
-              pageSize,
-              orderBy,
-              sortOrder,
-            )
+            currentPage,
+            pageSize,
+            orderBy,
+            sortOrder,
+          )
           : await leaderboardApi.getLeaderboardByLanguage(
-              selectedLanguage,
-              currentPage,
-              pageSize,
-              orderBy,
-              sortOrder,
-            );
+            selectedLanguage,
+            currentPage,
+            pageSize,
+            orderBy,
+            sortOrder,
+          );
 
       if (response.success) {
         const data: PaginatedResponse = response.data;
@@ -126,12 +126,7 @@ const LeaderboardView: React.FC = () => {
     return (currentPage - 1) * pageSize + index + 1;
   };
 
-  const getMedalEmoji = (rank: number) => {
-    if (rank === 1) return "🥇";
-    if (rank === 2) return "🥈";
-    if (rank === 3) return "🥉";
-    return "";
-  };
+
 
   if (loading) {
     return (
@@ -142,27 +137,27 @@ const LeaderboardView: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8 dark:bg-gray-900">
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div className="mb-8 text-center">
-          <h1 className="mb-2 text-4xl font-bold text-gray-900 dark:text-white">
+    <div className="min-h-screen py-12 px-4 sm:px-6 lg:px-8 animate-fade-in">
+      <div className="mx-auto max-w-7xl">
+        <div className="mb-12 text-center">
+          <h1 className="mb-3 text-5xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-primary-600 to-accent-500 tracking-tight dark:from-primary-400 dark:to-accent-400 animate-fade-in-up">
             🏆 Leaderboard
           </h1>
-          <p className="text-lg text-gray-600 dark:text-gray-300">
-            Clasificación de los mejores estudiantes
+          <p className="text-xl text-gray-600 dark:text-gray-300 font-light max-w-2xl mx-auto animate-fade-in-up delay-100">
+            Descubre quiénes lideran el aprendizaje y únete a la competencia.
           </p>
         </div>
 
-        <Card className="mb-6">
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
-            <div>
-              <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
+        <div className="glass-panel p-6 mb-8 animate-fade-in-up delay-200">
+          <div className="grid grid-cols-1 gap-6 md:grid-cols-4">
+            <div className="relative">
+              <label className="mb-2 block text-sm font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider">
                 Idioma
               </label>
               <select
                 value={selectedLanguage}
                 onChange={(e) => handleLanguageChange(e.target.value)}
-                className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+                className="w-full rounded-xl border-gray-200 bg-gray-50/50 backdrop-blur-sm px-4 py-3 text-gray-900 focus:border-primary-500 focus:ring-primary-500 dark:border-gray-600 dark:bg-gray-800/50 dark:text-white transition-all hover:bg-white dark:hover:bg-gray-800"
               >
                 <option value="global">🌍 Global</option>
                 {languages.map((language) => (
@@ -174,13 +169,13 @@ const LeaderboardView: React.FC = () => {
             </div>
 
             <div>
-              <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
+              <label className="mb-2 block text-sm font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider">
                 Por página
               </label>
               <select
                 value={pageSize}
                 onChange={(e) => handlePageSizeChange(Number(e.target.value))}
-                className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+                className="w-full rounded-xl border-gray-200 bg-gray-50/50 backdrop-blur-sm px-4 py-3 text-gray-900 focus:border-primary-500 focus:ring-primary-500 dark:border-gray-600 dark:bg-gray-800/50 dark:text-white transition-all hover:bg-white dark:hover:bg-gray-800"
               >
                 <option value={10}>10</option>
                 <option value={25}>25</option>
@@ -190,13 +185,13 @@ const LeaderboardView: React.FC = () => {
             </div>
 
             <div>
-              <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
+              <label className="mb-2 block text-sm font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider">
                 Ordenar por
               </label>
               <select
                 value={orderBy}
                 onChange={(e) => setOrderBy(e.target.value)}
-                className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+                className="w-full rounded-xl border-gray-200 bg-gray-50/50 backdrop-blur-sm px-4 py-3 text-gray-900 focus:border-primary-500 focus:ring-primary-500 dark:border-gray-600 dark:bg-gray-800/50 dark:text-white transition-all hover:bg-white dark:hover:bg-gray-800"
               >
                 <option value="totalScore">Puntuación Total</option>
                 <option value="firstName">Nombre</option>
@@ -205,107 +200,131 @@ const LeaderboardView: React.FC = () => {
             </div>
 
             <div>
-              <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
+              <label className="mb-2 block text-sm font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider">
                 Dirección
               </label>
               <select
                 value={sortOrder}
                 onChange={(e) => setSortOrder(e.target.value as "ASC" | "DESC")}
-                className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+                className="w-full rounded-xl border-gray-200 bg-gray-50/50 backdrop-blur-sm px-4 py-3 text-gray-900 focus:border-primary-500 focus:ring-primary-500 dark:border-gray-600 dark:bg-gray-800/50 dark:text-white transition-all hover:bg-white dark:hover:bg-gray-800"
               >
                 <option value="DESC">Descendente</option>
                 <option value="ASC">Ascendente</option>
               </select>
             </div>
           </div>
-        </Card>
+        </div>
 
         {error && (
-          <Alert color="failure" className="mb-6">
-            <div>
-              <h3 className="text-sm font-medium">
-                Error al cargar el leaderboard
-              </h3>
-              <div className="mt-2 text-sm">{error}</div>
+          <Alert color="failure" className="mb-6 rounded-xl border-l-4 border-red-500 shadow-sm animate-fade-in">
+            <div className="flex items-center gap-3">
+              <span className="text-2xl">⚠️</span>
+              <div>
+                <h3 className="text-lg font-bold">Error</h3>
+                <div className="text-sm opacity-90">{error}</div>
+              </div>
             </div>
           </Alert>
         )}
 
-        <Card>
-          <Table hoverable>
-            <Table.Head>
+        <div className="glass-panel overflow-hidden animate-fade-in-up delay-300">
+          <Table hoverable theme={{ root: { shadow: "none" } }}>
+            <Table.Head className="bg-gray-50/50 dark:bg-gray-700/50 text-gray-700 dark:text-gray-200 uppercase text-xs tracking-wider">
               <Table.HeadCell>Posición</Table.HeadCell>
               <Table.HeadCell
-                className="cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700"
+                className="cursor-pointer hover:text-primary-600 transition-colors py-4 font-bold"
                 onClick={() => handleSortChange("firstName")}
               >
-                Nombre{" "}
-                {orderBy === "firstName" && (sortOrder === "ASC" ? "↑" : "↓")}
+                <div className="flex items-center gap-1">
+                  Nombre
+                  {orderBy === "firstName" && (
+                    <span className="text-primary-500">{sortOrder === "ASC" ? "↑" : "↓"}</span>
+                  )}
+                </div>
               </Table.HeadCell>
               <Table.HeadCell
-                className="cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700"
+                className="cursor-pointer hover:text-primary-600 transition-colors py-4 font-bold"
                 onClick={() => handleSortChange("lastName")}
               >
-                Apellido{" "}
-                {orderBy === "lastName" && (sortOrder === "ASC" ? "↑" : "↓")}
+                <div className="flex items-center gap-1">
+                  Apellido
+                  {orderBy === "lastName" && (
+                    <span className="text-primary-500">{sortOrder === "ASC" ? "↑" : "↓"}</span>
+                  )}
+                </div>
               </Table.HeadCell>
               <Table.HeadCell
-                className="cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700"
+                className="cursor-pointer hover:text-primary-600 transition-colors py-4 font-bold"
                 onClick={() => handleSortChange("totalScore")}
               >
-                XP{" "}
-                {orderBy === "totalScore" && (sortOrder === "ASC" ? "↑" : "↓")}
+                <div className="flex items-center gap-1">
+                  XP
+                  {orderBy === "totalScore" && (
+                    <span className="text-primary-500">{sortOrder === "ASC" ? "↑" : "↓"}</span>
+                  )}
+                </div>
               </Table.HeadCell>
             </Table.Head>
-            <Table.Body className="divide-y">
+            <Table.Body className="divide-y divide-gray-100 dark:divide-gray-700">
               {leaderboardData.map((entry, index) => {
                 const rank = getRank(index);
-                const medal = getMedalEmoji(rank);
+                const isTop3 = rank <= 3;
 
                 return (
                   <Table.Row
                     key={entry.userId}
-                    className="bg-white dark:border-gray-700 dark:bg-gray-800"
+                    className="bg-transparent hover:bg-primary-50/30 dark:hover:bg-primary-900/10 transition-colors duration-200"
                   >
-                    <Table.Cell className="whitespace-nowrap font-medium text-gray-900 dark:text-white">
-                      <div className="flex items-center">
-                        <span className="mr-2 text-lg">{medal}</span>
-                        <span
-                          className={`text-sm font-medium ${
-                            rank <= 3
-                              ? "font-bold text-yellow-600"
-                              : "text-gray-900 dark:text-white"
-                          }`}
-                        >
-                          #{rank}
-                        </span>
+                    <Table.Cell className="whitespace-nowrap font-medium text-gray-900 dark:text-white py-4">
+                      <div className="flex items-center gap-3">
+                        {isTop3 ? (
+                          <div className={`
+                            flex items-center justify-center w-10 h-10 rounded-full text-xl shadow-sm
+                            ${rank === 1 ? 'bg-yellow-100 text-yellow-600 ring-2 ring-yellow-400' : ''}
+                            ${rank === 2 ? 'bg-gray-100 text-gray-500 ring-2 ring-gray-300' : ''}
+                            ${rank === 3 ? 'bg-orange-100 text-orange-600 ring-2 ring-orange-400' : ''}
+                          `}>
+                            {rank === 1 && '🥇'}
+                            {rank === 2 && '🥈'}
+                            {rank === 3 && '🥉'}
+                          </div>
+                        ) : (
+                          <div className="flex items-center justify-center w-10 h-10 rounded-full bg-gray-100 dark:bg-gray-700 text-gray-500 font-bold text-sm">
+                            #{rank}
+                          </div>
+                        )}
                       </div>
                     </Table.Cell>
-                    <Table.Cell className="text-gray-900 dark:text-white">
-                      <div className="flex items-center">
-                        <img
-                          src={`${BACKEND_BASE_URL}/images/user/${entry.userId}?size=sm&v=${Date.now()}`}
-                          alt={`${entry.firstName} ${entry.lastName}`}
-                          className="mr-3 h-8 w-8 rounded-full object-cover"
-                          onError={(e) => {
-                            e.currentTarget.src = "/user.svg";
-                          }}
-                        />
-                        {entry.firstName}
+                    <Table.Cell className="text-gray-900 dark:text-white font-medium">
+                      <div className="flex items-center gap-3">
+                        <div className="relative group">
+                          <img
+                            src={`${BACKEND_BASE_URL}/images/user/${entry.userId}?size=sm&v=${Date.now()}`}
+                            alt={`${entry.firstName} ${entry.lastName}`}
+                            className={`h-10 w-10 rounded-full object-cover shadow-sm transition-transform group-hover:scale-110 ${isTop3 ? 'ring-2 ring-white dark:ring-gray-800' : ''}`}
+                            onError={(e) => {
+                              e.currentTarget.src = "/user.svg";
+                            }}
+                          />
+                          {isTop3 && <div className="absolute -bottom-1 -right-1 w-3 h-3 bg-green-500 rounded-full border-2 border-white dark:border-gray-800"></div>}
+                        </div>
+                        <span className="text-base">{entry.firstName}</span>
                       </div>
                     </Table.Cell>
-                    <Table.Cell className="text-gray-900 dark:text-white">
+                    <Table.Cell className="text-gray-600 dark:text-gray-300">
                       {entry.lastName}
                     </Table.Cell>
                     <Table.Cell>
-                      <strong>{entry.totalScore} XP</strong>
+                      <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-primary-100 text-primary-700 dark:bg-primary-900/30 dark:text-primary-300 shadow-sm">
+                        {entry.totalScore.toLocaleString()} XP
+                      </span>
                     </Table.Cell>
                   </Table.Row>
                 );
               })}
             </Table.Body>
           </Table>
-        </Card>
+        </div>
         {totalPages > 1 && (
           <div className="mt-6 space-y-4">
             <div className="flex items-center justify-between">
