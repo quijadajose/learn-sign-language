@@ -10,13 +10,6 @@
   ParseUUIDPipe,
   Inject,
 } from '@nestjs/common';
-import {
-  ApiTags,
-  ApiOperation,
-  ApiResponse,
-  ApiBearerAuth,
-  ApiQuery,
-} from '@nestjs/swagger';
 import { Roles } from 'src/auth/infrastructure/decorators/roles.decorator';
 import { RolesGuard } from 'src/auth/infrastructure/guards/roles/roles.guard';
 import { ModeratorPermissionService } from 'src/moderator/application/services/moderator-permission/moderator-permission.service';
@@ -26,12 +19,18 @@ import { ModeratorListItem } from 'src/moderator/domain/dto/moderator-list-respo
 import { AssignPermissionDto } from 'src/moderator/domain/dto/assign-permission.dto';
 import { ModeratorPermission } from 'src/shared/domain/entities/moderatorPermission';
 import { UserRepositoryInterface } from 'src/auth/domain/ports/user.repository.interface/user.repository.interface';
+import {
+  DocAssignPermission,
+  DocListModerators,
+  DocModerator,
+  DocRevokePermission,
+  DocSearchUsers,
+} from './docs/moderator.docs';
 
-@ApiTags('Moderators')
+@DocModerator()
 @Controller('admin/moderators')
 @UseGuards(RolesGuard)
 @Roles('admin')
-@ApiBearerAuth()
 export class ModeratorController {
   constructor(
     private readonly moderatorPermissionService: ModeratorPermissionService,
@@ -40,23 +39,7 @@ export class ModeratorController {
   ) { }
 
   @Get()
-  @ApiOperation({
-    summary: 'Listar moderadores',
-    description:
-      'Obtiene la lista paginada de moderadores con sus permisos. Puede filtrarse por languageId o regionId.',
-  })
-  @ApiResponse({
-    status: 200,
-    description: 'Lista de moderadores obtenida exitosamente',
-  })
-  @ApiResponse({
-    status: 401,
-    description: 'No autorizado',
-  })
-  @ApiResponse({
-    status: 403,
-    description: 'Acceso denegado - Se requiere rol de administrador',
-  })
+  @DocListModerators()
   async listModerators(
     @Query() query: GetModeratorsDto,
   ): Promise<PaginatedResponseDto<ModeratorListItem>> {
@@ -69,35 +52,7 @@ export class ModeratorController {
   }
 
   @Post()
-  @ApiOperation({
-    summary: 'Asignar permiso de moderación',
-    description:
-      'Asigna un permiso de moderación a un usuario para un lenguaje o región específica.',
-  })
-  @ApiResponse({
-    status: 201,
-    description: 'Permiso asignado exitosamente',
-  })
-  @ApiResponse({
-    status: 400,
-    description: 'Datos de entrada inválidos',
-  })
-  @ApiResponse({
-    status: 401,
-    description: 'No autorizado',
-  })
-  @ApiResponse({
-    status: 403,
-    description: 'Acceso denegado - Se requiere rol de administrador',
-  })
-  @ApiResponse({
-    status: 404,
-    description: 'Usuario, lenguaje o región no encontrado',
-  })
-  @ApiResponse({
-    status: 409,
-    description: 'El usuario ya tiene este permiso',
-  })
+  @DocAssignPermission()
   async assignPermission(
     @Body() assignPermissionDto: AssignPermissionDto,
   ): Promise<ModeratorPermission> {
@@ -107,29 +62,7 @@ export class ModeratorController {
   }
 
   @Get('users/search')
-  @ApiOperation({
-    summary: 'Buscar usuarios',
-    description:
-      'Busca usuarios por email, nombre o apellido. Retorna hasta 10 resultados.',
-  })
-  @ApiQuery({
-    name: 'q',
-    required: true,
-    description: 'Término de búsqueda (email, nombre o apellido)',
-    type: String,
-  })
-  @ApiResponse({
-    status: 200,
-    description: 'Lista de usuarios encontrados',
-  })
-  @ApiResponse({
-    status: 401,
-    description: 'No autorizado',
-  })
-  @ApiResponse({
-    status: 403,
-    description: 'Acceso denegado - Se requiere rol de administrador',
-  })
+  @DocSearchUsers()
   async searchUsers(@Query('q') query: string) {
     if (!query || query.trim().length < 2) {
       return [];
@@ -145,26 +78,7 @@ export class ModeratorController {
   }
 
   @Delete(':permissionId')
-  @ApiOperation({
-    summary: 'Revocar permiso de moderación',
-    description: 'Revoca un permiso de moderación específico.',
-  })
-  @ApiResponse({
-    status: 200,
-    description: 'Permiso revocado exitosamente',
-  })
-  @ApiResponse({
-    status: 401,
-    description: 'No autorizado',
-  })
-  @ApiResponse({
-    status: 403,
-    description: 'Acceso denegado - Se requiere rol de administrador',
-  })
-  @ApiResponse({
-    status: 404,
-    description: 'Permiso no encontrado',
-  })
+  @DocRevokePermission()
   async revokePermission(
     @Param('permissionId', ParseUUIDPipe) permissionId: string,
   ): Promise<{ message: string }> {
