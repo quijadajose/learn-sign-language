@@ -230,8 +230,8 @@ export class SeederService implements OnModuleInit {
   ) { }
 
   async onModuleInit() {
+    await this.seedCountriesAndDivisions();
     const nodeEnv = this.configService.get<string>('NODE_ENV') || 'development';
-    // Solo ejecutamos el seed automático en modo desarrollo
     if (nodeEnv !== 'development') {
       console.log('Seed automático omitido: NODE_ENV no es "development"');
       return;
@@ -245,7 +245,6 @@ export class SeederService implements OnModuleInit {
       await this.seedAdminUser();
       await this.seedNormalUser();
       await this.seedothersUsers();
-      await this.seedCountriesAndDivisions();
       await this.seedLanguages();
       await this.seedStages();
       await this.seedRegions();
