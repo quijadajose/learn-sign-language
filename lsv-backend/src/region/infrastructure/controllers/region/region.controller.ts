@@ -11,7 +11,6 @@ import {
   UseGuards,
   Inject,
 } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse, ApiQuery } from '@nestjs/swagger';
 import { Roles } from 'src/auth/infrastructure/decorators/roles.decorator';
 import { RolesGuard } from 'src/auth/infrastructure/guards/roles/roles.guard';
 import { RequireResourcePermission } from 'src/auth/infrastructure/decorators/require-resource-permission.decorator';
@@ -27,15 +26,16 @@ import { CountryDivisionService } from 'src/shared/application/services/country-
 import { CountryWithDivisionsDto } from 'src/shared/domain/dto/country-with-divisions.dto';
 import { SearchCountriesDto } from 'src/shared/domain/dto/search-countries.dto';
 import { Country } from 'src/shared/domain/entities/iso-3166-2/countries';
+import { DocGetCountries, DocRegion } from './docs/region.docs';
 
-@ApiTags('Regions')
+@DocRegion()
 @Controller('region')
 export class RegionController {
   constructor(
     private readonly regionService: RegionService,
     private readonly languageService: LanguageService,
     private readonly countryDivisionService: CountryDivisionService,
-  ) {}
+  ) { }
 
   @Get()
   async getAllRegions(
@@ -45,43 +45,7 @@ export class RegionController {
   }
 
   @Get('countries')
-  @ApiOperation({
-    summary: 'Buscar países por nombre',
-    description:
-      'Busca países por nombre y retorna una lista con código y nombre del país. Útil para obtener el countryCode necesario para crear lenguajes.',
-  })
-  @ApiQuery({
-    name: 'name',
-    description: 'Nombre del país a buscar (mínimo 2 caracteres)',
-    example: 'colom',
-    required: true,
-  })
-  @ApiResponse({
-    status: 200,
-    description: 'Lista de países encontrados',
-    schema: {
-      type: 'array',
-      items: {
-        type: 'object',
-        properties: {
-          code: {
-            type: 'string',
-            description: 'Código ISO del país',
-            example: 'CO',
-          },
-          name: {
-            type: 'string',
-            description: 'Nombre del país',
-            example: 'Colombia',
-          },
-        },
-      },
-    },
-  })
-  @ApiResponse({
-    status: 400,
-    description: 'Parámetros de búsqueda inválidos',
-  })
+  @DocGetCountries()
   async getCountries(
     @Query() searchDto: SearchCountriesDto,
   ): Promise<Country[]> {
