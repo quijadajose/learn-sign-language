@@ -229,12 +229,18 @@ export class SeederService implements OnModuleInit {
     private readonly countryDivisionService: CountryDivisionService,
   ) { }
 
-  onModuleInit() {
-    this.seed();
+  async onModuleInit() {
+    const nodeEnv = this.configService.get<string>('NODE_ENV') || 'development';
+    // Solo ejecutamos el seed automático en modo desarrollo
+    if (nodeEnv !== 'development') {
+      console.log('Seed automático omitido: NODE_ENV no es "development"');
+      return;
+    }
+    await this.seed();
   }
 
   public async seed() {
-    console.log('=== Iniciando Seeder V2 ===');
+    console.log('Seeding...');
     try {
       await this.seedAdminUser();
       await this.seedNormalUser();

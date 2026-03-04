@@ -73,7 +73,7 @@ import { ModeratorModule } from './moderator/moderator.module';
           Division,
           ModeratorPermission,
         ],
-        synchronize: true,
+        synchronize: configService.get<string>('NODE_ENV') === 'development',
       }),
     }),
     MailerModule.forRootAsync({
@@ -105,4 +105,4 @@ import { ModeratorModule } from './moderator/moderator.module';
   controllers: [ImagesController],
   providers: [UploadPictureUseCase, SeederService],
 })
-export class AppModule {}
+export class AppModule { }
