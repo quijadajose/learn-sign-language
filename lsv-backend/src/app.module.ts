@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common';
+import { join } from 'path';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { validate } from './config/env.validation';
@@ -74,6 +75,8 @@ import { ModeratorModule } from './moderator/moderator.module';
           ModeratorPermission,
         ],
         synchronize: configService.get<string>('NODE_ENV') === 'development',
+        migrations: [join(__dirname, '/db/migrations/*.{ts,js}')],
+        migrationsRun: configService.get<string>('NODE_ENV') !== 'development',
       }),
     }),
     MailerModule.forRootAsync({

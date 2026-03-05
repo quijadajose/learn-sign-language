@@ -46,6 +46,24 @@ $ docker-compose up
 $ pnpm run start:prod
 ```
 
+## Database Migrations
+
+This project uses TypeORM migrations to manage database changes. It leverages Node.js native `.env` file support (v20.6.0+).
+
+```bash
+# Generate a migration (after changing entities)
+$ pnpm run migration:generate src/db/migrations/MigrationName
+
+# Run pending migrations
+$ pnpm run migration:run
+
+# Revert the last migration
+$ pnpm run migration:revert
+```
+
+> [!IMPORTANT]
+> Migrations are automatically run in development and production when the server starts via `migrationsRun: true` in `app.module.ts`.
+
 ## Run tests
 
 ```bash
