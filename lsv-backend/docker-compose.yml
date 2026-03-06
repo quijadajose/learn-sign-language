@@ -24,20 +24,8 @@ services:
       MYSQL_PASSWORD: ${DB_PASSWORD}
     volumes:
       - db_data:/var/lib/mysql
+      - ./init-db:/docker-entrypoint-initdb.d
 
-  lsv-test:
-    build:
-      dockerfile: Dockerfile
-      context: .
-      target: development
-    volumes:
-      - .:/src/app
-      - /src/app/node_modules
-    command: pnpm run test:e2e
-    depends_on:
-      - lsv-db
-    profiles:
-      - test
 
 volumes:
   db_data:

@@ -5,9 +5,9 @@ export class SetLessonCompletionUseCase {
   constructor(
     @Inject('UserLessonRepositoryInterface')
     private readonly userLessonRepository: UserLessonRepositoryInterface,
-  ) {}
-  execute(userId: string, lessonId: string, isCompleted: boolean) {
-    this.userLessonRepository.setLessonCompletion(
+  ) { }
+  async execute(userId: string, lessonId: string, isCompleted: boolean) {
+    return await this.userLessonRepository.setLessonCompletion(
       userId,
       lessonId,
       isCompleted,

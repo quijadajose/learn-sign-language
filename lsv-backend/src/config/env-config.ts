@@ -2,8 +2,8 @@ import { IsString, IsNumber, IsBoolean, IsEmail, IsIn } from 'class-validator';
 
 export class EnvConfig {
   @IsString()
-  @IsIn(['development', 'production'])
-  NODE_ENV: 'development' | 'production';
+  @IsIn(['development', 'production', 'test'])
+  NODE_ENV: 'development' | 'production' | 'test';
 
   @IsString()
   DB_HOST: string;

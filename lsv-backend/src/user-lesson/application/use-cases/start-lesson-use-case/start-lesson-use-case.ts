@@ -5,8 +5,8 @@ export class StartLessonUseCase {
   constructor(
     @Inject('UserLessonRepositoryInterface')
     private readonly userLessonRepository: UserLessonRepositoryInterface,
-  ) {}
-  execute(userId: string, lessonId: string) {
-    this.userLessonRepository.startLesson(userId, lessonId);
+  ) { }
+  async execute(userId: string, lessonId: string) {
+    return await this.userLessonRepository.startLesson(userId, lessonId);
   }
 }

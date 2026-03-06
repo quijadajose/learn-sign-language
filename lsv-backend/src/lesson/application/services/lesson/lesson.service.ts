@@ -44,12 +44,12 @@ export class LessonService {
     private readonly getRegionalLessonUseCase: GetRegionalLessonUseCase,
     @Inject(forwardRef(() => QuizVariantService))
     private readonly quizVariantService: QuizVariantService,
-  ) {}
+  ) { }
   async createLesson(createLessonDto: CreateLessonDto) {
     return await this.createLessonUseCase.execute(createLessonDto);
   }
   async saveLessonImage(lessonId: string, file: Express.Multer.File) {
-    return await this.uploadPictureUseCase.execute(lessonId, 'lessons', file);
+    return await this.uploadPictureUseCase.execute(lessonId, 'lesson', file);
   }
   async getLessonsByLanguage(
     languageId: string,

@@ -362,6 +362,12 @@ export class SeederService implements OnModuleInit {
   }
 
   private async seedCountriesAndDivisions() {
+    const countries = await this.countryDivisionService.getAllCountries();
+    if (countries.length >= 237) {
+      console.log('Países ya están en la base de datos, saltando seed.');
+      return;
+    }
+
     console.log('Seeding países y divisiones desde ISO-3166-2...');
     const countriesToCreate: { code: string; name: string }[] = [];
     const divisionsToCreate: {
