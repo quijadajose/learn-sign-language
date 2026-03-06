@@ -48,7 +48,7 @@ export class AuthController {
   }
 
   @Public()
-  @Post('login/')
+  @Post('login')
   @DocLogin()
   async login(@Body() user: LoginUserDto) {
     const token = await this.authService.login(user);

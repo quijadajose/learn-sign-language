@@ -1,6 +1,9 @@
 import { Injectable, NotFoundException, Inject } from '@nestjs/common';
 import { GetUserLessonByUserIdUseCase } from '../../use-cases/get-user-lesson-by-user-id-use-case/get-user-lesson-by-user-id-use-case';
-import { PaginationDto } from 'src/shared/domain/dto/PaginationDto';
+import {
+  PaginatedResponseDto,
+  PaginationDto,
+} from 'src/shared/domain/dto/PaginationDto';
 import { UserLesson } from 'src/shared/domain/entities/userLesson';
 import { StartLessonUseCase } from '../../use-cases/start-lesson-use-case/start-lesson-use-case';
 import { SetLessonCompletionUseCase } from '../../use-cases/set-lesson-completion-use-case/set-lesson-completion-use-case';
@@ -18,11 +21,11 @@ export class UserLessonService {
     private readonly getLessonByIdUseCase: GetLessonByIdUseCase,
     @Inject(GetRegionalLessonUseCase)
     private readonly getRegionalLessonUseCase: GetRegionalLessonUseCase,
-  ) {}
+  ) { }
   getUserLessonByUserId(
     userId: string,
     paginationDto: PaginationDto,
-  ): Promise<UserLesson[]> {
+  ): Promise<PaginatedResponseDto<UserLesson>> {
     return this.getUserLessonByUserIdUseCase.execute(userId, paginationDto);
   }
   async startLesson(userId: string, lessonId: string, regionId?: string) {
@@ -62,9 +65,13 @@ export class UserLessonService {
     }
 
     // Usar siempre el ID de la lección base para user_lesson
-    this.startLessonUseCase.execute(userId, baseLessonId);
+    await this.startLessonUseCase.execute(userId, baseLessonId);
   }
-  setLessonCompletion(userId: string, lessonId: string, isCompleted: boolean) {
-    this.setLessonCompletionUseCase.execute(userId, lessonId, isCompleted);
+  async setLessonCompletion(
+    userId: string,
+    lessonId: string,
+    isCompleted: boolean,
+  ) {
+    await this.setLessonCompletionUseCase.execute(userId, lessonId, isCompleted);
   }
 }

@@ -104,16 +104,6 @@ export class LessonController {
   @Post(':id/image')
   @UseInterceptors(
     FileInterceptor('file', {
-      storage: diskStorage({
-        destination: './uploads/lesson',
-        filename: (req, file, cb) => {
-          const uniqueSuffix =
-            Date.now() + '-' + Math.round(Math.random() * 1e9);
-          const ext = path.extname(file.originalname);
-          const name = path.basename(file.originalname, ext);
-          cb(null, `${name}-${uniqueSuffix}${ext}`);
-        },
-      }),
       fileFilter: (req, file, cb) => {
         if (file.mimetype.match(/\/(jpg|jpeg|png|gif)$/)) {
           cb(null, true);
@@ -134,8 +124,8 @@ export class LessonController {
       throw new BadRequestException('No file uploaded');
     }
 
-    const imageUrl = `/uploads/lesson/${file.filename}`;
-    await this.lessonAdminService.saveLessonImage(lessonId, file);
+    const res = await this.lessonAdminService.saveLessonImage(lessonId, file);
+    const imageUrl = res[0];
 
     return {
       message: 'Image uploaded successfully',
