@@ -17,7 +17,7 @@ export class StageService {
     private readonly createStageUseCase: CreateStageUseCase,
     private readonly updateStageUseCase: UpdateStageUseCase,
     private readonly deleteStageUseCase: DeleteStageUseCase,
-  ) { }
+  ) {}
   async getStagesByLanguage(
     id: string,
     pagination: PaginationDto,

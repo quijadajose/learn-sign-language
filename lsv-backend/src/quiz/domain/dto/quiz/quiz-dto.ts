@@ -1,4 +1,10 @@
-import { ArrayMinSize, IsArray, IsString, IsUUID, ValidateNested } from 'class-validator';
+import {
+  ArrayMinSize,
+  IsArray,
+  IsString,
+  IsUUID,
+  ValidateNested,
+} from 'class-validator';
 import { QuestionDto } from '../../question/question-dto';
 import { Type } from 'class-transformer';
 

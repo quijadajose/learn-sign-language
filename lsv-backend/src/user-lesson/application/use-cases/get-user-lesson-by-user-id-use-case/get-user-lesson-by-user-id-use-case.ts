@@ -10,7 +10,7 @@ export class GetUserLessonByUserIdUseCase {
   constructor(
     @Inject('UserLessonRepositoryInterface')
     private readonly userLessonRepository: UserLessonRepositoryInterface,
-  ) { }
+  ) {}
 
   async execute(
     userId: string,

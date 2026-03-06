@@ -13,7 +13,7 @@ export class ModeratorPermissionService {
     private readonly assignPermissionUseCase: AssignPermissionUseCase,
     private readonly revokePermissionUseCase: RevokePermissionUseCase,
     private readonly listModeratorsUseCase: ListModeratorsUseCase,
-  ) { }
+  ) {}
 
   async assignPermission(
     dto: AssignPermissionDto,
@@ -30,13 +30,10 @@ export class ModeratorPermissionService {
     languageId?: string,
     regionId?: string,
   ): Promise<PaginatedResponseDto<ModeratorListItem>> {
-    return await this.listModeratorsUseCase.execute(pagination, languageId, regionId);
+    return await this.listModeratorsUseCase.execute(
+      pagination,
+      languageId,
+      regionId,
+    );
   }
 }
-
-
-
-
-
-
-

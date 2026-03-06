@@ -6,7 +6,7 @@ export class GetLanguageUseCase {
   constructor(
     @Inject('LanguageRepositoryInterface')
     private readonly languageRepository: LanguageRepositoryInterface,
-  ) { }
+  ) {}
   async execute(id: string): Promise<Language> {
     const language = await this.languageRepository.findById(id);
     if (!language) {

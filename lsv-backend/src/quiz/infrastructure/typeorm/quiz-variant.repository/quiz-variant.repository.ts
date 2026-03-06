@@ -19,7 +19,7 @@ export class QuizVariantRepository {
     private readonly optionVariantRepository: Repository<OptionVariant>,
     @InjectRepository(QuizSubmission)
     private readonly submissionRepository: Repository<QuizSubmission>,
-  ) { }
+  ) {}
 
   async findByLessonVariantId(lessonVariantId: string): Promise<QuizVariant[]> {
     return await this.quizVariantRepository.find({

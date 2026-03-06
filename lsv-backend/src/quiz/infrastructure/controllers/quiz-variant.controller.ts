@@ -10,8 +10,6 @@ import {
   ParseUUIDPipe,
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
-import { RolesGuard } from 'src/auth/infrastructure/guards/roles/roles.guard';
-import { Roles } from 'src/auth/infrastructure/decorators/roles.decorator';
 import { RequireResourcePermission } from 'src/auth/infrastructure/decorators/require-resource-permission.decorator';
 import { PermissionScope } from 'src/shared/domain/entities/moderatorPermission';
 import { ResourceAccessGuard } from 'src/auth/infrastructure/guards/resource-access/resource-access.guard';
@@ -22,7 +20,7 @@ import { QuizVariant } from 'src/shared/domain/entities/quizVariant';
 @Controller('quiz-variants')
 @UseGuards(AuthGuard('jwt'), ResourceAccessGuard)
 export class QuizVariantController {
-  constructor(private readonly quizVariantService: QuizVariantService) { }
+  constructor(private readonly quizVariantService: QuizVariantService) {}
 
   @RequireResourcePermission(PermissionScope.REGION, {
     param: 'lessonVariantId',

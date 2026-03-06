@@ -69,7 +69,7 @@ export class QuizService {
     let quiz: Quiz | null = null;
     try {
       quiz = await this.getQuizByIdUseCase.execute(quizId);
-    } catch (error) {
+    } catch {
       // Si no se encuentra el quiz normal, continuar para buscar quiz variant
       quiz = null;
     }

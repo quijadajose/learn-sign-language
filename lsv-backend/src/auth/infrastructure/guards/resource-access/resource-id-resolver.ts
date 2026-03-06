@@ -115,7 +115,11 @@ export class ResourceIdResolver {
       // Casos como quiz.lesson.languageId
       const [entityName, relationName, property] = parts;
 
-      if (entityName === 'quiz' && relationName === 'lesson' && property === 'languageId') {
+      if (
+        entityName === 'quiz' &&
+        relationName === 'lesson' &&
+        property === 'languageId'
+      ) {
         const quiz = await this.quizRepository.findOne({
           where: { id: resourceId },
           relations: ['lesson', 'lesson.language'],
@@ -136,7 +140,9 @@ export class ResourceIdResolver {
           relations: ['lessonVariant', 'lessonVariant.region'],
         });
         if (!quizVariant || !quizVariant.lessonVariant) {
-          throw new NotFoundException('Quiz variant or lesson variant not found');
+          throw new NotFoundException(
+            'Quiz variant or lesson variant not found',
+          );
         }
         return quizVariant.lessonVariant.region?.id || null;
       }

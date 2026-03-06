@@ -14,10 +14,3 @@ export class AssignPermissionDto {
   @IsNotEmpty()
   targetId: string; // UUID of language or region
 }
-
-
-
-
-
-
-

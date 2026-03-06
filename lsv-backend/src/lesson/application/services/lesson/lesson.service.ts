@@ -44,7 +44,7 @@ export class LessonService {
     private readonly getRegionalLessonUseCase: GetRegionalLessonUseCase,
     @Inject(forwardRef(() => QuizVariantService))
     private readonly quizVariantService: QuizVariantService,
-  ) { }
+  ) {}
   async createLesson(createLessonDto: CreateLessonDto) {
     return await this.createLessonUseCase.execute(createLessonDto);
   }
@@ -101,7 +101,7 @@ export class LessonService {
             })),
           }));
         }
-      } catch (error) {
+      } catch {
         // Si falla, intentar con la lección base
       }
     }

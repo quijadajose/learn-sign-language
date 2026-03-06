@@ -17,7 +17,6 @@ import { Quiz } from 'src/shared/domain/entities/quiz';
 import { Stages } from 'src/shared/domain/entities/stage';
 import { QuizSubmission } from 'src/shared/domain/entities/quizSubmission';
 import { LessonVariant } from 'src/shared/domain/entities/lessonVariant';
-import { Region } from 'src/shared/domain/entities/region';
 import { CreateLessonVariantDto } from 'src/lesson/domain/dto/create-lesson-variant/create-lesson-variant-dto';
 import { FindManyOptions, Repository, DataSource } from 'typeorm';
 import { QuizService } from 'src/quiz/application/services/quiz/quiz.service';
@@ -40,7 +39,7 @@ export class LessonRepository implements LessonRepositoryInterface {
     private readonly dataSource: DataSource,
     @Inject(forwardRef(() => QuizService))
     private readonly quizService: QuizService,
-  ) { }
+  ) {}
   async findPassedLessonIdsForUser(userId: string): Promise<Set<string>> {
     const submissions = await this.quizSubmissionRepository
       .createQueryBuilder('submission')
@@ -82,6 +81,7 @@ export class LessonRepository implements LessonRepositoryInterface {
       questions: quiz.questions.map((question) => ({
         ...question,
         options: question.options.map((option) => {
+          // eslint-disable-next-line @typescript-eslint/no-unused-vars
           const { isCorrect, ...rest } = option;
           return rest;
         }),

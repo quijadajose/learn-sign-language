@@ -9,9 +9,8 @@ export class RevokePermissionUseCase {
   ) {}
 
   async execute(permissionId: string): Promise<void> {
-    const permission = await this.moderatorPermissionRepository.findById(
-      permissionId,
-    );
+    const permission =
+      await this.moderatorPermissionRepository.findById(permissionId);
     if (!permission) {
       throw new NotFoundException('Permission not found');
     }
@@ -19,10 +18,3 @@ export class RevokePermissionUseCase {
     await this.moderatorPermissionRepository.deleteById(permissionId);
   }
 }
-
-
-
-
-
-
-

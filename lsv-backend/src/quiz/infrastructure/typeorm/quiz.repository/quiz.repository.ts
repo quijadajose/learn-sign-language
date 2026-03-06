@@ -14,7 +14,7 @@ import { Question } from 'src/shared/domain/entities/question';
 import { Quiz } from 'src/shared/domain/entities/quiz';
 import { QuizSubmission } from 'src/shared/domain/entities/quizSubmission';
 import { User } from 'src/shared/domain/entities/user';
-import { FindManyOptions, Repository, SelectQueryBuilder } from 'typeorm';
+import { FindManyOptions, Repository } from 'typeorm';
 
 export class QuizRepository implements QuizRepositoryInterface {
   constructor(

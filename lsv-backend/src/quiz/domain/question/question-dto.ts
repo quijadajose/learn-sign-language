@@ -1,4 +1,9 @@
-import { ArrayMinSize, IsArray, IsString, ValidateNested } from 'class-validator';
+import {
+  ArrayMinSize,
+  IsArray,
+  IsString,
+  ValidateNested,
+} from 'class-validator';
 import { OptionDto } from '../dto/option/option-dto';
 import { Type } from 'class-transformer';
 

@@ -14,10 +14,3 @@ export interface ResourcePermissionMetadata {
 }
 
 export const RESOURCE_PERMISSION_KEY = 'resourcePermission';
-
-
-
-
-
-
-

@@ -21,7 +21,7 @@ export class RegionService {
     private readonly regionRepository: RegionRepositoryInterface,
     private readonly languageService: LanguageService,
     private readonly countryDivisionService: CountryDivisionService,
-  ) { }
+  ) {}
 
   async getAllRegions(
     pagination: PaginationDto,
@@ -54,7 +54,7 @@ export class RegionService {
       );
     }
 
-    let languageId = createRegionDto.languageId;
+    const languageId = createRegionDto.languageId;
     if (!languageId) {
       throw new Error('languageId is required to create a region');
     }
@@ -115,7 +115,8 @@ export class RegionService {
     }
 
     if (updateRegionDto.isDefault) {
-      const languageId = updateRegionDto.languageId || existingRegion.languageId;
+      const languageId =
+        updateRegionDto.languageId || existingRegion.languageId;
       const existingDefault =
         await this.regionRepository.findDefaultByLanguageId(languageId);
 

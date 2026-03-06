@@ -108,4 +108,4 @@ import { ModeratorModule } from './moderator/moderator.module';
   controllers: [ImagesController],
   providers: [UploadPictureUseCase, SeederService],
 })
-export class AppModule { }
+export class AppModule {}

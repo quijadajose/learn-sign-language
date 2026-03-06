@@ -16,7 +16,7 @@ import { UserLessonService } from 'src/user-lesson/application/services/user-les
 @Controller('user-lesson')
 @UseGuards(AuthGuard('jwt'))
 export class UserLessonController {
-  constructor(private readonly userLessonService: UserLessonService) { }
+  constructor(private readonly userLessonService: UserLessonService) {}
   @Get('by-user/:id')
   getUserLessonByUserId(
     @Param('id', ParseUUIDPipe) id: string,

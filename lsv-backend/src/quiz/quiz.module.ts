@@ -81,4 +81,4 @@ import { UpdateQuizVariantUseCase } from './application/use-cases/update-quiz-va
     UpdateQuizUseCase,
   ],
 })
-export class QuizModule { }
+export class QuizModule {}
