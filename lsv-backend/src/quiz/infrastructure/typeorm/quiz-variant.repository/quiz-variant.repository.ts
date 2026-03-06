@@ -169,9 +169,7 @@ export class QuizVariantRepository {
 
     let correctCount = 0;
     for (const answer of submission.answers) {
-      if (
-        correctAnswersMap.get(answer.questionId) === answer.optionId
-      ) {
+      if (correctAnswersMap.get(answer.questionId) === answer.optionId) {
         correctCount++;
       }
     }
@@ -185,7 +183,8 @@ export class QuizVariantRepository {
       answers: JSON.stringify(submission.answers) as any,
       score: Math.round(score),
     });
-    const savedSubmission = await this.submissionRepository.save(quizSubmission);
+    const savedSubmission =
+      await this.submissionRepository.save(quizSubmission);
     const { id, submittedAt } = savedSubmission;
     return { id, submittedAt, score };
   }

@@ -17,7 +17,7 @@ export class EnrollUserInLanguageUseCase {
 
   async execute(userId: string, languageId: string): Promise<UserLanguage> {
     const user = await this.userRepository.findById(userId);
-    if (!user) {      
+    if (!user) {
       throw new NotFoundException('User not found');
     }
 
