@@ -1,4 +1,6 @@
 import { QuizVariant } from 'src/shared/domain/entities/quizVariant';
+import { User } from 'src/shared/domain/entities/user';
+import { Submission } from '../dto/submission/submission.dto';
 
 export interface QuizVariantRepositoryInterface {
   findByLessonVariantId(lessonVariantId: string): Promise<QuizVariant[]>;
@@ -21,4 +23,9 @@ export interface QuizVariantRepositoryInterface {
       options: Array<{ text: string; isCorrect: boolean }>;
     }>,
   ): Promise<QuizVariant>;
+  submissionTest(
+    user: User,
+    quizVariant: QuizVariant,
+    submission: Submission,
+  ): Promise<{ id: string; submittedAt: Date; score: number }>;
 }

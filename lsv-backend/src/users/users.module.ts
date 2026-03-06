@@ -12,7 +12,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { UserLanguage } from 'src/shared/domain/entities/userLanguage';
 import { UserRegion } from 'src/shared/domain/entities/userRegion';
 import { User } from 'src/shared/domain/entities/user';
-import { EnrollUserInLanguageUseCase } from './infrastructure/users/enroll-user-in-language.use-case';
+import { EnrollUserInLanguageUseCase } from './application/use-cases/enroll-user-in-language/enroll-user-in-language.use-case';
 import { EnrollUserInRegionUseCase } from './application/use-cases/enroll-user-in-region/enroll-user-in-region.use-case';
 import { GetUserRegionsUseCase } from './application/use-cases/get-user-regions/get-user-regions.use-case';
 import { UnenrollUserFromLanguageUseCase } from './application/use-cases/unenroll-user-from-language/unenroll-user-from-language.use-case';

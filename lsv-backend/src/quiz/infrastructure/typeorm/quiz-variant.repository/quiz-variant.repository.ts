@@ -6,7 +6,7 @@ import { QuestionVariant } from 'src/shared/domain/entities/questionVariant';
 import { OptionVariant } from 'src/shared/domain/entities/optionVariant';
 import { QuizSubmission } from 'src/shared/domain/entities/quizSubmission';
 import { User } from 'src/shared/domain/entities/user';
-import { SubmissionDto } from 'src/quiz/application/dto/submission/submission-dto';
+import { Submission } from 'src/quiz/domain/dto/submission/submission.dto';
 
 @Injectable()
 export class QuizVariantRepository {
@@ -150,7 +150,7 @@ export class QuizVariantRepository {
   async submissionTest(
     user: User,
     quizVariant: QuizVariant,
-    submissionDto: SubmissionDto,
+    submission: Submission,
   ) {
     const correctOptions = await this.optionVariantRepository.find({
       where: {
@@ -168,9 +168,9 @@ export class QuizVariantRepository {
     });
 
     let correctCount = 0;
-    for (const submission of submissionDto.answers) {
+    for (const answer of submission.answers) {
       if (
-        correctAnswersMap.get(submission.questionId) === submission.optionId
+        correctAnswersMap.get(answer.questionId) === answer.optionId
       ) {
         correctCount++;
       }
@@ -179,13 +179,13 @@ export class QuizVariantRepository {
     const totalQuestions = correctOptions.length;
     const score =
       totalQuestions > 0 ? (correctCount / totalQuestions) * 100 : 0;
-    const submission = this.submissionRepository.create({
+    const quizSubmission = this.submissionRepository.create({
       user: user,
       quizVariant: quizVariant,
-      answers: JSON.stringify(submissionDto.answers) as any,
+      answers: JSON.stringify(submission.answers) as any,
       score: Math.round(score),
     });
-    const savedSubmission = await this.submissionRepository.save(submission);
+    const savedSubmission = await this.submissionRepository.save(quizSubmission);
     const { id, submittedAt } = savedSubmission;
     return { id, submittedAt, score };
   }
