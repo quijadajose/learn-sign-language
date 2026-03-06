@@ -5,7 +5,10 @@
   Inject,
   ConflictException,
 } from '@nestjs/common';
-import { ModeratorPermission, PermissionScope } from 'src/shared/domain/entities/moderatorPermission';
+import {
+  ModeratorPermission,
+  PermissionScope,
+} from 'src/shared/domain/entities/moderatorPermission';
 import { ModeratorPermissionRepositoryInterface } from 'src/moderator/domain/ports/moderator-permission.repository.interface';
 import { AssignPermissionDto } from 'src/moderator/domain/dto/assign-permission.dto';
 import { LanguageRepositoryInterface } from 'src/language/domain/ports/language.repository.interface/language.repository.interface';
@@ -40,10 +43,11 @@ export class AssignPermissionUseCase {
       }
 
       // Verificar si ya existe un permiso para este usuario y lenguaje
-      const existing = await this.moderatorPermissionRepository.findByUserIdAndLanguageId(
-        dto.userId,
-        dto.targetId,
-      );
+      const existing =
+        await this.moderatorPermissionRepository.findByUserIdAndLanguageId(
+          dto.userId,
+          dto.targetId,
+        );
       if (existing) {
         throw new ConflictException(
           'User already has permission for this language',
@@ -64,10 +68,11 @@ export class AssignPermissionUseCase {
       }
 
       // Verificar si ya existe un permiso para este usuario y región
-      const existing = await this.moderatorPermissionRepository.findByUserIdAndRegionId(
-        dto.userId,
-        dto.targetId,
-      );
+      const existing =
+        await this.moderatorPermissionRepository.findByUserIdAndRegionId(
+          dto.userId,
+          dto.targetId,
+        );
       if (existing) {
         throw new ConflictException(
           'User already has permission for this region',
@@ -84,10 +89,3 @@ export class AssignPermissionUseCase {
     throw new BadRequestException('Invalid scope');
   }
 }
-
-
-
-
-
-
-

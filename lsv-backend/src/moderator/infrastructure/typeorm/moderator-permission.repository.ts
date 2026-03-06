@@ -1,12 +1,16 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { ModeratorPermission, PermissionScope } from 'src/shared/domain/entities/moderatorPermission';
+import {
+  ModeratorPermission,
+  PermissionScope,
+} from 'src/shared/domain/entities/moderatorPermission';
 import { ModeratorPermissionRepositoryInterface } from 'src/moderator/domain/ports/moderator-permission.repository.interface';
 
 @Injectable()
 export class ModeratorPermissionRepository
-  implements ModeratorPermissionRepositoryInterface {
+  implements ModeratorPermissionRepositoryInterface
+{
   private readonly secureSelect = {
     id: true as const,
     userId: true as const,
@@ -44,7 +48,7 @@ export class ModeratorPermissionRepository
   constructor(
     @InjectRepository(ModeratorPermission)
     private readonly moderatorPermissionRepository: Repository<ModeratorPermission>,
-  ) { }
+  ) {}
 
   async findByUserId(userId: string): Promise<ModeratorPermission[]> {
     return this.moderatorPermissionRepository.find({
@@ -142,9 +146,7 @@ export class ModeratorPermissionRepository
     });
   }
 
-  async save(
-    permission: ModeratorPermission,
-  ): Promise<ModeratorPermission> {
+  async save(permission: ModeratorPermission): Promise<ModeratorPermission> {
     return this.moderatorPermissionRepository.save(permission);
   }
 
@@ -180,10 +182,3 @@ export class ModeratorPermissionRepository
     });
   }
 }
-
-
-
-
-
-
-

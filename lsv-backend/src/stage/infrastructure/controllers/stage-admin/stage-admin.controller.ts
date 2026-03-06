@@ -13,8 +13,6 @@ import {
 } from '@nestjs/common';
 import { StageDto } from 'src/shared/domain/dto/create-stage/create-stage-dto';
 import { StageService } from 'src/stage/application/services/stage/stage.service';
-import { Roles } from 'src/auth/infrastructure/decorators/roles.decorator';
-import { RolesGuard } from 'src/auth/infrastructure/guards/roles/roles.guard';
 import { RequireResourcePermission } from 'src/auth/infrastructure/decorators/require-resource-permission.decorator';
 import { PermissionScope } from 'src/shared/domain/entities/moderatorPermission';
 import { ResourceAccessGuard } from 'src/auth/infrastructure/guards/resource-access/resource-access.guard';
@@ -26,7 +24,7 @@ import { Stages } from 'src/shared/domain/entities/stage';
 
 @Controller('stage')
 export class StageController {
-  constructor(private readonly stageService: StageService) { }
+  constructor(private readonly stageService: StageService) {}
 
   @UseGuards(ResourceAccessGuard)
   @RequireResourcePermission(PermissionScope.LANGUAGE, { body: 'languageId' })
@@ -59,7 +57,11 @@ export class StageController {
     return this.stageService.deleteStage(id);
   }
   @UseGuards(ResourceAccessGuard)
-  @RequireResourcePermission(PermissionScope.LANGUAGE, { param: 'id' }, { allowRegionModerators: true })
+  @RequireResourcePermission(
+    PermissionScope.LANGUAGE,
+    { param: 'id' },
+    { allowRegionModerators: true },
+  )
   @Get(':id')
   async findAll(
     @Query() pagination: PaginationDto,

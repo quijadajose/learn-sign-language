@@ -227,7 +227,7 @@ export class SeederService implements OnModuleInit {
     private readonly quizVariantService: QuizVariantService,
     private readonly regionService: RegionService,
     private readonly countryDivisionService: CountryDivisionService,
-  ) { }
+  ) {}
 
   async onModuleInit() {
     await this.seedCountriesAndDivisions();
@@ -351,7 +351,7 @@ export class SeederService implements OnModuleInit {
     });
     await this.registerUserUseCase.register({
       age: 20,
-      email: "localModeratorEmail@gmail.com",
+      email: 'localModeratorEmail@gmail.com',
       firstName: 'Usuario',
       lastName: 'Normal',
       password: normalUserPassword,

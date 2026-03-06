@@ -8,18 +8,19 @@ export class ListModeratorsUseCase {
   constructor(
     @Inject('ModeratorPermissionRepositoryInterface')
     private readonly moderatorPermissionRepository: ModeratorPermissionRepositoryInterface,
-  ) { }
+  ) {}
 
   async execute(
     pagination: { page: number; limit: number },
     languageId?: string,
     regionId?: string,
   ): Promise<PaginatedResponseDto<ModeratorListItem>> {
-    const [permissions, total] = await this.moderatorPermissionRepository.findWithFilters(
-      pagination,
-      languageId,
-      regionId,
-    );
+    const [permissions, total] =
+      await this.moderatorPermissionRepository.findWithFilters(
+        pagination,
+        languageId,
+        regionId,
+      );
 
     const data: ModeratorListItem[] = permissions.map((permission) => ({
       id: permission.id,
@@ -31,13 +32,11 @@ export class ListModeratorsUseCase {
       createdAt: permission.createdAt,
     }));
 
-    return new PaginatedResponseDto(data, total, pagination.page, pagination.limit);
+    return new PaginatedResponseDto(
+      data,
+      total,
+      pagination.page,
+      pagination.limit,
+    );
   }
 }
-
-
-
-
-
-
-

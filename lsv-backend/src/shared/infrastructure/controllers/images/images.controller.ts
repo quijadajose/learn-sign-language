@@ -29,7 +29,7 @@ export class UploadImageDto {
 @DocImages()
 @Controller('images')
 export class ImagesController {
-  constructor(private readonly uploadPictureUseCase: UploadPictureUseCase) { }
+  constructor(private readonly uploadPictureUseCase: UploadPictureUseCase) {}
   private readonly allowedExtensions = ['png', 'jpeg', 'jpg', 'webp'];
 
   @Public()

@@ -9,7 +9,6 @@ import {
   Put,
   Query,
   UseGuards,
-  Inject,
 } from '@nestjs/common';
 import { Roles } from 'src/auth/infrastructure/decorators/roles.decorator';
 import { RolesGuard } from 'src/auth/infrastructure/guards/roles/roles.guard';
@@ -20,7 +19,6 @@ import { CreateRegionDto } from 'src/region/domain/create-region.dto';
 import { GetRegionsQueryDto } from 'src/region/domain/dto/get-regions-query.dto';
 import { RegionService } from 'src/region/application/services/region/region.service';
 import { Region } from 'src/shared/domain/entities/region';
-import { PaginationDto } from 'src/shared/domain/dto/PaginationDto';
 import { LanguageService } from 'src/language/application/services/language/language-admin.service';
 import { CountryDivisionService } from 'src/shared/application/services/country-division.service';
 import { CountryWithDivisionsDto } from 'src/shared/domain/dto/country-with-divisions.dto';
@@ -35,7 +33,7 @@ export class RegionController {
     private readonly regionService: RegionService,
     private readonly languageService: LanguageService,
     private readonly countryDivisionService: CountryDivisionService,
-  ) { }
+  ) {}
 
   @Get()
   async getAllRegions(

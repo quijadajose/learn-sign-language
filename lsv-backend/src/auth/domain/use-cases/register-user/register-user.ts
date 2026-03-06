@@ -1,9 +1,4 @@
-﻿import {
-  Injectable,
-  BadRequestException,
-  ConflictException,
-  Inject,
-} from '@nestjs/common';
+﻿import { Injectable, ConflictException, Inject } from '@nestjs/common';
 import { CreateUserDto } from 'src/auth/domain/dto/create-user/create-user';
 import { User } from 'src/shared/domain/entities/user';
 import { UserRepositoryInterface } from '../../ports/user.repository.interface/user.repository.interface';

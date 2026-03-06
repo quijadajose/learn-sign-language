@@ -1,4 +1,7 @@
-import { ModeratorPermission, PermissionScope } from 'src/shared/domain/entities/moderatorPermission';
+import {
+  ModeratorPermission,
+  PermissionScope,
+} from 'src/shared/domain/entities/moderatorPermission';
 
 export interface ModeratorPermissionRepositoryInterface {
   findByUserId(userId: string): Promise<ModeratorPermission[]>;
@@ -29,10 +32,3 @@ export interface ModeratorPermissionRepositoryInterface {
     regionId?: string,
   ): Promise<[ModeratorPermission[], number]>;
 }
-
-
-
-
-
-
-

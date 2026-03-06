@@ -36,7 +36,7 @@ export class ModeratorController {
     private readonly moderatorPermissionService: ModeratorPermissionService,
     @Inject('UserRepositoryInterface')
     private readonly userRepository: UserRepositoryInterface,
-  ) { }
+  ) {}
 
   @Get()
   @DocListModerators()

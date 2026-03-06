@@ -34,7 +34,7 @@ export class AuthController {
   constructor(
     private readonly authService: AuthService,
     private readonly configService: ConfigService,
-  ) { }
+  ) {}
   @Public()
   @Post('register')
   @DocRegister()
@@ -86,7 +86,7 @@ export class AuthController {
   @Get('google')
   @UseGuards(AuthGuard('google'))
   @DocGoogleAuth()
-  async googleAuth() { }
+  async googleAuth() {}
 
   @Public()
   @Get('google/callback')

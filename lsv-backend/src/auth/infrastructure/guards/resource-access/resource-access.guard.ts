@@ -21,7 +21,7 @@ export class ResourceAccessGuard implements CanActivate {
     @Inject('ModeratorPermissionRepositoryInterface')
     private readonly moderatorPermissionRepository: ModeratorPermissionRepositoryInterface,
     private readonly resourceIdResolver: ResourceIdResolver,
-  ) { }
+  ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const metadata = this.reflector.get<ResourcePermissionMetadata>(
@@ -86,7 +86,7 @@ export class ResourceAccessGuard implements CanActivate {
 
       if (!hasPermission) {
         throw new ForbiddenException(
-          "You do not have permission to access this language resource",
+          'You do not have permission to access this language resource',
         );
       }
       return true;

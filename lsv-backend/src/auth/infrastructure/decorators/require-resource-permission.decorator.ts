@@ -10,14 +10,8 @@ export const RequireResourcePermission = (
   scope: PermissionScope,
   source: ResourcePermissionSource,
   options: { allowRegionModerators?: boolean } = {},
-) => SetMetadata<typeof RESOURCE_PERMISSION_KEY, ResourcePermissionMetadata>(
-  RESOURCE_PERMISSION_KEY,
-  { scope, source, ...options },
-);
-
-
-
-
-
-
-
+) =>
+  SetMetadata<typeof RESOURCE_PERMISSION_KEY, ResourcePermissionMetadata>(
+    RESOURCE_PERMISSION_KEY,
+    { scope, source, ...options },
+  );

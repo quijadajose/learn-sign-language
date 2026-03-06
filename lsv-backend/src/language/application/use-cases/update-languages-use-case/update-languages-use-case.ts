@@ -6,7 +6,7 @@ export class UpdateLanguagesUseCase {
   constructor(
     @Inject('LanguageRepositoryInterface')
     private readonly languageRepository: LanguageRepositoryInterface,
-  ) { }
+  ) {}
   async execute(
     updateLanguageDto: CreateLanguageDto,
     id: string,
@@ -18,9 +18,13 @@ export class UpdateLanguagesUseCase {
       throw new NotFoundException('Language not found');
     }
 
-    const existingLanguageWithSameName = await this.languageRepository.findByName(name);
+    const existingLanguageWithSameName =
+      await this.languageRepository.findByName(name);
 
-    if (existingLanguageWithSameName && existingLanguageWithSameName.id !== id) {
+    if (
+      existingLanguageWithSameName &&
+      existingLanguageWithSameName.id !== id
+    ) {
       throw new BadRequestException('Language with this name already exists');
     }
     const updatedLanguage = await this.languageRepository.update(

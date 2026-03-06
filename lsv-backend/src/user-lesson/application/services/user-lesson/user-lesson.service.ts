@@ -21,7 +21,7 @@ export class UserLessonService {
     private readonly getLessonByIdUseCase: GetLessonByIdUseCase,
     @Inject(GetRegionalLessonUseCase)
     private readonly getRegionalLessonUseCase: GetRegionalLessonUseCase,
-  ) { }
+  ) {}
   getUserLessonByUserId(
     userId: string,
     paginationDto: PaginationDto,
@@ -51,7 +51,7 @@ export class UserLessonService {
           // Es una lección normal, usar su ID
           baseLessonId = (lessonOrVariant as any).id;
         }
-      } catch (error) {
+      } catch {
         throw new NotFoundException(
           `Lesson with ID ${lessonId} not found for region ${regionId}`,
         );
@@ -72,6 +72,10 @@ export class UserLessonService {
     lessonId: string,
     isCompleted: boolean,
   ) {
-    await this.setLessonCompletionUseCase.execute(userId, lessonId, isCompleted);
+    await this.setLessonCompletionUseCase.execute(
+      userId,
+      lessonId,
+      isCompleted,
+    );
   }
 }

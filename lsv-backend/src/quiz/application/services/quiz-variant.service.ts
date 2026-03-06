@@ -13,7 +13,7 @@ export class QuizVariantService {
     private readonly createQuizVariantUseCase: CreateQuizVariantUseCase,
     private readonly deleteQuizVariantUseCase: DeleteQuizVariantUseCase,
     private readonly updateQuizVariantUseCase: UpdateQuizVariantUseCase,
-  ) { }
+  ) {}
 
   async getQuizVariants(lessonVariantId: string): Promise<QuizVariant[]> {
     return await this.getQuizVariantsUseCase.execute(lessonVariantId);
@@ -29,7 +29,10 @@ export class QuizVariantService {
     id: string,
     updateQuizVariantDto: CreateQuizVariantDto,
   ): Promise<QuizVariant> {
-    return await this.updateQuizVariantUseCase.execute(id, updateQuizVariantDto);
+    return await this.updateQuizVariantUseCase.execute(
+      id,
+      updateQuizVariantDto,
+    );
   }
 
   async deleteQuizVariant(id: string): Promise<void> {

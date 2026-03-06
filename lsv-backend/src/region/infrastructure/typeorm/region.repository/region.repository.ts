@@ -14,7 +14,7 @@ export class RegionRepository implements RegionRepositoryInterface {
   constructor(
     @InjectRepository(Region)
     private readonly regionRepository: Repository<Region>,
-  ) { }
+  ) {}
 
   async findById(id: string): Promise<Region | null> {
     return await this.regionRepository.findOne({

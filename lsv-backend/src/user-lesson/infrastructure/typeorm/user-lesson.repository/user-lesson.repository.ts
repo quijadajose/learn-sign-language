@@ -11,7 +11,7 @@ export class UserLessonRepository implements UserLessonRepositoryInterface {
   constructor(
     @InjectRepository(UserLesson)
     private readonly userLessonRepository: Repository<UserLesson>,
-  ) { }
+  ) {}
   async getUserLessonByUserId(
     userId: string,
     pagination: PaginationDto,

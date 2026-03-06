@@ -17,10 +17,3 @@ export class ModeratorListResponseDto {
   data: ModeratorListItem[];
   total: number;
 }
-
-
-
-
-
-
-

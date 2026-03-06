@@ -5,19 +5,19 @@ import { QuizVariant } from 'src/shared/domain/entities/quizVariant';
 
 @Injectable()
 export class UpdateQuizVariantUseCase {
-    constructor(
-        @Inject('QuizVariantRepositoryInterface')
-        private readonly quizVariantRepository: QuizVariantRepositoryInterface,
-    ) { }
+  constructor(
+    @Inject('QuizVariantRepositoryInterface')
+    private readonly quizVariantRepository: QuizVariantRepositoryInterface,
+  ) {}
 
-    async execute(
-        id: string,
-        updateQuizVariantDto: CreateQuizVariantDto,
-    ): Promise<QuizVariant> {
-        return await this.quizVariantRepository.updateWithQuestions(
-            id,
-            updateQuizVariantDto.lessonVariantId,
-            updateQuizVariantDto.questions,
-        );
-    }
+  async execute(
+    id: string,
+    updateQuizVariantDto: CreateQuizVariantDto,
+  ): Promise<QuizVariant> {
+    return await this.quizVariantRepository.updateWithQuestions(
+      id,
+      updateQuizVariantDto.lessonVariantId,
+      updateQuizVariantDto.questions,
+    );
+  }
 }

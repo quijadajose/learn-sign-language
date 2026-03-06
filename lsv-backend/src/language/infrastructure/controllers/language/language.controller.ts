@@ -46,7 +46,7 @@ export class LanguageController {
     private readonly languageService: LanguageService,
     private readonly stageService: StageService,
     private readonly quizService: QuizService,
-  ) { }
+  ) {}
 
   @UseGuards(RolesGuard)
   @Roles('admin')

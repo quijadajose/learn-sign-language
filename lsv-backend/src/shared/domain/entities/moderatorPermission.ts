@@ -54,10 +54,3 @@ export class ModeratorPermission {
   @CreateDateColumn()
   createdAt: Date;
 }
-
-
-
-
-
-
-

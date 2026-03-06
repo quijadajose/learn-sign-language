@@ -19,7 +19,6 @@ import {
   ApiResponse,
   ApiBody,
   ApiParam,
-  ApiQuery,
   ApiBearerAuth,
   ApiBadRequestResponse,
   ApiInternalServerErrorResponse,
@@ -27,8 +26,6 @@ import {
   ApiForbiddenResponse,
   ApiNotFoundResponse,
 } from '@nestjs/swagger';
-import { Roles } from 'src/auth/infrastructure/decorators/roles.decorator';
-import { RolesGuard } from 'src/auth/infrastructure/guards/roles/roles.guard';
 import { RequireResourcePermission } from 'src/auth/infrastructure/decorators/require-resource-permission.decorator';
 import { PermissionScope } from 'src/shared/domain/entities/moderatorPermission';
 import { ResourceAccessGuard } from 'src/auth/infrastructure/guards/resource-access/resource-access.guard';
@@ -41,13 +38,17 @@ import { Quiz } from 'src/shared/domain/entities/quiz';
 @ApiTags('Quiz')
 @Controller('quiz')
 export class QuizController {
-  constructor(private readonly quizService: QuizService) { }
+  constructor(private readonly quizService: QuizService) {}
 
   @UseGuards(ResourceAccessGuard)
-  @RequireResourcePermission(PermissionScope.LANGUAGE, {
-    body: 'lessonId',
-    resolve: 'lesson.languageId',
-  }, { allowRegionModerators: true })
+  @RequireResourcePermission(
+    PermissionScope.LANGUAGE,
+    {
+      body: 'lessonId',
+      resolve: 'lesson.languageId',
+    },
+    { allowRegionModerators: true },
+  )
   @Post()
   @ApiOperation({
     summary: 'Crear un nuevo quiz',
@@ -347,10 +348,14 @@ export class QuizController {
   }
 
   @UseGuards(ResourceAccessGuard)
-  @RequireResourcePermission(PermissionScope.LANGUAGE, {
-    param: 'id',
-    resolve: 'quiz.lesson.languageId',
-  }, { allowRegionModerators: true })
+  @RequireResourcePermission(
+    PermissionScope.LANGUAGE,
+    {
+      param: 'id',
+      resolve: 'quiz.lesson.languageId',
+    },
+    { allowRegionModerators: true },
+  )
   @Get('admin/:id')
   @ApiBearerAuth()
   @ApiOperation({
@@ -385,10 +390,14 @@ export class QuizController {
   }
 
   @UseGuards(ResourceAccessGuard)
-  @RequireResourcePermission(PermissionScope.LANGUAGE, {
-    param: 'id',
-    resolve: 'quiz.lesson.languageId',
-  }, { allowRegionModerators: true })
+  @RequireResourcePermission(
+    PermissionScope.LANGUAGE,
+    {
+      param: 'id',
+      resolve: 'quiz.lesson.languageId',
+    },
+    { allowRegionModerators: true },
+  )
   @Put(':id')
   @ApiBearerAuth()
   @ApiOperation({
@@ -727,10 +736,14 @@ export class QuizController {
   }
 
   @UseGuards(ResourceAccessGuard)
-  @RequireResourcePermission(PermissionScope.LANGUAGE, {
-    param: 'id',
-    resolve: 'quiz.lesson.languageId',
-  }, { allowRegionModerators: true })
+  @RequireResourcePermission(
+    PermissionScope.LANGUAGE,
+    {
+      param: 'id',
+      resolve: 'quiz.lesson.languageId',
+    },
+    { allowRegionModerators: true },
+  )
   @Delete(':id')
   @ApiBearerAuth()
   @ApiOperation({

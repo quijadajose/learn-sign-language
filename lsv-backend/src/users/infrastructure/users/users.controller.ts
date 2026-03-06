@@ -51,7 +51,7 @@ export class UsersController {
     private readonly languageService: LanguageService,
     private readonly lessonAdminService: LessonService,
     private readonly usersService: UsersService,
-  ) { }
+  ) {}
 
   @Get('me')
   @UseGuards(AuthGuard('jwt'))
