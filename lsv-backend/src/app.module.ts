@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common';
+import { APP_FILTER } from '@nestjs/core';
 import { join } from 'path';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
@@ -37,9 +38,11 @@ import { Division } from './shared/domain/entities/iso-3166-2/divisions';
 import { SeederService } from './seeder/seeder.service';
 import { ModeratorPermission } from './shared/domain/entities/moderatorPermission';
 import { ModeratorModule } from './moderator/moderator.module';
+import { SentryGlobalFilter, SentryModule } from '@sentry/nestjs/setup';
 
 @Module({
   imports: [
+    SentryModule.forRoot(),
     ConfigModule.forRoot({
       validate,
       isGlobal: true,
@@ -106,6 +109,13 @@ import { ModeratorModule } from './moderator/moderator.module';
     ModeratorModule,
   ],
   controllers: [ImagesController],
-  providers: [UploadPictureUseCase, SeederService],
+  providers: [
+    {
+      provide: APP_FILTER,
+      useClass: SentryGlobalFilter,
+    },
+    UploadPictureUseCase,
+    SeederService,
+  ],
 })
 export class AppModule {}
