@@ -18,19 +18,11 @@ export class EnrollUserInRegionUseCase {
   async execute(userId: string, regionId: string): Promise<UserRegion> {
     const user = await this.userRepository.findById(userId);
     if (!user) {
-      console.error(
-        '❌ EnrollUserInRegionUseCase.execute - Usuario no encontrado:',
-        userId,
-      );
       throw new NotFoundException('User not found');
     }
 
     const region = await this.regionRepository.findById(regionId);
     if (!region) {
-      console.error(
-        '❌ EnrollUserInRegionUseCase.execute - Región no encontrada:',
-        regionId,
-      );
       throw new NotFoundException('Region not found');
     }
 

@@ -19,8 +19,7 @@ import { DeleteQuizUseCase } from '../../use-cases/delete-quiz-use-case/delete-q
 import { UpdateQuizUseCase } from '../../use-cases/update-quiz-use-case/update-quiz-use-case';
 import { ListQuizUseCase } from '../../use-cases/list-quiz-use-case/list-quiz-use-case';
 import { QuizRepositoryInterface } from '../../../domain/ports/quiz.repository.interface/quiz.repository.interface';
-import { QuizVariantRepository } from 'src/quiz/infrastructure/typeorm/quiz-variant.repository/quiz-variant.repository';
-// import { QuizVariantRepository } from '../../infrastructure/typeorm/quiz-variant.repository/quiz-variant.repository';
+import { QuizVariantRepositoryInterface } from '../../../domain/ports/quiz-variant.repository.interface';
 
 @Injectable()
 export class QuizService {
@@ -37,7 +36,7 @@ export class QuizService {
     @Inject('QuizRepositoryInterface')
     private readonly quizRepository: QuizRepositoryInterface,
     @Inject('QuizVariantRepositoryInterface')
-    private readonly quizVariantRepository: QuizVariantRepository,
+    private readonly quizVariantRepository: QuizVariantRepositoryInterface,
   ) {}
   createQuiz(quizDto: QuizDto) {
     return this.createQuizWithQuestionsAndOptionsUseCase.execute(quizDto);
@@ -81,10 +80,17 @@ export class QuizService {
     // Si no se encuentra quiz normal, intentar obtener un quiz variant
     const quizVariant = await this.quizVariantRepository.findById(quizId);
     if (quizVariant) {
+      // Convertir SubmissionDto a Submission (dominio)
+      const submissionDomain = {
+        answers: submission.answers.map((answer) => ({
+          questionId: answer.questionId,
+          optionId: answer.optionId,
+        })),
+      };
       return this.quizVariantRepository.submissionTest(
         user,
         quizVariant,
-        submission,
+        submissionDomain,
       );
     }
 

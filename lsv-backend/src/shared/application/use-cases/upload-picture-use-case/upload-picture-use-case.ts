@@ -70,7 +70,6 @@ export class UploadPictureUseCase {
       }
       return imageUrls;
     } catch (error) {
-      console.error('Error processing image:', error);
       if (error instanceof BadRequestException) {
         throw error;
       }

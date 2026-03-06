@@ -6,7 +6,7 @@ import {
   PaginatedResponseDto,
   PaginationDto,
 } from 'src/shared/domain/dto/PaginationDto';
-import { EnrollUserInLanguageUseCase } from 'src/users/infrastructure/users/enroll-user-in-language.use-case';
+import { EnrollUserInLanguageUseCase } from '../use-cases/enroll-user-in-language/enroll-user-in-language.use-case';
 import { EnrollUserInRegionUseCase } from '../use-cases/enroll-user-in-region/enroll-user-in-region.use-case';
 import { GetUserLanguagesUseCase } from '../use-cases/get-user-languages/get-user-languages.use-case';
 import { GetUserRegionsUseCase } from '../use-cases/get-user-regions/get-user-regions.use-case';
