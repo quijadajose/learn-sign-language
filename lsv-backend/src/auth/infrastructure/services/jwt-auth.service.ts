@@ -1,6 +1,6 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { JwtService } from '@nestjs/jwt';
+import { JwtService, JwtSignOptions } from '@nestjs/jwt';
 import { TokenService } from 'src/auth/domain/ports/token.service/token.service.interface';
 import { JwtPayload } from 'src/auth/interfaces/jwt-payload.interface';
 import { User } from 'src/shared/domain/entities/user';
@@ -14,7 +14,11 @@ export class JwtAuthService implements TokenService {
 
   generateToken(user: User, expiresIn?: string): string {
     const payload = { email: user.email, sub: user.id, role: user.role };
-    return this.jwtService.sign(payload, expiresIn ? { expiresIn } : undefined);
+    const options: JwtSignOptions | undefined = expiresIn
+      ? { expiresIn: expiresIn as unknown as JwtSignOptions['expiresIn'] }
+      : undefined;
+
+    return this.jwtService.sign(payload, options);
   }
   verifyToken(token: string): JwtPayload {
     try {
