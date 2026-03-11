@@ -1,14 +1,22 @@
 import React, { useState, useEffect, useCallback } from "react";
 import {
   Table,
+  TableHead,
+  TableHeadCell,
+  TableBody,
+  TableRow,
+  TableCell,
   Button,
   Modal,
+  ModalHeader,
+  ModalBody,
   TextInput,
   Label,
   Textarea,
   Spinner,
   Alert,
   Toast,
+  ToastToggle,
   Pagination,
   Select,
 } from "flowbite-react";
@@ -494,7 +502,7 @@ export default function StageManagement() {
               )}
             </div>
             <div className="ml-3 text-sm font-normal">{toast.message}</div>
-            <Toast.Toggle
+            <ToastToggle
               onDismiss={() =>
                 setToastMessages((prev) =>
                   prev.filter((t) => t.id !== toast.id),
@@ -529,9 +537,10 @@ export default function StageManagement() {
               <HiTranslate className="size-5 text-gray-600 dark:text-gray-400" />
               <Label
                 htmlFor="language-select"
-                value="Seleccionar idioma:"
                 className="text-sm font-medium"
-              />
+              >
+                Seleccionar idioma:
+              </Label>
             </div>
             <div className="max-w-xs flex-1">
               <Select
@@ -576,8 +585,8 @@ export default function StageManagement() {
         {!loading && !error && (
           <div className="overflow-x-auto">
             <Table hoverable>
-              <Table.Head>
-                <Table.HeadCell
+              <TableHead>
+                <TableHeadCell
                   className="cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700"
                   onClick={() => handleSortChange("name")}
                 >
@@ -589,8 +598,8 @@ export default function StageManagement() {
                       </span>
                     )}
                   </div>
-                </Table.HeadCell>
-                <Table.HeadCell
+                </TableHeadCell>
+                <TableHeadCell
                   className="cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700"
                   onClick={() => handleSortChange("description")}
                 >
@@ -602,23 +611,23 @@ export default function StageManagement() {
                       </span>
                     )}
                   </div>
-                </Table.HeadCell>
-                <Table.HeadCell>
+                </TableHeadCell>
+                <TableHeadCell>
                   <span className="sr-only">Acciones</span>
-                </Table.HeadCell>
-              </Table.Head>
-              <Table.Body className="divide-y">
+                </TableHeadCell>
+              </TableHead>
+              <TableBody className="divide-y">
                 {stages.length > 0 ? (
                   stages.map((stage) => (
-                    <Table.Row
+                    <TableRow
                       key={stage.id}
                       className="bg-white dark:border-gray-700 dark:bg-gray-800"
                     >
-                      <Table.Cell className="whitespace-nowrap font-medium text-gray-900 dark:text-white">
+                      <TableCell className="whitespace-nowrap font-medium text-gray-900 dark:text-white">
                         {stage.name}
-                      </Table.Cell>
-                      <Table.Cell>{stage.description}</Table.Cell>
-                      <Table.Cell>
+                      </TableCell>
+                      <TableCell>{stage.description}</TableCell>
+                      <TableCell>
                         <div className="flex gap-2">
                           <Button
                             size="sm"
@@ -641,20 +650,20 @@ export default function StageManagement() {
                             </div>
                           </Button>
                         </div>
-                      </Table.Cell>
-                    </Table.Row>
+                      </TableCell>
+                    </TableRow>
                   ))
                 ) : (
-                  <Table.Row>
-                    <Table.Cell
+                  <TableRow>
+                    <TableCell
                       colSpan={3}
                       className="text-center text-gray-500 dark:text-gray-400"
                     >
                       No se encontraron etapas para este idioma.
-                    </Table.Cell>
-                  </Table.Row>
+                    </TableCell>
+                  </TableRow>
                 )}
-              </Table.Body>
+              </TableBody>
             </Table>
 
             {totalStages > pageSize && (
@@ -677,8 +686,8 @@ export default function StageManagement() {
       </div>
 
       <Modal show={showDeleteModal} onClose={closeDeleteModal} popup size="md">
-        <Modal.Header />
-        <Modal.Body>
+        <ModalHeader />
+        <ModalBody>
           <div className="text-center">
             <HiExclamationCircle className="mx-auto mb-4 size-14 text-gray-400 dark:text-gray-200" />
             <h3 className="mb-5 text-lg font-normal text-gray-500 dark:text-gray-400">
@@ -703,25 +712,25 @@ export default function StageManagement() {
               <Button
                 color="failure"
                 onClick={handleDeleteStage}
-                isProcessing={isDeleting}
                 disabled={isDeleting}
               >
+                {isDeleting && <Spinner size="sm" className="mr-2" />}
                 {isDeleting ? "Eliminando..." : "Sí, eliminar"}
               </Button>
             </div>
           </div>
-        </Modal.Body>
+        </ModalBody>
       </Modal>
 
       <Modal show={showAddModal} onClose={closeAddModal} popup size="md">
-        <Modal.Header />
-        <Modal.Body>
+        <ModalHeader />
+        <ModalBody>
           <form onSubmit={handleAddSubmit} className="space-y-6">
             <h3 className="text-xl font-medium text-gray-900 dark:text-white">
               Añadir Nueva Etapa
             </h3>
             <div>
-              <Label htmlFor="name" value="Nombre de la Etapa" />
+              <Label htmlFor="name">Nombre de la Etapa</Label>
               <TextInput
                 id="name"
                 name="name"
@@ -733,7 +742,7 @@ export default function StageManagement() {
               />
             </div>
             <div>
-              <Label htmlFor="description" value="Descripción" />
+              <Label htmlFor="description">Descripción</Label>
               <Textarea
                 id="description"
                 name="description"
@@ -755,25 +764,25 @@ export default function StageManagement() {
               <Button
                 type="submit"
                 color="blue"
-                isProcessing={isSubmitting}
                 disabled={isSubmitting}
               >
+                {isSubmitting && <Spinner size="sm" className="mr-2" />}
                 {isSubmitting ? "Creando..." : "Crear Etapa"}
               </Button>
             </div>
           </form>
-        </Modal.Body>
+        </ModalBody>
       </Modal>
 
       <Modal show={showEditModal} onClose={closeEditModal} popup size="md">
-        <Modal.Header />
-        <Modal.Body>
+        <ModalHeader />
+        <ModalBody>
           <form onSubmit={handleEditSubmit} className="space-y-6">
             <h3 className="text-xl font-medium text-gray-900 dark:text-white">
               Editar Etapa
             </h3>
             <div>
-              <Label htmlFor="edit-name" value="Nombre de la Etapa" />
+               <Label htmlFor="edit-name">Nombre de la Etapa</Label>
               <TextInput
                 id="edit-name"
                 name="name"
@@ -784,7 +793,7 @@ export default function StageManagement() {
               />
             </div>
             <div>
-              <Label htmlFor="edit-description" value="Descripción" />
+              <Label htmlFor="edit-description">Descripción</Label>
               <Textarea
                 id="edit-description"
                 name="description"
@@ -805,14 +814,14 @@ export default function StageManagement() {
               <Button
                 type="submit"
                 color="success"
-                isProcessing={isSubmitting}
                 disabled={isSubmitting}
               >
+                {isSubmitting && <Spinner size="sm" className="mr-2" />}
                 {isSubmitting ? "Guardando..." : "Guardar Cambios"}
               </Button>
             </div>
           </form>
-        </Modal.Body>
+        </ModalBody>
       </Modal>
     </>
   );

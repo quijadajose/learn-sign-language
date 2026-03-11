@@ -1,6 +1,6 @@
 import { ReactNode, useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { Avatar, DarkThemeToggle, Dropdown, Navbar } from "flowbite-react";
+import { Avatar, DarkThemeToggle, Dropdown, Navbar, NavbarBrand, NavbarToggle, NavbarCollapse, NavbarLink, DropdownHeader, DropdownItem, DropdownDivider } from "flowbite-react";
 import { HiTranslate } from "react-icons/hi";
 import { BACKEND_BASE_URL } from "../config";
 import { userApi } from "../services/api";
@@ -79,9 +79,9 @@ const DashboardLayout = ({ children }: Props) => {
   return (
     <>
       <Navbar fluid rounded>
-        <Navbar.Brand href="/dashboard">
+        <NavbarBrand href="/dashboard">
           <img src="/LogoLogin.png" className="mr-3 h-6 sm:h-9" alt="Logo" />
-        </Navbar.Brand>
+        </NavbarBrand>
         <div className="flex md:order-2">
           <DarkThemeToggle />
 
@@ -103,45 +103,45 @@ const DashboardLayout = ({ children }: Props) => {
                 />
               }
             >
-              <Dropdown.Header>
+              <DropdownHeader>
                 <span className="block text-sm">
                   {user?.firstName} {user?.lastName}
                 </span>
                 <span className="block truncate text-sm font-medium">
                   {user?.email}
                 </span>
-              </Dropdown.Header>
-              <Dropdown.Item onClick={() => navigate("/dashboard")}>
+              </DropdownHeader>
+              <DropdownItem onClick={() => navigate("/dashboard")}>
                 Dashboard
-              </Dropdown.Item>
-              <Dropdown.Item onClick={() => navigate("/profile")}>
+              </DropdownItem>
+              <DropdownItem onClick={() => navigate("/profile")}>
                 Profile
-              </Dropdown.Item>
-              <Dropdown.Item onClick={() => setShowLanguageSwitcher(true)}>
+              </DropdownItem>
+              <DropdownItem onClick={() => setShowLanguageSwitcher(true)}>
                 <HiTranslate className="mr-2 size-4" />
                 Cambiar Idioma
-              </Dropdown.Item>
-              <Dropdown.Divider />
-              <Dropdown.Item onClick={handleLogout}>Sign out</Dropdown.Item>
+              </DropdownItem>
+              <DropdownDivider />
+              <DropdownItem onClick={handleLogout}>Sign out</DropdownItem>
             </Dropdown>
           ) : (
             <div className="size-10 animate-pulse rounded-full bg-gray-200 dark:bg-gray-700"></div>
           )}
-          <Navbar.Toggle />
+          <NavbarToggle />
         </div>
-        <Navbar.Collapse>
-          <Navbar.Link
+        <NavbarCollapse>
+          <NavbarLink
             href="/dashboard"
             active={location.pathname === "/dashboard"}
           >
             Dashboard
-          </Navbar.Link>
-          <Navbar.Link
+          </NavbarLink>
+          <NavbarLink
             href="/leaderboard"
             active={location.pathname === "/leaderboard"}
           >
             Leaderboard
-          </Navbar.Link>
+          </NavbarLink>
           {(isAdmin || isModerator) && (
             <Dropdown
               arrowIcon={true}
@@ -155,7 +155,7 @@ const DashboardLayout = ({ children }: Props) => {
               {hasAnyLanguagePermission() && (
                 <>
 
-                  <Dropdown.Item
+                  <DropdownItem
                     onClick={() => navigate("/admin/languages")}
                     className={
                       location.pathname.startsWith("/admin/languages")
@@ -164,8 +164,8 @@ const DashboardLayout = ({ children }: Props) => {
                     }
                   >
                     Languages
-                  </Dropdown.Item>
-                  <Dropdown.Item
+                  </DropdownItem>
+                  <DropdownItem
                     onClick={() => navigate("/admin/stages")}
                     className={
                       location.pathname.startsWith("/admin/stages")
@@ -174,10 +174,10 @@ const DashboardLayout = ({ children }: Props) => {
                     }
                   >
                     Stages
-                  </Dropdown.Item>
+                  </DropdownItem>
                 </>
               )}
-              <Dropdown.Item
+              <DropdownItem
                 onClick={() => navigate("/admin/lessons")}
                 className={
                   location.pathname.startsWith("/admin/lessons")
@@ -186,8 +186,8 @@ const DashboardLayout = ({ children }: Props) => {
                 }
               >
                 Lessons
-              </Dropdown.Item>
-              <Dropdown.Item
+              </DropdownItem>
+              <DropdownItem
                 onClick={() => navigate("/admin/regions")}
                 className={
                   location.pathname.startsWith("/admin/regions")
@@ -196,9 +196,9 @@ const DashboardLayout = ({ children }: Props) => {
                 }
               >
                 Regions
-              </Dropdown.Item>
+              </DropdownItem>
               {isAdmin && (
-                <Dropdown.Item
+                <DropdownItem
                   onClick={() => navigate("/admin/moderators")}
                   className={
                     location.pathname.startsWith("/admin/moderators")
@@ -207,11 +207,11 @@ const DashboardLayout = ({ children }: Props) => {
                   }
                 >
                   Moderators
-                </Dropdown.Item>
+                </DropdownItem>
               )}
             </Dropdown>
           )}
-        </Navbar.Collapse>
+        </NavbarCollapse>
       </Navbar>
       {user ? (
         <main className="min-h-screen p-4 dark:bg-gray-800">{children}</main>

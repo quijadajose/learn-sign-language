@@ -7,12 +7,15 @@ import { useLocalStorage } from "../hooks/useLocalStorage";
 import {
   Button,
   Modal,
+  ModalHeader,
+  ModalBody,
   TextInput,
   Label,
   Textarea,
   Spinner,
   Alert,
   Toast,
+  ToastToggle,
   FileInput,
 } from "flowbite-react";
 import {
@@ -462,7 +465,7 @@ export default function LanguageManagement() {
               )}
             </div>
             <div className="ml-3 text-sm font-normal">{toast.message}</div>
-            <Toast.Toggle
+            <ToastToggle
               onDismiss={() =>
                 setToastMessages((prev) =>
                   prev.filter((t) => t.id !== toast.id),
@@ -658,14 +661,14 @@ export default function LanguageManagement() {
       </div>
 
       <Modal show={isEditModalOpen} onClose={handleCancelEdit} popup size="md">
-        <Modal.Header />
-        <Modal.Body>
+        <ModalHeader />
+        <ModalBody>
           <form onSubmit={handleEditSubmit} className="space-y-6">
             <h3 className="text-xl font-medium text-gray-900 dark:text-white">
               Editar Idioma
             </h3>
             <div>
-              <Label htmlFor="edit-name" value="Nombre del Idioma" />
+              <Label htmlFor="edit-name">Nombre del Idioma</Label>
               <TextInput
                 id="edit-name"
                 value={editForm.name}
@@ -677,7 +680,7 @@ export default function LanguageManagement() {
               />
             </div>
             <div>
-              <Label htmlFor="edit-description" value="Descripción" />
+              <Label htmlFor="edit-description">Descripción</Label>
               <Textarea
                 id="edit-description"
                 value={editForm.description}
@@ -689,7 +692,7 @@ export default function LanguageManagement() {
               />
             </div>
             <div>
-              <Label htmlFor="edit-image" value="Imagen (Opcional)" />
+              <Label htmlFor="edit-image">Imagen (Opcional)</Label>
               <div className="flex w-full items-center justify-center">
                 <Label
                   htmlFor="edit-dropzone-file"
@@ -744,14 +747,14 @@ export default function LanguageManagement() {
               <Button
                 type="submit"
                 color="success"
-                isProcessing={isSubmitting}
                 disabled={isSubmitting}
               >
+                {isSubmitting && <Spinner size="sm" className="mr-2" />}
                 {isSubmitting ? "Guardando..." : "Guardar Cambios"}
               </Button>
             </div>
           </form>
-        </Modal.Body>
+        </ModalBody>
       </Modal>
 
       <Modal
@@ -760,8 +763,8 @@ export default function LanguageManagement() {
         popup
         size="md"
       >
-        <Modal.Header />
-        <Modal.Body>
+        <ModalHeader />
+        <ModalBody>
           <div className="text-center">
             <HiExclamationCircle className="mx-auto mb-4 size-14 text-gray-400 dark:text-gray-200" />
             <h3 className="mb-5 text-lg font-normal text-gray-500 dark:text-gray-400">
@@ -786,25 +789,25 @@ export default function LanguageManagement() {
               <Button
                 color="failure"
                 onClick={handleDeleteSubmit}
-                isProcessing={isDeleting}
                 disabled={isDeleting}
               >
+                {isDeleting && <Spinner size="sm" className="mr-2" />}
                 {isDeleting ? "Eliminando..." : "Sí, eliminar"}
               </Button>
             </div>
           </div>
-        </Modal.Body>
+        </ModalBody>
       </Modal>
 
       <Modal show={isAddModalOpen} onClose={handleCancelAdd} popup size="md">
-        <Modal.Header />
-        <Modal.Body>
+        <ModalHeader />
+        <ModalBody>
           <form onSubmit={handleAddSubmit} className="space-y-6">
             <h3 className="text-xl font-medium text-gray-900 dark:text-white">
               Añadir Nuevo Idioma
             </h3>
             <div>
-              <Label htmlFor="add-country" value="País *" />
+              <Label htmlFor="add-country">País *</Label>
               <Select
                 id="add-country"
                 value={selectedCountry}
@@ -842,7 +845,7 @@ export default function LanguageManagement() {
               />
             </div>
             <div>
-              <Label htmlFor="add-name" value="Nombre del Idioma" />
+              <Label htmlFor="add-name">Nombre del Idioma</Label>
               <TextInput
                 id="add-name"
                 value={addForm.name}
@@ -853,7 +856,7 @@ export default function LanguageManagement() {
               />
             </div>
             <div>
-              <Label htmlFor="add-description" value="Descripción" />
+              <Label htmlFor="add-description">Descripción</Label>
               <Textarea
                 id="add-description"
                 value={addForm.description}
@@ -866,7 +869,7 @@ export default function LanguageManagement() {
               />
             </div>
             <div>
-              <Label htmlFor="add-image" value="Imagen (Opcional)" />
+              <Label htmlFor="add-image">Imagen (Opcional)</Label>
               <div className="flex w-full items-center justify-center">
                 <Label
                   htmlFor="dropzone-file"
@@ -921,14 +924,14 @@ export default function LanguageManagement() {
               <Button
                 type="submit"
                 color="blue"
-                isProcessing={isAdding}
                 disabled={isAdding}
               >
+                {isAdding && <Spinner size="sm" className="mr-2" />}
                 {isAdding ? "Creando..." : "Crear Idioma"}
               </Button>
             </div>
           </form>
-        </Modal.Body>
+        </ModalBody>
       </Modal>
     </>
   );

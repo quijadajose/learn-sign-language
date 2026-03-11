@@ -8,6 +8,10 @@ import {
   Modal,
   Progress,
   Dropdown,
+  DropdownItem,
+  ModalHeader,
+  ModalBody,
+  ModalFooter,
 } from "flowbite-react";
 import { useLocalStorage } from "./hooks/useLocalStorage";
 import { useToast } from "./components/ToastProvider";
@@ -241,13 +245,13 @@ export default function LessonListView() {
         {allStages.length > 1 && (
           <Dropdown label="Cambiar Sección" dismissOnClick={true} color="blue">
             {allStages.map((stage) => (
-              <Dropdown.Item
+              <DropdownItem
                 key={stage.id}
                 onClick={() => handleChangeStage(stage.id)}
                 disabled={stage.id === stageId}
               >
                 {stage.name}: {stage.description}
-              </Dropdown.Item>
+              </DropdownItem>
             ))}
           </Dropdown>
         )}
@@ -349,13 +353,13 @@ export default function LessonListView() {
       )}
 
       <Modal show={showModal} onClose={() => setShowModal(false)} size="4xl">
-        <Modal.Header>
+        <ModalHeader>
           <div className="flex items-center gap-2">
             <HiCheckCircle className="h-6 w-6 text-blue-600" />
             <span>Resultados del Examen: {selectedLesson?.name}</span>
           </div>
-        </Modal.Header>
-        <Modal.Body>
+        </ModalHeader>
+        <ModalBody>
           <div className="space-y-6">
             {selectedLesson?.submissions.map((submission, index) => (
               <div
@@ -423,10 +427,10 @@ export default function LessonListView() {
               </div>
             ))}
           </div>
-        </Modal.Body>
-        <Modal.Footer>
+        </ModalBody>
+        <ModalFooter>
           <Button onClick={() => setShowModal(false)}>Cerrar</Button>
-        </Modal.Footer>
+        </ModalFooter>
       </Modal>
     </div>
   );

@@ -5,12 +5,16 @@ import {
   Button,
   Alert,
   Modal,
+  ModalHeader,
+  ModalBody,
+  ModalFooter,
   TextInput,
   Label,
   Textarea,
   Spinner,
   Badge,
   Tabs,
+  TabItem,
 } from "flowbite-react";
 import {
   HiPlus,
@@ -369,7 +373,7 @@ export default function QuizManagement() {
       )}
 
       <Tabs>
-        <Tabs.Item title="Quizzes Principales" active>
+        <TabItem title="Quizzes Principales" active>
           {quizzes.length === 0 ? (
             <Card>
               <div className="py-8 text-center">
@@ -432,10 +436,10 @@ export default function QuizManagement() {
               ))}
             </div>
           )}
-        </Tabs.Item>
-        <Tabs.Item title="Variantes Regionales">
+        </TabItem>
+        <TabItem title="Variantes Regionales">
           <QuizVariantManagement />
-        </Tabs.Item>
+        </TabItem>
       </Tabs>
 
       <Modal
@@ -447,10 +451,10 @@ export default function QuizManagement() {
         }}
         size="4xl"
       >
-        <Modal.Header>
+        <ModalHeader>
           {editingQuiz ? "Editar Quiz" : "Crear Nuevo Quiz"}
-        </Modal.Header>
-        <Modal.Body>
+        </ModalHeader>
+        <ModalBody>
           <div className="space-y-6">
             {newQuestions.map((question, questionIndex) => (
               <Card key={questionIndex}>
@@ -630,8 +634,8 @@ export default function QuizManagement() {
               Agregar Pregunta
             </Button>
           </div>
-        </Modal.Body>
-        <Modal.Footer>
+        </ModalBody>
+        <ModalFooter>
           <Button
             color="success"
             onClick={handleSubmitQuiz}
@@ -658,7 +662,7 @@ export default function QuizManagement() {
           >
             Cancelar
           </Button>
-        </Modal.Footer>
+        </ModalFooter>
       </Modal>
     </div>
   );

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Button, TextInput, Card, Label, Spinner, Toast } from "flowbite-react";
+import { Button, TextInput, Card, Label, Spinner, Toast, ToastToggle } from "flowbite-react";
 import { HiCheck, HiX } from "react-icons/hi";
 import { BACKEND_BASE_URL } from "./config";
 import { useNavigate } from "react-router-dom";
@@ -252,7 +252,7 @@ export const ResponsiveProfileForm = () => {
                 )}
               </div>
               <div className="ml-3 text-sm font-normal">{toast.message}</div>
-              <Toast.Toggle
+              <ToastToggle
                 onDismiss={() =>
                   setToastMessages((prev) =>
                     prev.filter((t) => t.id !== toast.id),
@@ -295,7 +295,7 @@ export const ResponsiveProfileForm = () => {
               )}
             </div>
             <div className="ml-3 text-sm font-normal">{toast.message}</div>
-            <Toast.Toggle
+            <ToastToggle
               onDismiss={() =>
                 setToastMessages((prev) =>
                   prev.filter((t) => t.id !== toast.id),
@@ -329,9 +329,10 @@ export const ResponsiveProfileForm = () => {
                 <div className="w-full max-w-xs">
                   <Label
                     htmlFor="photo"
-                    value="Change profile picture"
                     className="sr-only"
-                  />
+                  >
+                    Change profile picture
+                  </Label>
                   <input
                     id="photo"
                     type="file"
@@ -350,8 +351,9 @@ export const ResponsiveProfileForm = () => {
               <Label
                 className="text-gray-500 dark:text-gray-400"
                 htmlFor="firstName"
-                value="Nombre"
-              />
+              >
+                Nombre
+              </Label>
               <TextInput
                 id="firstName"
                 name="firstName"
@@ -365,8 +367,9 @@ export const ResponsiveProfileForm = () => {
               <Label
                 className="text-gray-500 dark:text-gray-400"
                 htmlFor="lastName"
-                value="Apellido"
-              />
+              >
+                Apellido
+              </Label>
               <TextInput
                 id="lastName"
                 name="lastName"
@@ -380,8 +383,9 @@ export const ResponsiveProfileForm = () => {
               <Label
                 className="text-gray-500 dark:text-gray-400"
                 htmlFor="email"
-                value="Email"
-              />
+              >
+                Email
+              </Label>
               <TextInput
                 id="email"
                 name="email"
@@ -396,8 +400,9 @@ export const ResponsiveProfileForm = () => {
               <Label
                 className="text-gray-500 dark:text-gray-400"
                 htmlFor="age"
-                value="Edad"
-              />
+              >
+                Edad
+              </Label>
               <TextInput
                 id="age"
                 name="age"
@@ -420,9 +425,10 @@ export const ResponsiveProfileForm = () => {
                 <div>
                   <Label
                     htmlFor="currentPassword"
-                    value="Contraseña Actual"
                     className="text-gray-500 dark:text-gray-400"
-                  />
+                  >
+                    Contraseña Actual
+                  </Label>
                   <TextInput
                     id="currentPassword"
                     name="currentPassword"
@@ -437,9 +443,10 @@ export const ResponsiveProfileForm = () => {
                 <div>
                   <Label
                     htmlFor="newPassword"
-                    value="Nueva Contraseña"
                     className="text-gray-500 dark:text-gray-400"
-                  />
+                  >
+                    Nueva Contraseña
+                  </Label>
                   <TextInput
                     id="newPassword"
                     name="newPassword"
@@ -454,9 +461,10 @@ export const ResponsiveProfileForm = () => {
                 <div className="md:col-span-2">
                   <Label
                     htmlFor="confirmPassword"
-                    value="Repetir Nueva Contraseña"
                     className="text-gray-500 dark:text-gray-400"
-                  />
+                  >
+                    Repetir Nueva Contraseña
+                  </Label>
                   <TextInput
                     id="confirmPassword"
                     name="confirmPassword"
@@ -474,8 +482,9 @@ export const ResponsiveProfileForm = () => {
               <Label
                 className="text-gray-500 dark:text-gray-400"
                 htmlFor="role"
-                value="Rol"
-              />
+              >
+                Rol
+              </Label>
               <TextInput
                 id="role"
                 name="role"
@@ -488,8 +497,9 @@ export const ResponsiveProfileForm = () => {
               <Label
                 className="text-gray-500 dark:text-gray-400"
                 htmlFor="createdAt"
-                value="Miembro Desde"
-              />
+              >
+                Miembro Desde
+              </Label>
               <TextInput
                 id="createdAt"
                 name="createdAt"
@@ -502,8 +512,9 @@ export const ResponsiveProfileForm = () => {
             <div className="md:col-span-2">
               <Label
                 className="mb-2 block text-gray-500 dark:text-gray-400"
-                value="Mano dominante"
-              />
+              >
+                Mano dominante
+              </Label>
               <div className="flex items-center space-x-4">
                 <Label
                   htmlFor="rightHanded"
@@ -565,9 +576,9 @@ export const ResponsiveProfileForm = () => {
                 <Button
                   color="success"
                   onClick={handleSave}
-                  isProcessing={loading}
                   disabled={loading}
                 >
+                  {loading && <Spinner size="sm" className="mr-2" />}
                   {loading ? "Guardando..." : "Guardar Cambios"}
                 </Button>
               </>

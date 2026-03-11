@@ -1,7 +1,7 @@
 import { useState, useCallback } from "react";
 import { Formity, OnReturn } from "@formity/react";
 import { schema, Values } from "./schema";
-import { Toast } from "flowbite-react";
+import { Toast, ToastToggle } from "flowbite-react";
 import { HiCheck, HiX } from "react-icons/hi";
 import { useNavigate } from "react-router-dom";
 import { authApi } from "../services/api";
@@ -59,7 +59,7 @@ export default function Register() {
               )}
             </div>
             <div className="ml-3 text-sm font-normal">{toast.message}</div>
-            <Toast.Toggle
+            <ToastToggle
               onDismiss={() =>
                 setToastMessages((prev) =>
                   prev.filter((t) => t.id !== toast.id),

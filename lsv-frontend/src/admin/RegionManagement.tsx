@@ -4,9 +4,18 @@ import {
   Card,
   Label,
   Modal,
+  ModalHeader,
+  ModalBody,
+  ModalFooter,
   Table,
+  TableHead,
+  TableHeadCell,
+  TableBody,
+  TableRow,
+  TableCell,
   Textarea,
   Toast,
+  ToastToggle,
   Alert,
   Badge,
   Spinner,
@@ -911,23 +920,23 @@ export default function RegionManagement() {
         </div>
         <div className="overflow-x-auto">
           <Table>
-            <Table.Head>
-              <Table.HeadCell>Nombre</Table.HeadCell>
-              <Table.HeadCell>Código</Table.HeadCell>
-              <Table.HeadCell>Descripción</Table.HeadCell>
-              <Table.HeadCell>Tipo</Table.HeadCell>
-              <Table.HeadCell>Acciones</Table.HeadCell>
-            </Table.Head>
-            <Table.Body className="divide-y">
+            <TableHead>
+              <TableHeadCell>Nombre</TableHeadCell>
+              <TableHeadCell>Código</TableHeadCell>
+              <TableHeadCell>Descripción</TableHeadCell>
+              <TableHeadCell>Tipo</TableHeadCell>
+              <TableHeadCell>Acciones</TableHeadCell>
+            </TableHead>
+            <TableBody className="divide-y">
               {groupedRegions.length === 0 ? (
-                <Table.Row>
-                  <Table.Cell
+                <TableRow>
+                  <TableCell
                     colSpan={5}
                     className="text-center text-gray-500 dark:text-gray-400"
                   >
                     No hay regiones disponibles
-                  </Table.Cell>
-                </Table.Row>
+                  </TableCell>
+                </TableRow>
               ) : (
                 groupedRegions.map((countryGroup) => {
                   const isCountryExpanded = expandedCountries.has(
@@ -938,8 +947,8 @@ export default function RegionManagement() {
                   return (
                     <React.Fragment key={countryKey}>
                       {/* Fila de País */}
-                      <Table.Row className="bg-gray-100 dark:bg-gray-700">
-                        <Table.Cell
+                      <TableRow className="bg-gray-100 dark:bg-gray-700">
+                        <TableCell
                           colSpan={5}
                           className="font-semibold text-gray-900 dark:text-white"
                         >
@@ -971,37 +980,37 @@ export default function RegionManagement() {
                               )
                             </span>
                           </button>
-                        </Table.Cell>
-                      </Table.Row>
+                        </TableCell>
+                      </TableRow>
 
                       {/* Filas de Idiomas y Regiones */}
                       {isCountryExpanded &&
                         (countryGroup.languages.length === 1 ? (
                           // Si solo hay un idioma, mostrar regiones directamente sin nivel de idioma
                           countryGroup.languages[0].regions.map((region) => (
-                            <Table.Row
+                            <TableRow
                               key={region.id}
                               className="bg-white dark:border-gray-700 dark:bg-gray-900"
                             >
-                              <Table.Cell className="pl-8 whitespace-nowrap font-medium text-gray-900 dark:text-white">
+                              <TableCell className="pl-8 whitespace-nowrap font-medium text-gray-900 dark:text-white">
                                 {region.name}
-                              </Table.Cell>
-                              <Table.Cell className="whitespace-nowrap text-gray-900 dark:text-white">
+                              </TableCell>
+                              <TableCell className="whitespace-nowrap text-gray-900 dark:text-white">
                                 {region.code}
-                              </Table.Cell>
-                              <Table.Cell className="text-gray-900 dark:text-white">
+                              </TableCell>
+                              <TableCell className="text-gray-900 dark:text-white">
                                 {region.description.length > 50
                                   ? `${region.description.substring(0, 50)}...`
                                   : region.description}
-                              </Table.Cell>
-                              <Table.Cell>
+                              </TableCell>
+                              <TableCell>
                                 {region.isDefault ? (
                                   <Badge color="blue">Base</Badge>
                                 ) : (
                                   <Badge color="gray">Regional</Badge>
                                 )}
-                              </Table.Cell>
-                              <Table.Cell>
+                              </TableCell>
+                              <TableCell>
                                 <div className="flex space-x-2">
                                   <Button
                                     size="sm"
@@ -1035,8 +1044,8 @@ export default function RegionManagement() {
                                     </>
                                   )}
                                 </div>
-                              </Table.Cell>
-                            </Table.Row>
+                              </TableCell>
+                            </TableRow>
                           ))
                         ) : (
                           // Si hay múltiples idiomas, mostrar el nivel de idioma
@@ -1049,8 +1058,8 @@ export default function RegionManagement() {
                             return (
                               <React.Fragment key={languageKey}>
                                 {/* Fila de Idioma */}
-                                <Table.Row className="bg-gray-50 dark:bg-gray-800">
-                                  <Table.Cell
+                                <TableRow className="bg-gray-50 dark:bg-gray-800">
+                                  <TableCell
                                     colSpan={5}
                                     className="pl-8 font-medium text-gray-800 dark:text-gray-200"
                                   >
@@ -1072,35 +1081,35 @@ export default function RegionManagement() {
                                         )
                                       </span>
                                     </button>
-                                  </Table.Cell>
-                                </Table.Row>
+                                  </TableCell>
+                                </TableRow>
 
                                 {/* Filas de Regiones */}
                                 {isLanguageExpanded &&
                                   languageGroup.regions.map((region) => (
-                                    <Table.Row
+                                    <TableRow
                                       key={region.id}
                                       className="bg-white dark:border-gray-700 dark:bg-gray-900"
                                     >
-                                      <Table.Cell className="pl-12 whitespace-nowrap font-medium text-gray-900 dark:text-white">
+                                      <TableCell className="pl-12 whitespace-nowrap font-medium text-gray-900 dark:text-white">
                                         {region.name}
-                                      </Table.Cell>
-                                      <Table.Cell className="whitespace-nowrap text-gray-900 dark:text-white">
+                                      </TableCell>
+                                      <TableCell className="whitespace-nowrap text-gray-900 dark:text-white">
                                         {region.code}
-                                      </Table.Cell>
-                                      <Table.Cell className="text-gray-900 dark:text-white">
+                                      </TableCell>
+                                      <TableCell className="text-gray-900 dark:text-white">
                                         {region.description.length > 50
                                           ? `${region.description.substring(0, 50)}...`
                                           : region.description}
-                                      </Table.Cell>
-                                      <Table.Cell>
+                                      </TableCell>
+                                      <TableCell>
                                         {region.isDefault ? (
                                           <Badge color="blue">Base</Badge>
                                         ) : (
                                           <Badge color="gray">Regional</Badge>
                                         )}
-                                      </Table.Cell>
-                                      <Table.Cell>
+                                      </TableCell>
+                                      <TableCell>
                                         <div className="flex space-x-2">
                                           <Button
                                             size="sm"
@@ -1136,8 +1145,8 @@ export default function RegionManagement() {
                                             </>
                                           )}
                                         </div>
-                                      </Table.Cell>
-                                    </Table.Row>
+                                      </TableCell>
+                                    </TableRow>
                                   ))}
                               </React.Fragment>
                             );
@@ -1147,7 +1156,7 @@ export default function RegionManagement() {
                   );
                 })
               )}
-            </Table.Body>
+            </TableBody>
           </Table>
         </div>
       </Card>
@@ -1161,11 +1170,11 @@ export default function RegionManagement() {
           setIsCountryLocked(false);
         }}
       >
-        <Modal.Header>Crear Nueva Región</Modal.Header>
-        <Modal.Body>
+        <ModalHeader>Crear Nueva Región</ModalHeader>
+        <ModalBody>
           <div className="space-y-4">
             <div>
-              <Label htmlFor="create-country" value="País" />
+              <Label htmlFor="create-country">País</Label>
               <Select
                 id="create-country"
                 value={selectedCountry}
@@ -1189,7 +1198,7 @@ export default function RegionManagement() {
 
             {selectedCountry && (
               <div>
-                <Label htmlFor="create-division" value="División/Estado" />
+                <Label htmlFor="create-division">División/Estado</Label>
                 <AsyncSelect
                   id="create-division"
                   value={selectedDivision}
@@ -1219,7 +1228,7 @@ export default function RegionManagement() {
               </div>
             )}
             <div>
-              <Label htmlFor="create-description" value="Descripción" />
+              <Label htmlFor="create-description">Descripción</Label>
               <Textarea
                 id="create-description"
                 value={createForm.description}
@@ -1241,11 +1250,11 @@ export default function RegionManagement() {
                 }
                 className="mr-2"
               />
-              <Label htmlFor="create-default" value="Región Nacional (Base)" />
+              <Label htmlFor="create-default">Región Nacional (Base)</Label>
             </div>
           </div>
-        </Modal.Body>
-        <Modal.Footer>
+        </ModalBody>
+        <ModalFooter>
           <Button
             onClick={handleCreateRegion}
             disabled={createLoading}
@@ -1257,7 +1266,7 @@ export default function RegionManagement() {
           <Button color="gray" onClick={() => setIsCreateModalOpen(false)}>
             Cancelar
           </Button>
-        </Modal.Footer>
+        </ModalFooter>
       </Modal>
 
       <Modal
@@ -1268,12 +1277,12 @@ export default function RegionManagement() {
           // Se reseteará cuando se abra el modal de nuevo
         }}
       >
-        <Modal.Header>Editar Región</Modal.Header>
-        <Modal.Body>
+        <ModalHeader>Editar Región</ModalHeader>
+        <ModalBody>
           <div className="space-y-4">
             {editSelectedCountry && (
               <div>
-                <Label htmlFor="edit-division" value="División/Estado" />
+                <Label htmlFor="edit-division">División/Estado</Label>
                 <AsyncSelect
                   id="edit-division"
                   value={editSelectedDivision}
@@ -1303,7 +1312,7 @@ export default function RegionManagement() {
               </div>
             )}
             <div>
-              <Label htmlFor="edit-description" value="Descripción" />
+              <Label htmlFor="edit-description">Descripción</Label>
               <Textarea
                 id="edit-description"
                 value={editForm.description}
@@ -1325,11 +1334,11 @@ export default function RegionManagement() {
                 }
                 className="mr-2"
               />
-              <Label htmlFor="edit-default" value="Región Nacional (Base)" />
+              <Label htmlFor="edit-default">Región Nacional (Base)</Label>
             </div>
           </div>
-        </Modal.Body>
-        <Modal.Footer>
+        </ModalBody>
+        <ModalFooter>
           <Button
             onClick={handleEditRegion}
             disabled={editLoading}
@@ -1341,34 +1350,34 @@ export default function RegionManagement() {
           <Button color="gray" onClick={() => setIsEditModalOpen(false)}>
             Cancelar
           </Button>
-        </Modal.Footer>
+        </ModalFooter>
       </Modal>
 
       <Modal show={isViewModalOpen} onClose={() => setIsViewModalOpen(false)}>
-        <Modal.Header>Detalles de la Región</Modal.Header>
-        <Modal.Body>
+        <ModalHeader>Detalles de la Región</ModalHeader>
+        <ModalBody>
           {selectedRegion && (
             <div className="space-y-4">
               <div>
-                <Label value="Nombre" />
+                <Label>Nombre</Label>
                 <p className="font-medium text-gray-900 dark:text-white">
                   {selectedRegion.name}
                 </p>
               </div>
               <div>
-                <Label value="Código" />
+                <Label>Código</Label>
                 <p className="text-gray-900 dark:text-white">
                   {selectedRegion.code}
                 </p>
               </div>
               <div>
-                <Label value="Descripción" />
+                <Label>Descripción</Label>
                 <p className="text-gray-900 dark:text-white">
                   {selectedRegion.description}
                 </p>
               </div>
               <div>
-                <Label value="Tipo" />
+                <Label>Tipo</Label>
                 <p className="text-gray-900 dark:text-white">
                   {selectedRegion.isDefault
                     ? "Región Nacional (Base)"
@@ -1376,19 +1385,19 @@ export default function RegionManagement() {
                 </p>
               </div>
               <div>
-                <Label value="Fecha de Creación" />
+                <Label>Fecha de Creación</Label>
                 <p className="text-gray-900 dark:text-white">
                   {new Date(selectedRegion.createdAt).toLocaleDateString()}
                 </p>
               </div>
             </div>
           )}
-        </Modal.Body>
-        <Modal.Footer>
+        </ModalBody>
+        <ModalFooter>
           <Button color="gray" onClick={() => setIsViewModalOpen(false)}>
             Cerrar
           </Button>
-        </Modal.Footer>
+        </ModalFooter>
       </Modal>
 
       <Modal
@@ -1396,8 +1405,8 @@ export default function RegionManagement() {
         size="md"
         onClose={() => setIsDeleteModalOpen(false)}
       >
-        <Modal.Header>Confirmar Eliminación</Modal.Header>
-        <Modal.Body>
+        <ModalHeader>Confirmar Eliminación</ModalHeader>
+        <ModalBody>
           <div className="text-center">
             <h3 className="mb-5 text-lg font-normal text-gray-500 dark:text-gray-400">
               ¿Estás seguro de que quieres eliminar la región{" "}
@@ -1411,8 +1420,8 @@ export default function RegionManagement() {
               variantes regionales asociadas.
             </p>
           </div>
-        </Modal.Body>
-        <Modal.Footer>
+        </ModalBody>
+        <ModalFooter>
           <Button
             color="failure"
             onClick={handleDeleteRegion}
@@ -1424,7 +1433,7 @@ export default function RegionManagement() {
           <Button color="gray" onClick={() => setIsDeleteModalOpen(false)}>
             Cancelar
           </Button>
-        </Modal.Footer>
+        </ModalFooter>
       </Modal>
 
       <div className="fixed right-4 top-4 z-[100] space-y-2">
@@ -1439,7 +1448,7 @@ export default function RegionManagement() {
               {toast.type === "success" ? "✓" : "✕"}
             </div>
             <div className="ml-3 text-sm font-normal">{toast.message}</div>
-            <Toast.Toggle />
+            <ToastToggle />
           </Toast>
         ))}
       </div>

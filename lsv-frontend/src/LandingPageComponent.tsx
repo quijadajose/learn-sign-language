@@ -1,4 +1,4 @@
-import { Button, Navbar, DarkThemeToggle, Footer } from "flowbite-react";
+import { Button, Navbar, DarkThemeToggle, Footer, NavbarBrand, NavbarToggle, NavbarCollapse, NavbarLink, FooterBrand, FooterLinkGroup, FooterLink } from "flowbite-react";
 import { Link } from "react-router-dom";
 const scrollToSection = (id: string) => {
   const section = document.getElementById(id);
@@ -18,14 +18,14 @@ export default function LandingPageComponent() {
         rounded
         className="fixed left-0 top-0 z-50 w-full bg-white shadow-md"
       >
-        <Navbar.Brand>
+        <NavbarBrand>
           <img
             src="public/LogoLogin.png"
             className="mr-3 h-6 sm:h-9"
             alt="LSV Logo"
           />
           <span className="self-center whitespace-nowrap text-xl font-semibold dark:text-white"></span>
-        </Navbar.Brand>
+        </NavbarBrand>
         <div className="flex space-x-2 md:order-2">
           <Button color="gray">
             <Link to="/login">Iniciar sesión</Link>
@@ -34,19 +34,19 @@ export default function LandingPageComponent() {
             <Link to="/register">Registro</Link>
           </Button>
           <DarkThemeToggle />
-          <Navbar.Toggle />
+          <NavbarToggle />
         </div>
-        <Navbar.Collapse>
-          <Navbar.Link onClick={() => scrollToSection("about")} active>
+        <NavbarCollapse>
+          <NavbarLink onClick={() => scrollToSection("about")} active>
             Acerca de
-          </Navbar.Link>
-          <Navbar.Link onClick={() => scrollToSection("why")}>
+          </NavbarLink>
+          <NavbarLink onClick={() => scrollToSection("why")}>
             ¿Por qué LSV?
-          </Navbar.Link>
-          <Navbar.Link onClick={() => scrollToSection("history")}>
+          </NavbarLink>
+          <NavbarLink onClick={() => scrollToSection("history")}>
             Historia del proyecto
-          </Navbar.Link>
-        </Navbar.Collapse>
+          </NavbarLink>
+        </NavbarCollapse>
       </Navbar>
       <section id="about" className="bg-white dark:bg-gray-900">
         <div className="mx-auto grid max-w-screen-xl px-4 py-8 lg:grid-cols-12 lg:gap-8 lg:py-16 xl:gap-0">
@@ -191,12 +191,12 @@ export default function LandingPageComponent() {
         </div>
       </section>
       <Footer container>
-        <Footer.Brand src="public/LogoLogin.png" alt="LSV Logo" />
-        <Footer.LinkGroup>
-          <Footer.Link href="https://github.com/quijadajose/LSV/">
+        <FooterBrand src="public/LogoLogin.png" alt="LSV Logo" />
+        <FooterLinkGroup>
+          <FooterLink href="https://github.com/quijadajose/LSV/">
             Github
-          </Footer.Link>
-        </Footer.LinkGroup>
+          </FooterLink>
+        </FooterLinkGroup>
       </Footer>
     </>
   );
