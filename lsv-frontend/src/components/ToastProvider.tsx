@@ -6,7 +6,7 @@ import {
   useCallback,
   useEffect,
 } from "react";
-import { Toast } from "flowbite-react";
+import { Toast, ToastToggle } from "flowbite-react";
 import { HiCheck, HiX, HiInformationCircle } from "react-icons/hi";
 
 type ToastMessage = {
@@ -75,7 +75,7 @@ export const ToastProvider = ({ children }: { children: ReactNode }) => {
               )}
             </div>
             <div className="ml-3 text-sm font-normal">{toast.message}</div>
-            <Toast.Toggle
+            <ToastToggle
               onDismiss={() =>
                 setToasts((prev) => prev.filter((t) => t.id !== toast.id))
               }

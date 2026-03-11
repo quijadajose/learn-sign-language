@@ -4,9 +4,18 @@ import {
   Card,
   Label,
   Modal,
+  ModalHeader,
+  ModalBody,
+  ModalFooter,
   Table,
+  TableHead,
+  TableHeadCell,
+  TableBody,
+  TableRow,
+  TableCell,
   Select,
   Toast,
+  ToastToggle,
   Alert,
   Spinner,
 } from "flowbite-react";
@@ -62,7 +71,7 @@ export default function ModeratorManagement() {
   const [error, setError] = useState<string | null>(null);
   const [toasts, setToasts] = useState<ToastMessage[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
-  const [pageSize, setPageSize] = useState(10);
+  const [pageSize] = useState(10);
   const [totalItems, setTotalItems] = useState(0);
   const [isAssignModalOpen, setIsAssignModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
@@ -306,7 +315,7 @@ export default function ModeratorManagement() {
               )}
             </div>
             <div className="ml-3 text-sm font-normal">{toast.message}</div>
-            <Toast.Toggle
+            <ToastToggle
               onDismiss={() =>
                 setToasts((prev) => prev.filter((t) => t.id !== toast.id))
               }
@@ -342,36 +351,36 @@ export default function ModeratorManagement() {
       <Card>
         <div className="overflow-x-auto">
           <Table>
-            <Table.Head>
-              <Table.HeadCell>Usuario</Table.HeadCell>
-              <Table.HeadCell>Tipo</Table.HeadCell>
-              <Table.HeadCell>Recurso</Table.HeadCell>
-              <Table.HeadCell>Fecha de Asignación</Table.HeadCell>
-              <Table.HeadCell>Acciones</Table.HeadCell>
-            </Table.Head>
-            <Table.Body className="divide-y">
+            <TableHead>
+              <TableHeadCell>Usuario</TableHeadCell>
+              <TableHeadCell>Tipo</TableHeadCell>
+              <TableHeadCell>Recurso</TableHeadCell>
+              <TableHeadCell>Fecha de Asignación</TableHeadCell>
+              <TableHeadCell>Acciones</TableHeadCell>
+            </TableHead>
+            <TableBody className="divide-y">
               {permissions.length === 0 ? (
-                <Table.Row>
-                  <Table.Cell colSpan={5} className="text-center">
+                <TableRow>
+                  <TableCell colSpan={5} className="text-center">
                     <p className="text-gray-500 dark:text-gray-400">
                       No hay permisos de moderación asignados
                     </p>
-                  </Table.Cell>
-                </Table.Row>
+                  </TableCell>
+                </TableRow>
               ) : (
                 permissions.map((permission) => (
-                  <Table.Row
+                  <TableRow
                     key={permission.id}
                     className="bg-white dark:border-gray-700 dark:bg-gray-800"
                   >
-                    <Table.Cell className="whitespace-nowrap font-medium text-gray-900 dark:text-white">
+                    <TableCell className="whitespace-nowrap font-medium text-gray-900 dark:text-white">
                       {permission.user.firstName} {permission.user.lastName}
                       <br />
                       <span className="text-sm text-gray-500 dark:text-gray-400">
                         {permission.user.email}
                       </span>
-                    </Table.Cell>
-                    <Table.Cell>
+                    </TableCell>
+                    <TableCell>
                       <span
                         className={`rounded-full px-2 py-1 text-xs font-semibold ${permission.scope === "language"
                             ? "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200"
@@ -382,16 +391,16 @@ export default function ModeratorManagement() {
                           ? "Lenguaje"
                           : "Región"}
                       </span>
-                    </Table.Cell>
-                    <Table.Cell className="text-gray-900 dark:text-white">
+                    </TableCell>
+                    <TableCell className="text-gray-900 dark:text-white">
                       {permission.scope === "language"
                         ? permission.language?.name || "N/A"
                         : permission.region?.name || "N/A"}
-                    </Table.Cell>
-                    <Table.Cell className="text-gray-900 dark:text-white">
+                    </TableCell>
+                    <TableCell className="text-gray-900 dark:text-white">
                       {new Date(permission.createdAt).toLocaleDateString()}
-                    </Table.Cell>
-                    <Table.Cell>
+                    </TableCell>
+                    <TableCell>
                       <Button
                         size="sm"
                         color="failure"
@@ -399,11 +408,11 @@ export default function ModeratorManagement() {
                       >
                         <HiTrash className="h-4 w-4" />
                       </Button>
-                    </Table.Cell>
-                  </Table.Row>
+                    </TableCell>
+                  </TableRow>
                 ))
               )}
-            </Table.Body>
+            </TableBody>
           </Table>
         </div>
 
@@ -471,11 +480,11 @@ export default function ModeratorManagement() {
         }}
         size="md"
       >
-        <Modal.Header>Asignar Permiso de Moderación</Modal.Header>
-        <Modal.Body>
+        <ModalHeader>Asignar Permiso de Moderación</ModalHeader>
+        <ModalBody>
           <div className="space-y-4">
             <div>
-              <Label htmlFor="user-select" value="Seleccionar Usuario" />
+              <Label htmlFor="user-select">Seleccionar Usuario</Label>
               <AsyncSelect
                 id="user-select"
                 value={selectedUser}
@@ -511,7 +520,7 @@ export default function ModeratorManagement() {
             </div>
 
             <div>
-              <Label htmlFor="scope" value="Tipo de Permiso" />
+              <Label htmlFor="scope">Tipo de Permiso</Label>
               <Select
                 id="scope"
                 value={selectedScope}
@@ -528,7 +537,7 @@ export default function ModeratorManagement() {
 
             {selectedScope === "language" && (
               <div>
-                <Label htmlFor="language-select" value="Lenguaje" />
+                <Label htmlFor="language-select">Lenguaje</Label>
                 <Select
                   id="language-select"
                   value={selectedTargetId}
@@ -548,7 +557,7 @@ export default function ModeratorManagement() {
             {selectedScope === "region" && (
               <>
                 <div>
-                  <Label htmlFor="language-for-region-select" value="Lenguaje" />
+                  <Label htmlFor="language-for-region-select">Lenguaje</Label>
                   <Select
                     id="language-for-region-select"
                     value={selectedLanguageId}
@@ -571,7 +580,7 @@ export default function ModeratorManagement() {
                 </div>
                 {selectedLanguageId && (
                   <div>
-                    <Label htmlFor="region-select" value="Región" />
+                    <Label htmlFor="region-select">Región</Label>
                     <Select
                       id="region-select"
                       value={selectedTargetId}
@@ -592,8 +601,8 @@ export default function ModeratorManagement() {
               </>
             )}
           </div>
-        </Modal.Body>
-        <Modal.Footer>
+        </ModalBody>
+        <ModalFooter>
           <Button
             color="gray"
             onClick={() => {
@@ -606,12 +615,12 @@ export default function ModeratorManagement() {
           </Button>
           <Button
             onClick={handleAssignPermission}
-            isProcessing={isSubmitting}
             disabled={isSubmitting || !selectedUser || !selectedScope || !selectedTargetId}
           >
+            {isSubmitting && <Spinner size="sm" className="mr-2" />}
             Asignar Permiso
           </Button>
-        </Modal.Footer>
+        </ModalFooter>
       </Modal>
 
       <Modal
@@ -622,8 +631,8 @@ export default function ModeratorManagement() {
         }}
         size="md"
       >
-        <Modal.Header>Revocar Permiso</Modal.Header>
-        <Modal.Body>
+        <ModalHeader>Revocar Permiso</ModalHeader>
+        <ModalBody>
           <div className="text-center">
             <HiExclamationCircle className="mx-auto mb-4 size-14 text-gray-400 dark:text-gray-200" />
             <h3 className="mb-5 text-lg font-normal text-gray-500 dark:text-gray-400">
@@ -642,8 +651,8 @@ export default function ModeratorManagement() {
               .
             </p>
           </div>
-        </Modal.Body>
-        <Modal.Footer>
+        </ModalBody>
+        <ModalFooter>
           <Button
             color="gray"
             onClick={() => {
@@ -657,12 +666,12 @@ export default function ModeratorManagement() {
           <Button
             color="failure"
             onClick={handleDeletePermission}
-            isProcessing={isDeleting}
             disabled={isDeleting}
           >
+            {isDeleting && <Spinner size="sm" className="mr-2" />}
             {isDeleting ? "Revocando..." : "Sí, revocar"}
           </Button>
-        </Modal.Footer>
+        </ModalFooter>
       </Modal>
     </div>
   );

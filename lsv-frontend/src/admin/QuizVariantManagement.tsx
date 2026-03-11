@@ -5,12 +5,20 @@ import {
   Button,
   Alert,
   Modal,
+  ModalHeader,
+  ModalBody,
+  ModalFooter,
   TextInput,
   Label,
   Textarea,
   Spinner,
   Badge,
   Table,
+  TableHead,
+  TableHeadCell,
+  TableBody,
+  TableRow,
+  TableCell,
 } from "flowbite-react";
 import {
   HiPlus,
@@ -451,33 +459,33 @@ const QuizVariantManagement = () => {
       <Card>
         <div className="overflow-x-auto">
           <Table>
-            <Table.Head>
-              <Table.HeadCell>Variante de Lección</Table.HeadCell>
-              <Table.HeadCell>Región</Table.HeadCell>
-              <Table.HeadCell>Preguntas</Table.HeadCell>
-              <Table.HeadCell>Acciones</Table.HeadCell>
-            </Table.Head>
-            <Table.Body className="divide-y">
+            <TableHead>
+              <TableHeadCell>Variante de Lección</TableHeadCell>
+              <TableHeadCell>Región</TableHeadCell>
+              <TableHeadCell>Preguntas</TableHeadCell>
+              <TableHeadCell>Acciones</TableHeadCell>
+            </TableHead>
+            <TableBody className="divide-y">
               {quizVariants.map((variant) => (
-                <Table.Row
+                <TableRow
                   key={variant.id}
                   className="bg-white dark:border-gray-700 dark:bg-gray-800"
                 >
-                  <Table.Cell className="whitespace-nowrap font-medium text-gray-900 dark:text-white">
+                  <TableCell className="whitespace-nowrap font-medium text-gray-900 dark:text-white">
                     {variant.lessonVariant?.name || "N/A"}
-                  </Table.Cell>
-                  <Table.Cell className="text-gray-900 dark:text-white">
+                  </TableCell>
+                  <TableCell className="text-gray-900 dark:text-white">
                     <div className="flex items-center">
                       {variant.lessonVariant?.region?.name || "N/A"} (
                       {variant.lessonVariant?.region?.code || "N/A"})
                     </div>
-                  </Table.Cell>
-                  <Table.Cell className="text-gray-900 dark:text-white">
+                  </TableCell>
+                  <TableCell className="text-gray-900 dark:text-white">
                     <Badge color="blue">
                       {variant.questionVariants.length} preguntas
                     </Badge>
-                  </Table.Cell>
-                  <Table.Cell>
+                  </TableCell>
+                  <TableCell>
                     <div className="flex space-x-2">
                       {(isAdmin ||
                         (variant.lessonVariant?.region?.id &&
@@ -500,17 +508,17 @@ const QuizVariantManagement = () => {
                           </>
                         )}
                     </div>
-                  </Table.Cell>
-                </Table.Row>
+                  </TableCell>
+                </TableRow>
               ))}
               {quizVariants.length === 0 && (
-                <Table.Row>
-                  <Table.Cell colSpan={4} className="text-center text-gray-500">
+                <TableRow>
+                  <TableCell colSpan={4} className="text-center text-gray-500">
                     No hay variantes de quiz creadas
-                  </Table.Cell>
-                </Table.Row>
+                  </TableCell>
+                </TableRow>
               )}
-            </Table.Body>
+            </TableBody>
           </Table>
         </div>
       </Card>
@@ -525,13 +533,13 @@ const QuizVariantManagement = () => {
         }}
         size="4xl"
       >
-        <Modal.Header>
+        <ModalHeader>
           {editingQuizVariantId ? "Editar Variante de Quiz" : "Crear Variante de Quiz"}
-        </Modal.Header>
-        <Modal.Body>
+        </ModalHeader>
+        <ModalBody>
           <div className="space-y-6">
             <div>
-              <Label htmlFor="lessonVariant" value="Variante de Lección" />
+              <Label htmlFor="lessonVariant">Variante de Lección</Label>
               <div className="relative">
                 <select
                   id="lessonVariant"
@@ -744,16 +752,16 @@ const QuizVariantManagement = () => {
               Agregar Pregunta
             </Button>
           </div>
-        </Modal.Body>
-        <Modal.Footer>
+        </ModalBody>
+        <ModalFooter>
           <Button
             color="success"
             onClick={handleSaveQuizVariant}
-            isProcessing={creating}
             disabled={
               creating || !selectedLessonVariantId || questions.length === 0
             }
           >
+            {creating && <Spinner size="sm" className="mr-2" />}
             {editingQuizVariantId ? "Actualizar Variante" : "Crear Variante"}
           </Button>
           <Button
@@ -767,7 +775,7 @@ const QuizVariantManagement = () => {
           >
             Cancelar
           </Button>
-        </Modal.Footer>
+        </ModalFooter>
       </Modal>
     </div>
   );

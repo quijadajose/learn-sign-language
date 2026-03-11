@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Table, Spinner, Alert, Pagination } from "flowbite-react";
+import { Table, Spinner, Alert, Pagination, TableHead, TableHeadCell, TableBody, TableRow, TableCell } from "flowbite-react";
 import { leaderboardApi, languageApi } from "./services/api";
 import { BACKEND_BASE_URL } from "./config";
 
@@ -229,9 +229,9 @@ const LeaderboardView: React.FC = () => {
 
         <div className="glass-panel overflow-hidden animate-fade-in-up delay-300">
           <Table hoverable theme={{ root: { shadow: "none" } }}>
-            <Table.Head className="bg-gray-50/50 dark:bg-gray-700/50 text-gray-700 dark:text-gray-200 uppercase text-xs tracking-wider">
-              <Table.HeadCell>Posición</Table.HeadCell>
-              <Table.HeadCell
+            <TableHead className="bg-gray-50/50 dark:bg-gray-700/50 text-gray-700 dark:text-gray-200 uppercase text-xs tracking-wider">
+              <TableHeadCell>Posición</TableHeadCell>
+              <TableHeadCell
                 className="cursor-pointer hover:text-primary-600 transition-colors py-4 font-bold"
                 onClick={() => handleSortChange("firstName")}
               >
@@ -241,8 +241,8 @@ const LeaderboardView: React.FC = () => {
                     <span className="text-primary-500">{sortOrder === "ASC" ? "↑" : "↓"}</span>
                   )}
                 </div>
-              </Table.HeadCell>
-              <Table.HeadCell
+              </TableHeadCell>
+              <TableHeadCell
                 className="cursor-pointer hover:text-primary-600 transition-colors py-4 font-bold"
                 onClick={() => handleSortChange("lastName")}
               >
@@ -252,8 +252,8 @@ const LeaderboardView: React.FC = () => {
                     <span className="text-primary-500">{sortOrder === "ASC" ? "↑" : "↓"}</span>
                   )}
                 </div>
-              </Table.HeadCell>
-              <Table.HeadCell
+              </TableHeadCell>
+              <TableHeadCell
                 className="cursor-pointer hover:text-primary-600 transition-colors py-4 font-bold"
                 onClick={() => handleSortChange("totalScore")}
               >
@@ -263,19 +263,19 @@ const LeaderboardView: React.FC = () => {
                     <span className="text-primary-500">{sortOrder === "ASC" ? "↑" : "↓"}</span>
                   )}
                 </div>
-              </Table.HeadCell>
-            </Table.Head>
-            <Table.Body className="divide-y divide-gray-100 dark:divide-gray-700">
+              </TableHeadCell>
+            </TableHead>
+            <TableBody className="divide-y divide-gray-100 dark:divide-gray-700">
               {leaderboardData.map((entry, index) => {
                 const rank = getRank(index);
                 const isTop3 = rank <= 3;
 
                 return (
-                  <Table.Row
+                  <TableRow
                     key={entry.userId}
                     className="bg-transparent hover:bg-primary-50/30 dark:hover:bg-primary-900/10 transition-colors duration-200"
                   >
-                    <Table.Cell className="whitespace-nowrap font-medium text-gray-900 dark:text-white py-4">
+                    <TableCell className="whitespace-nowrap font-medium text-gray-900 dark:text-white py-4">
                       <div className="flex items-center gap-3">
                         {isTop3 ? (
                           <div className={`
@@ -294,8 +294,8 @@ const LeaderboardView: React.FC = () => {
                           </div>
                         )}
                       </div>
-                    </Table.Cell>
-                    <Table.Cell className="text-gray-900 dark:text-white font-medium">
+                    </TableCell>
+                    <TableCell className="text-gray-900 dark:text-white font-medium">
                       <div className="flex items-center gap-3">
                         <div className="relative group">
                           <img
@@ -310,19 +310,19 @@ const LeaderboardView: React.FC = () => {
                         </div>
                         <span className="text-base">{entry.firstName}</span>
                       </div>
-                    </Table.Cell>
-                    <Table.Cell className="text-gray-600 dark:text-gray-300">
+                    </TableCell>
+                    <TableCell className="text-gray-600 dark:text-gray-300">
                       {entry.lastName}
-                    </Table.Cell>
-                    <Table.Cell>
+                    </TableCell>
+                    <TableCell>
                       <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-primary-100 text-primary-700 dark:bg-primary-900/30 dark:text-primary-300 shadow-sm">
                         {entry.totalScore.toLocaleString()} XP
                       </span>
-                    </Table.Cell>
-                  </Table.Row>
+                    </TableCell>
+                  </TableRow>
                 );
               })}
-            </Table.Body>
+            </TableBody>
           </Table>
         </div>
         {totalPages > 1 && (

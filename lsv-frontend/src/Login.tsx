@@ -1,8 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { Button, Checkbox, Label, TextInput } from "flowbite-react";
+import { Button, Checkbox, Label, TextInput, Toast, ToastToggle } from "flowbite-react";
 import { Link } from "react-router-dom";
-import { Toast } from "flowbite-react";
 import { HiCheck, HiX } from "react-icons/hi";
 import { authApi } from "./services/api";
 import { BACKEND_BASE_URL } from "./config";
@@ -90,7 +89,7 @@ function Login() {
               )}
             </div>
             <div className="ml-3 text-sm font-normal">{toast.message}</div>
-            <Toast.Toggle
+            <ToastToggle
               onDismiss={() =>
                 setToastMessages((prev) =>
                   prev.filter((t) => t.id !== toast.id),

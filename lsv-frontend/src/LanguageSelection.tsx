@@ -427,8 +427,8 @@ export default function LanguageSelection({ onLanguageSelected }: Props) {
             <Button
               onClick={() => handleNext()}
               disabled={!selectedLanguageId || enrolling}
-              isProcessing={enrolling}
             >
+              {enrolling && <Spinner size="sm" className="mr-2" />}
               {enrolling ? "Inscribiendo..." : "Siguiente"}
             </Button>
           </div>
@@ -473,8 +473,8 @@ export default function LanguageSelection({ onLanguageSelected }: Props) {
             <Button
               onClick={() => handleNext()}
               disabled={!selectedRegionId || enrolling}
-              isProcessing={enrolling}
             >
+              {enrolling && <Spinner size="sm" className="mr-2" />}
               {enrolling ? "Inscribiendo..." : "Continuar"}
             </Button>
           </div>

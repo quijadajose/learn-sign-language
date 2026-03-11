@@ -1,11 +1,14 @@
 import { useState, useEffect } from "react";
 import {
   Modal,
+  ModalHeader,
+  ModalBody,
   Button,
   Spinner,
   Alert,
   Select,
   Tabs,
+  TabItem,
   Card,
 } from "flowbite-react";
 import {
@@ -533,14 +536,14 @@ export default function LanguageSwitcher({
 
   return (
     <Modal show={isOpen} onClose={onClose} size="lg">
-      <Modal.Header>
+      <ModalHeader>
         <div className="flex items-center gap-2">
           <HiTranslate className="size-5 text-gray-600 dark:text-gray-400" />
           Gestión de Idiomas
         </div>
-      </Modal.Header>
+      </ModalHeader>
 
-      <Modal.Body>
+      <ModalBody>
         {loading && (
           <div className="flex items-center justify-center py-8">
             <Spinner size="lg" />
@@ -556,7 +559,7 @@ export default function LanguageSwitcher({
 
         {!loading && !error && (
           <Tabs aria-label="Language management tabs">
-            <Tabs.Item
+            <TabItem
               title="Cambiar Idioma"
               icon={HiTranslate}
               active={activeTab === 0}
@@ -678,8 +681,8 @@ export default function LanguageSwitcher({
                           <Button
                             onClick={handleSwitchLanguage}
                             disabled={!selectedLanguageId || switching}
-                            isProcessing={switching}
                           >
+                            {switching && <Spinner size="sm" className="mr-2" />}
                             {switching ? "Cambiando..." : "Cambiar Idioma"}
                           </Button>
                         </div>
@@ -801,8 +804,8 @@ export default function LanguageSwitcher({
                               <Button
                                 onClick={handleSwitchWithRegion}
                                 disabled={!selectedRegionId || switching}
-                                isProcessing={switching}
                               >
+                                {switching && <Spinner size="sm" className="mr-2" />}
                                 {switching ? "Cambiando..." : "Cambiar Idioma"}
                               </Button>
                             </div>
@@ -823,8 +826,8 @@ export default function LanguageSwitcher({
                               <Button
                                 onClick={handleSwitchWithRegion}
                                 disabled={switching}
-                                isProcessing={switching}
                               >
+                                {switching && <Spinner size="sm" className="mr-2" />}
                                 {switching
                                   ? "Cambiando..."
                                   : "Continuar sin Región"}
@@ -843,9 +846,9 @@ export default function LanguageSwitcher({
                   </div>
                 )}
               </div>
-            </Tabs.Item>
+              </TabItem>
 
-            <Tabs.Item
+            <TabItem
               title="Inscribirse en Nuevo Idioma"
               icon={HiPlus}
               active={activeTab === 1}
@@ -992,8 +995,8 @@ export default function LanguageSwitcher({
                           <Button
                             onClick={handleEnroll}
                             disabled={!selectedRegionId || enrolling}
-                            isProcessing={enrolling}
                           >
+                            {enrolling && <Spinner size="sm" className="mr-2" />}
                             {enrolling ? "Inscribiendo..." : "Inscribirse"}
                           </Button>
                         </div>
@@ -1014,8 +1017,8 @@ export default function LanguageSwitcher({
                           <Button
                             onClick={handleEnroll}
                             disabled={enrolling}
-                            isProcessing={enrolling}
                           >
+                            {enrolling && <Spinner size="sm" className="mr-2" />}
                             {enrolling
                               ? "Inscribiendo..."
                               : "Continuar sin Región"}
@@ -1026,9 +1029,9 @@ export default function LanguageSwitcher({
                   </>
                 )}
               </div>
-            </Tabs.Item>
+              </TabItem>
 
-            <Tabs.Item
+            <TabItem
               title="Gestionar Regiones"
               icon={HiLocationMarker}
               active={activeTab === 2}
@@ -1248,8 +1251,8 @@ export default function LanguageSwitcher({
                           <Button
                             onClick={handleEnrollRegion}
                             disabled={!selectedRegionId || enrollingRegion}
-                            isProcessing={enrollingRegion}
                           >
+                            {enrollingRegion && <Spinner size="sm" className="mr-2" />}
                             {enrollingRegion
                               ? "Inscribiendo..."
                               : "Inscribirse"}
@@ -1282,10 +1285,10 @@ export default function LanguageSwitcher({
                   </>
                 )}
               </div>
-            </Tabs.Item>
+              </TabItem>
           </Tabs>
         )}
-      </Modal.Body>
+      </ModalBody>
     </Modal>
   );
 }

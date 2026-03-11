@@ -8,11 +8,20 @@ import {
   Spinner,
   Alert,
   Modal,
+  ModalHeader,
+  ModalBody,
+  ModalFooter,
   TextInput,
   Textarea,
   Toast,
+  ToastToggle,
   Badge,
   Table,
+  TableHead,
+  TableHeadCell,
+  TableBody,
+  TableRow,
+  TableCell,
   Label,
 } from "flowbite-react";
 import {
@@ -27,7 +36,6 @@ import {
   HiGlobe,
 } from "react-icons/hi";
 import QuillEditor from "../components/QuillEditor";
-import Editor from "./Editor";
 import "../styles/quill-flowbite.css";
 import { adminApi, regionApi, lessonVariantApi } from "../services/api";
 
@@ -1096,14 +1104,14 @@ export default function LessonManagement() {
         onClose={handleCloseCreateModal}
         size="5xl"
       >
-        <Modal.Header>
+        <ModalHeader>
           <div className="flex w-full items-center justify-between">
             <h3 className="text-xl font-medium text-gray-900 dark:text-white">
               Agregar Lección
             </h3>
           </div>
-        </Modal.Header>
-        <Modal.Body>
+        </ModalHeader>
+        <ModalBody>
           <div className="space-y-6">
             <div>
               <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
@@ -1193,8 +1201,8 @@ export default function LessonManagement() {
               </div>
             </div>
           </div>
-        </Modal.Body>
-        <Modal.Footer>
+        </ModalBody>
+        <ModalFooter>
           <div className="flex w-full justify-end gap-2">
             <Button
               color="light"
@@ -1206,23 +1214,24 @@ export default function LessonManagement() {
             <Button
               color="success"
               onClick={handleSubmitCreate}
-              isProcessing={createLoading}
+              disabled={createLoading}
             >
+              {createLoading && <Spinner size="sm" className="mr-2" />}
               Crear Lección
             </Button>
           </div>
-        </Modal.Footer>
+        </ModalFooter>
       </Modal>
 
       <Modal show={isViewModalOpen} onClose={handleCloseViewModal} size="4xl">
-        <Modal.Header>
+        <ModalHeader>
           <div className="flex w-full items-center justify-between">
             <h3 className="text-xl font-medium text-gray-900 dark:text-white">
               Detalles de la Lección
             </h3>
           </div>
-        </Modal.Header>
-        <Modal.Body>
+        </ModalHeader>
+        <ModalBody>
           {viewLoading ? (
             <div className="flex h-32 items-center justify-center">
               <Spinner size="lg" />
@@ -1310,18 +1319,18 @@ export default function LessonManagement() {
               </span>
             </div>
           )}
-        </Modal.Body>
+        </ModalBody>
       </Modal>
 
       <Modal show={isEditModalOpen} onClose={handleCloseEditModal} size="5xl">
-        <Modal.Header>
+        <ModalHeader>
           <div className="flex w-full items-center justify-between">
             <h3 className="text-xl font-medium text-gray-900 dark:text-white">
               Editar Lección
             </h3>
           </div>
-        </Modal.Header>
-        <Modal.Body>
+        </ModalHeader>
+        <ModalBody>
           <div className="space-y-6">
             <div>
               <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
@@ -1355,9 +1364,9 @@ export default function LessonManagement() {
                 Contenido
               </label>
               <div className="quill-flowbite rounded-md bg-gray-50 dark:bg-gray-700">
-                <Editor
+                <QuillEditor
                   value={editForm.content}
-                  onChange={(changes) =>
+                  onChange={(changes: any) =>
                     setEditForm((p) => ({ ...p, content: changes.html }))
                   }
                 />
@@ -1410,8 +1419,8 @@ export default function LessonManagement() {
               </div>
             </div>
           </div>
-        </Modal.Body>
-        <Modal.Footer>
+        </ModalBody>
+        <ModalFooter>
           <div className="flex w-full justify-end gap-2">
             <Button
               color="light"
@@ -1423,12 +1432,13 @@ export default function LessonManagement() {
             <Button
               color="success"
               onClick={handleSubmitEdit}
-              isProcessing={editLoading}
+              disabled={editLoading}
             >
+              {editLoading && <Spinner size="sm" className="mr-2" />}
               Guardar Cambios
             </Button>
           </div>
-        </Modal.Footer>
+        </ModalFooter>
       </Modal>
 
       <Modal
@@ -1437,8 +1447,8 @@ export default function LessonManagement() {
         popup
         size="md"
       >
-        <Modal.Header />
-        <Modal.Body>
+        <ModalHeader />
+        <ModalBody>
           <div className="text-center">
             <HiExclamationCircle className="mx-auto mb-4 size-14 text-gray-400 dark:text-gray-200" />
             <h3 className="mb-5 text-lg font-normal text-gray-500 dark:text-gray-400">
@@ -1463,14 +1473,14 @@ export default function LessonManagement() {
               <Button
                 color="failure"
                 onClick={handleConfirmDelete}
-                isProcessing={isDeleting}
                 disabled={isDeleting}
               >
+                {isDeleting && <Spinner size="sm" className="mr-2" />}
                 {isDeleting ? "Eliminando..." : "Sí, eliminar"}
               </Button>
             </div>
           </div>
-        </Modal.Body>
+        </ModalBody>
       </Modal>
 
       <Modal
@@ -1478,8 +1488,8 @@ export default function LessonManagement() {
         size="6xl"
         onClose={() => setIsVariantModalOpen(false)}
       >
-        <Modal.Header>Variantes Regionales</Modal.Header>
-        <Modal.Body>
+        <ModalHeader>Variantes Regionales</ModalHeader>
+        <ModalBody>
           <div className="space-y-4">
             <div className="flex items-center justify-between">
               <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
@@ -1501,26 +1511,26 @@ export default function LessonManagement() {
             ) : (
               <div className="overflow-x-auto">
                 <Table>
-                  <Table.Head>
-                    <Table.HeadCell>Nombre</Table.HeadCell>
-                    <Table.HeadCell>Región</Table.HeadCell>
-                    <Table.HeadCell>Tipo</Table.HeadCell>
-                    <Table.HeadCell>Notas Regionales</Table.HeadCell>
-                    <Table.HeadCell>Acciones</Table.HeadCell>
-                  </Table.Head>
-                  <Table.Body className="divide-y">
+                  <TableHead>
+                    <TableHeadCell>Nombre</TableHeadCell>
+                    <TableHeadCell>Región</TableHeadCell>
+                    <TableHeadCell>Tipo</TableHeadCell>
+                    <TableHeadCell>Notas Regionales</TableHeadCell>
+                    <TableHeadCell>Acciones</TableHeadCell>
+                  </TableHead>
+                  <TableBody className="divide-y">
                     {lessonVariants.map((variant) => (
-                      <Table.Row
+                      <TableRow
                         key={variant.id}
                         className="bg-white dark:border-gray-700 dark:bg-gray-800"
                       >
-                        <Table.Cell className="whitespace-nowrap font-medium text-gray-900 dark:text-white">
+                        <TableCell className="whitespace-nowrap font-medium text-gray-900 dark:text-white">
                           {variant.name}
-                        </Table.Cell>
-                        <Table.Cell className="text-gray-900 dark:text-white">
+                        </TableCell>
+                        <TableCell className="text-gray-900 dark:text-white">
                           {variant.region.name} ({variant.region.code})
-                        </Table.Cell>
-                        <Table.Cell>
+                        </TableCell>
+                        <TableCell>
                           <div className="flex flex-wrap gap-1">
                             {variant.isBase && (
                               <Badge color="green">Base</Badge>
@@ -1532,11 +1542,11 @@ export default function LessonManagement() {
                               <Badge color="gray">Regional</Badge>
                             )}
                           </div>
-                        </Table.Cell>
-                        <Table.Cell className="text-gray-900 dark:text-white">
+                        </TableCell>
+                        <TableCell className="text-gray-900 dark:text-white">
                           {variant.regionalNotes || "N/A"}
-                        </Table.Cell>
-                        <Table.Cell>
+                        </TableCell>
+                        <TableCell>
                           <div className="flex space-x-2">
                             {(hasLanguagePermission(selectedLanguageId) ||
                               hasRegionPermission(variant.region.id)) && (
@@ -1558,20 +1568,20 @@ export default function LessonManagement() {
                                 </>
                               )}
                           </div>
-                        </Table.Cell>
-                      </Table.Row>
+                        </TableCell>
+                      </TableRow>
                     ))}
-                  </Table.Body>
+                  </TableBody>
                 </Table>
               </div>
             )}
           </div>
-        </Modal.Body>
-        <Modal.Footer>
+        </ModalBody>
+        <ModalFooter>
           <Button color="gray" onClick={() => setIsVariantModalOpen(false)}>
             Cerrar
           </Button>
-        </Modal.Footer>
+        </ModalFooter>
       </Modal>
 
       <Modal
@@ -1582,13 +1592,13 @@ export default function LessonManagement() {
           setEditingVariantId(null);
         }}
       >
-        <Modal.Header>
+        <ModalHeader>
           {editingVariantId ? "Editar Variante Regional" : "Crear Variante Regional"}
-        </Modal.Header>
-        <Modal.Body>
+        </ModalHeader>
+        <ModalBody>
           <div className="space-y-4">
             <div>
-              <Label htmlFor="variant-name" value="Nombre" />
+              <Label htmlFor="variant-name">Nombre</Label>
               <TextInput
                 id="variant-name"
                 value={variantForm.name}
@@ -1600,7 +1610,7 @@ export default function LessonManagement() {
               />
             </div>
             <div>
-              <Label htmlFor="variant-description" value="Descripción" />
+              <Label htmlFor="variant-description">Descripción</Label>
               <Textarea
                 id="variant-description"
                 value={variantForm.description}
@@ -1616,7 +1626,7 @@ export default function LessonManagement() {
               />
             </div>
             <div>
-              <Label htmlFor="variant-region" value="Región" />
+              <Label htmlFor="variant-region">Región</Label>
               <Select
                 id="variant-region"
                 value={variantForm.regionId}
@@ -1644,7 +1654,7 @@ export default function LessonManagement() {
               </Select>
             </div>
             <div>
-              <Label htmlFor="variant-content" value="Contenido" />
+              <Label htmlFor="variant-content">Contenido</Label>
               <div className="mt-1">
                 <QuillEditor
                   value={variantForm.content}
@@ -1669,10 +1679,9 @@ export default function LessonManagement() {
                 }
                 className="mr-2"
               />
-              <Label
-                htmlFor="variant-specific"
-                value="Específica de la región"
-              />
+              <Label htmlFor="variant-specific">
+                Específica de la región
+              </Label>
             </div>
             {lessonVariants.some((v) => v.isBase) ? (
               <div className="rounded-md bg-gray-50 p-3 text-sm text-gray-500 dark:bg-gray-700 dark:text-gray-400">
@@ -1690,14 +1699,13 @@ export default function LessonManagement() {
                   }
                   className="mr-2"
                 />
-                <Label
-                  htmlFor="variant-base"
-                  value="Variante base (solo puede haber una por lección)"
-                />
+                <Label htmlFor="variant-base">
+                  Variante base (solo puede haber una por lección)
+                </Label>
               </div>
             )}
             <div>
-              <Label htmlFor="variant-notes" value="Notas Regionales" />
+              <Label htmlFor="variant-notes">Notas Regionales</Label>
               <Textarea
                 id="variant-notes"
                 value={variantForm.regionalNotes}
@@ -1712,8 +1720,8 @@ export default function LessonManagement() {
               />
             </div>
           </div>
-        </Modal.Body>
-        <Modal.Footer>
+        </ModalBody>
+        <ModalFooter>
           <Button
             onClick={handleCreateVariant}
             disabled={createLoading}
@@ -1728,7 +1736,7 @@ export default function LessonManagement() {
           >
             Cancelar
           </Button>
-        </Modal.Footer>
+        </ModalFooter>
       </Modal>
 
       <div className="pointer-events-none fixed right-4 top-4 z-50 flex flex-col gap-2">
@@ -1748,7 +1756,7 @@ export default function LessonManagement() {
                 )}
               </div>
               <div className="ml-3 text-sm font-normal">{t.message}</div>
-              <Toast.Toggle
+              <ToastToggle
                 onClick={() =>
                   setToasts((prev: ToastMessage[]) =>
                     prev.filter((x: ToastMessage) => x.id !== t.id),
