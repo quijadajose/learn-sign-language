@@ -1,5 +1,6 @@
 import { Routes, Route, Navigate } from "react-router-dom";
-import { Flowbite } from "flowbite-react";
+import { ThemeProvider } from "flowbite-react";
+import { ThemeInit } from "../.flowbite-react/init";
 
 import Login from "./Login";
 import ForgoPassword from "./ForgotPasswordComponent";
@@ -33,7 +34,8 @@ function PrivateRoute({ children }: { children: JSX.Element }) {
 function App() {
   return (
     <AuthProvider>
-      <Flowbite>
+      <ThemeInit />
+      <ThemeProvider>
         <main className="min-h-screen bg-gradient-to-br from-gray-50 to-primary-50 dark:from-gray-900 dark:to-gray-800 transition-colors duration-500">
           <ToastProvider>
             <Routes>
@@ -165,7 +167,7 @@ function App() {
             </Routes>
           </ToastProvider>
         </main>
-      </Flowbite>
+      </ThemeProvider>
     </AuthProvider>
   );
 }
