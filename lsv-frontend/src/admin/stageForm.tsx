@@ -60,7 +60,8 @@ export default function StageManagement() {
   const { isAdmin, isModerator, user } = usePermissions();
   const { token, isAuthenticated } = useAuth();
   const navigate = useNavigate();
-  const [selectedLanguageIdByHook, setSelectedLanguageIdByHook] = useLocalStorage<string | null>("selectedLanguageId", null);
+  const [selectedLanguageIdByHook, setSelectedLanguageIdByHook] =
+    useLocalStorage<string | null>("selectedLanguageId", null);
   const [stages, setStages] = useState<Stage[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
@@ -154,7 +155,13 @@ export default function StageManagement() {
     (newPage: number) => {
       setCurrentPage(newPage);
       if (token && selectedLanguageIdByHook) {
-        fetchStages(selectedLanguageIdByHook, newPage, pageSize, orderBy, sortOrder);
+        fetchStages(
+          selectedLanguageIdByHook,
+          newPage,
+          pageSize,
+          orderBy,
+          sortOrder,
+        );
       }
     },
     [pageSize, orderBy, sortOrder, fetchStages],
@@ -171,7 +178,13 @@ export default function StageManagement() {
       setCurrentPage(1);
 
       if (token && selectedLanguageIdByHook) {
-        fetchStages(selectedLanguageIdByHook, 1, pageSize, newOrderByValue, newSortOrder);
+        fetchStages(
+          selectedLanguageIdByHook,
+          1,
+          pageSize,
+          newOrderByValue,
+          newSortOrder,
+        );
       }
     },
     [orderBy, sortOrder, pageSize, fetchStages],
@@ -197,7 +210,11 @@ export default function StageManagement() {
         const seenIds = new Set<string>();
 
         user.moderatorPermissions.forEach((p) => {
-          if (p.scope === "language" && p.language && !seenIds.has(p.language.id)) {
+          if (
+            p.scope === "language" &&
+            p.language &&
+            !seenIds.has(p.language.id)
+          ) {
             moderatorLanguages.push({
               id: p.language.id,
               name: p.language.name,
@@ -330,7 +347,17 @@ export default function StageManagement() {
     };
 
     initialize();
-  }, [navigate, fetchStages, addToast, fetchLanguageName, fetchLanguages, currentPage, pageSize, orderBy, sortOrder]);
+  }, [
+    navigate,
+    fetchStages,
+    addToast,
+    fetchLanguageName,
+    fetchLanguages,
+    currentPage,
+    pageSize,
+    orderBy,
+    sortOrder,
+  ]);
 
   const openAddModal = () => {
     setFormData({ name: "", description: "" });
@@ -490,10 +517,11 @@ export default function StageManagement() {
         {toastMessages.map((toast) => (
           <Toast key={toast.id}>
             <div
-              className={`inline-flex size-8 shrink-0 items-center justify-center rounded-lg ${toast.type === "success"
-                ? "bg-green-100 text-green-500 dark:bg-green-800 dark:text-green-200"
-                : "bg-red-100 text-red-500 dark:bg-red-800 dark:text-red-200"
-                }`}
+              className={`inline-flex size-8 shrink-0 items-center justify-center rounded-lg ${
+                toast.type === "success"
+                  ? "bg-green-100 text-green-500 dark:bg-green-800 dark:text-green-200"
+                  : "bg-red-100 text-red-500 dark:bg-red-800 dark:text-red-200"
+              }`}
             >
               {toast.type === "success" ? (
                 <HiCheck className="size-5" />
@@ -535,10 +563,7 @@ export default function StageManagement() {
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-2">
               <HiTranslate className="size-5 text-gray-600 dark:text-gray-400" />
-              <Label
-                htmlFor="language-select"
-                className="text-sm font-medium"
-              >
+              <Label htmlFor="language-select" className="text-sm font-medium">
                 Seleccionar idioma:
               </Label>
             </div>
@@ -761,11 +786,7 @@ export default function StageManagement() {
               >
                 Cancelar
               </Button>
-              <Button
-                type="submit"
-                color="blue"
-                disabled={isSubmitting}
-              >
+              <Button type="submit" color="blue" disabled={isSubmitting}>
                 {isSubmitting && <Spinner size="sm" className="mr-2" />}
                 {isSubmitting ? "Creando..." : "Crear Etapa"}
               </Button>
@@ -782,7 +803,7 @@ export default function StageManagement() {
               Editar Etapa
             </h3>
             <div>
-               <Label htmlFor="edit-name">Nombre de la Etapa</Label>
+              <Label htmlFor="edit-name">Nombre de la Etapa</Label>
               <TextInput
                 id="edit-name"
                 name="name"
@@ -811,11 +832,7 @@ export default function StageManagement() {
               >
                 Cancelar
               </Button>
-              <Button
-                type="submit"
-                color="success"
-                disabled={isSubmitting}
-              >
+              <Button type="submit" color="success" disabled={isSubmitting}>
                 {isSubmitting && <Spinner size="sm" className="mr-2" />}
                 {isSubmitting ? "Guardando..." : "Guardar Cambios"}
               </Button>

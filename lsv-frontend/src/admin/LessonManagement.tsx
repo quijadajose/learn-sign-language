@@ -126,7 +126,10 @@ export default function LessonManagement() {
     hasRegionPermission,
     hasAnyPermissionForLanguage,
   } = usePermissions();
-  const [selectedLanguageId, setSelectedLanguageId] = useLocalStorage<string>("selectedLanguageId", "");
+  const [selectedLanguageId, setSelectedLanguageId] = useLocalStorage<string>(
+    "selectedLanguageId",
+    "",
+  );
   const [languages, setLanguages] = useState<Language[]>([]);
   const [lessons, setLessons] = useState<Lesson[]>([]);
   const [loading, setLoading] = useState(true);
@@ -211,7 +214,11 @@ export default function LessonManagement() {
       const seenIds = new Set<string>();
 
       user.moderatorPermissions.forEach((p) => {
-        if (p.scope === "language" && p.language && !seenIds.has(p.language.id)) {
+        if (
+          p.scope === "language" &&
+          p.language &&
+          !seenIds.has(p.language.id)
+        ) {
           moderatorLanguages.push({
             id: p.language.id,
             name: p.language.name,
@@ -681,14 +688,14 @@ export default function LessonManagement() {
       setCreateLoading(true);
       const response = editingVariantId
         ? await lessonVariantApi.updateLessonVariant(
-          selectedLessonId,
-          editingVariantId,
-          variantForm,
-        )
+            selectedLessonId,
+            editingVariantId,
+            variantForm,
+          )
         : await lessonVariantApi.createLessonVariant(
-          selectedLessonId,
-          variantForm,
-        );
+            selectedLessonId,
+            variantForm,
+          );
 
       if (response.success) {
         addToast(
@@ -713,7 +720,7 @@ export default function LessonManagement() {
         addToast(
           "error",
           response.message ||
-          `Error al ${editingVariantId ? "actualizar" : "crear"} la variante`,
+            `Error al ${editingVariantId ? "actualizar" : "crear"} la variante`,
         );
       }
     } catch (err) {
@@ -1002,61 +1009,65 @@ export default function LessonManagement() {
                             {hasAnyPermissionForLanguage(
                               lesson.languageId || selectedLanguageId,
                             ) && (
-                                <>
-                                  {hasLanguagePermission(
-                                    lesson.languageId || selectedLanguageId,
-                                  ) && (
-                                      <Button
-                                        size="sm"
-                                        color="info"
-                                        onClick={() => handleOpenEditModal(lesson)}
-                                        disabled={editLoading}
-                                      >
-                                        <div className="flex items-center">
-                                          <HiPencilAlt className="mr-1 size-4" />
-                                          Editar
-                                        </div>
-                                      </Button>
-                                    )}
+                              <>
+                                {hasLanguagePermission(
+                                  lesson.languageId || selectedLanguageId,
+                                ) && (
                                   <Button
                                     size="sm"
                                     color="info"
-                                    onClick={() => openVariantsModal(lesson.id)}
+                                    onClick={() => handleOpenEditModal(lesson)}
+                                    disabled={editLoading}
                                   >
                                     <div className="flex items-center">
-                                      <HiGlobe className="mr-1 size-4" />
-                                      Variantes
+                                      <HiPencilAlt className="mr-1 size-4" />
+                                      Editar
                                     </div>
                                   </Button>
+                                )}
+                                <Button
+                                  size="sm"
+                                  color="info"
+                                  onClick={() => openVariantsModal(lesson.id)}
+                                >
+                                  <div className="flex items-center">
+                                    <HiGlobe className="mr-1 size-4" />
+                                    Variantes
+                                  </div>
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  color="purple"
+                                  onClick={() =>
+                                    navigate(
+                                      `/admin/lessons/${lesson.id}/quizzes`,
+                                    )
+                                  }
+                                >
+                                  <div className="flex items-center">
+                                    <HiAcademicCap className="mr-1 size-4" />
+                                    Quiz
+                                  </div>
+                                </Button>
+                                {hasLanguagePermission(
+                                  lesson.languageId || selectedLanguageId,
+                                ) && (
                                   <Button
                                     size="sm"
-                                    color="purple"
+                                    color="failure"
                                     onClick={() =>
-                                      navigate(`/admin/lessons/${lesson.id}/quizzes`)
+                                      handleOpenDeleteModal(lesson)
                                     }
+                                    disabled={isDeleting}
                                   >
                                     <div className="flex items-center">
-                                      <HiAcademicCap className="mr-1 size-4" />
-                                      Quiz
+                                      <HiTrash className="mr-1 size-4" />
+                                      Eliminar
                                     </div>
                                   </Button>
-                                  {hasLanguagePermission(
-                                    lesson.languageId || selectedLanguageId,
-                                  ) && (
-                                      <Button
-                                        size="sm"
-                                        color="failure"
-                                        onClick={() => handleOpenDeleteModal(lesson)}
-                                        disabled={isDeleting}
-                                      >
-                                        <div className="flex items-center">
-                                          <HiTrash className="mr-1 size-4" />
-                                          Eliminar
-                                        </div>
-                                      </Button>
-                                    )}
-                                </>
-                              )}
+                                )}
+                              </>
+                            )}
                           </div>
                         </td>
                       </tr>
@@ -1550,23 +1561,27 @@ export default function LessonManagement() {
                           <div className="flex space-x-2">
                             {(hasLanguagePermission(selectedLanguageId) ||
                               hasRegionPermission(variant.region.id)) && (
-                                <>
-                                  <Button
-                                    size="sm"
-                                    color="info"
-                                    onClick={() => handleOpenVariantEditModal(variant)}
-                                  >
-                                    <HiPencilAlt className="h-4 w-4" />
-                                  </Button>
-                                  <Button
-                                    size="sm"
-                                    color="failure"
-                                    onClick={() => handleDeleteVariant(variant.id)}
-                                  >
-                                    <HiTrash className="h-4 w-4" />
-                                  </Button>
-                                </>
-                              )}
+                              <>
+                                <Button
+                                  size="sm"
+                                  color="info"
+                                  onClick={() =>
+                                    handleOpenVariantEditModal(variant)
+                                  }
+                                >
+                                  <HiPencilAlt className="h-4 w-4" />
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  color="failure"
+                                  onClick={() =>
+                                    handleDeleteVariant(variant.id)
+                                  }
+                                >
+                                  <HiTrash className="h-4 w-4" />
+                                </Button>
+                              </>
+                            )}
                           </div>
                         </TableCell>
                       </TableRow>
@@ -1593,7 +1608,9 @@ export default function LessonManagement() {
         }}
       >
         <ModalHeader>
-          {editingVariantId ? "Editar Variante Regional" : "Crear Variante Regional"}
+          {editingVariantId
+            ? "Editar Variante Regional"
+            : "Crear Variante Regional"}
         </ModalHeader>
         <ModalBody>
           <div className="space-y-4">
@@ -1644,7 +1661,7 @@ export default function LessonManagement() {
                       (!lessonVariants.some((v) => v.region.id === region.id) ||
                         (editingVariantId &&
                           lessonVariants.find((v) => v.id === editingVariantId)
-                            ?.region.id === region.id))
+                            ?.region.id === region.id)),
                   )
                   .map((region) => (
                     <option key={region.id} value={region.id}>
@@ -1679,9 +1696,7 @@ export default function LessonManagement() {
                 }
                 className="mr-2"
               />
-              <Label htmlFor="variant-specific">
-                Específica de la región
-              </Label>
+              <Label htmlFor="variant-specific">Específica de la región</Label>
             </div>
             {lessonVariants.some((v) => v.isBase) ? (
               <div className="rounded-md bg-gray-50 p-3 text-sm text-gray-500 dark:bg-gray-700 dark:text-gray-400">
@@ -1744,10 +1759,11 @@ export default function LessonManagement() {
           <div key={t.id} className="pointer-events-auto">
             <Toast>
               <div
-                className={`inline-flex size-8 shrink-0 items-center justify-center rounded-lg ${t.type === "success"
-                  ? "bg-green-100 text-green-500 dark:bg-green-800 dark:text-green-200"
-                  : "bg-red-100 text-red-500 dark:bg-red-800 dark:text-red-200"
-                  }`}
+                className={`inline-flex size-8 shrink-0 items-center justify-center rounded-lg ${
+                  t.type === "success"
+                    ? "bg-green-100 text-green-500 dark:bg-green-800 dark:text-green-200"
+                    : "bg-red-100 text-red-500 dark:bg-red-800 dark:text-red-200"
+                }`}
               >
                 {t.type === "success" ? (
                   <HiCheck className="size-5" />

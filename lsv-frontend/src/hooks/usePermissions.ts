@@ -21,7 +21,7 @@ export const usePermissions = () => {
     if (!user?.moderatorPermissions) return false;
 
     return user.moderatorPermissions.some(
-      (p) => p.scope === "language" && p.languageId === languageId
+      (p) => p.scope === "language" && p.languageId === languageId,
     );
   };
 
@@ -31,7 +31,7 @@ export const usePermissions = () => {
 
     // Verificar permiso directo de región
     const hasDirectRegionPermission = user.moderatorPermissions.some(
-      (p) => p.scope === "region" && p.regionId === regionId
+      (p) => p.scope === "region" && p.regionId === regionId,
     );
 
     if (hasDirectRegionPermission) return true;
@@ -39,7 +39,7 @@ export const usePermissions = () => {
     const hasLanguagePermission = user.moderatorPermissions.some(
       (p) =>
         p.scope === "language" &&
-        p.language?.regions?.some((r) => r.id === regionId)
+        p.language?.regions?.some((r) => r.id === regionId),
     );
 
     return hasLanguagePermission;

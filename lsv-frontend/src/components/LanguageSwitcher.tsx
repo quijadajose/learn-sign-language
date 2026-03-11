@@ -682,7 +682,9 @@ export default function LanguageSwitcher({
                             onClick={handleSwitchLanguage}
                             disabled={!selectedLanguageId || switching}
                           >
-                            {switching && <Spinner size="sm" className="mr-2" />}
+                            {switching && (
+                              <Spinner size="sm" className="mr-2" />
+                            )}
                             {switching ? "Cambiando..." : "Cambiar Idioma"}
                           </Button>
                         </div>
@@ -805,7 +807,9 @@ export default function LanguageSwitcher({
                                 onClick={handleSwitchWithRegion}
                                 disabled={!selectedRegionId || switching}
                               >
-                                {switching && <Spinner size="sm" className="mr-2" />}
+                                {switching && (
+                                  <Spinner size="sm" className="mr-2" />
+                                )}
                                 {switching ? "Cambiando..." : "Cambiar Idioma"}
                               </Button>
                             </div>
@@ -827,7 +831,9 @@ export default function LanguageSwitcher({
                                 onClick={handleSwitchWithRegion}
                                 disabled={switching}
                               >
-                                {switching && <Spinner size="sm" className="mr-2" />}
+                                {switching && (
+                                  <Spinner size="sm" className="mr-2" />
+                                )}
                                 {switching
                                   ? "Cambiando..."
                                   : "Continuar sin Región"}
@@ -846,7 +852,7 @@ export default function LanguageSwitcher({
                   </div>
                 )}
               </div>
-              </TabItem>
+            </TabItem>
 
             <TabItem
               title="Inscribirse en Nuevo Idioma"
@@ -996,7 +1002,9 @@ export default function LanguageSwitcher({
                             onClick={handleEnroll}
                             disabled={!selectedRegionId || enrolling}
                           >
-                            {enrolling && <Spinner size="sm" className="mr-2" />}
+                            {enrolling && (
+                              <Spinner size="sm" className="mr-2" />
+                            )}
                             {enrolling ? "Inscribiendo..." : "Inscribirse"}
                           </Button>
                         </div>
@@ -1014,11 +1022,10 @@ export default function LanguageSwitcher({
                           >
                             Atrás
                           </Button>
-                          <Button
-                            onClick={handleEnroll}
-                            disabled={enrolling}
-                          >
-                            {enrolling && <Spinner size="sm" className="mr-2" />}
+                          <Button onClick={handleEnroll} disabled={enrolling}>
+                            {enrolling && (
+                              <Spinner size="sm" className="mr-2" />
+                            )}
                             {enrolling
                               ? "Inscribiendo..."
                               : "Continuar sin Región"}
@@ -1029,7 +1036,7 @@ export default function LanguageSwitcher({
                   </>
                 )}
               </div>
-              </TabItem>
+            </TabItem>
 
             <TabItem
               title="Gestionar Regiones"
@@ -1252,7 +1259,9 @@ export default function LanguageSwitcher({
                             onClick={handleEnrollRegion}
                             disabled={!selectedRegionId || enrollingRegion}
                           >
-                            {enrollingRegion && <Spinner size="sm" className="mr-2" />}
+                            {enrollingRegion && (
+                              <Spinner size="sm" className="mr-2" />
+                            )}
                             {enrollingRegion
                               ? "Inscribiendo..."
                               : "Inscribirse"}
@@ -1285,7 +1294,7 @@ export default function LanguageSwitcher({
                   </>
                 )}
               </div>
-              </TabItem>
+            </TabItem>
           </Tabs>
         )}
       </ModalBody>

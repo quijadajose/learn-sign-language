@@ -123,9 +123,9 @@ function ResetPassword() {
           <img className="mr-2 size-8" src="public/LogoLogin.png" alt="logo" />
           Lenguaje de señas venezolano
         </Link>
-        <div className="w-full rounded-lg bg-white shadow dark:border dark:border-gray-700 dark:bg-gray-800 sm:max-w-md xl:p-0">
+        <div className="w-full rounded-lg bg-white shadow sm:max-w-md xl:p-0 dark:border dark:border-gray-700 dark:bg-gray-800">
           <div className="space-y-4 p-6 sm:p-8 md:space-y-6">
-            <h1 className="text-xl font-bold leading-tight tracking-tight text-gray-900 dark:text-white md:text-2xl">
+            <h1 className="text-xl font-bold leading-tight tracking-tight text-gray-900 md:text-2xl dark:text-white">
               Restablecer contraseña
             </h1>
             <p className="text-sm text-gray-600 dark:text-gray-400">

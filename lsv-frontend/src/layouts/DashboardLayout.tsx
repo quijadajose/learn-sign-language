@@ -1,6 +1,18 @@
 import { ReactNode, useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { Avatar, DarkThemeToggle, Dropdown, Navbar, NavbarBrand, NavbarToggle, NavbarCollapse, NavbarLink, DropdownHeader, DropdownItem, DropdownDivider } from "flowbite-react";
+import {
+  Avatar,
+  DarkThemeToggle,
+  Dropdown,
+  Navbar,
+  NavbarBrand,
+  NavbarToggle,
+  NavbarCollapse,
+  NavbarLink,
+  DropdownHeader,
+  DropdownItem,
+  DropdownDivider,
+} from "flowbite-react";
 import { HiTranslate } from "react-icons/hi";
 import { BACKEND_BASE_URL } from "../config";
 import { userApi } from "../services/api";
@@ -27,11 +39,7 @@ const DashboardLayout = ({ children }: Props) => {
   const [avatarError, setAvatarError] = useState(false);
   const [avatarTimestamp, setAvatarTimestamp] = useState(Date.now());
   const [showLanguageSwitcher, setShowLanguageSwitcher] = useState(false);
-  const {
-    isAdmin,
-    isModerator,
-    hasAnyLanguagePermission,
-  } = usePermissions();
+  const { isAdmin, isModerator, hasAnyLanguagePermission } = usePermissions();
 
   const handleLogout = () => {
     logout();
@@ -147,14 +155,13 @@ const DashboardLayout = ({ children }: Props) => {
               arrowIcon={true}
               inline
               label={
-                <span className="block rounded py-2 pl-3 pr-4 text-gray-700 hover:bg-gray-100 dark:border-gray-700 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white md:border-0 md:p-0 md:hover:bg-transparent md:hover:text-blue-700 md:dark:hover:bg-transparent md:dark:hover:text-white">
+                <span className="block rounded py-2 pl-3 pr-4 text-gray-700 hover:bg-gray-100 md:border-0 md:p-0 md:hover:bg-transparent md:hover:text-blue-700 dark:border-gray-700 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white md:dark:hover:bg-transparent md:dark:hover:text-white">
                   Gestión
                 </span>
               }
             >
               {hasAnyLanguagePermission() && (
                 <>
-
                   <DropdownItem
                     onClick={() => navigate("/admin/languages")}
                     className={

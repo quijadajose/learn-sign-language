@@ -36,10 +36,18 @@ export default function StageProgressView({ language }: Props) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const { token } = useAuth();
-  const [, setSelectedLanguageId] = useLocalStorage<string | null>("selectedLanguageId", null);
-  const [selectedRegionId] = useLocalStorage<string | null>("selectedRegionId", null);
+  const [, setSelectedLanguageId] = useLocalStorage<string | null>(
+    "selectedLanguageId",
+    null,
+  );
+  const [selectedRegionId] = useLocalStorage<string | null>(
+    "selectedRegionId",
+    null,
+  );
   const stageStorageKey = `selectedStageId_${language.id}`;
-  const [persistedStageId, setPersistedStageId] = useLocalStorage<string | null>(stageStorageKey, null);
+  const [persistedStageId, setPersistedStageId] = useLocalStorage<
+    string | null
+  >(stageStorageKey, null);
   const addToast = useToast();
   const navigate = useNavigate();
 

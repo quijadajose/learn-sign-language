@@ -24,22 +24,25 @@ export default function Register() {
     }, 4000);
   };
 
-  const onReturn = useCallback<OnReturn<Values>>(async (values) => {
-    try {
-      const response = await authApi.register(values);
+  const onReturn = useCallback<OnReturn<Values>>(
+    async (values) => {
+      try {
+        const response = await authApi.register(values);
 
-      if (response.success && response.data) {
-        const { user, token } = response.data;
-        login(user, token);
-        addToast("success", "Registro exitoso");
-        navigate("/dashboard");
-      } else {
-        addToast("error", response.message || "Error al registrar");
+        if (response.success && response.data) {
+          const { user, token } = response.data;
+          login(user, token);
+          addToast("success", "Registro exitoso");
+          navigate("/dashboard");
+        } else {
+          addToast("error", response.message || "Error al registrar");
+        }
+      } catch (error) {
+        addToast("error", "Error al conectar con el servidor");
       }
-    } catch (error) {
-      addToast("error", "Error al conectar con el servidor");
-    }
-  }, [login, navigate]);
+    },
+    [login, navigate],
+  );
 
   return (
     <>
@@ -47,10 +50,11 @@ export default function Register() {
         {toastMessages.map((toast) => (
           <Toast key={toast.id}>
             <div
-              className={`inline-flex size-8 shrink-0 items-center justify-center rounded-lg ${toast.type === "success"
+              className={`inline-flex size-8 shrink-0 items-center justify-center rounded-lg ${
+                toast.type === "success"
                   ? "bg-green-100 text-green-500 dark:bg-green-800 dark:text-green-200"
                   : "bg-red-100 text-red-500 dark:bg-red-800 dark:text-red-200"
-                }`}
+              }`}
             >
               {toast.type === "success" ? (
                 <HiCheck className="size-5" />
