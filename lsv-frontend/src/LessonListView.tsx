@@ -15,11 +15,7 @@ import {
 } from "flowbite-react";
 import { useLocalStorage } from "./hooks/useLocalStorage";
 import { useToast } from "./components/ToastProvider";
-import {
-  HiExclamationCircle,
-  HiClock,
-  HiCheckCircle,
-} from "react-icons/hi";
+import { HiExclamationCircle, HiClock, HiCheckCircle } from "react-icons/hi";
 import { lessonApi } from "./services/api";
 import { BACKEND_BASE_URL } from "./config";
 import { useAuth } from "./context/AuthContext";
@@ -67,9 +63,18 @@ export default function LessonListView() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const { token } = useAuth();
-  const [selectedLanguageId] = useLocalStorage<string | null>("selectedLanguageId", null);
-  const [selectedRegionId] = useLocalStorage<string | null>("selectedRegionId", null);
-  const [, setPersistedStageId] = useLocalStorage<string | null>(`selectedStageId_${selectedLanguageId}`, null);
+  const [selectedLanguageId] = useLocalStorage<string | null>(
+    "selectedLanguageId",
+    null,
+  );
+  const [selectedRegionId] = useLocalStorage<string | null>(
+    "selectedRegionId",
+    null,
+  );
+  const [, setPersistedStageId] = useLocalStorage<string | null>(
+    `selectedStageId_${selectedLanguageId}`,
+    null,
+  );
   const addToast = useToast();
   const [selectedLesson, setSelectedLesson] = useState<Lesson | null>(null);
   const [showModal, setShowModal] = useState(false);
@@ -184,7 +189,6 @@ export default function LessonListView() {
       },
     });
   };
-
 
   const handleShowSubmissions = (lesson: Lesson) => {
     setSelectedLesson(lesson);
@@ -378,12 +382,13 @@ export default function LessonListView() {
                       {formatDate(submission.submittedAt)}
                     </span>
                     <span
-                      className={`rounded-full px-3 py-1 text-sm font-medium ${submission.score === 100
-                        ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200"
-                        : submission.score >= 80
-                          ? "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200"
-                          : "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200"
-                        }`}
+                      className={`rounded-full px-3 py-1 text-sm font-medium ${
+                        submission.score === 100
+                          ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200"
+                          : submission.score >= 80
+                            ? "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200"
+                            : "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200"
+                      }`}
                     >
                       {submission.score}/100
                     </span>

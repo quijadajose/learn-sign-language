@@ -1,6 +1,13 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { Button, Checkbox, Label, TextInput, Toast, ToastToggle } from "flowbite-react";
+import {
+  Button,
+  Checkbox,
+  Label,
+  TextInput,
+  Toast,
+  ToastToggle,
+} from "flowbite-react";
 import { Link } from "react-router-dom";
 import { HiCheck, HiX } from "react-icons/hi";
 import { authApi } from "./services/api";
@@ -12,7 +19,10 @@ function Login() {
   const { login, isAuthenticated } = useAuth();
   const [searchParams] = useSearchParams();
   const queryToken = searchParams.get("token");
-  const [rememberedEmail, setRememberedEmail] = useLocalStorage<string | null>("rememberedEmail", null);
+  const [rememberedEmail, setRememberedEmail] = useLocalStorage<string | null>(
+    "rememberedEmail",
+    null,
+  );
 
   const [toastMessages, setToastMessages] = useState<
     { id: number; type: "success" | "error"; message: string }[]
@@ -77,10 +87,11 @@ function Login() {
         {toastMessages.map((toast) => (
           <Toast key={toast.id}>
             <div
-              className={`inline-flex size-8 shrink-0 items-center justify-center rounded-lg ${toast.type === "success"
+              className={`inline-flex size-8 shrink-0 items-center justify-center rounded-lg ${
+                toast.type === "success"
                   ? "bg-green-100 text-green-500 dark:bg-green-800 dark:text-green-200"
                   : "bg-red-100 text-red-500 dark:bg-red-800 dark:text-red-200"
-                }`}
+              }`}
             >
               {toast.type === "success" ? (
                 <HiCheck className="size-5" />
@@ -107,9 +118,9 @@ function Login() {
           <img className="mr-2 size-8" src="public/LogoLogin.png" alt="logo" />
           Lenguaje de señas venezolano
         </Link>
-        <div className="w-full rounded-lg bg-white shadow dark:border dark:border-gray-700 dark:bg-gray-800 sm:max-w-md xl:p-0">
+        <div className="w-full rounded-lg bg-white shadow sm:max-w-md xl:p-0 dark:border dark:border-gray-700 dark:bg-gray-800">
           <div className="space-y-4 p-6 sm:p-8 md:space-y-6">
-            <h1 className="text-xl font-bold leading-tight tracking-tight text-gray-900 dark:text-white md:text-2xl">
+            <h1 className="text-xl font-bold leading-tight tracking-tight text-gray-900 md:text-2xl dark:text-white">
               Iniciar sesión
             </h1>
             <form className="space-y-4 md:space-y-6" onSubmit={handleLogin}>
@@ -178,7 +189,7 @@ function Login() {
               <Button
                 color={"red"}
                 type="button"
-                className="flex w-full max-w-md items-center justify-center rounded-lg bg-red-600  px-4 py-2 font-semibold text-white hover:bg-red-700"
+                className="flex w-full max-w-md items-center justify-center rounded-lg bg-red-600 px-4 py-2 font-semibold text-white hover:bg-red-700"
                 onClick={handleGoogleLogin}
               >
                 <svg

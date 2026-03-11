@@ -8,7 +8,7 @@
   }
 
   body {
-    @apply font-sans antialiased text-gray-900 bg-gray-50 dark:bg-gray-900 dark:text-white transition-colors duration-300;
+    @apply bg-gray-50 font-sans text-gray-900 antialiased transition-colors duration-300 dark:bg-gray-900 dark:text-white;
   }
 
   h1,
@@ -23,15 +23,15 @@
 
 @layer components {
   .glass-panel {
-    @apply bg-white/70 dark:bg-gray-800/70 backdrop-blur-lg border border-white/20 dark:border-gray-700/30 shadow-glass rounded-xl;
+    @apply rounded-xl border border-white/20 bg-white/70 shadow-glass backdrop-blur-lg dark:border-gray-700/30 dark:bg-gray-800/70;
   }
 
   .btn-primary {
-    @apply px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg transition-all duration-300 shadow-md hover:shadow-lg hover:-translate-y-0.5 active:translate-y-0;
+    @apply rounded-lg bg-primary-600 px-4 py-2 text-white shadow-md transition-all duration-300 hover:-translate-y-0.5 hover:bg-primary-700 hover:shadow-lg active:translate-y-0;
   }
 
   .card-hover {
-    @apply transition-all duration-300 hover:shadow-xl hover:-translate-y-1;
+    @apply transition-all duration-300 hover:-translate-y-1 hover:shadow-xl;
   }
 }
 
@@ -46,7 +46,7 @@
 }
 
 ::-webkit-scrollbar-thumb {
-  @apply bg-gray-300 dark:bg-gray-700 rounded-full hover:bg-gray-400 dark:hover:bg-gray-600 transition-colors;
+  @apply rounded-full bg-gray-300 transition-colors hover:bg-gray-400 dark:bg-gray-700 dark:hover:bg-gray-600;
 }
 
 /* Estilos para react-select */

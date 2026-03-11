@@ -88,9 +88,9 @@ const QuizVariantManagement = () => {
   const [creating, setCreating] = useState(false);
   const [uploadingImage, setUploadingImage] = useState<string | null>(null);
   const [loadingQuestions, setLoadingQuestions] = useState(false);
-  const [editingQuizVariantId, setEditingQuizVariantId] = useState<string | null>(
-    null,
-  );
+  const [editingQuizVariantId, setEditingQuizVariantId] = useState<
+    string | null
+  >(null);
   const addToast = useToast();
   const { isAdmin, hasRegionPermission } = usePermissions();
 
@@ -183,7 +183,7 @@ const QuizVariantManagement = () => {
         addToast(
           "error",
           response.message ||
-          `Error al ${editingQuizVariantId ? "actualizar" : "crear"} la variante de quiz`,
+            `Error al ${editingQuizVariantId ? "actualizar" : "crear"} la variante de quiz`,
         );
       }
     } catch (err) {
@@ -489,24 +489,26 @@ const QuizVariantManagement = () => {
                     <div className="flex space-x-2">
                       {(isAdmin ||
                         (variant.lessonVariant?.region?.id &&
-                          hasRegionPermission(variant.lessonVariant.region.id))) && (
-                          <>
-                            <Button
-                              size="sm"
-                              color="info"
-                              onClick={() => handleOpenEditModal(variant)}
-                            >
-                              <HiPencil className="h-4 w-4" />
-                            </Button>
-                            <Button
-                              size="sm"
-                              color="failure"
-                              onClick={() => handleDeleteQuizVariant(variant.id)}
-                            >
-                              <HiTrash className="h-4 w-4" />
-                            </Button>
-                          </>
-                        )}
+                          hasRegionPermission(
+                            variant.lessonVariant.region.id,
+                          ))) && (
+                        <>
+                          <Button
+                            size="sm"
+                            color="info"
+                            onClick={() => handleOpenEditModal(variant)}
+                          >
+                            <HiPencil className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            size="sm"
+                            color="failure"
+                            onClick={() => handleDeleteQuizVariant(variant.id)}
+                          >
+                            <HiTrash className="h-4 w-4" />
+                          </Button>
+                        </>
+                      )}
                     </div>
                   </TableCell>
                 </TableRow>
@@ -534,7 +536,9 @@ const QuizVariantManagement = () => {
         size="4xl"
       >
         <ModalHeader>
-          {editingQuizVariantId ? "Editar Variante de Quiz" : "Crear Variante de Quiz"}
+          {editingQuizVariantId
+            ? "Editar Variante de Quiz"
+            : "Crear Variante de Quiz"}
         </ModalHeader>
         <ModalBody>
           <div className="space-y-6">

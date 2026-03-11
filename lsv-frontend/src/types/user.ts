@@ -1,4 +1,4 @@
-export type PermissionScope = 'language' | 'region';
+export type PermissionScope = "language" | "region";
 
 export interface Language {
   id: string;

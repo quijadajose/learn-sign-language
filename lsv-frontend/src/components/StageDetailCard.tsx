@@ -17,9 +17,18 @@ interface Props {
 
 export default function StageDetailCard({ stage }: Props) {
   const navigate = useNavigate();
-  const [selectedLanguageId] = useLocalStorage<string | null>("selectedLanguageId", null);
-  const [selectedRegionId] = useLocalStorage<string | null>("selectedRegionId", null);
-  const [, setPersistedStageId] = useLocalStorage<string | null>(`selectedStageId_${selectedLanguageId}`, null);
+  const [selectedLanguageId] = useLocalStorage<string | null>(
+    "selectedLanguageId",
+    null,
+  );
+  const [selectedRegionId] = useLocalStorage<string | null>(
+    "selectedRegionId",
+    null,
+  );
+  const [, setPersistedStageId] = useLocalStorage<string | null>(
+    `selectedStageId_${selectedLanguageId}`,
+    null,
+  );
 
   const handleViewLessons = () => {
     // Guardar la sección seleccionada

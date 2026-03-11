@@ -25,30 +25,35 @@ export function useLocalStorage<T>(key: string, initialValue: T) {
 
   const [storedValue, setStoredValue] = useState<T>(readValue);
 
-  const setValue = useCallback((value: T | ((val: T) => T)) => {
-    if (typeof window === "undefined") {
-      console.warn(`Tried setting localStorage key “${key}” even though environment is not a client`);
-    }
-
-    try {
-      const newValue = value instanceof Function ? value(storedValue) : value;
-
-      if (newValue === null || newValue === undefined) {
-        window.localStorage.removeItem(key);
-      } else if (typeof newValue === "string") {
-        window.localStorage.setItem(key, newValue);
-      } else {
-        window.localStorage.setItem(key, JSON.stringify(newValue));
+  const setValue = useCallback(
+    (value: T | ((val: T) => T)) => {
+      if (typeof window === "undefined") {
+        console.warn(
+          `Tried setting localStorage key “${key}” even though environment is not a client`,
+        );
       }
 
-      setStoredValue(newValue);
+      try {
+        const newValue = value instanceof Function ? value(storedValue) : value;
 
-      // We dispatch a custom event so every useLocalStorage hook are notified
-      window.dispatchEvent(new Event("local-storage"));
-    } catch (error) {
-      console.warn(`Error setting localStorage key “${key}”:`, error);
-    }
-  }, [key, storedValue]);
+        if (newValue === null || newValue === undefined) {
+          window.localStorage.removeItem(key);
+        } else if (typeof newValue === "string") {
+          window.localStorage.setItem(key, newValue);
+        } else {
+          window.localStorage.setItem(key, JSON.stringify(newValue));
+        }
+
+        setStoredValue(newValue);
+
+        // We dispatch a custom event so every useLocalStorage hook are notified
+        window.dispatchEvent(new Event("local-storage"));
+      } catch (error) {
+        console.warn(`Error setting localStorage key “${key}”:`, error);
+      }
+    },
+    [key, storedValue],
+  );
 
   useEffect(() => {
     const handleStorageChange = () => {

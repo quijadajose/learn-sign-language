@@ -14,7 +14,7 @@ Sentry.init({
   // For example, automatic IP address collection on events
   sendDefaultPii: true,
   // Enable logs to be sent to Sentry
-  enableLogs: true
+  enableLogs: true,
 });
 
 const root = ReactDOM.createRoot(

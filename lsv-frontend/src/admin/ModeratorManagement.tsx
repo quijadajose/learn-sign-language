@@ -168,7 +168,9 @@ export default function ModeratorManagement() {
     };
   }, []);
 
-  const loadUserOptions = async (inputValue: string): Promise<
+  const loadUserOptions = async (
+    inputValue: string,
+  ): Promise<
     Array<{
       value: string;
       label: string;
@@ -189,16 +191,18 @@ export default function ModeratorManagement() {
 
       if (response.success && response.data) {
         const users = Array.isArray(response.data) ? response.data : [];
-        return users.map((user: {
-          id: string;
-          email: string;
-          firstName: string;
-          lastName: string;
-        }) => ({
-          value: user.id,
-          label: `${user.firstName} ${user.lastName} (${user.email})`,
-          user: user,
-        }));
+        return users.map(
+          (user: {
+            id: string;
+            email: string;
+            firstName: string;
+            lastName: string;
+          }) => ({
+            value: user.id,
+            label: `${user.firstName} ${user.lastName} (${user.email})`,
+            user: user,
+          }),
+        );
       }
       return [];
     } catch (err) {
@@ -303,10 +307,11 @@ export default function ModeratorManagement() {
         {toasts.map((toast) => (
           <Toast key={toast.id}>
             <div
-              className={`inline-flex size-8 shrink-0 items-center justify-center rounded-lg ${toast.type === "success"
+              className={`inline-flex size-8 shrink-0 items-center justify-center rounded-lg ${
+                toast.type === "success"
                   ? "bg-green-100 text-green-500 dark:bg-green-800 dark:text-green-200"
                   : "bg-red-100 text-red-500 dark:bg-red-800 dark:text-red-200"
-                }`}
+              }`}
             >
               {toast.type === "success" ? (
                 <HiExclamationCircle className="size-5" />
@@ -382,10 +387,11 @@ export default function ModeratorManagement() {
                     </TableCell>
                     <TableCell>
                       <span
-                        className={`rounded-full px-2 py-1 text-xs font-semibold ${permission.scope === "language"
+                        className={`rounded-full px-2 py-1 text-xs font-semibold ${
+                          permission.scope === "language"
                             ? "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200"
                             : "bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200"
-                          }`}
+                        }`}
                       >
                         {permission.scope === "language"
                           ? "Lenguaje"
@@ -418,7 +424,7 @@ export default function ModeratorManagement() {
 
         {/* Paginación */}
         {totalItems > 0 && (
-          <div className="flex items-center justify-between border-t border-gray-200 bg-white px-4 py-3 dark:border-gray-700 dark:bg-gray-800 sm:px-6">
+          <div className="flex items-center justify-between border-t border-gray-200 bg-white px-4 py-3 sm:px-6 dark:border-gray-700 dark:bg-gray-800">
             <div className="flex flex-1 justify-between sm:hidden">
               <Button
                 onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
@@ -439,12 +445,15 @@ export default function ModeratorManagement() {
               <div>
                 <p className="text-sm text-gray-700 dark:text-gray-400">
                   Mostrando{" "}
-                  <span className="font-medium">{(currentPage - 1) * pageSize + 1}</span>{" "}
+                  <span className="font-medium">
+                    {(currentPage - 1) * pageSize + 1}
+                  </span>{" "}
                   a{" "}
                   <span className="font-medium">
                     {Math.min(currentPage * pageSize, totalItems)}
                   </span>{" "}
-                  de <span className="font-medium">{totalItems}</span> resultados
+                  de <span className="font-medium">{totalItems}</span>{" "}
+                  resultados
                 </p>
               </div>
               <div>
@@ -452,7 +461,9 @@ export default function ModeratorManagement() {
                   <Button
                     size="sm"
                     color="gray"
-                    onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+                    onClick={() =>
+                      setCurrentPage((prev) => Math.max(prev - 1, 1))
+                    }
                     disabled={currentPage === 1}
                   >
                     Anterior
@@ -488,7 +499,9 @@ export default function ModeratorManagement() {
               <AsyncSelect
                 id="user-select"
                 value={selectedUser}
-                onChange={(option: SingleValue<typeof selectedUser>) => setSelectedUser(option)}
+                onChange={(option: SingleValue<typeof selectedUser>) =>
+                  setSelectedUser(option)
+                }
                 loadOptions={loadUserOptions}
                 placeholder="Escribe para buscar por email o nombre..."
                 isClearable
@@ -515,7 +528,8 @@ export default function ModeratorManagement() {
                 }}
               />
               <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                Escribe el email o nombre del usuario para buscar (mínimo 2 caracteres)
+                Escribe el email o nombre del usuario para buscar (mínimo 2
+                caracteres)
               </p>
             </div>
 
@@ -585,11 +599,15 @@ export default function ModeratorManagement() {
                       id="region-select"
                       value={selectedTargetId}
                       onChange={(e) => setSelectedTargetId(e.target.value)}
-                      disabled={isSubmitting || !selectedUser || !selectedLanguageId}
+                      disabled={
+                        isSubmitting || !selectedUser || !selectedLanguageId
+                      }
                     >
                       <option value="">Selecciona una región</option>
                       {regions
-                        .filter((region) => region.languageId === selectedLanguageId)
+                        .filter(
+                          (region) => region.languageId === selectedLanguageId,
+                        )
                         .map((region) => (
                           <option key={region.id} value={region.id}>
                             {region.name}
@@ -615,7 +633,12 @@ export default function ModeratorManagement() {
           </Button>
           <Button
             onClick={handleAssignPermission}
-            disabled={isSubmitting || !selectedUser || !selectedScope || !selectedTargetId}
+            disabled={
+              isSubmitting ||
+              !selectedUser ||
+              !selectedScope ||
+              !selectedTargetId
+            }
           >
             {isSubmitting && <Spinner size="sm" className="mr-2" />}
             Asignar Permiso

@@ -318,7 +318,7 @@ export default function QuizManagement() {
         addToast(
           "error",
           response.message ||
-          `Error al ${editingQuiz ? "actualizar" : "crear"} el quiz`,
+            `Error al ${editingQuiz ? "actualizar" : "crear"} el quiz`,
         );
       }
     } catch (err) {

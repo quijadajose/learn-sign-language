@@ -14,7 +14,10 @@ export default function LanguageCards() {
   const [selectedLanguage, setSelectedLanguage] = useState<Language | null>(
     null,
   );
-  const [selectedLanguageId] = useLocalStorage<string | null>("selectedLanguageId", null);
+  const [selectedLanguageId] = useLocalStorage<string | null>(
+    "selectedLanguageId",
+    null,
+  );
 
   useEffect(() => {
     const fetchSelectedLanguage = async () => {

@@ -93,7 +93,10 @@ interface GroupedRegion {
 export default function RegionManagement() {
   const { hasRegionPermission, hasLanguagePermission, isAdmin } =
     usePermissions();
-  const [selectedLanguageId] = useLocalStorage<string | null>("selectedLanguageId", null);
+  const [selectedLanguageId] = useLocalStorage<string | null>(
+    "selectedLanguageId",
+    null,
+  );
   const [regions, setRegions] = useState<Region[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -440,9 +443,7 @@ export default function RegionManagement() {
       setLoading(true);
       setError(null);
 
-      const languageId = isAdmin
-        ? undefined
-        : selectedLanguageId;
+      const languageId = isAdmin ? undefined : selectedLanguageId;
 
       // Cargar todas las regiones haciendo paginación hasta obtener todas
       let allRegions: Region[] = [];
@@ -471,7 +472,10 @@ export default function RegionManagement() {
           hasMore = false;
           if (!response.success) {
             setError(response.message || "Error al cargar las regiones");
-            addToast("error", response.message || "Error al cargar las regiones");
+            addToast(
+              "error",
+              response.message || "Error al cargar las regiones",
+            );
           }
         }
       }
@@ -791,8 +795,7 @@ export default function RegionManagement() {
 
   const loadEditDivisionsByLanguage = async (region: Region) => {
     try {
-      const languageId =
-        region.language?.id || selectedLanguageId;
+      const languageId = region.language?.id || selectedLanguageId;
       if (!languageId) {
         return;
       }
@@ -833,7 +836,10 @@ export default function RegionManagement() {
                     };
                     setEditSelectedDivision(divisionOption);
                     if (import.meta.env.DEV) {
-                      console.log("División cargada para edición:", divisionOption);
+                      console.log(
+                        "División cargada para edición:",
+                        divisionOption,
+                      );
                     }
                   } else {
                     if (import.meta.env.DEV) {
@@ -848,10 +854,7 @@ export default function RegionManagement() {
                 }
               } catch (error) {
                 if (import.meta.env.DEV) {
-                  console.error(
-                    "Error loading division for edit:",
-                    error,
-                  );
+                  console.error("Error loading division for edit:", error);
                 }
               }
             } else {
@@ -967,7 +970,8 @@ export default function RegionManagement() {
                                 : `${countryGroup.countryName} (${countryGroup.countryCode})`}
                             </span>
                             <span className="ml-2 text-sm font-normal text-gray-500 dark:text-gray-400">
-                              ({countryGroup.languages.length === 1
+                              (
+                              {countryGroup.languages.length === 1
                                 ? countryGroup.languages[0].regions.length
                                 : countryGroup.languages.length}{" "}
                               {countryGroup.languages.length === 1
@@ -985,52 +989,52 @@ export default function RegionManagement() {
 
                       {/* Filas de Idiomas y Regiones */}
                       {isCountryExpanded &&
-                        (countryGroup.languages.length === 1 ? (
-                          // Si solo hay un idioma, mostrar regiones directamente sin nivel de idioma
-                          countryGroup.languages[0].regions.map((region) => (
-                            <TableRow
-                              key={region.id}
-                              className="bg-white dark:border-gray-700 dark:bg-gray-900"
-                            >
-                              <TableCell className="pl-8 whitespace-nowrap font-medium text-gray-900 dark:text-white">
-                                {region.name}
-                              </TableCell>
-                              <TableCell className="whitespace-nowrap text-gray-900 dark:text-white">
-                                {region.code}
-                              </TableCell>
-                              <TableCell className="text-gray-900 dark:text-white">
-                                {region.description.length > 50
-                                  ? `${region.description.substring(0, 50)}...`
-                                  : region.description}
-                              </TableCell>
-                              <TableCell>
-                                {region.isDefault ? (
-                                  <Badge color="blue">Base</Badge>
-                                ) : (
-                                  <Badge color="gray">Regional</Badge>
-                                )}
-                              </TableCell>
-                              <TableCell>
-                                <div className="flex space-x-2">
-                                  <Button
-                                    size="sm"
-                                    color="light"
-                                    onClick={() => openViewModal(region)}
-                                  >
-                                    <HiEye className="h-4 w-4" />
-                                  </Button>
-                                  {hasRegionPermission(region.id) && (
-                                    <>
-                                      <Button
-                                        size="sm"
-                                        color="light"
-                                        onClick={() => openEditModal(region)}
-                                      >
-                                        <HiPencil className="h-4 w-4" />
-                                      </Button>
-                                      {hasLanguagePermission(
-                                        region.language?.id || "",
-                                      ) && (
+                        (countryGroup.languages.length === 1
+                          ? // Si solo hay un idioma, mostrar regiones directamente sin nivel de idioma
+                            countryGroup.languages[0].regions.map((region) => (
+                              <TableRow
+                                key={region.id}
+                                className="bg-white dark:border-gray-700 dark:bg-gray-900"
+                              >
+                                <TableCell className="whitespace-nowrap pl-8 font-medium text-gray-900 dark:text-white">
+                                  {region.name}
+                                </TableCell>
+                                <TableCell className="whitespace-nowrap text-gray-900 dark:text-white">
+                                  {region.code}
+                                </TableCell>
+                                <TableCell className="text-gray-900 dark:text-white">
+                                  {region.description.length > 50
+                                    ? `${region.description.substring(0, 50)}...`
+                                    : region.description}
+                                </TableCell>
+                                <TableCell>
+                                  {region.isDefault ? (
+                                    <Badge color="blue">Base</Badge>
+                                  ) : (
+                                    <Badge color="gray">Regional</Badge>
+                                  )}
+                                </TableCell>
+                                <TableCell>
+                                  <div className="flex space-x-2">
+                                    <Button
+                                      size="sm"
+                                      color="light"
+                                      onClick={() => openViewModal(region)}
+                                    >
+                                      <HiEye className="h-4 w-4" />
+                                    </Button>
+                                    {hasRegionPermission(region.id) && (
+                                      <>
+                                        <Button
+                                          size="sm"
+                                          color="light"
+                                          onClick={() => openEditModal(region)}
+                                        >
+                                          <HiPencil className="h-4 w-4" />
+                                        </Button>
+                                        {hasLanguagePermission(
+                                          region.language?.id || "",
+                                        ) && (
                                           <Button
                                             size="sm"
                                             color="failure"
@@ -1041,97 +1045,101 @@ export default function RegionManagement() {
                                             <HiTrash className="h-4 w-4" />
                                           </Button>
                                         )}
-                                    </>
-                                  )}
-                                </div>
-                              </TableCell>
-                            </TableRow>
-                          ))
-                        ) : (
-                          // Si hay múltiples idiomas, mostrar el nivel de idioma
-                          countryGroup.languages.map((languageGroup) => {
-                            const languageKey = `${countryKey}-${languageGroup.languageId}`;
-                            const isLanguageExpanded = expandedLanguages.has(
-                              languageKey,
-                            );
+                                      </>
+                                    )}
+                                  </div>
+                                </TableCell>
+                              </TableRow>
+                            ))
+                          : // Si hay múltiples idiomas, mostrar el nivel de idioma
+                            countryGroup.languages.map((languageGroup) => {
+                              const languageKey = `${countryKey}-${languageGroup.languageId}`;
+                              const isLanguageExpanded =
+                                expandedLanguages.has(languageKey);
 
-                            return (
-                              <React.Fragment key={languageKey}>
-                                {/* Fila de Idioma */}
-                                <TableRow className="bg-gray-50 dark:bg-gray-800">
-                                  <TableCell
-                                    colSpan={5}
-                                    className="pl-8 font-medium text-gray-800 dark:text-gray-200"
-                                  >
-                                    <button
-                                      onClick={() => toggleLanguage(languageKey)}
-                                      className="flex items-center space-x-2 hover:text-blue-600 dark:hover:text-blue-400"
+                              return (
+                                <React.Fragment key={languageKey}>
+                                  {/* Fila de Idioma */}
+                                  <TableRow className="bg-gray-50 dark:bg-gray-800">
+                                    <TableCell
+                                      colSpan={5}
+                                      className="pl-8 font-medium text-gray-800 dark:text-gray-200"
                                     >
-                                      {isLanguageExpanded ? (
-                                        <HiChevronDown className="h-4 w-4" />
-                                      ) : (
-                                        <HiChevronRight className="h-4 w-4" />
-                                      )}
-                                      <span>{languageGroup.languageName}</span>
-                                      <span className="ml-2 text-sm font-normal text-gray-500 dark:text-gray-400">
-                                        ({languageGroup.regions.length}{" "}
-                                        {languageGroup.regions.length === 1
-                                          ? "región"
-                                          : "regiones"}
-                                        )
-                                      </span>
-                                    </button>
-                                  </TableCell>
-                                </TableRow>
-
-                                {/* Filas de Regiones */}
-                                {isLanguageExpanded &&
-                                  languageGroup.regions.map((region) => (
-                                    <TableRow
-                                      key={region.id}
-                                      className="bg-white dark:border-gray-700 dark:bg-gray-900"
-                                    >
-                                      <TableCell className="pl-12 whitespace-nowrap font-medium text-gray-900 dark:text-white">
-                                        {region.name}
-                                      </TableCell>
-                                      <TableCell className="whitespace-nowrap text-gray-900 dark:text-white">
-                                        {region.code}
-                                      </TableCell>
-                                      <TableCell className="text-gray-900 dark:text-white">
-                                        {region.description.length > 50
-                                          ? `${region.description.substring(0, 50)}...`
-                                          : region.description}
-                                      </TableCell>
-                                      <TableCell>
-                                        {region.isDefault ? (
-                                          <Badge color="blue">Base</Badge>
+                                      <button
+                                        onClick={() =>
+                                          toggleLanguage(languageKey)
+                                        }
+                                        className="flex items-center space-x-2 hover:text-blue-600 dark:hover:text-blue-400"
+                                      >
+                                        {isLanguageExpanded ? (
+                                          <HiChevronDown className="h-4 w-4" />
                                         ) : (
-                                          <Badge color="gray">Regional</Badge>
+                                          <HiChevronRight className="h-4 w-4" />
                                         )}
-                                      </TableCell>
-                                      <TableCell>
-                                        <div className="flex space-x-2">
-                                          <Button
-                                            size="sm"
-                                            color="light"
-                                            onClick={() => openViewModal(region)}
-                                          >
-                                            <HiEye className="h-4 w-4" />
-                                          </Button>
-                                          {hasRegionPermission(region.id) && (
-                                            <>
-                                              <Button
-                                                size="sm"
-                                                color="light"
-                                                onClick={() =>
-                                                  openEditModal(region)
-                                                }
-                                              >
-                                                <HiPencil className="h-4 w-4" />
-                                              </Button>
-                                              {hasLanguagePermission(
-                                                region.language?.id || "",
-                                              ) && (
+                                        <span>
+                                          {languageGroup.languageName}
+                                        </span>
+                                        <span className="ml-2 text-sm font-normal text-gray-500 dark:text-gray-400">
+                                          ({languageGroup.regions.length}{" "}
+                                          {languageGroup.regions.length === 1
+                                            ? "región"
+                                            : "regiones"}
+                                          )
+                                        </span>
+                                      </button>
+                                    </TableCell>
+                                  </TableRow>
+
+                                  {/* Filas de Regiones */}
+                                  {isLanguageExpanded &&
+                                    languageGroup.regions.map((region) => (
+                                      <TableRow
+                                        key={region.id}
+                                        className="bg-white dark:border-gray-700 dark:bg-gray-900"
+                                      >
+                                        <TableCell className="whitespace-nowrap pl-12 font-medium text-gray-900 dark:text-white">
+                                          {region.name}
+                                        </TableCell>
+                                        <TableCell className="whitespace-nowrap text-gray-900 dark:text-white">
+                                          {region.code}
+                                        </TableCell>
+                                        <TableCell className="text-gray-900 dark:text-white">
+                                          {region.description.length > 50
+                                            ? `${region.description.substring(0, 50)}...`
+                                            : region.description}
+                                        </TableCell>
+                                        <TableCell>
+                                          {region.isDefault ? (
+                                            <Badge color="blue">Base</Badge>
+                                          ) : (
+                                            <Badge color="gray">Regional</Badge>
+                                          )}
+                                        </TableCell>
+                                        <TableCell>
+                                          <div className="flex space-x-2">
+                                            <Button
+                                              size="sm"
+                                              color="light"
+                                              onClick={() =>
+                                                openViewModal(region)
+                                              }
+                                            >
+                                              <HiEye className="h-4 w-4" />
+                                            </Button>
+                                            {hasRegionPermission(region.id) && (
+                                              <>
+                                                <Button
+                                                  size="sm"
+                                                  color="light"
+                                                  onClick={() =>
+                                                    openEditModal(region)
+                                                  }
+                                                >
+                                                  <HiPencil className="h-4 w-4" />
+                                                </Button>
+                                                {hasLanguagePermission(
+                                                  region.language?.id || "",
+                                                ) && (
                                                   <Button
                                                     size="sm"
                                                     color="failure"
@@ -1142,16 +1150,15 @@ export default function RegionManagement() {
                                                     <HiTrash className="h-4 w-4" />
                                                   </Button>
                                                 )}
-                                            </>
-                                          )}
-                                        </div>
-                                      </TableCell>
-                                    </TableRow>
-                                  ))}
-                              </React.Fragment>
-                            );
-                          })
-                        ))}
+                                              </>
+                                            )}
+                                          </div>
+                                        </TableCell>
+                                      </TableRow>
+                                    ))}
+                                </React.Fragment>
+                              );
+                            }))}
                     </React.Fragment>
                   );
                 })
@@ -1440,10 +1447,11 @@ export default function RegionManagement() {
         {toasts.map((toast) => (
           <Toast key={toast.id}>
             <div
-              className={`inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg ${toast.type === "success"
-                ? "bg-green-100 text-green-500 dark:bg-green-800 dark:text-green-200"
-                : "bg-red-100 text-red-500 dark:bg-red-800 dark:text-red-200"
-                }`}
+              className={`inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg ${
+                toast.type === "success"
+                  ? "bg-green-100 text-green-500 dark:bg-green-800 dark:text-green-200"
+                  : "bg-red-100 text-red-500 dark:bg-red-800 dark:text-red-200"
+              }`}
             >
               {toast.type === "success" ? "✓" : "✕"}
             </div>

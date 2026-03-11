@@ -50,7 +50,6 @@ interface EnrolledRegion {
   region: Region;
 }
 
-
 const ITEMS_PER_PAGE = 8;
 
 interface Props {
@@ -99,7 +98,7 @@ export default function LanguageSelection({ onLanguageSelected }: Props) {
         if (!enrolledResponse.success) {
           throw new Error(
             enrolledResponse.message ||
-            "No se pudieron obtener tus idiomas inscritos.",
+              "No se pudieron obtener tus idiomas inscritos.",
           );
         }
 
@@ -205,7 +204,7 @@ export default function LanguageSelection({ onLanguageSelected }: Props) {
         if (!availableResponse.success) {
           throw new Error(
             availableResponse.message ||
-            "No se pudieron obtener los idiomas disponibles.",
+              "No se pudieron obtener los idiomas disponibles.",
           );
         }
 
@@ -255,9 +254,7 @@ export default function LanguageSelection({ onLanguageSelected }: Props) {
     addToast("success", `Región seleccionada: ${region.name} `);
   };
 
-  const loadRegions = async (
-    languageId: string,
-  ) => {
+  const loadRegions = async (languageId: string) => {
     try {
       setLoading(true);
       const response = await regionApi.getRegions(1, 100, languageId);

@@ -1,5 +1,13 @@
 import React, { useEffect, useState } from "react";
-import { Button, TextInput, Card, Label, Spinner, Toast, ToastToggle } from "flowbite-react";
+import {
+  Button,
+  TextInput,
+  Card,
+  Label,
+  Spinner,
+  Toast,
+  ToastToggle,
+} from "flowbite-react";
 import { HiCheck, HiX } from "react-icons/hi";
 import { BACKEND_BASE_URL } from "./config";
 import { useNavigate } from "react-router-dom";
@@ -240,10 +248,11 @@ export const ResponsiveProfileForm = () => {
           {toastMessages.map((toast) => (
             <Toast key={toast.id}>
               <div
-                className={`inline-flex size-8 shrink-0 items-center justify-center rounded-lg ${toast.type === "success"
-                  ? "bg-green-100 text-green-500 dark:bg-green-800 dark:text-green-200"
-                  : "bg-red-100 text-red-500 dark:bg-red-800 dark:text-red-200"
-                  }`}
+                className={`inline-flex size-8 shrink-0 items-center justify-center rounded-lg ${
+                  toast.type === "success"
+                    ? "bg-green-100 text-green-500 dark:bg-green-800 dark:text-green-200"
+                    : "bg-red-100 text-red-500 dark:bg-red-800 dark:text-red-200"
+                }`}
               >
                 {toast.type === "success" ? (
                   <HiCheck className="size-5" />
@@ -283,10 +292,11 @@ export const ResponsiveProfileForm = () => {
         {toastMessages.map((toast) => (
           <Toast key={toast.id}>
             <div
-              className={`inline-flex size-8 shrink-0 items-center justify-center rounded-lg ${toast.type === "success"
-                ? "bg-green-100 text-green-500 dark:bg-green-800 dark:text-green-200"
-                : "bg-red-100 text-red-500 dark:bg-red-800 dark:text-red-200"
-                }`}
+              className={`inline-flex size-8 shrink-0 items-center justify-center rounded-lg ${
+                toast.type === "success"
+                  ? "bg-green-100 text-green-500 dark:bg-green-800 dark:text-green-200"
+                  : "bg-red-100 text-red-500 dark:bg-red-800 dark:text-red-200"
+              }`}
             >
               {toast.type === "success" ? (
                 <HiCheck className="size-5" />
@@ -327,10 +337,7 @@ export const ResponsiveProfileForm = () => {
               />
               {isEditing && (
                 <div className="w-full max-w-xs">
-                  <Label
-                    htmlFor="photo"
-                    className="sr-only"
-                  >
+                  <Label htmlFor="photo" className="sr-only">
                     Change profile picture
                   </Label>
                   <input
@@ -397,10 +404,7 @@ export const ResponsiveProfileForm = () => {
               />
             </div>
             <div>
-              <Label
-                className="text-gray-500 dark:text-gray-400"
-                htmlFor="age"
-              >
+              <Label className="text-gray-500 dark:text-gray-400" htmlFor="age">
                 Edad
               </Label>
               <TextInput
@@ -416,7 +420,7 @@ export const ResponsiveProfileForm = () => {
 
             {isEditing && (
               <>
-                <div className="mt-4 border-t pt-4 dark:border-gray-600 md:col-span-2">
+                <div className="mt-4 border-t pt-4 md:col-span-2 dark:border-gray-600">
                   <h3 className="mb-2 text-lg font-semibold text-gray-700 dark:text-gray-300">
                     Cambiar Contraseña
                   </h3>
@@ -510,9 +514,7 @@ export const ResponsiveProfileForm = () => {
             </div>
 
             <div className="md:col-span-2">
-              <Label
-                className="mb-2 block text-gray-500 dark:text-gray-400"
-              >
+              <Label className="mb-2 block text-gray-500 dark:text-gray-400">
                 Mano dominante
               </Label>
               <div className="flex items-center space-x-4">
@@ -573,11 +575,7 @@ export const ResponsiveProfileForm = () => {
                 >
                   Cancelar
                 </Button>
-                <Button
-                  color="success"
-                  onClick={handleSave}
-                  disabled={loading}
-                >
+                <Button color="success" onClick={handleSave} disabled={loading}>
                   {loading && <Spinner size="sm" className="mr-2" />}
                   {loading ? "Guardando..." : "Guardar Cambios"}
                 </Button>

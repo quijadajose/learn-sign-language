@@ -52,7 +52,10 @@ export default function LanguageManagement() {
   const navigate = useNavigate();
   const { isAdmin, isModerator, canCreateLanguage, hasLanguagePermission } =
     usePermissions();
-  const [, setSelectedLanguageId] = useLocalStorage<string | null>("selectedLanguageId", null);
+  const [, setSelectedLanguageId] = useLocalStorage<string | null>(
+    "selectedLanguageId",
+    null,
+  );
   const [languages, setLanguages] = useState<Language[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -152,7 +155,8 @@ export default function LanguageManagement() {
       try {
         setLoadingCountries(true);
 
-        const response = await countryDivisionApi.getCountriesWithDivisions(searchTerm);
+        const response =
+          await countryDivisionApi.getCountriesWithDivisions(searchTerm);
 
         if (!response.success) {
           throw new Error(response.message || "Error al buscar países");
@@ -210,14 +214,15 @@ export default function LanguageManagement() {
     let imageUploadSuccess = false;
 
     try {
-
-      const response = await adminApi.updateLanguage(editingLanguage.id, editForm);
+      const response = await adminApi.updateLanguage(
+        editingLanguage.id,
+        editForm,
+      );
 
       if (response.success) {
         languageUpdateSuccess = true;
       } else {
-        const errorMessage =
-          response.message || "Error al actualizar idioma";
+        const errorMessage = response.message || "Error al actualizar idioma";
         addToast("error", `Error al actualizar idioma: ${errorMessage}`);
       }
 
@@ -453,10 +458,11 @@ export default function LanguageManagement() {
         {toastMessages.map((toast) => (
           <Toast key={toast.id}>
             <div
-              className={`inline-flex size-8 shrink-0 items-center justify-center rounded-lg ${toast.type === "success"
-                ? "bg-green-100 text-green-500 dark:bg-green-800 dark:text-green-200"
-                : "bg-red-100 text-red-500 dark:bg-red-800 dark:text-red-200"
-                }`}
+              className={`inline-flex size-8 shrink-0 items-center justify-center rounded-lg ${
+                toast.type === "success"
+                  ? "bg-green-100 text-green-500 dark:bg-green-800 dark:text-green-200"
+                  : "bg-red-100 text-red-500 dark:bg-red-800 dark:text-red-200"
+              }`}
             >
               {toast.type === "success" ? (
                 <HiCheck className="size-5" />
@@ -607,7 +613,7 @@ export default function LanguageManagement() {
           </div>
 
           {totalPages > 1 && (
-            <div className="flex items-center justify-between border-t border-gray-200 bg-white px-4 py-3 dark:border-gray-700 dark:bg-gray-800 sm:px-6">
+            <div className="flex items-center justify-between border-t border-gray-200 bg-white px-4 py-3 sm:px-6 dark:border-gray-700 dark:bg-gray-800">
               <div className="flex flex-1 justify-between sm:hidden">
                 <Button
                   onClick={() => handlePageChange(currentPage - 1)}
@@ -744,11 +750,7 @@ export default function LanguageManagement() {
               >
                 Cancelar
               </Button>
-              <Button
-                type="submit"
-                color="success"
-                disabled={isSubmitting}
-              >
+              <Button type="submit" color="success" disabled={isSubmitting}>
                 {isSubmitting && <Spinner size="sm" className="mr-2" />}
                 {isSubmitting ? "Guardando..." : "Guardar Cambios"}
               </Button>
@@ -921,11 +923,7 @@ export default function LanguageManagement() {
               >
                 Cancelar
               </Button>
-              <Button
-                type="submit"
-                color="blue"
-                disabled={isAdding}
-              >
+              <Button type="submit" color="blue" disabled={isAdding}>
                 {isAdding && <Spinner size="sm" className="mr-2" />}
                 {isAdding ? "Creando..." : "Crear Idioma"}
               </Button>
