@@ -1,4 +1,5 @@
 import { Module, forwardRef } from '@nestjs/common';
+import * as nodemailer from 'nodemailer';
 import { AuthService } from './application/auth.service';
 import { AuthController } from './infrastructure/auth.controller';
 import { TypeOrmModule } from '@nestjs/typeorm';
@@ -58,6 +59,24 @@ import { ModeratorModule } from '../moderator/moderator.module';
     {
       provide: APP_GUARD,
       useClass: JwtAuthGuard,
+    },
+    {
+      provide: 'MAIL_TRANSPORTER',
+      inject: [ConfigService],
+      useFactory: (configService: ConfigService) => {
+        return nodemailer.createTransport({
+          host: configService.get<string>('EMAIL_HOST'),
+          port: configService.get<number>('EMAIL_PORT', 587),
+          secure: configService.get<number>('EMAIL_PORT') === 465, // true para 465, false para otros
+          auth: {
+            user: configService.get<string>('EMAIL_USER'),
+            pass: configService.get<string>('EMAIL_PASSWORD'),
+          },
+          tls: {
+            rejectUnauthorized: false, // Ayuda con problemas de certificados en desarrollo
+          },
+        });
+      },
     },
     {
       provide: 'TokenService',
