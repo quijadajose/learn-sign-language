@@ -9,9 +9,7 @@ import { PaginatedResponseDto } from '../../domain/dto/paginated-response.dto';
 import { CountryWithDivisionsDto } from '../../domain/dto/country-with-divisions.dto';
 
 @Injectable()
-export class CountryDivisionRepository
-  implements CountryDivisionRepositoryInterface
-{
+export class CountryDivisionRepository implements CountryDivisionRepositoryInterface {
   constructor(
     @InjectRepository(Country)
     private readonly countryRepository: Repository<Country>,
