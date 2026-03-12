@@ -183,7 +183,11 @@ function Login() {
                   Registrarse
                 </Link>
               </p>
-              <Button type="submit" className="w-full px-4 py-2 font-semibold">
+              <Button
+                type="submit"
+                color="blue"
+                className="w-full bg-blue-700 px-4 py-2 font-semibold hover:bg-blue-800"
+              >
                 Iniciar sesión
               </Button>
               <Button

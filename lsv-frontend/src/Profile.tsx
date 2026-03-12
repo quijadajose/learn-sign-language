@@ -581,7 +581,12 @@ export const ResponsiveProfileForm = () => {
                 </Button>
               </>
             ) : (
-              <Button onClick={() => setIsEditing(true)} disabled={loading}>
+              <Button
+                color="blue"
+                className="bg-blue-700 hover:bg-blue-800"
+                onClick={() => setIsEditing(true)}
+                disabled={loading}
+              >
                 Editar Perfil
               </Button>
             )}
