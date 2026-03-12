@@ -6,7 +6,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { validate } from './config/env.validation';
 import { AuthModule } from './auth/auth.module';
 import { User } from './shared/domain/entities/user';
-import { MailerModule } from '@nestjs-modules/mailer';
+import * as nodemailer from 'nodemailer';
 import { UsersModule } from './users/users.module';
 import { UserLesson } from './shared/domain/entities/userLesson';
 import { Lesson } from './shared/domain/entities/lesson';
@@ -80,20 +80,6 @@ import { SentryGlobalFilter, SentryModule } from '@sentry/nestjs/setup';
         synchronize: configService.get<string>('NODE_ENV') === 'development',
         migrations: [join(__dirname, '/db/migrations/*.{ts,js}')],
         migrationsRun: configService.get<string>('NODE_ENV') !== 'development',
-      }),
-    }),
-    MailerModule.forRootAsync({
-      imports: [ConfigModule],
-      inject: [ConfigService],
-      useFactory: async (configService: ConfigService) => ({
-        transport: {
-          host: configService.get<string>('EMAIL_HOST'),
-          port: configService.get<number>('EMAIL_PORT', 587),
-          auth: {
-            user: configService.get<string>('EMAIL_USER'),
-            pass: configService.get<string>('EMAIL_PASSWORD'),
-          },
-        },
       }),
     }),
     AuthModule,
