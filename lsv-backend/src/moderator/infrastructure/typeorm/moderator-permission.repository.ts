@@ -8,9 +8,7 @@ import {
 import { ModeratorPermissionRepositoryInterface } from 'src/moderator/domain/ports/moderator-permission.repository.interface';
 
 @Injectable()
-export class ModeratorPermissionRepository
-  implements ModeratorPermissionRepositoryInterface
-{
+export class ModeratorPermissionRepository implements ModeratorPermissionRepositoryInterface {
   private readonly secureSelect = {
     id: true as const,
     userId: true as const,
