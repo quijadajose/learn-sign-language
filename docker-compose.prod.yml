@@ -1,6 +1,5 @@
 services:
   lsv-api:
-  lsv-api:
     command: npm run start:prod
     environment:
       - SENTRY_DSN=${SENTRY_DSN}
