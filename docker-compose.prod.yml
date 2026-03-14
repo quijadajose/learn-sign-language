@@ -9,4 +9,4 @@ services:
 
   lsv-frontend:
     ports:
-      - "8080:80"
+      - "80:80"
