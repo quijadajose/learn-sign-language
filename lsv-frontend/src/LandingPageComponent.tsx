@@ -32,7 +32,7 @@ export default function LandingPageComponent() {
       >
         <NavbarBrand>
           <img
-            src="/LSV/LogoLogin.png"
+            src="/LogoLogin.png"
             className="mr-3 h-6 sm:h-9"
             alt="LSV Logo"
           />
@@ -98,7 +98,7 @@ export default function LandingPageComponent() {
             </Link>
           </div>
           <div className="hidden lg:col-span-5 lg:mt-0 lg:flex">
-            <img src="/LSV/image1.svg" alt="mockup" />
+            <img src="/image1.svg" alt="mockup" />
           </div>
         </div>
       </section>
@@ -203,7 +203,7 @@ export default function LandingPageComponent() {
         </div>
       </section>
       <Footer container>
-        <FooterBrand src="/LSV/LogoLogin.png" alt="LSV Logo" />
+        <FooterBrand src="/LogoLogin.png" alt="LSV Logo" />
         <FooterLinkGroup>
           <FooterLink href="https://github.com/quijadajose/LSV/">
             Github

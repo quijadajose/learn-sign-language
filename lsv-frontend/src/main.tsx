@@ -4,7 +4,7 @@ import { BrowserRouter } from "react-router-dom";
 import "./index.css";
 import App from "./App";
 
-const SENTRY_DSN = import.meta.env.SENTRY_DSN;
+const SENTRY_DSN = import.meta.env.VITE_SENTRY_DSN;
 
 import * as Sentry from "@sentry/react";
 
@@ -22,7 +22,7 @@ const root = ReactDOM.createRoot(
 );
 root.render(
   <React.StrictMode>
-    <BrowserRouter basename="/LSV">
+    <BrowserRouter basename="/">
       <App />
     </BrowserRouter>
   </React.StrictMode>,

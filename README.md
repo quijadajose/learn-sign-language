@@ -15,24 +15,33 @@ Este proyecto tiene como objetivo crear una plataforma educativa para aprender e
 - **`lsv-model-trainer`**:
   - API en Python para entrenar modelos de detección de señas.
 
-## Tecnologías utilizadas
-
 - **Backend**: NestJS, TypeORM, MySQL
-- **Frontend**: Angular
+- **Frontend**: React (Vite), Tailwind CSS
 - **Machine Learning**: Python, TensorFlow/PyTorch
 
-## Instalación
+## Despliegue con Docker
 
-Sigue estos pasos para configurar el proyecto localmente:
+Este proyecto utiliza Docker Compose para gestionar los diferentes servicios (Backend, Frontend y Base de Datos).
 
-1. Clona este repositorio:
+### 🛠️ Desarrollo Local
+Para levantar todo el stack en modo desarrollo (con hot-reload y debug ports):
+```bash
+docker compose up -d
+```
 
-2. Configura cada subproyecto siguiendo las instrucciones en sus respectivos directorios:
-   - `lsv-backend/README.md`
-   - `lsv-frontend/README.md`
-   - `lsv-model-trainer/README.md`
+### 🚀 Producción
+Para levantar el stack optimizado para producción:
+```bash
+docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build
+```
 
-3. Asegúrate de tener instaladas las dependencias necesarias y sigue las instrucciones para levantar cada servicio.
+> [!NOTE]
+> El despliegue a producción está automatizado mediante **GitHub Actions**. Solo necesitas hacer `git push origin main`.
+
+## Instalación Manual
+
+Si prefieres no usar Docker para el desarrollo, sigue estos pasos:
+
 
 ## Contribuciones
 
