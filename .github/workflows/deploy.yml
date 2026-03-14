@@ -59,7 +59,7 @@ jobs:
           host: ${{ secrets.SSH_HOST }}
           username: ${{ secrets.SSH_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
-          source: "docker-compose.yml,docker-compose.prod.yml"
+          source: "docker-compose.yml,docker-compose.prod.yml,Caddyfile"
           target: "~/apps/lsv"
 
       - name: Deploy to Server via SSH
