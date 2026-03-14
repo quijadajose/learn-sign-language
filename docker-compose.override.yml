@@ -1,6 +1,8 @@
 services:
   lsv-api:
     build:
+      context: ./lsv-backend
+      dockerfile: Dockerfile
       target: development
     volumes:
       - ./lsv-backend:/src/app
@@ -11,6 +13,9 @@ services:
       - "9229:9229"
 
   lsv-frontend:
+    build:
+      context: ./lsv-frontend
+      dockerfile: Dockerfile
     ports:
       - "8080:80"
 

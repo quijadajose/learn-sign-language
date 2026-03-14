@@ -1,9 +1,6 @@
 services:
   lsv-api:
     image: ghcr.io/quijadajose/lsv-backend:latest
-    build:
-      context: ./lsv-backend
-      dockerfile: Dockerfile
     restart: unless-stopped
     depends_on:
       - lsv-db
@@ -13,19 +10,9 @@ services:
       - DB_HOST=lsv-db
     networks:
       - lsv_network
-    logging:
-      driver: "json-file"
-      options:
-        max-size: "10m"
-        max-file: "3"
 
   lsv-frontend:
     image: ghcr.io/quijadajose/lsv-frontend:latest
-    build:
-      context: ./lsv-frontend
-      dockerfile: Dockerfile
-      args:
-        - VITE_SENTRY_DSN=${VITE_SENTRY_DSN}
     restart: unless-stopped
     env_file:
       - ./.env
