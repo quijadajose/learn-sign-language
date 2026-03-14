@@ -227,7 +227,15 @@ export class ApiService {
   }
 
   static buildUrl(endpoint: string, params: Record<string, any> = {}): string {
-    const url = new URL(endpoint, this.baseURL);
+    const base = this.baseURL.startsWith("http")
+      ? this.baseURL
+      : window.location.origin + this.baseURL;
+
+    // Asegurarnos de que endpoint no duplique la barra si base ya tiene una o viceversa
+    const cleanEndpoint = endpoint.startsWith("/") ? endpoint.slice(1) : endpoint;
+    const cleanBase = base.endsWith("/") ? base : `${base}/`;
+
+    const url = new URL(cleanEndpoint, cleanBase);
     Object.entries(params).forEach(([key, value]) => {
       if (value !== undefined && value !== null) {
         url.searchParams.append(key, value.toString());

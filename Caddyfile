@@ -1,6 +1,6 @@
 sing-language.duckdns.org {
     # Backend API proxy
-    handle_path /api/* {
+    handle_path /api* {
         reverse_proxy lsv-api:3000
     }
 
