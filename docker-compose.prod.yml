@@ -3,9 +3,27 @@ services:
     command: npm run start:prod
     environment:
       - SENTRY_DSN=${SENTRY_DSN}
-    ports:
-      - "3000:3000"
+    expose:
+      - "3000"
 
   lsv-frontend:
+    expose:
+      - "80"
+
+  gateway:
+    image: caddy:2-alpine
+    restart: unless-stopped
     ports:
       - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile
+      - caddy_data:/data
+      - caddy_config:/config
+    networks:
+      - lsv_network
+
+volumes:
+  db_data:
+  caddy_data:
+  caddy_config:
