@@ -32,7 +32,12 @@ async function bootstrap() {
     configService.get<string>('FRONTEND_URL') ?? 'http://localhost:8080';
 
   app.enableCors({
-    origin: [frontendUrl, 'http://localhost:8080'],
+    origin: [
+      frontendUrl,
+      'http://localhost',
+      'http://localhost:8080',
+      'http://localhost:5173',
+    ],
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
     credentials: true,
   });

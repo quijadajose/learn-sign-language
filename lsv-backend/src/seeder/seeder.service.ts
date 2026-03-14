@@ -13,7 +13,7 @@ import { CreateStageUseCase } from 'src/stage/application/use-cases/create-stage
 import { StageRepositoryInterface } from 'src/stage/domain/ports/stage.repository.interface/stage.repository.interface';
 import { RegionService } from 'src/region/application/services/region/region.service';
 import { CountryDivisionService } from 'src/shared/application/services/country-division.service';
-import * as countriesData from './iso-3166-2.json';
+import countriesData from './iso-3166-2.json';
 
 interface LanguageSeedData {
   countryCode: string;

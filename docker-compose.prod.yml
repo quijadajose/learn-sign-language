@@ -1,0 +1,16 @@
+services:
+  lsv-api:
+    build:
+      target: production
+    command: npm run start:prod
+    environment:
+      - SENTRY_DSN=${SENTRY_DSN}
+    ports:
+      - "3000:3000"
+
+  lsv-frontend:
+    build:
+      args:
+        - VITE_SENTRY_DSN=${VITE_SENTRY_DSN}
+    ports:
+      - "8080:80"

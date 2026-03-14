@@ -1,0 +1,19 @@
+services:
+  lsv-api:
+    build:
+      target: development
+    volumes:
+      - ./lsv-backend:/src/app
+      - /src/app/node_modules
+    command: npm run start:debug
+    ports:
+      - "3000:3000"
+      - "9229:9229"
+
+  lsv-frontend:
+    ports:
+      - "8080:80"
+
+  lsv-db:
+    ports:
+      - "3306:3306"

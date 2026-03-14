@@ -2,7 +2,6 @@ import sharp from 'sharp';
 import * as fs from 'fs';
 import * as path from 'path';
 import { BadRequestException } from '@nestjs/common';
-import { fileTypeFromBuffer } from 'file-type';
 
 export class UploadPictureUseCase {
   async execute(
@@ -18,6 +17,7 @@ export class UploadPictureUseCase {
       throw new BadRequestException('No image buffer available');
     }
 
+    const { fileTypeFromBuffer } = await import('file-type');
     const type = await fileTypeFromBuffer(file.buffer);
     if (
       !type ||

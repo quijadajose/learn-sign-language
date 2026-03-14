@@ -1,0 +1,66 @@
+services:
+  lsv-api:
+    image: ghcr.io/quijadajose/lsv-backend:latest
+    build:
+      context: ./lsv-backend
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    depends_on:
+      - lsv-db
+    env_file:
+      - ./.env
+    environment:
+      - DB_HOST=lsv-db
+    networks:
+      - lsv_network
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  lsv-frontend:
+    image: ghcr.io/quijadajose/lsv-frontend:latest
+    build:
+      context: ./lsv-frontend
+      dockerfile: Dockerfile
+      args:
+        - VITE_SENTRY_DSN=${VITE_SENTRY_DSN}
+    restart: unless-stopped
+    env_file:
+      - ./.env
+    networks:
+      - lsv_network
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  lsv-db:
+    image: mysql:8.0
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD}
+      MYSQL_DATABASE: ${DB_DATABASE}
+      MYSQL_USER: ${DB_USERNAME}
+      MYSQL_PASSWORD: ${DB_PASSWORD}
+    env_file:
+      - ./.env
+    volumes:
+      - db_data:/var/lib/mysql
+      - ./lsv-backend/init-db:/docker-entrypoint-initdb.d
+    networks:
+      - lsv_network
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+networks:
+  lsv_network:
+    driver: bridge
+
+volumes:
+  db_data:
