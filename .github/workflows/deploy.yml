@@ -41,6 +41,8 @@ jobs:
         with:
           context: ./lsv-frontend
           push: true
+          build-args: |
+            VITE_SENTRY_DSN=${{ secrets.VITE_SENTRY_DSN }}
           tags: ${{ env.REGISTRY }}/${{ env.FRONTEND_IMAGE }}:latest
 
   deploy:
