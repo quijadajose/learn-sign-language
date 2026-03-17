@@ -36,45 +36,48 @@ export class UserLessonService {
 
     let baseLessonId = lessonId;
 
-    // Si hay regionId, usar findRegionalLesson para obtener la lección base
-    if (regionId) {
-      try {
-        const lessonOrVariant = await this.getRegionalLessonUseCase.execute(
-          lessonId,
-          regionId,
-        );
-        // Verificar si es una variante (tiene la propiedad baseLesson)
-        if ('baseLesson' in lessonOrVariant && lessonOrVariant.baseLesson) {
-          // Es una variante, usar el ID de la lección base
-          baseLessonId = lessonOrVariant.baseLesson.id;
-        } else {
-          // Es una lección normal, usar su ID
-          baseLessonId = (lessonOrVariant as any).id;
-        }
-      } catch {
-        throw new NotFoundException(
-          `Lesson with ID ${lessonId} not found for region ${regionId}`,
-        );
+    try {
+      const lessonOrVariant = await this.getRegionalLessonUseCase.execute(
+        lessonId,
+        regionId,
+      );
+      // Si es una variante (tiene la propiedad baseLesson), usar el ID de la lección base
+      if ('baseLesson' in lessonOrVariant && lessonOrVariant.baseLesson) {
+        baseLessonId = lessonOrVariant.baseLesson.id;
       }
-    } else {
-      const lesson = await this.getLessonByIdUseCase.execute(lessonId);
-      if (!lesson) {
-        throw new NotFoundException(`Lesson with ID ${lessonId} not found`);
-      }
-      baseLessonId = lesson.id;
+    } catch {
+      throw new NotFoundException(
+        `Lesson with ID ${lessonId} not found${regionId ? ` for region ${regionId}` : ''}`,
+      );
     }
 
     // Usar siempre el ID de la lección base para user_lesson
     await this.startLessonUseCase.execute(userId, baseLessonId);
   }
+
   async setLessonCompletion(
     userId: string,
     lessonId: string,
     isCompleted: boolean,
   ) {
+    let baseLessonId = lessonId;
+
+    try {
+      const lessonOrVariant = await this.getRegionalLessonUseCase.execute(
+        lessonId,
+      );
+      // Si es una variante (tiene la propiedad baseLesson), usar el ID de la lección base
+      if ('baseLesson' in lessonOrVariant && lessonOrVariant.baseLesson) {
+        baseLessonId = lessonOrVariant.baseLesson.id;
+      }
+    } catch {
+      // Si no se encuentra como lección ni como variante, lanzamos 404
+      throw new NotFoundException(`Lesson with ID ${lessonId} not found`);
+    }
+
     await this.setLessonCompletionUseCase.execute(
       userId,
-      lessonId,
+      baseLessonId,
       isCompleted,
     );
   }

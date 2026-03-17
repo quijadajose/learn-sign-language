@@ -325,25 +325,8 @@ export class QuizRepository implements QuizRepositoryInterface {
 
     const countQuery = this.submissionRepository
       .createQueryBuilder('qs')
-      .select('COUNT(DISTINCT u.id)', 'count')
-      .innerJoin(User, 'u', 'qs.userId = u.id')
-      .innerJoin(
-        (subquery) => {
-          return subquery
-            .select([
-              'qs2.userId AS userId',
-              'qs2.quizId AS quizId',
-              'MAX(qs2.score) AS maxScore',
-            ])
-            .from(QuizSubmission, 'qs2')
-            .where('qs2.score IS NOT NULL')
-            .groupBy('qs2.userId')
-            .addGroupBy('qs2.quizId');
-        },
-        'subquery',
-        'qs.userId = subquery.userId AND qs.quizId = subquery.quizId',
-      )
-      .groupBy('u.id');
+      .select('COUNT(DISTINCT qs.userId)', 'count')
+      .where('qs.score IS NOT NULL');
 
     const totalResult = await countQuery.getRawOne();
     const total = totalResult ? parseInt(totalResult.count) : 0;
@@ -362,16 +345,16 @@ export class QuizRepository implements QuizRepositoryInterface {
           return subquery
             .select([
               'qs2.userId AS userId',
-              'qs2.quizId AS quizId',
+              'COALESCE(qs2.quizId, qs2.quizVariantId) AS generalQuizId',
               'MAX(qs2.score) AS maxScore',
             ])
             .from(QuizSubmission, 'qs2')
             .where('qs2.score IS NOT NULL')
             .groupBy('qs2.userId')
-            .addGroupBy('qs2.quizId');
+            .addGroupBy('generalQuizId');
         },
         'subquery',
-        'qs.userId = subquery.userId AND qs.quizId = subquery.quizId',
+        'qs.userId = subquery.userId AND COALESCE(qs.quizId, qs.quizVariantId) = subquery.generalQuizId',
       )
       .groupBy('u.id')
       .orderBy(orderBy, sortOrder === 'ASC' ? 'ASC' : 'DESC')
@@ -404,29 +387,16 @@ export class QuizRepository implements QuizRepositoryInterface {
 
     const countQuery = this.submissionRepository
       .createQueryBuilder('qs')
-      .select('COUNT(DISTINCT u.id)', 'count')
-      .innerJoin(User, 'u', 'qs.userId = u.id')
-      .innerJoin(Quiz, 'q', 'qs.quizId = q.id')
-      .innerJoin(Lesson, 'l', 'q.lessonId = l.id')
-      .where('l.languageId = :languageId', { languageId })
-      .innerJoin(
-        (subquery) => {
-          return subquery
-            .select([
-              'qs2.userId AS userId',
-              'qs2.quizId AS quizId',
-              'MAX(qs2.score) AS maxScore',
-            ])
-            .from(QuizSubmission, 'qs2')
-            .innerJoin(Quiz, 'q2', 'qs2.quizId = q2.id')
-            .innerJoin(Lesson, 'l2', 'q2.lessonId = l2.id')
-            .where('l2.languageId = :languageId', { languageId })
-            .groupBy('qs2.userId, qs2.quizId');
-        },
-        'subquery',
-        'qs.userId = subquery.userId AND qs.quizId = subquery.quizId',
-      )
-      .groupBy('u.id');
+      .select('COUNT(DISTINCT qs.userId)', 'count')
+      .leftJoin('qs.quiz', 'q')
+      .leftJoin('q.lesson', 'l')
+      .leftJoin('qs.quizVariant', 'qv')
+      .leftJoin('qv.lessonVariant', 'lv')
+      .leftJoin('lv.baseLesson', 'l2')
+      .where('COALESCE(l.languageId, l2.languageId) = :languageId', {
+        languageId,
+      })
+      .andWhere('qs.score IS NOT NULL');
 
     const totalResult = await countQuery.getRawOne();
     const total = totalResult ? parseInt(totalResult.count) : 0;
@@ -440,25 +410,29 @@ export class QuizRepository implements QuizRepositoryInterface {
         'SUM(subquery.maxScore) AS totalScore',
       ])
       .innerJoin(User, 'u', 'qs.userId = u.id')
-      .innerJoin(Quiz, 'q', 'qs.quizId = q.id')
-      .innerJoin(Lesson, 'l', 'q.lessonId = l.id')
-      .where('l.languageId = :languageId', { languageId })
       .innerJoin(
         (subquery) => {
           return subquery
             .select([
               'qs2.userId AS userId',
-              'qs2.quizId AS quizId',
+              'COALESCE(qs2.quizId, qs2.quizVariantId) AS generalQuizId',
               'MAX(qs2.score) AS maxScore',
             ])
             .from(QuizSubmission, 'qs2')
-            .innerJoin(Quiz, 'q2', 'qs2.quizId = q2.id')
-            .innerJoin(Lesson, 'l2', 'q2.lessonId = l2.id')
-            .where('l2.languageId = :languageId', { languageId })
-            .groupBy('qs2.userId, qs2.quizId');
+            .leftJoin('qs2.quiz', 'q3')
+            .leftJoin('q3.lesson', 'l3')
+            .leftJoin('qs2.quizVariant', 'qv3')
+            .leftJoin('qv3.lessonVariant', 'lv3')
+            .leftJoin('lv3.baseLesson', 'l4')
+            .where('COALESCE(l3.languageId, l4.languageId) = :languageId', {
+              languageId,
+            })
+            .andWhere('qs2.score IS NOT NULL')
+            .groupBy('qs2.userId')
+            .addGroupBy('generalQuizId');
         },
         'subquery',
-        'qs.userId = subquery.userId AND qs.quizId = subquery.quizId',
+        'qs.userId = subquery.userId AND COALESCE(qs.quizId, qs.quizVariantId) = subquery.generalQuizId',
       )
       .groupBy('u.id')
       .orderBy(orderBy, sortOrder === 'ASC' ? 'ASC' : 'DESC')

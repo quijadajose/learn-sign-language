@@ -28,7 +28,7 @@ export default function LandingPageComponent() {
       <Navbar
         fluid
         rounded
-        className="fixed left-0 top-0 z-50 w-full bg-white shadow-md"
+        className="fixed left-0 top-0 z-50 w-full bg-white/80 shadow-md backdrop-blur-md dark:bg-gray-900/80"
       >
         <NavbarBrand>
           <img

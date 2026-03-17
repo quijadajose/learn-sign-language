@@ -7,6 +7,7 @@ import {
 } from 'src/shared/domain/dto/PaginationDto';
 import { Stages } from 'src/shared/domain/entities/stage';
 import { FindManyOptions, Repository } from 'typeorm';
+import { QuizSubmission } from 'src/shared/domain/entities/quizSubmission';
 
 export class StageRepository implements StageRepositoryInterface {
   constructor(
@@ -123,7 +124,14 @@ export class StageRepository implements StageRepositoryInterface {
       )
       .leftJoin('s.lessons', 'l')
       .leftJoin('l.quizzes', 'q')
-      .leftJoin('q.submissions', 'qs', 'qs.userId = :userId', { userId })
+      .leftJoin('l.variants', 'lv')
+      .leftJoin('lv.quizVariants', 'qv')
+      .leftJoin(
+        QuizSubmission,
+        'qs',
+        'qs.userId = :userId AND (qs.quizId = q.id OR qs.quizVariantId = qv.id)',
+        { userId },
+      )
       .where('s.languageId = :languageId', { languageId })
       .groupBy('s.id')
       .addGroupBy('s.name')
@@ -142,9 +150,6 @@ export class StageRepository implements StageRepositoryInterface {
       this.stageRepository
         .createQueryBuilder('s')
         .select('COUNT(DISTINCT s.id)', 'count')
-        .leftJoin('s.lessons', 'l')
-        .leftJoin('l.quizzes', 'q')
-        .leftJoin('q.submissions', 'qs', 'qs.userId = :userId', { userId })
         .where('s.languageId = :languageId', { languageId })
         .getRawOne()
         .then((result) => parseInt(result.count) || 0),
