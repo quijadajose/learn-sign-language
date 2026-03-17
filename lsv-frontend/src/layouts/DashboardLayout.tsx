@@ -86,7 +86,7 @@ const DashboardLayout = ({ children }: Props) => {
 
   return (
     <>
-      <Navbar fluid rounded>
+      <Navbar fluid rounded className="sticky top-0 z-[60] bg-white/80 shadow-sm backdrop-blur-md dark:bg-gray-900/80">
         <NavbarBrand href="/dashboard">
           <img src="/LogoLogin.png" className="mr-3 h-6 sm:h-9" alt="Logo" />
         </NavbarBrand>

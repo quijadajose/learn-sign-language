@@ -341,10 +341,10 @@ export class LessonRepository implements LessonRepositoryInterface {
         l.stageId AS lesson_stageId,
         COALESCE(lv.createdAt, l.createdAt) AS lesson_createdAt,
         COALESCE(lv.updatedAt, l.updatedAt) AS lesson_updatedAt,
-        q.id AS quiz_id,
+        COALESCE(qv.id, q.id) AS quiz_id,
         qs.id AS submission_id,
         qs.userId AS submission_userId,
-        qs.quizId AS submission_quizId,
+        COALESCE(qs.quizId, qs.quizVariantId) AS submission_quizId,
         qs.score AS submission_score,
         qs.submittedAt AS submission_submittedAt,
         qs.answers AS submission_answers,
@@ -353,7 +353,11 @@ export class LessonRepository implements LessonRepositoryInterface {
         lesson AS l
         LEFT JOIN lesson_variant AS lv ON lv.baseLessonId = l.id AND lv.regionId = ?
         LEFT JOIN quiz AS q ON q.lessonId = l.id
-        LEFT JOIN quiz_submission AS qs ON qs.quizId = q.id AND qs.userId = ?
+        LEFT JOIN quiz_variant AS qv ON qv.lessonVariantId = lv.id
+        LEFT JOIN quiz_submission AS qs ON (
+          (qs.quizId = q.id AND q.id IS NOT NULL) OR 
+          (qs.quizVariantId = qv.id AND qv.id IS NOT NULL)
+        ) AND qs.userId = ?
       WHERE
         l.languageId = ?
         ${stageId ? 'AND l.stageId = ?' : ''}
