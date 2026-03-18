@@ -8,8 +8,10 @@ import {
   Req,
   Res,
   UseGuards,
+  Logger,
 } from '@nestjs/common';
 import { Throttle } from '@nestjs/throttler';
+import * as Sentry from '@sentry/nestjs';
 import { CreateUserDto } from '../domain/dto/create-user/create-user';
 import { AuthService } from '../application/auth.service';
 import { AuthGuard } from '@nestjs/passport';
@@ -32,6 +34,7 @@ import {
 @DocAuth()
 @Controller('auth')
 export class AuthController {
+  private readonly logger = new Logger(AuthController.name);
   constructor(
     private readonly authService: AuthService,
     private readonly configService: ConfigService,
@@ -67,7 +70,13 @@ export class AuthController {
   @DocRequestPasswordReset()
   async requestPasswordReset(@Body() resetPasswordDto: ResetPassword) {
     const { email } = resetPasswordDto;
-    await this.authService.sendPasswordResetToken(email);
+    this.authService.sendPasswordResetToken(email).catch((error) => {
+      Sentry.captureException(error);
+      this.logger.error(
+        'Error in sendPasswordResetToken in background:',
+        error,
+      );
+    });
     return { message: 'If the email exists, a reset link has been sent.' };
   }
 
