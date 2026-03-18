@@ -10,6 +10,8 @@ import {
   FooterBrand,
   FooterLinkGroup,
   FooterLink,
+  FooterDivider,
+  FooterCopyright,
 } from "flowbite-react";
 import { Link } from "react-router-dom";
 const scrollToSection = (id: string) => {
@@ -32,9 +34,9 @@ export default function LandingPageComponent() {
         <NavbarBrand>
           <Link to="/" className="flex items-center">
             <img
-              src="/LogoLogin.png"
-              className="mr-3 h-8 sm:h-10"
-              alt="LSV Logo"
+              src="/logo.svg"
+              className="mr-3 h-8 sm:h-10 dark:invert"
+              alt="Plataforma Logo"
             />
           </Link>
         </NavbarBrand>
@@ -59,10 +61,16 @@ export default function LandingPageComponent() {
             Acerca de
           </NavbarLink>
           <NavbarLink 
-            onClick={() => scrollToSection("why")}
+            onClick={() => scrollToSection("features")}
             className="cursor-pointer font-bold text-gray-700 hover:text-blue-600 dark:text-gray-300 dark:hover:text-white"
           >
-            ¿Por qué LSV?
+            Características
+          </NavbarLink>
+          <NavbarLink 
+            onClick={() => scrollToSection("collaborate")}
+            className="cursor-pointer font-bold text-gray-700 hover:text-blue-600 dark:text-gray-300 dark:hover:text-white"
+          >
+            Colaborar
           </NavbarLink>
           <NavbarLink 
             onClick={() => scrollToSection("history")}
@@ -76,12 +84,10 @@ export default function LandingPageComponent() {
         <div className="mx-auto grid max-w-screen-xl px-4 py-8 lg:grid-cols-12 lg:gap-8 lg:py-16 xl:gap-0">
           <div className="mr-auto place-self-center lg:col-span-7">
             <h1 className="mb-4 max-w-2xl text-4xl font-extrabold leading-none md:text-5xl xl:text-6xl dark:text-white">
-              Aprende lenguaje de señas venezolano
+              Aprende Lenguaje de Señas
             </h1>
             <p className="mb-6 max-w-2xl font-light text-gray-500 md:text-lg lg:mb-8 lg:text-xl dark:text-gray-400">
-              Aprende lenguaje de señas venezolano con esta aplicación gratis y
-              online. Diviértete, practica y comunícate con la comunidad sorda y
-              sordomuda de Venezuela.
+              Nuestra plataforma gratuita y online te permite aprender lenguaje de señas de diversos países. Diviértete, practica y comunícate con la comunidad sorda.
             </p>
 
             <Link
@@ -114,90 +120,100 @@ export default function LandingPageComponent() {
           </div>
         </div>
       </section>
-      <section id="why" className="bg-gray-50 dark:bg-gray-800">
+
+      <section id="features" className="bg-gray-50 dark:bg-gray-800">
         <div className="mx-auto max-w-screen-xl px-4 py-8 sm:py-16 lg:px-6">
           <div className="mb-8 max-w-screen-md lg:mb-16">
             <h2 className="mb-4 text-4xl font-extrabold text-gray-900 dark:text-white">
-              ¿Por qué LSV?
+              ¿Por qué nuestra plataforma?
             </h2>
             <p className="text-gray-500 sm:text-xl dark:text-gray-400">
-              LSV es una aplicación web y móvil que te permite aprender y
-              practicar el lenguaje de señas venezolano de forma fácil,
-              divertida y eficaz.
+              Ofrecemos una experiencia integral para aprender y practicar diversos lenguajes de señas de forma fácil.
             </p>
           </div>
           <div className="space-y-8 md:grid md:grid-cols-2 md:gap-12 md:space-y-0 lg:grid-cols-3">
             <div>
               <h3 className="mb-2 text-xl font-bold dark:text-white">
-                Registro Crea tu cuenta y accede a LSV.
+                Registro Sencillo
               </h3>
               <p className="text-gray-500 dark:text-gray-400">
-                Regístrate y recupera tu contraseña de forma segura y rápida, y
-                disfruta de la mejor aplicación para aprender y practicar
-                lenguaje de señas venezolano.
+                Regístrate y accede a todo el contenido. Sigue tu progreso a lo largo de los diferentes niveles.
               </p>
             </div>
             <div>
               <h3 className="mb-2 text-xl font-bold dark:text-white">
-                Administración Gestiona los idiomas y las lecciones de LSV
+                Multilenguaje
               </h3>
               <p className="text-gray-500 dark:text-gray-400">
-                Accede a un panel de administración donde podrás añadir,
-                eliminar y actualizar idiomas y lecciones, agrupados en etapas y
-                niveles del MCER.
+                Accede a lecciones de lenguaje de señas de diferentes países y regiones.
               </p>
             </div>
             <div>
               <h3 className="mb-2 text-xl font-bold dark:text-white">
-                Selección Elige el idioma y el nivel que más te convenga
+                Material Interactivo
               </h3>
               <p className="text-gray-500 dark:text-gray-400">
-                Accede a un panel de selección de lecciones donde podrás ver las
-                lecciones disponibles, con videos, ejercicios y material de
-                apoyo.
+                Aprende con videos, ejercicios prácticos y evaluaciones que te ayudarán a consolidar tus conocimientos.
               </p>
             </div>
             <div>
               <h3 className="mb-2 text-xl font-bold dark:text-white">
-                Evaluación Realiza pruebas de conocimiento
+                Evaluación Continua
               </h3>
-              <p className="text-gray-500 dark:text-gray-400">
-                Accede a un panel de evaluación donde podrás comprobar tu nivel
-                y tu progreso.
-              </p>
+              
             </div>
             <div>
               <h3 className="mb-2 text-xl font-bold dark:text-white">
-                Ranking Compara tu ranking y el de otros usuarios
+                Ranking y Motivación
               </h3>
               <p className="text-gray-500 dark:text-gray-400">
-                Accede a una tabla de posiciones donde podrás ver tu puntuación
-                y la de otros usuarios según tu nivel y progreso, y retarte a ti
-                mismo y a otros.
+                Compite amistosamente con otros usuarios, sube en el ranking y mantén la motivación para seguir aprendiendo.
               </p>
             </div>
           </div>
         </div>
       </section>
 
-      <section id="history" className="bg-white dark:bg-gray-900">
+      <section id="collaborate" className="bg-white dark:bg-gray-900">
+        <div className="mx-auto max-w-screen-xl px-4 py-8 lg:px-6 lg:py-16">
+          <div className="mx-auto max-w-screen-sm text-center">
+            <h2 className="mb-4 text-4xl font-extrabold leading-tight tracking-tight text-gray-900 dark:text-white">
+              ¿Quieres agregar un nuevo idioma?
+            </h2>
+            <p className="mb-6 font-light text-gray-500 md:text-lg dark:text-gray-400">
+              Nuestra plataforma está creciendo. Si representas a una escuela, asociación o eres un experto que desea cargar lecciones de lenguaje de señas de tu país, ¡queremos colaborar contigo!
+            </p>
+            <div className="flex flex-col space-y-4 sm:flex-row sm:justify-center sm:space-x-4 sm:space-y-0">
+              <Button
+                color="blue"
+                size="lg"
+                href="mailto:quijadajose@gmail.com" // Placeholder or actual email
+              >
+                Contactar por Correo
+              </Button>
+              <Button
+                color="gray"
+                size="lg"
+                href="https://github.com/quijadajose/LSV/issues"
+              >
+                Ver Panel de Issues
+              </Button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="history" className="bg-gray-50 dark:bg-gray-800">
         <div className="mx-auto max-w-screen-xl items-center gap-16 px-4 py-8 lg:grid lg:grid-cols-2 lg:px-6 lg:py-16">
           <div className="font-light text-gray-500 sm:text-lg dark:text-gray-400">
             <h2 className="mb-4 text-4xl font-extrabold text-gray-900 dark:text-white">
-              Historia del proyecto
+              Nuestra Historia
             </h2>
             <p className="mb-4">
-              La idea de aprender la lengua de señas siempre me acompañó desde
-              la infancia, porque muchos compañeros de clase la practicaban
-              porque ellos o sus familiares tenían problemas de habla y/o
-              audición, y la lengua de señas me llamaba la atención, pero no
-              había muchos lugares donde la enseñaran. Cuando comencé la
-              universidad, me di cuenta de que con los conocimientos que iba a
-              aprender podría hacer algo para facilitar la educación de la
-              lengua de señas venezolana. Pero no fue hasta que una asignatura
-              nos asignó la realización de un sistema innovador y, sin dudarlo,
-              pensé en hacer ese proyecto que quería hacer desde hace tanto
-              tiempo.
+              La idea de aprender la lengua de señas nació de la observación y el deseo de romper las barreras de comunicación. Lo que comenzó como un proyecto universitario enfocado en el lenguaje de señas de una región, hoy se transforma en una herramienta global.
+            </p>
+            <p>
+              Nuestra misión es facilitar la educación inclusiva en todo el mundo, proporcionando una plataforma accesible donde cualquier institución pueda compartir y enseñar el lenguaje de señas de su comunidad.
             </p>
           </div>
           <div className="mt-8 grid grid-cols-2 gap-4">
@@ -214,13 +230,23 @@ export default function LandingPageComponent() {
           </div>
         </div>
       </section>
+
       <Footer container>
-        <FooterBrand src="/LogoLogin.png" alt="LSV Logo" />
-        <FooterLinkGroup>
-          <FooterLink href="https://github.com/quijadajose/LSV/">
-            Github
-          </FooterLink>
-        </FooterLinkGroup>
+        <div className="w-full text-center">
+          <div className="w-full justify-between sm:flex sm:items-center sm:justify-between">
+            <FooterBrand src="/logo.svg" alt="Logo" name="Plataforma de Señas" className="dark:invert" />
+            <FooterLinkGroup>
+              <FooterLink href="https://github.com/quijadajose/LSV/">
+                Github
+              </FooterLink>
+              <FooterLink href="#" onClick={() => scrollToSection("collaborate")} className="cursor-pointer">
+                Colaborar
+              </FooterLink>
+            </FooterLinkGroup>
+          </div>
+          <FooterDivider />
+          <FooterCopyright href="#" by="José Quijada™" year={2026} />
+        </div>
       </Footer>
     </>
   );
