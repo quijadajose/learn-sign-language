@@ -1,6 +1,6 @@
 import { DataSource } from 'typeorm';
 import * as bcrypt from 'bcrypt';
-import * as request from 'supertest';
+import request from 'supertest';
 
 /**
  * Limpia todas las tablas de la base de datos de pruebas.
@@ -9,24 +9,23 @@ import * as request from 'supertest';
 export async function cleanDatabase(dataSource: DataSource) {
   const entities = dataSource.entityMetadatas;
   const tableNames = entities
-    .map((entity) => `\`${entity.tableName}\``)
+    .map((entity) => `"${entity.tableName}"`)
     .join(', ');
 
   if (tableNames) {
     try {
-      // Desactivamos checks de FK para poder truncar en cualquier orden
-      await dataSource.query('SET FOREIGN_KEY_CHECKS = 0;');
+      // Postgres equivalent of SET FOREIGN_KEY_CHECKS = 0;
+      await dataSource.query("SET session_replication_role = 'replica';");
 
       for (const entity of entities) {
         const tableName = entity.tableName;
         if (tableName === 'countries' || tableName === 'divisions') {
           continue;
         }
-        const repository = dataSource.getRepository(entity.name);
-        await repository.query(`TRUNCATE TABLE \`${tableName}\`;`);
+        await dataSource.query(`TRUNCATE TABLE "${tableName}" RESTART IDENTITY CASCADE;`);
       }
 
-      await dataSource.query('SET FOREIGN_KEY_CHECKS = 1;');
+      await dataSource.query("SET session_replication_role = 'origin';");
     } catch (error) {
       console.error('Error limpiando la base de datos de prueba:', error);
       throw error;
