@@ -115,8 +115,8 @@ function Login() {
           to="/"
           className="mb-6 flex items-center text-2xl font-semibold text-gray-900 dark:text-white"
         >
-          <img className="mr-2 size-8" src="/LogoLogin.png" alt="logo" />
-          Lenguaje de señas venezolano
+          <img className="mr-2 size-8 dark:invert" src="/logo.svg" alt="logo" />
+          Aprende Lenguaje de Señas
         </Link>
         <div className="w-full rounded-lg bg-white shadow sm:max-w-md xl:p-0 dark:border dark:border-gray-700 dark:bg-gray-800">
           <div className="space-y-4 p-6 sm:p-8 md:space-y-6">
