@@ -9,6 +9,7 @@ import {
   Res,
   UseGuards,
 } from '@nestjs/common';
+import { Throttle } from '@nestjs/throttler';
 import { CreateUserDto } from '../domain/dto/create-user/create-user';
 import { AuthService } from '../application/auth.service';
 import { AuthGuard } from '@nestjs/passport';
@@ -36,6 +37,7 @@ export class AuthController {
     private readonly configService: ConfigService,
   ) {}
   @Public()
+  @Throttle({ default: { limit: 5, ttl: 60000 } })
   @Post('register')
   @DocRegister()
   async register(@Body() createUserDto: CreateUserDto) {
@@ -48,6 +50,7 @@ export class AuthController {
   }
 
   @Public()
+  @Throttle({ default: { limit: 5, ttl: 60000 } })
   @Post('login')
   @DocLogin()
   async login(@Body() user: LoginUserDto) {
@@ -59,6 +62,7 @@ export class AuthController {
   }
 
   @Public()
+  @Throttle({ default: { limit: 5, ttl: 60000 } })
   @Post('password/reset')
   @DocRequestPasswordReset()
   async requestPasswordReset(@Body() resetPasswordDto: ResetPassword) {
@@ -68,6 +72,7 @@ export class AuthController {
   }
 
   @Public()
+  @Throttle({ default: { limit: 5, ttl: 60000 } })
   @Post('password/reset/confirm')
   @DocConfirmPasswordReset()
   async confirmPasswordReset(

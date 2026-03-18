@@ -4,6 +4,7 @@ services:
     restart: unless-stopped
     depends_on:
       - lsv-db
+      - lsv-valkey
     env_file:
       - ./.env
     environment:
@@ -23,6 +24,15 @@ services:
       options:
         max-size: "10m"
         max-file: "3"
+
+  lsv-valkey:
+    image: valkey/valkey:8.0-alpine
+    restart: unless-stopped
+    networks:
+      - lsv_network
+    volumes:
+      - valkey_data:/data
+    command: valkey-server --save 60 1 --loglevel warning
 
   lsv-db:
     image: postgres:18.3-alpine
@@ -50,3 +60,4 @@ networks:
 
 volumes:
   db_data_psql:
+  valkey_data:

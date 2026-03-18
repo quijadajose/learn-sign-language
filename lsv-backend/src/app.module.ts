@@ -1,12 +1,11 @@
 import { Module } from '@nestjs/common';
-import { APP_FILTER } from '@nestjs/core';
+import { APP_FILTER, APP_GUARD } from '@nestjs/core';
 import { join } from 'path';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { validate } from './config/env.validation';
 import { AuthModule } from './auth/auth.module';
 import { User } from './shared/domain/entities/user';
-import * as nodemailer from 'nodemailer';
 import { UsersModule } from './users/users.module';
 import { UserLesson } from './shared/domain/entities/userLesson';
 import { Lesson } from './shared/domain/entities/lesson';
@@ -39,6 +38,8 @@ import { SeederService } from './seeder/seeder.service';
 import { ModeratorPermission } from './shared/domain/entities/moderatorPermission';
 import { ModeratorModule } from './moderator/moderator.module';
 import { SentryGlobalFilter, SentryModule } from '@sentry/nestjs/setup';
+import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
+import { ThrottlerStorageRedisService } from '@nest-lab/throttler-storage-redis';
 
 @Module({
   imports: [
@@ -93,12 +94,31 @@ import { SentryGlobalFilter, SentryModule } from '@sentry/nestjs/setup';
     RegionModule,
     CountryDivisionModule,
     ModeratorModule,
+    ThrottlerModule.forRootAsync({
+      inject: [ConfigService],
+      useFactory: (config: ConfigService) => ({
+        throttlers: [
+          {
+            ttl: 60000,
+            limit: 100,
+          },
+        ],
+        storage: new ThrottlerStorageRedisService({
+          host: config.get('VALKEY_HOST'),
+          port: config.get('VALKEY_PORT'),
+        }),
+      }),
+    }),
   ],
   controllers: [ImagesController],
   providers: [
     {
       provide: APP_FILTER,
       useClass: SentryGlobalFilter,
+    },
+    {
+      provide: APP_GUARD,
+      useClass: ThrottlerGuard,
     },
     UploadPictureUseCase,
     SeederService,
