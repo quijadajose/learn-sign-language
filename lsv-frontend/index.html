@@ -12,14 +12,15 @@
       rel="stylesheet"
     />
     <script>
-      if (localStorage.getItem('flowbite-theme-mode') === 'dark' || (!('flowbite-theme-mode' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
-        document.documentElement.classList.add('dark');
-      } else {
-        document.documentElement.classList.remove('dark');
-      }
+      (function() {
+        const theme = localStorage.getItem('flowbite-theme-mode');
+        if (theme === 'dark' || (!theme && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+          document.documentElement.classList.add('dark');
+        }
+      })();
     </script>
   </head>
-  <body className="bg-white dark:bg-gray-900">
+  <body class="bg-white dark:bg-gray-900">
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
