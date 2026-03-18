@@ -25,5 +25,6 @@ services:
 
 volumes:
   db_data_psql:
+  valkey_data:
   caddy_data:
   caddy_config:
