@@ -50,7 +50,7 @@ import { SentryGlobalFilter, SentryModule } from '@sentry/nestjs/setup';
     TypeOrmModule.forRootAsync({
       inject: [ConfigService],
       useFactory: async (configService: ConfigService) => ({
-        type: 'mysql',
+        type: 'postgres',
         host: configService.get<string>('DB_HOST'),
         port: Number(configService.get('DB_PORT')),
         username: configService.get<string>('DB_USERNAME'),

@@ -20,7 +20,7 @@ import { Division } from '../shared/domain/entities/iso-3166-2/divisions';
 import { ModeratorPermission } from '../shared/domain/entities/moderatorPermission';
 
 export const AppDataSource = new DataSource({
-  type: 'mysql',
+  type: 'postgres',
   host: process.env.DB_HOST,
   port: Number(process.env.DB_PORT),
   username: process.env.DB_USERNAME,

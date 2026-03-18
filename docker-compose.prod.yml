@@ -24,6 +24,6 @@ services:
       - lsv_network
 
 volumes:
-  db_data:
+  db_data_psql:
   caddy_data:
   caddy_config:

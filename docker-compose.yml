@@ -25,17 +25,16 @@ services:
         max-file: "3"
 
   lsv-db:
-    image: mysql:8.0
+    image: postgres:18.3-alpine
     restart: unless-stopped
     environment:
-      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD}
-      MYSQL_DATABASE: ${DB_DATABASE}
-      MYSQL_USER: ${DB_USERNAME}
-      MYSQL_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${DB_DATABASE}
+      POSTGRES_USER: ${DB_USERNAME}
     env_file:
       - ./.env
     volumes:
-      - db_data:/var/lib/mysql
+      - db_data_psql:/var/lib/postgresql/data
       - ./lsv-backend/init-db:/docker-entrypoint-initdb.d
     networks:
       - lsv_network
@@ -50,4 +49,4 @@ networks:
     driver: bridge
 
 volumes:
-  db_data:
+  db_data_psql:
