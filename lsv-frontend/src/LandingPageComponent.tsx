@@ -194,7 +194,7 @@ export default function LandingPageComponent() {
               <Button
                 color="gray"
                 size="lg"
-                href="https://github.com/quijadajose/LSV/issues"
+                href="https://github.com/quijadajose/learn-sign-language/issues"
               >
                 Ver Panel de Issues
               </Button>
@@ -236,7 +236,7 @@ export default function LandingPageComponent() {
           <div className="w-full justify-between sm:flex sm:items-center sm:justify-between">
             <FooterBrand src="/logo.svg" alt="Logo" name="Plataforma de Señas" className="dark:invert" />
             <FooterLinkGroup>
-              <FooterLink href="https://github.com/quijadajose/LSV/">
+              <FooterLink href="https://github.com/quijadajose/learn-sign-language">
                 Github
               </FooterLink>
               <FooterLink href="#" onClick={() => scrollToSection("collaborate")} className="cursor-pointer">
