@@ -27,40 +27,52 @@ export default function LandingPageComponent() {
     <>
       <Navbar
         fluid
-        rounded
-        className="fixed left-0 top-0 z-50 w-full bg-white/80 shadow-md backdrop-blur-md dark:bg-gray-900/80"
+        className="fixed left-0 top-0 z-50 w-full border-b border-gray-200 bg-white/90 shadow-sm backdrop-blur-md dark:border-gray-800 dark:bg-gray-900/90"
       >
         <NavbarBrand>
-          <img
-            src="/LogoLogin.png"
-            className="mr-3 h-6 sm:h-9"
-            alt="LSV Logo"
-          />
-          <span className="self-center whitespace-nowrap text-xl font-semibold dark:text-white"></span>
+          <Link to="/" className="flex items-center">
+            <img
+              src="/LogoLogin.png"
+              className="mr-3 h-8 sm:h-10"
+              alt="LSV Logo"
+            />
+          </Link>
         </NavbarBrand>
-        <div className="flex space-x-2 md:order-2">
-          <Button color="gray">
-            <Link to="/login">Iniciar sesión</Link>
+        <div className="flex items-center gap-2 md:order-2">
+          <Button color="gray" size="sm" as={Link} to="/login">
+            Iniciar sesión
           </Button>
-          <Button color="blue">
-            <Link to="/register">Registro</Link>
+          <Button color="blue" size="sm" as={Link} to="/register">
+            Registro
           </Button>
-          <DarkThemeToggle />
-          <NavbarToggle />
+          <div className="ml-2 flex items-center gap-1 border-l border-gray-200 pl-2 dark:border-gray-700">
+            <DarkThemeToggle className="hover:bg-gray-100 dark:hover:bg-gray-800" />
+            <NavbarToggle />
+          </div>
         </div>
         <NavbarCollapse>
-          <NavbarLink onClick={() => scrollToSection("about")} active>
+          <NavbarLink 
+            onClick={() => scrollToSection("about")} 
+            className="cursor-pointer font-bold text-gray-700 hover:text-blue-600 dark:text-gray-300 dark:hover:text-white"
+            active
+          >
             Acerca de
           </NavbarLink>
-          <NavbarLink onClick={() => scrollToSection("why")}>
+          <NavbarLink 
+            onClick={() => scrollToSection("why")}
+            className="cursor-pointer font-bold text-gray-700 hover:text-blue-600 dark:text-gray-300 dark:hover:text-white"
+          >
             ¿Por qué LSV?
           </NavbarLink>
-          <NavbarLink onClick={() => scrollToSection("history")}>
-            Historia del proyecto
+          <NavbarLink 
+            onClick={() => scrollToSection("history")}
+            className="cursor-pointer font-bold text-gray-700 hover:text-blue-600 dark:text-gray-300 dark:hover:text-white"
+          >
+            Historia
           </NavbarLink>
         </NavbarCollapse>
       </Navbar>
-      <section id="about" className="bg-white dark:bg-gray-900">
+      <section id="about" className="bg-white pt-24 dark:bg-gray-900">
         <div className="mx-auto grid max-w-screen-xl px-4 py-8 lg:grid-cols-12 lg:gap-8 lg:py-16 xl:gap-0">
           <div className="mr-auto place-self-center lg:col-span-7">
             <h1 className="mb-4 max-w-2xl text-4xl font-extrabold leading-none md:text-5xl xl:text-6xl dark:text-white">
