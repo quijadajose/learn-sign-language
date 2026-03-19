@@ -86,9 +86,17 @@ const DashboardLayout = ({ children }: Props) => {
 
   return (
     <>
-      <Navbar fluid rounded className="sticky top-0 z-[60] bg-white/80 shadow-sm backdrop-blur-md dark:bg-gray-900/80">
+      <Navbar
+        fluid
+        rounded
+        className="sticky top-0 z-[60] bg-white/80 shadow-sm backdrop-blur-md dark:bg-gray-900/80"
+      >
         <NavbarBrand href="/dashboard">
-          <img src="/logo.svg" className="mr-3 h-6 sm:h-9 dark:invert" alt="Logo" />
+          <img
+            src="/logo.svg"
+            className="mr-3 h-6 dark:invert sm:h-9"
+            alt="Logo"
+          />
         </NavbarBrand>
         <div className="flex md:order-2">
           <DarkThemeToggle />
@@ -155,7 +163,7 @@ const DashboardLayout = ({ children }: Props) => {
               arrowIcon={true}
               inline
               label={
-                <span className="block rounded py-2 pl-3 pr-4 text-gray-700 hover:bg-gray-100 md:border-0 md:p-0 md:hover:bg-transparent md:hover:text-blue-700 dark:border-gray-700 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white md:dark:hover:bg-transparent md:dark:hover:text-white">
+                <span className="block rounded py-2 pl-3 pr-4 text-gray-700 hover:bg-gray-100 dark:border-gray-700 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white md:border-0 md:p-0 md:hover:bg-transparent md:hover:text-blue-700 md:dark:hover:bg-transparent md:dark:hover:text-white">
                   Gestión
                 </span>
               }

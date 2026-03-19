@@ -2,13 +2,13 @@ import React, { useState, useEffect } from "react";
 import { Spinner, Alert, Pagination } from "flowbite-react";
 import { leaderboardApi, languageApi } from "./services/api";
 import { BACKEND_BASE_URL } from "./config";
-import { 
-  HiStar, 
-  HiGlobeAlt, 
-  HiSortAscending, 
-  HiSortDescending, 
+import {
+  HiStar,
+  HiGlobeAlt,
+  HiSortAscending,
+  HiSortDescending,
   HiUserGroup,
-  HiLightningBolt
+  HiLightningBolt,
 } from "react-icons/hi";
 
 interface LeaderboardEntry {
@@ -31,7 +31,9 @@ interface Language {
 }
 
 const LeaderboardView: React.FC = () => {
-  const [leaderboardData, setLeaderboardData] = useState<LeaderboardEntry[]>([]);
+  const [leaderboardData, setLeaderboardData] = useState<LeaderboardEntry[]>(
+    [],
+  );
   const [languages, setLanguages] = useState<Language[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -94,7 +96,9 @@ const LeaderboardView: React.FC = () => {
         setError(response.message || "Error al cargar el leaderboard");
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Error al cargar el leaderboard");
+      setError(
+        err instanceof Error ? err.message : "Error al cargar el leaderboard",
+      );
     } finally {
       setLoading(false);
     }
@@ -106,7 +110,7 @@ const LeaderboardView: React.FC = () => {
     return (
       <div className="flex min-h-[60vh] flex-col items-center justify-center gap-4">
         <Spinner size="xl" />
-        <p className="text-gray-400 animate-pulse">Cargando clasificación...</p>
+        <p className="animate-pulse text-gray-400">Cargando clasificación...</p>
       </div>
     );
   }
@@ -118,18 +122,19 @@ const LeaderboardView: React.FC = () => {
         <div className="mb-4 inline-flex h-16 w-16 items-center justify-center rounded-2xl bg-indigo-500/10 text-indigo-500 shadow-xl ring-1 ring-indigo-500/20 dark:text-indigo-400">
           <HiStar className="h-10 w-10" />
         </div>
-        <h1 className="mb-3 text-4xl font-black tracking-tight text-gray-900 md:text-5xl dark:text-white">
+        <h1 className="mb-3 text-4xl font-black tracking-tight text-gray-900 dark:text-white md:text-5xl">
           Leaderboard
         </h1>
         <p className="mx-auto max-w-xl text-lg font-medium text-gray-500 dark:text-gray-400">
-          Descubre quiénes lideran el aprendizaje y únete a la competencia. ¡Sigue practicando para subir de nivel!
+          Descubre quiénes lideran el aprendizaje y únete a la competencia.
+          ¡Sigue practicando para subir de nivel!
         </p>
       </div>
 
       {/* Filters Panel */}
       <div className="relative mb-8 overflow-hidden rounded-3xl border border-gray-200 bg-white p-6 shadow-2xl backdrop-blur-md dark:border-gray-700/60 dark:bg-gray-800/90">
         <div className="absolute -right-20 -top-20 h-64 w-64 rounded-full bg-indigo-500/5 blur-3xl" />
-        
+
         <div className="relative grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
           <div className="space-y-2">
             <label className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest text-gray-400 dark:text-gray-500">
@@ -145,7 +150,9 @@ const LeaderboardView: React.FC = () => {
             >
               <option value="global">Clasificación Global</option>
               {languages.map((lang) => (
-                <option key={lang.id} value={lang.id}>{lang.name}</option>
+                <option key={lang.id} value={lang.id}>
+                  {lang.name}
+                </option>
               ))}
             </select>
           </div>
@@ -206,7 +213,10 @@ const LeaderboardView: React.FC = () => {
       </div>
 
       {error && (
-        <Alert color="failure" className="mb-6 rounded-2xl border-red-500/20 bg-red-500/10 text-red-900 dark:text-red-200">
+        <Alert
+          color="failure"
+          className="mb-6 rounded-2xl border-red-500/20 bg-red-500/10 text-red-900 dark:text-red-200"
+        >
           <HiStar className="mr-2 h-5 w-5" /> {error}
         </Alert>
       )}
@@ -222,13 +232,13 @@ const LeaderboardView: React.FC = () => {
         {leaderboardData.map((entry, index) => {
           const rank = getRank(index);
           const isTop3 = rank <= 3;
-          
+
           return (
-            <div 
+            <div
               key={entry.userId}
               className={`group relative flex items-center gap-4 overflow-hidden rounded-2xl border p-4 transition-all duration-300 hover:scale-[1.01] ${
-                isTop3 
-                  ? "border-indigo-500/30 bg-indigo-50/30 shadow-lg shadow-indigo-500/5 dark:bg-gray-800/60 dark:hover:bg-gray-800/80" 
+                isTop3
+                  ? "border-indigo-500/30 bg-indigo-50/30 shadow-lg shadow-indigo-500/5 dark:bg-gray-800/60 dark:hover:bg-gray-800/80"
                   : "border-gray-100 bg-white dark:border-gray-700/50 dark:bg-gray-800/40 dark:hover:bg-gray-800/60"
               }`}
             >
@@ -262,15 +272,19 @@ const LeaderboardView: React.FC = () => {
                   src={`${BACKEND_BASE_URL}/images/user/${entry.userId}?size=sm&v=${Date.now()}`}
                   alt={entry.firstName}
                   className={`h-full w-full rounded-2xl object-cover shadow-inner ring-2 ${
-                    isTop3 ? "ring-indigo-500/50" : "ring-gray-100 dark:ring-gray-700/40"
+                    isTop3
+                      ? "ring-indigo-500/50"
+                      : "ring-gray-100 dark:ring-gray-700/40"
                   }`}
-                  onError={(e) => { e.currentTarget.src = "/user.svg"; }}
+                  onError={(e) => {
+                    e.currentTarget.src = "/user.svg";
+                  }}
                 />
                 <div className="absolute -bottom-1 -right-1 h-3.5 w-3.5 rounded-full border-2 border-white bg-green-500 dark:border-gray-800" />
               </div>
 
               {/* User Info */}
-              <div className="flex-1 min-w-0">
+              <div className="min-w-0 flex-1">
                 <h3 className="text-base font-black text-gray-900 transition-colors group-hover:text-indigo-600 dark:text-white dark:group-hover:text-indigo-300">
                   {entry.firstName} {entry.lastName}
                 </h3>
@@ -293,9 +307,21 @@ const LeaderboardView: React.FC = () => {
 
       {/* Pagination Section */}
       {totalPages > 1 && (
-        <div className="mt-10 flex flex-col items-center justify-between gap-6 border-t border-gray-100 pt-8 sm:flex-row dark:border-gray-800">
+        <div className="mt-10 flex flex-col items-center justify-between gap-6 border-t border-gray-100 pt-8 dark:border-gray-800 sm:flex-row">
           <p className="text-sm font-semibold text-gray-400">
-            Mostrando <span className="text-gray-700 dark:text-gray-300">{(currentPage - 1) * pageSize + 1}</span> a <span className="text-gray-700 dark:text-gray-300">{Math.min(currentPage * pageSize, totalEntries)}</span> de <span className="text-gray-700 dark:text-gray-300">{totalEntries}</span> leyendas
+            Mostrando{" "}
+            <span className="text-gray-700 dark:text-gray-300">
+              {(currentPage - 1) * pageSize + 1}
+            </span>{" "}
+            a{" "}
+            <span className="text-gray-700 dark:text-gray-300">
+              {Math.min(currentPage * pageSize, totalEntries)}
+            </span>{" "}
+            de{" "}
+            <span className="text-gray-700 dark:text-gray-300">
+              {totalEntries}
+            </span>{" "}
+            leyendas
           </p>
           <div className="flex overflow-x-auto sm:justify-center">
             <Pagination
@@ -311,26 +337,27 @@ const LeaderboardView: React.FC = () => {
                 layout: {
                   table: {
                     base: "text-sm text-gray-700 dark:text-gray-400",
-                    span: "font-semibold text-gray-900 dark:text-white"
-                  }
+                    span: "font-semibold text-gray-900 dark:text-white",
+                  },
                 },
                 pages: {
                   base: "xs:mt-0 mt-2 inline-flex items-center -space-x-px",
                   showIcon: "inline-flex items-center justify-center p-1",
                   previous: {
                     base: "ml-0 rounded-l-2xl border border-gray-200 bg-white px-4 py-2 text-sm font-bold text-gray-500 hover:bg-gray-50 hover:text-indigo-600 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white",
-                    icon: "h-5 w-5"
+                    icon: "h-5 w-5",
                   },
                   next: {
                     base: "rounded-r-2xl border border-gray-200 bg-white px-4 py-2 text-sm font-bold text-gray-500 hover:bg-gray-50 hover:text-indigo-600 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white",
-                    icon: "h-5 w-5"
+                    icon: "h-5 w-5",
                   },
                   selector: {
-                    base: "w-10 border-y border-x-[0.5px] border-gray-200 bg-white py-2 text-sm font-bold text-gray-500 hover:bg-gray-50 hover:text-indigo-600 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white",
-                    active: "z-10 bg-indigo-600 text-white hover:bg-indigo-700 border-indigo-600 !text-white",
-                    disabled: "opacity-50 cursor-not-allowed"
-                  }
-                }
+                    base: "w-10 border-x-[0.5px] border-y border-gray-200 bg-white py-2 text-sm font-bold text-gray-500 hover:bg-gray-50 hover:text-indigo-600 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white",
+                    active:
+                      "z-10 border-indigo-600 bg-indigo-600 !text-white text-white hover:bg-indigo-700",
+                    disabled: "cursor-not-allowed opacity-50",
+                  },
+                },
               }}
             />
           </div>

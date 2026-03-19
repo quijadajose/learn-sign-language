@@ -233,7 +233,7 @@ export class ApiService {
         searchParams.append(key, value.toString());
       }
     });
-    
+
     const queryString = searchParams.toString();
     return queryString ? `${endpoint}?${queryString}` : endpoint;
   }
