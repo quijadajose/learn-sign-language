@@ -8,10 +8,8 @@ import {
   NavbarCollapse,
   NavbarLink,
   FooterBrand,
-  FooterLinkGroup,
   FooterLink,
   FooterDivider,
-  FooterCopyright,
 } from "flowbite-react";
 import { Link } from "react-router-dom";
 const scrollToSection = (id: string) => {
