@@ -19,10 +19,10 @@ export class EnvConfig {
 
   @IsString()
   DB_DATABASE: string;
- 
+
   @IsString()
   VALKEY_HOST: string;
- 
+
   @IsNumber()
   VALKEY_PORT: number;
 

@@ -1,8 +1,16 @@
 import { Injectable } from '@nestjs/common';
-import { HealthCheckService, TypeOrmHealthIndicator, MicroserviceHealthIndicator } from '@nestjs/terminus';
+import {
+  HealthCheckService,
+  TypeOrmHealthIndicator,
+  MicroserviceHealthIndicator,
+} from '@nestjs/terminus';
 import { ConfigService } from '@nestjs/config';
 import { Transport } from '@nestjs/microservices';
-import { SslHealthIndicator, DomainHealthIndicator, ApiHealthIndicator } from '../../../infrastructure/indicators';
+import {
+  SslHealthIndicator,
+  DomainHealthIndicator,
+  ApiHealthIndicator,
+} from '../../../infrastructure/indicators';
 
 @Injectable()
 export class CheckHealthUseCase {
@@ -19,7 +27,7 @@ export class CheckHealthUseCase {
   async execute() {
     const frontendUrl = this.configService.get<string>('FRONTEND_URL');
     const domain = new URL(frontendUrl).hostname;
-    
+
     return this.health.check([
       () => this.api.isHealthy('api'),
       () => this.db.pingCheck('database'),

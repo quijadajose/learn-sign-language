@@ -63,9 +63,8 @@ export class UserLessonService {
     let baseLessonId = lessonId;
 
     try {
-      const lessonOrVariant = await this.getRegionalLessonUseCase.execute(
-        lessonId,
-      );
+      const lessonOrVariant =
+        await this.getRegionalLessonUseCase.execute(lessonId);
       // Si es una variante (tiene la propiedad baseLesson), usar el ID de la lección base
       if ('baseLesson' in lessonOrVariant && lessonOrVariant.baseLesson) {
         baseLessonId = lessonOrVariant.baseLesson.id;
