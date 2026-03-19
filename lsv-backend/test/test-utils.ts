@@ -22,7 +22,9 @@ export async function cleanDatabase(dataSource: DataSource) {
         if (tableName === 'countries' || tableName === 'divisions') {
           continue;
         }
-        await dataSource.query(`TRUNCATE TABLE "${tableName}" RESTART IDENTITY CASCADE;`);
+        await dataSource.query(
+          `TRUNCATE TABLE "${tableName}" RESTART IDENTITY CASCADE;`,
+        );
       }
 
       await dataSource.query("SET session_replication_role = 'origin';");

@@ -25,7 +25,10 @@ export const DocCheckHealth = () => {
                 properties: {
                   status: { type: 'string', example: 'up' },
                   uptime: { type: 'number', example: 1234.56 },
-                  timestamp: { type: 'string', example: '2026-03-19T17:15:58Z' },
+                  timestamp: {
+                    type: 'string',
+                    example: '2026-03-19T17:15:58Z',
+                  },
                   version: { type: 'string', example: '0.0.1' },
                 },
               },
@@ -45,7 +48,10 @@ export const DocCheckHealth = () => {
                 type: 'object',
                 properties: {
                   status: { type: 'string', example: 'up' },
-                  expiryDate: { type: 'string', example: '2026-12-31T23:59:59Z' },
+                  expiryDate: {
+                    type: 'string',
+                    example: '2026-12-31T23:59:59Z',
+                  },
                   daysUntilExpiry: { type: 'number', example: 285 },
                 },
               },
@@ -53,7 +59,10 @@ export const DocCheckHealth = () => {
                 type: 'object',
                 properties: {
                   status: { type: 'string', example: 'up' },
-                  expiryDate: { type: 'string', example: '2027-01-15T00:00:00Z' },
+                  expiryDate: {
+                    type: 'string',
+                    example: '2027-01-15T00:00:00Z',
+                  },
                   daysUntilExpiry: { type: 'number', example: 300 },
                 },
               },
