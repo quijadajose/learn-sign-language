@@ -11,6 +11,7 @@ import {
   FooterLinkGroup,
   FooterLink,
   FooterDivider,
+  FooterCopyright,
 } from "flowbite-react";
 import { Link } from "react-router-dom";
 const scrollToSection = (id: string) => {
@@ -70,12 +71,6 @@ export default function LandingPageComponent() {
             className="cursor-pointer font-bold text-gray-700 hover:text-blue-600 dark:text-gray-300 dark:hover:text-white"
           >
             Colaborar
-          </NavbarLink>
-          <NavbarLink 
-            onClick={() => scrollToSection("history")}
-            className="cursor-pointer font-bold text-gray-700 hover:text-blue-600 dark:text-gray-300 dark:hover:text-white"
-          >
-            Historia
           </NavbarLink>
         </NavbarCollapse>
       </Navbar>
@@ -206,14 +201,9 @@ export default function LandingPageComponent() {
         <div className="w-full text-center">
           <div className="w-full justify-between sm:flex sm:items-center sm:justify-between">
             <FooterBrand src="/logo.svg" alt="Logo" name="Plataforma de Señas" className="dark:invert" />
-            <FooterLinkGroup>
-              <FooterLink href="https://github.com/quijadajose/learn-sign-language">
-                Github
-              </FooterLink>
-              <FooterLink href="#" onClick={() => scrollToSection("collaborate")} className="cursor-pointer">
-                Colaborar
-              </FooterLink>
-            </FooterLinkGroup>
+            <FooterLink href="https://github.com/quijadajose/learn-sign-language" onClick={() => scrollToSection("collaborate")} className="cursor-pointer">
+              Colaborar
+            </FooterLink>
           </div>
           <FooterDivider />
         </div>
