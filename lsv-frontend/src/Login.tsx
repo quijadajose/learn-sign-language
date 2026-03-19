@@ -118,9 +118,9 @@ function Login() {
           <img className="mr-2 size-8 dark:invert" src="/logo.svg" alt="logo" />
           Aprende Lenguaje de Señas
         </Link>
-        <div className="w-full rounded-lg bg-white shadow sm:max-w-md xl:p-0 dark:border dark:border-gray-700 dark:bg-gray-800">
+        <div className="w-full rounded-lg bg-white shadow dark:border dark:border-gray-700 dark:bg-gray-800 sm:max-w-md xl:p-0">
           <div className="space-y-4 p-6 sm:p-8 md:space-y-6">
-            <h1 className="text-xl font-bold leading-tight tracking-tight text-gray-900 md:text-2xl dark:text-white">
+            <h1 className="text-xl font-bold leading-tight tracking-tight text-gray-900 dark:text-white md:text-2xl">
               Iniciar sesión
             </h1>
             <form className="space-y-4 md:space-y-6" onSubmit={handleLogin}>

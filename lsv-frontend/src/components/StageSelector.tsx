@@ -15,10 +15,16 @@ interface Props {
   onSelectStage: (stageId: string) => void;
 }
 
-function StageMiniCard({ stage, onSelect }: { stage: StageProgress; onSelect: (id: string) => void }) {
+function StageMiniCard({
+  stage,
+  onSelect,
+}: {
+  stage: StageProgress;
+  onSelect: (id: string) => void;
+}) {
   const progressPercent = parseFloat(stage.progress || "0");
   const isComplete = progressPercent === 100;
-  
+
   return (
     <div
       onClick={() => onSelect(stage.id)}
@@ -36,30 +42,34 @@ function StageMiniCard({ stage, onSelect }: { stage: StageProgress; onSelect: (i
         )}
       </div>
 
-      <div className="flex-1 min-w-0">
+      <div className="min-w-0 flex-1">
         <h4 className="mb-1 text-lg font-black text-gray-900 transition-colors group-hover:text-indigo-600 dark:text-white dark:group-hover:text-indigo-400">
           {stage.name}
         </h4>
-        <p className="mb-4 text-xs font-medium leading-relaxed text-gray-500 line-clamp-2 dark:text-gray-400">
+        <p className="mb-4 line-clamp-2 text-xs font-medium leading-relaxed text-gray-500 dark:text-gray-400">
           {stage.description}
         </p>
       </div>
 
-      <div className="mt-auto pt-4 border-t border-gray-100 dark:border-gray-700/50">
+      <div className="mt-auto border-t border-gray-100 pt-4 dark:border-gray-700/50">
         <div className="mb-2 flex items-center justify-between text-[10px] font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500">
           <span>Progreso</span>
-          <span className="text-gray-900 dark:text-gray-300">{Math.round(progressPercent)}%</span>
+          <span className="text-gray-900 dark:text-gray-300">
+            {Math.round(progressPercent)}%
+          </span>
         </div>
         <div className="h-1.5 w-full overflow-hidden rounded-full bg-gray-100 dark:bg-gray-700">
           <div
             className={`h-full rounded-full transition-all duration-1000 ${
-              isComplete ? "bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.4)]" : "bg-indigo-500 shadow-[0_0_8px_rgba(99,102,241,0.4)]"
+              isComplete
+                ? "bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.4)]"
+                : "bg-indigo-500 shadow-[0_0_8px_rgba(99,102,241,0.4)]"
             }`}
             style={{ width: `${progressPercent}%` }}
           />
         </div>
-        
-        <div className="mt-4 flex items-center gap-1 text-xs font-black text-indigo-500 opacity-0 transition-all duration-300 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 dark:text-indigo-400">
+
+        <div className="mt-4 flex -translate-x-2 items-center gap-1 text-xs font-black text-indigo-500 opacity-0 transition-all duration-300 group-hover:translate-x-0 group-hover:opacity-100 dark:text-indigo-400">
           Seleccionar sección <HiArrowRight className="h-3 w-3" />
         </div>
       </div>
@@ -89,10 +99,10 @@ export default function StageSelector({
 
       <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
         {otherStages.map((stage) => (
-          <StageMiniCard 
-            key={stage.id} 
-            stage={stage} 
-            onSelect={onSelectStage} 
+          <StageMiniCard
+            key={stage.id}
+            stage={stage}
+            onSelect={onSelectStage}
           />
         ))}
       </div>

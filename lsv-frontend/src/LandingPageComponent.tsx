@@ -35,7 +35,7 @@ export default function LandingPageComponent() {
           <Link to="/" className="flex items-center">
             <img
               src="/logo.svg"
-              className="mr-3 h-8 sm:h-10 dark:invert"
+              className="mr-3 h-8 dark:invert sm:h-10"
               alt="Plataforma Logo"
             />
           </Link>
@@ -53,20 +53,20 @@ export default function LandingPageComponent() {
           </div>
         </div>
         <NavbarCollapse>
-          <NavbarLink 
-            onClick={() => scrollToSection("about")} 
+          <NavbarLink
+            onClick={() => scrollToSection("about")}
             className="cursor-pointer font-bold text-gray-700 hover:text-blue-600 dark:text-gray-300 dark:hover:text-white"
             active
           >
             Acerca de
           </NavbarLink>
-          <NavbarLink 
+          <NavbarLink
             onClick={() => scrollToSection("features")}
             className="cursor-pointer font-bold text-gray-700 hover:text-blue-600 dark:text-gray-300 dark:hover:text-white"
           >
             Características
           </NavbarLink>
-          <NavbarLink 
+          <NavbarLink
             onClick={() => scrollToSection("collaborate")}
             className="cursor-pointer font-bold text-gray-700 hover:text-blue-600 dark:text-gray-300 dark:hover:text-white"
           >
@@ -77,11 +77,12 @@ export default function LandingPageComponent() {
       <section id="about" className="bg-white pt-24 dark:bg-gray-900">
         <div className="mx-auto grid max-w-screen-xl px-4 py-8 lg:grid-cols-12 lg:gap-8 lg:py-16 xl:gap-0">
           <div className="mr-auto place-self-center lg:col-span-7">
-            <h1 className="mb-4 max-w-2xl text-4xl font-extrabold leading-none md:text-5xl xl:text-6xl dark:text-white">
+            <h1 className="mb-4 max-w-2xl text-4xl font-extrabold leading-none dark:text-white md:text-5xl xl:text-6xl">
               Aprende Lenguaje de Señas
             </h1>
-            <p className="mb-6 max-w-2xl font-light text-gray-500 md:text-lg lg:mb-8 lg:text-xl dark:text-gray-400">
-              La plataforma te permite aprender lenguaje de señas de diversos países. Diviértete, practica y comunícate con la comunidad sorda.
+            <p className="mb-6 max-w-2xl font-light text-gray-500 dark:text-gray-400 md:text-lg lg:mb-8 lg:text-xl">
+              La plataforma te permite aprender lenguaje de señas de diversos
+              países. Diviértete, practica y comunícate con la comunidad sorda.
             </p>
 
             <Link
@@ -121,8 +122,9 @@ export default function LandingPageComponent() {
             <h2 className="mb-4 text-4xl font-extrabold text-gray-900 dark:text-white">
               ¿Por qué nuestra plataforma?
             </h2>
-            <p className="text-gray-500 sm:text-xl dark:text-gray-400">
-              Ofrecemos una experiencia integral para aprender y practicar diversos lenguajes de señas de forma fácil.
+            <p className="text-gray-500 dark:text-gray-400 sm:text-xl">
+              Ofrecemos una experiencia integral para aprender y practicar
+              diversos lenguajes de señas de forma fácil.
             </p>
           </div>
           <div className="space-y-8 md:grid md:grid-cols-2 md:gap-12 md:space-y-0 lg:grid-cols-3">
@@ -131,7 +133,8 @@ export default function LandingPageComponent() {
                 Registro Sencillo
               </h3>
               <p className="text-gray-500 dark:text-gray-400">
-                Regístrate y accede a todo el contenido. Sigue tu progreso a lo largo de los diferentes niveles.
+                Regístrate y accede a todo el contenido. Sigue tu progreso a lo
+                largo de los diferentes niveles.
               </p>
             </div>
             <div>
@@ -139,7 +142,8 @@ export default function LandingPageComponent() {
                 Multilenguaje
               </h3>
               <p className="text-gray-500 dark:text-gray-400">
-                Accede a lecciones de lenguaje de señas de diferentes países y regiones.
+                Accede a lecciones de lenguaje de señas de diferentes países y
+                regiones.
               </p>
             </div>
             <div>
@@ -147,21 +151,22 @@ export default function LandingPageComponent() {
                 Material Interactivo
               </h3>
               <p className="text-gray-500 dark:text-gray-400">
-                Aprende con videos, ejercicios prácticos y evaluaciones que te ayudarán a consolidar tus conocimientos.
+                Aprende con videos, ejercicios prácticos y evaluaciones que te
+                ayudarán a consolidar tus conocimientos.
               </p>
             </div>
             <div>
               <h3 className="mb-2 text-xl font-bold dark:text-white">
                 Evaluación Continua
               </h3>
-              
             </div>
             <div>
               <h3 className="mb-2 text-xl font-bold dark:text-white">
                 Ranking y Motivación
               </h3>
               <p className="text-gray-500 dark:text-gray-400">
-                Compite amistosamente con otros usuarios, sube en el ranking y mantén la motivación para seguir aprendiendo.
+                Compite amistosamente con otros usuarios, sube en el ranking y
+                mantén la motivación para seguir aprendiendo.
               </p>
             </div>
           </div>
@@ -174,8 +179,10 @@ export default function LandingPageComponent() {
             <h2 className="mb-4 text-4xl font-extrabold leading-tight tracking-tight text-gray-900 dark:text-white">
               ¿Quieres agregar un nuevo idioma?
             </h2>
-            <p className="mb-6 font-light text-gray-500 md:text-lg dark:text-gray-400">
-              Nuestra plataforma está creciendo. Si representas a una escuela, asociación o eres un experto que desea cargar lecciones de lenguaje de señas de tu país, ¡queremos colaborar contigo!
+            <p className="mb-6 font-light text-gray-500 dark:text-gray-400 md:text-lg">
+              Nuestra plataforma está creciendo. Si representas a una escuela,
+              asociación o eres un experto que desea cargar lecciones de
+              lenguaje de señas de tu país, ¡queremos colaborar contigo!
             </p>
             <div className="flex flex-col space-y-4 sm:flex-row sm:justify-center sm:space-x-4 sm:space-y-0">
               <Button
@@ -200,8 +207,17 @@ export default function LandingPageComponent() {
       <Footer container>
         <div className="w-full text-center">
           <div className="w-full justify-between sm:flex sm:items-center sm:justify-between">
-            <FooterBrand src="/logo.svg" alt="Logo" name="Plataforma de Señas" className="dark:invert" />
-            <FooterLink href="https://github.com/quijadajose/learn-sign-language" onClick={() => scrollToSection("collaborate")} className="cursor-pointer">
+            <FooterBrand
+              src="/logo.svg"
+              alt="Logo"
+              name="Plataforma de Señas"
+              className="dark:invert"
+            />
+            <FooterLink
+              href="https://github.com/quijadajose/learn-sign-language"
+              onClick={() => scrollToSection("collaborate")}
+              className="cursor-pointer"
+            >
               Colaborar
             </FooterLink>
           </div>

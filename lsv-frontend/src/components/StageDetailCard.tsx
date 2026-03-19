@@ -19,7 +19,7 @@ function ProgressRing({ progress }: { progress: number }) {
   const radius = 24;
   const circumference = 2 * Math.PI * radius;
   const offset = circumference - (progress / 100) * circumference;
-  
+
   return (
     <div className="relative flex h-16 w-16 items-center justify-center">
       <svg className="absolute -rotate-90" width="64" height="64">
@@ -106,7 +106,7 @@ export default function StageDetailCard({ stage }: Props) {
               Continuar Aprendiendo
             </span>
           </div>
-          <h2 className="mb-2 text-3xl font-black tracking-tight text-gray-900 md:text-4xl dark:text-white">
+          <h2 className="mb-2 text-3xl font-black tracking-tight text-gray-900 dark:text-white md:text-4xl">
             {stage.name}
           </h2>
           <p className="max-w-2xl text-lg font-medium text-gray-600 dark:text-gray-300">
@@ -115,22 +115,29 @@ export default function StageDetailCard({ stage }: Props) {
 
           <div className="mt-6 flex flex-wrap items-center gap-6">
             <div className="flex flex-col">
-              <span className="text-[10px] font-bold uppercase tracking-widest text-gray-400 dark:text-gray-500">Completado</span>
+              <span className="text-[10px] font-bold uppercase tracking-widest text-gray-400 dark:text-gray-500">
+                Completado
+              </span>
               <span className="text-xl font-black text-gray-900 dark:text-white">
-                {stage.completedLessons} <span className="text-sm font-normal text-gray-500 dark:text-gray-400">/{stage.totalLessons} lecciones</span>
+                {stage.completedLessons}{" "}
+                <span className="text-sm font-normal text-gray-500 dark:text-gray-400">
+                  /{stage.totalLessons} lecciones
+                </span>
               </span>
             </div>
-            
-            <div className="h-10 w-px bg-gray-200 dark:bg-gray-700 hidden sm:block" />
+
+            <div className="hidden h-10 w-px bg-gray-200 dark:bg-gray-700 sm:block" />
 
             <div className="grow sm:max-w-xs">
               <div className="mb-2 flex justify-between text-[10px] font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500">
                 <span>Progreso General</span>
-                <span className="text-gray-900 dark:text-gray-300">{Math.round(progressPercent)}%</span>
+                <span className="text-gray-900 dark:text-gray-300">
+                  {Math.round(progressPercent)}%
+                </span>
               </div>
               <div className="h-2 w-full overflow-hidden rounded-full bg-gray-100 dark:bg-gray-700">
                 <div
-                  className="h-full rounded-full bg-gradient-to-r from-indigo-500 to-purple-500 transition-all duration-1000 ease-out shadow-[0_0_10px_rgba(99,102,241,0.3)]"
+                  className="h-full rounded-full bg-gradient-to-r from-indigo-500 to-purple-500 shadow-[0_0_10px_rgba(99,102,241,0.3)] transition-all duration-1000 ease-out"
                   style={{ width: `${progressPercent}%` }}
                 />
               </div>

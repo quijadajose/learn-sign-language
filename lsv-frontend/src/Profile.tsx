@@ -420,7 +420,7 @@ export const ResponsiveProfileForm = () => {
 
             {isEditing && (
               <>
-                <div className="mt-4 border-t pt-4 md:col-span-2 dark:border-gray-600">
+                <div className="mt-4 border-t pt-4 dark:border-gray-600 md:col-span-2">
                   <h3 className="mb-2 text-lg font-semibold text-gray-700 dark:text-gray-300">
                     Cambiar Contraseña
                   </h3>

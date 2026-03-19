@@ -17,8 +17,8 @@ export default function Layout({
 }: LayoutProps) {
   return (
     <div className="relative flex size-full items-center justify-center px-6 py-8">
-      <div className="w-full max-w-md rounded-lg bg-white p-6 shadow sm:p-8 dark:border dark:border-gray-700 dark:bg-gray-800">
-        <h1 className="mb-3 text-xl font-bold leading-tight tracking-tight text-gray-900 md:text-2xl dark:text-white">
+      <div className="w-full max-w-md rounded-lg bg-white p-6 shadow dark:border dark:border-gray-700 dark:bg-gray-800 sm:p-8">
+        <h1 className="mb-3 text-xl font-bold leading-tight tracking-tight text-gray-900 dark:text-white md:text-2xl">
           {heading}
         </h1>
         <p className="mb-6 text-sm font-light text-gray-500 dark:text-gray-400">
