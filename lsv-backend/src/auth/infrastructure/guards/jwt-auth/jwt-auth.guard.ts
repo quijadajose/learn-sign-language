@@ -17,10 +17,11 @@ export class JwtAuthGuard implements CanActivate {
   ) {}
 
   canActivate(context: ExecutionContext): boolean {
-    const isPublic = this.reflector.get<boolean>(
-      'isPublic',
+    const isPublic = this.reflector.getAllAndOverride<boolean>('isPublic', [
       context.getHandler(),
-    );
+      context.getClass(),
+    ]);
+
     if (isPublic) {
       return true; // Allow access to public routes
     }
