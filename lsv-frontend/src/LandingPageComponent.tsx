@@ -203,34 +203,6 @@ export default function LandingPageComponent() {
         </div>
       </section>
 
-      <section id="history" className="bg-gray-50 dark:bg-gray-800">
-        <div className="mx-auto max-w-screen-xl items-center gap-16 px-4 py-8 lg:grid lg:grid-cols-2 lg:px-6 lg:py-16">
-          <div className="font-light text-gray-500 sm:text-lg dark:text-gray-400">
-            <h2 className="mb-4 text-4xl font-extrabold text-gray-900 dark:text-white">
-              Nuestra Historia
-            </h2>
-            <p className="mb-4">
-              La idea de aprender la lengua de señas nació de la observación y el deseo de romper las barreras de comunicación. Lo que comenzó como un proyecto universitario enfocado en el lenguaje de señas de una región, hoy se transforma en una herramienta global.
-            </p>
-            <p>
-              Nuestra misión es facilitar la educación inclusiva en todo el mundo, proporcionando una plataforma accesible donde cualquier institución pueda compartir y enseñar el lenguaje de señas de su comunidad.
-            </p>
-          </div>
-          <div className="mt-8 grid grid-cols-2 gap-4">
-            <img
-              className="w-full rounded-lg"
-              src="https://flowbite.s3.amazonaws.com/blocks/marketing-ui/content/office-long-2.png"
-              alt="office content 1"
-            />
-            <img
-              className="mt-4 w-full rounded-lg lg:mt-10"
-              src="https://flowbite.s3.amazonaws.com/blocks/marketing-ui/content/office-long-1.png"
-              alt="office content 2"
-            />
-          </div>
-        </div>
-      </section>
-
       <Footer container>
         <div className="w-full text-center">
           <div className="w-full justify-between sm:flex sm:items-center sm:justify-between">
@@ -245,7 +217,6 @@ export default function LandingPageComponent() {
             </FooterLinkGroup>
           </div>
           <FooterDivider />
-          <FooterCopyright href="#" by="José Quijada™" year={2026} />
         </div>
       </Footer>
     </>
