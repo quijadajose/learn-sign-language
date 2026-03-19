@@ -81,7 +81,7 @@ export default function LandingPageComponent() {
               Aprende Lenguaje de Señas
             </h1>
             <p className="mb-6 max-w-2xl font-light text-gray-500 md:text-lg lg:mb-8 lg:text-xl dark:text-gray-400">
-              Nuestra plataforma gratuita y online te permite aprender lenguaje de señas de diversos países. Diviértete, practica y comunícate con la comunidad sorda.
+              La plataforma te permite aprender lenguaje de señas de diversos países. Diviértete, practica y comunícate con la comunidad sorda.
             </p>
 
             <Link
