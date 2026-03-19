@@ -40,6 +40,7 @@ import { ModeratorModule } from './moderator/moderator.module';
 import { SentryGlobalFilter, SentryModule } from '@sentry/nestjs/setup';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { ThrottlerStorageRedisService } from '@nest-lab/throttler-storage-redis';
+import { HealthModule } from './health/health.module';
 
 @Module({
   imports: [
@@ -94,6 +95,7 @@ import { ThrottlerStorageRedisService } from '@nest-lab/throttler-storage-redis'
     RegionModule,
     CountryDivisionModule,
     ModeratorModule,
+    HealthModule,
     ThrottlerModule.forRootAsync({
       inject: [ConfigService],
       useFactory: (config: ConfigService) => ({
