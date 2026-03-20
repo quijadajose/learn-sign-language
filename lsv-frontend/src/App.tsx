@@ -24,6 +24,7 @@ import StageManagement from "./admin/stageForm";
 import LeaderboardView from "./LeaderboardView";
 import LessonListView from "./LessonListView";
 import PrivacyPolicy from "./PrivacyPolicy";
+import TermsOfService from "./TermsOfService";
 
 import { AuthProvider, useAuth } from "./context/AuthContext";
 
@@ -166,6 +167,7 @@ function App() {
                 }
               />
               <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+              <Route path="/terms-of-service" element={<TermsOfService />} />
             </Routes>
           </ToastProvider>
         </main>

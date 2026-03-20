@@ -147,9 +147,14 @@ export default function PrivacyPolicy() {
               alt="Logo"
               className="dark:invert"
             />
-            <Link to="/" className="text-gray-500 hover:underline dark:text-gray-400">
-              Inicio
-            </Link>
+            <div className="flex gap-4">
+              <Link to="/" className="text-gray-500 hover:underline dark:text-gray-400">
+                Inicio
+              </Link>
+              <Link to="/terms-of-service" className="text-gray-500 hover:underline dark:text-gray-400">
+                Condiciones del Servicio
+              </Link>
+            </div>
           </div>
         </div>
       </Footer>

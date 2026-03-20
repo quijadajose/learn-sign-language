@@ -3,7 +3,7 @@ import { Formity, OnReturn } from "@formity/react";
 import { schema, Values } from "./schema";
 import { Toast, ToastToggle } from "flowbite-react";
 import { HiCheck, HiX } from "react-icons/hi";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { authApi } from "../services/api";
 
 import { useAuth } from "../context/AuthContext";
@@ -74,7 +74,27 @@ export default function Register() {
         ))}
       </div>
 
-      <Formity<Values> schema={schema} onReturn={onReturn} />
+      <div className="flex flex-col">
+        <Formity<Values> schema={schema} onReturn={onReturn} />
+      </div>
+
+      <div className="mx-auto mb-8 mt-4 max-w-md px-6 text-center text-xs text-gray-500 dark:text-gray-400">
+        Al registrarte, confirmas que aceptas nuestras{" "}
+        <Link
+          to="/terms-of-service"
+          className="text-blue-600 hover:underline dark:text-blue-400"
+        >
+          Condiciones del Servicio
+        </Link>{" "}
+        y has leído nuestra{" "}
+        <Link
+          to="/privacy-policy"
+          className="text-blue-600 hover:underline dark:text-blue-400"
+        >
+          Política de Privacidad
+        </Link>
+        .
+      </div>
     </>
   );
 }

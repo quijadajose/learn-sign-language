@@ -216,6 +216,9 @@ export default function LandingPageComponent() {
             <Link to="/privacy-policy" className="text-sm text-gray-500 hover:underline dark:text-gray-400">
               Política de Privacidad
             </Link>
+            <Link to="/terms-of-service" className="text-sm text-gray-500 hover:underline dark:text-gray-400">
+              Condiciones del Servicio
+            </Link>
           </div>
           <FooterDivider />
         </div>
