@@ -10,7 +10,7 @@ import {
 } from "flowbite-react";
 import { Link } from "react-router-dom";
 import { HiCheck, HiX } from "react-icons/hi";
-import { authApi } from "./services/api";
+import { authApi, userApi } from "./services/api";
 import { BACKEND_BASE_URL } from "./config";
 import { useAuth } from "./context/AuthContext";
 import { useLocalStorage } from "./hooks/useLocalStorage";
@@ -43,17 +43,36 @@ function Login() {
   const [rememberMe, setRememberMe] = useState(!!rememberedEmail);
 
   useEffect(() => {
-    if (isAuthenticated || queryToken) {
+    const handleGoogleToken = async () => {
       if (queryToken) {
-        // Si hay token en la URL (Google Login), el AuthContext debería manejarlo si lo guardamos
-        // Pero aquí el backend redirige con el token. Necesitamos que el AuthContext lo inicialice.
-        // Por ahora, si hay token pero no estamos autenticados, lo manejamos.
-        // Nota: En una app real, el backend de Google redirigiría a un callback que setea el auth.
+        localStorage.setItem("auth", JSON.stringify(queryToken));
+        try {
+          const response = await userApi.getMe();
+          if (response.success && response.data) {
+            const userData = response.data.data || response.data;
+            login(userData, queryToken);
+            addToast("success", "Inicio de sesión con Google exitoso");
+            navigate("/dashboard");
+          } else {
+            localStorage.removeItem("auth");
+            addToast("error", "Error al obtener perfil de Google");
+            navigate("/login");
+          }
+        } catch (error) {
+          localStorage.removeItem("auth");
+          addToast("error", "Error de conexión con Google Login");
+          navigate("/login");
+        }
       }
+    };
+
+    if (isAuthenticated) {
       addToast("success", "Inicio de sesión exitoso");
       navigate("/dashboard");
+    } else if (queryToken) {
+      handleGoogleToken();
     }
-  }, [navigate, queryToken, isAuthenticated]);
+  }, [navigate, queryToken, isAuthenticated, login]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
