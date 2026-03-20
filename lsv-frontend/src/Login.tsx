@@ -45,7 +45,7 @@ function Login() {
   useEffect(() => {
     const handleGoogleToken = async () => {
       if (queryToken) {
-        localStorage.setItem("auth", JSON.stringify(queryToken));
+        localStorage.setItem("auth", queryToken);
         try {
           const response = await userApi.getMe();
           if (response.success && response.data) {
