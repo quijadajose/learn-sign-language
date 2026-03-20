@@ -23,6 +23,7 @@ import QuizView from "./QuizView";
 import StageManagement from "./admin/stageForm";
 import LeaderboardView from "./LeaderboardView";
 import LessonListView from "./LessonListView";
+import PrivacyPolicy from "./PrivacyPolicy";
 
 import { AuthProvider, useAuth } from "./context/AuthContext";
 
@@ -164,6 +165,7 @@ function App() {
                   </AdminRoute>
                 }
               />
+              <Route path="/privacy-policy" element={<PrivacyPolicy />} />
             </Routes>
           </ToastProvider>
         </main>
