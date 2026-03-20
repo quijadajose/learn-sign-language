@@ -208,6 +208,14 @@ function Login() {
                 Iniciar sesión con Google
               </Button>
             </form>
+            <div className="mt-4 flex justify-center gap-4 border-t pt-4 text-xs text-gray-400 dark:border-gray-700">
+              <Link to="/privacy-policy" className="hover:underline">
+                Política de Privacidad
+              </Link>
+              <Link to="/terms-of-service" className="hover:underline">
+                Condiciones del Servicio
+              </Link>
+            </div>
           </div>
         </div>
       </section>
