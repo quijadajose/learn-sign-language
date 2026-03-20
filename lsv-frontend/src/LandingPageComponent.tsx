@@ -8,7 +8,6 @@ import {
   NavbarCollapse,
   NavbarLink,
   FooterBrand,
-  FooterLink,
   FooterDivider,
 } from "flowbite-react";
 import { Link } from "react-router-dom";
@@ -211,13 +210,12 @@ export default function LandingPageComponent() {
               name="Plataforma de Señas"
               className="dark:invert"
             />
-            <FooterLink
-              href="https://github.com/quijadajose/learn-sign-language"
-              onClick={() => scrollToSection("collaborate")}
-              className="cursor-pointer"
-            >
+            <Link to="https://github.com/quijadajose/learn-sign-language" className="text-sm text-gray-500 hover:underline dark:text-gray-400">
               Colaborar
-            </FooterLink>
+            </Link>
+            <Link to="/privacy-policy" className="text-sm text-gray-500 hover:underline dark:text-gray-400">
+              Política de Privacidad
+            </Link>
           </div>
           <FooterDivider />
         </div>
