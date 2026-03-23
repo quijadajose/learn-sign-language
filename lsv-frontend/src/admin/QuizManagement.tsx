@@ -527,7 +527,7 @@ export default function QuizManagement() {
                             {isImageUrl(option.text) ? (
                               <div className="flex items-center gap-3">
                                 <img
-                                  src={`${BACKEND_BASE_URL}${option.text}`}
+                                  src={`${BACKEND_BASE_URL}${encodeURI(option.text)}`}
                                   alt="Opción"
                                   className="h-16 w-24 rounded border object-cover"
                                   onError={(e) => {

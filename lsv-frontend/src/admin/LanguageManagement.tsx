@@ -543,7 +543,7 @@ export default function LanguageManagement() {
                     <td className="whitespace-nowrap px-6 py-4">
                       <div className="flex items-center">
                         <img
-                          src={`${BACKEND_BASE_URL}/images/languages/${language.id}?size=original&v=${imageTimestamp}`}
+                          src={`${BACKEND_BASE_URL}/images/languages/${encodeURIComponent(language.id)}?size=original&v=${imageTimestamp}`}
                           alt={`Bandera de ${language.name}`}
                           className="mr-3 h-6 w-8 rounded object-contain"
                           onError={(e) => {

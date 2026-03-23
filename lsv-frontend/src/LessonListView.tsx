@@ -445,7 +445,7 @@ export default function LessonListView() {
     if (isImageUrl(optionText)) {
       return (
         <img
-          src={`${BACKEND_BASE_URL}${optionText}`}
+          src={`${BACKEND_BASE_URL}${encodeURI(optionText)}`}
           alt="Opción de respuesta"
           className="h-auto max-h-32 max-w-full rounded border object-contain"
           onError={(e) => {
@@ -453,7 +453,10 @@ export default function LessonListView() {
             target.style.display = "none";
             const parent = target.parentElement;
             if (parent) {
-              parent.innerHTML = `<span class="text-sm text-gray-600 dark:text-gray-400">${optionText}</span>`;
+              const span = document.createElement("span");
+              span.className = "text-sm text-gray-600 dark:text-gray-400";
+              span.textContent = optionText;
+              parent.appendChild(span);
             }
           }}
         />

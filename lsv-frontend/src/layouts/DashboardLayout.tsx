@@ -81,7 +81,7 @@ const DashboardLayout = ({ children }: Props) => {
 
   const avatarImgSrc =
     user?.id && !avatarError
-      ? `${BACKEND_BASE_URL}/images/user/${user?.id}?size=sm&v=${avatarTimestamp}`
+      ? `${BACKEND_BASE_URL}/images/user/${encodeURIComponent(user?.id)}?size=sm&v=${avatarTimestamp}`
       : "/user.svg";
 
   return (
