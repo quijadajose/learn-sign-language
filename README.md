@@ -2,6 +2,9 @@
 
 Este proyecto tiene como objetivo crear una plataforma educativa para aprender el Lenguaje de Señas Venezolano (LSV). El monorepo contiene tres subproyectos que trabajan juntos para lograr este objetivo.
 
+[![Status](https://img.shields.io/badge/Estado-Monitor-brightgreen)](https://stats.uptimerobot.com/n46WRvlnZD)
+
+
 ## Estructura del Proyecto
 
 - **`lsv-backend`**:
