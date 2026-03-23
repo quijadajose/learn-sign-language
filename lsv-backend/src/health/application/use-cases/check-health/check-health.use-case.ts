@@ -24,13 +24,16 @@ export class CheckHealthUseCase {
     private api: ApiHealthIndicator,
   ) {}
 
-  async execute() {
-    const frontendUrl = this.configService.get<string>('FRONTEND_URL');
-    const domain = new URL(frontendUrl).hostname;
+  async checkApi() {
+    return this.health.check([() => this.api.isHealthy('api')]);
+  }
 
+  async checkDatabase() {
+    return this.health.check([() => this.db.pingCheck('database')]);
+  }
+
+  async checkValkey() {
     return this.health.check([
-      () => this.api.isHealthy('api'),
-      () => this.db.pingCheck('database'),
       () =>
         this.microservice.pingCheck('valkey', {
           transport: Transport.REDIS,
@@ -39,8 +42,26 @@ export class CheckHealthUseCase {
             port: this.configService.get<number>('VALKEY_PORT'),
           },
         }),
-      () => this.ssl.check('ssl', domain),
-      () => this.domain.check('domain', domain),
     ]);
+  }
+
+  async checkSsl() {
+    return this.health.check([() => this.getSslIndicator()]);
+  }
+
+  async checkDomain() {
+    return this.health.check([() => this.getDomainIndicator()]);
+  }
+
+  private getSslIndicator() {
+    const frontendUrl = this.configService.get<string>('FRONTEND_URL');
+    const domain = new URL(frontendUrl).hostname;
+    return this.ssl.check('ssl', domain);
+  }
+
+  private getDomainIndicator() {
+    const frontendUrl = this.configService.get<string>('FRONTEND_URL');
+    const domain = new URL(frontendUrl).hostname;
+    return this.domain.check('domain', domain);
   }
 }
