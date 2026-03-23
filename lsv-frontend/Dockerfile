@@ -1,5 +1,5 @@
 # Build stage
-FROM node:20-alpine AS build
+FROM node:20.20.1-alpine3.22 AS build
 
 WORKDIR /app
 
@@ -12,7 +12,7 @@ ENV VITE_SENTRY_DSN=$VITE_SENTRY_DSN
 RUN npm run build
 
 # Production stage
-FROM nginx:stable-alpine AS production
+FROM nginx:1.29.6-alpine3.23-slim AS production
 
 # Copy built files from build stage
 COPY --from=build /app/dist /usr/share/nginx/html
