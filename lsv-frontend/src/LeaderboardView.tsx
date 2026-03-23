@@ -269,7 +269,7 @@ const LeaderboardView: React.FC = () => {
               {/* User Avatar */}
               <div className="relative h-12 w-12 shrink-0">
                 <img
-                  src={`${BACKEND_BASE_URL}/images/user/${entry.userId}?size=sm&v=${Date.now()}`}
+                  src={`${BACKEND_BASE_URL}/images/user/${encodeURIComponent(entry.userId)}?size=sm&v=${Date.now()}`}
                   alt={entry.firstName}
                   className={`h-full w-full rounded-2xl object-cover shadow-inner ring-2 ${
                     isTop3

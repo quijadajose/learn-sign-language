@@ -86,7 +86,7 @@ export const ResponsiveProfileForm = () => {
       setPreview(objectUrl);
       return () => URL.revokeObjectURL(objectUrl);
     } else {
-      const imageUrl = `${BACKEND_BASE_URL}/images/user/${profile.id}?size=lg&v=${Date.now()}`;
+      const imageUrl = `${BACKEND_BASE_URL}/images/user/${encodeURIComponent(profile.id)}?size=lg&v=${Date.now()}`;
       setPreview(imageUrl);
     }
   }, [newPhotoFile, profile]);
@@ -197,10 +197,10 @@ export const ResponsiveProfileForm = () => {
         } else {
           updatedProfileData = {
             ...updatedProfileData,
-            photo: `/images/user/${updatedProfileData.id}?v=${Date.now()}`,
+            photo: `/images/user/${encodeURIComponent(updatedProfileData.id)}?v=${Date.now()}`,
           };
           setPreview(
-            `${BACKEND_BASE_URL}/images/user/${updatedProfileData.id}?size=lg&v=${Date.now()}`,
+            `${BACKEND_BASE_URL}/images/user/${encodeURIComponent(updatedProfileData.id)}?size=lg&v=${Date.now()}`,
           );
           addToast("success", "Foto de perfil actualizada.");
         }
