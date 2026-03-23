@@ -210,13 +210,32 @@ export default function LandingPageComponent() {
               name="Plataforma de Señas"
               className="dark:invert"
             />
-            <Link to="https://github.com/quijadajose/learn-sign-language" className="text-sm text-gray-500 hover:underline dark:text-gray-400">
+            <a
+              href="https://github.com/quijadajose/learn-sign-language"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-sm text-gray-500 hover:underline dark:text-gray-400"
+            >
               Colaborar
-            </Link>
-            <Link to="/privacy-policy" className="text-sm text-gray-500 hover:underline dark:text-gray-400">
+            </a>
+            <a
+              href="https://stats.uptimerobot.com/n46WRvlnZD"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-sm text-gray-500 hover:underline dark:text-gray-400"
+            >
+              Estado del Sistema
+            </a>
+            <Link
+              to="/privacy-policy"
+              className="text-sm text-gray-500 hover:underline dark:text-gray-400"
+            >
               Política de Privacidad
             </Link>
-            <Link to="/terms-of-service" className="text-sm text-gray-500 hover:underline dark:text-gray-400">
+            <Link
+              to="/terms-of-service"
+              className="text-sm text-gray-500 hover:underline dark:text-gray-400"
+            >
               Condiciones del Servicio
             </Link>
           </div>
