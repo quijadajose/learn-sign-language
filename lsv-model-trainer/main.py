@@ -26,14 +26,14 @@ def upload_files():
     
     # Procesar cada lección
     for lesson in lesson_data:
-        lesson_name = lesson['name']
+        lesson_name = secure_filename(lesson['name'])
         lesson_dir = os.path.join(app.config['UPLOAD_FOLDER'], lesson_name)
         
         # Crear el directorio de la lección si no existe
         os.makedirs(lesson_dir, exist_ok=True)
         
         for word in lesson['word']:
-            word_name = word['name']
+            word_name = secure_filename(word['name'])
             num_parts = len(word['parts'])
             for part_index, part in enumerate(word['parts']):
                 # Determinar el nombre del directorio de la parte
@@ -54,10 +54,15 @@ def upload_files():
                             print(f"Filename for key {file_key} is empty")
                             continue
                         safe_filename = secure_filename(file.filename)
-                        file_path = os.path.normpath(os.path.join(part_dir, safe_filename))
-                        if not file_path.startswith(os.path.abspath(part_dir)):
+                        
+                        # Ensure absolute paths for secure comparison
+                        base_dir = os.path.abspath(part_dir)
+                        file_path = os.path.abspath(os.path.join(base_dir, safe_filename))
+                        
+                        if not file_path.startswith(base_dir + os.sep):
                             raise Exception("Invalid file path")
-                        print(f"Saving file: {file.filename} to {part_dir}")
+                            
+                        print(f"Saving file: {file.filename} to {file_path}")
                         file.save(file_path)
                     else:
                         print(f"File {file_key} not found in request")
