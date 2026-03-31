@@ -56,7 +56,8 @@ services:
 
 networks:
   lsv_network:
-    driver: bridge
+    external: true
+    name: web-proxy
 
 volumes:
   db_data_psql:
