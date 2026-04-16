@@ -222,8 +222,8 @@ export class LessonRepository implements LessonRepositoryInterface {
 
     const orderByClause =
       orderBy === 'createdAt'
-        ? `l.${orderBy} ${sortOrder}, qs.submittedAt DESC`
-        : `l.${orderBy} ${sortOrder}`;
+        ? `l."${orderBy}" ${sortOrder}, qs."submittedAt" DESC`
+        : `l."${orderBy}" ${sortOrder}`;
 
     const queryParams = [userId, languageId];
 
@@ -237,24 +237,24 @@ export class LessonRepository implements LessonRepositoryInterface {
           l.name AS lesson_name,
           l.description AS lesson_description,
           l.content AS lesson_content,
-          l.languageId AS lesson_languageId,
-          l.stageId AS lesson_stageId,
-          l.createdAt AS lesson_createdAt,
-          l.updatedAt AS lesson_updatedAt,
+          l."languageId" AS lesson_languageId,
+          l."stageId" AS lesson_stageId,
+          l."createdAt" AS lesson_createdAt,
+          l."updatedAt" AS lesson_updatedAt,
           q.id AS quiz_id,
           qs.id AS submission_id,
-          qs.userId AS submission_userId,
-          qs.quizId AS submission_quizId,
+          qs."userId" AS submission_userId,
+          qs."quizId" AS submission_quizId,
           qs.score AS submission_score,
-          qs.submittedAt AS submission_submittedAt,
+          qs."submittedAt" AS submission_submittedAt,
           qs.answers AS submission_answers
         FROM
           lesson AS l
-          LEFT JOIN quiz AS q ON q.lessonId = l.id
-          LEFT JOIN quiz_submission AS qs ON qs.quizId = q.id AND qs.userId = ?
+          LEFT JOIN quiz AS q ON q."lessonId" = l.id
+          LEFT JOIN quiz_submission AS qs ON qs."quizId" = q.id AND qs."userId" = $1
         WHERE
-          l.languageId = ?
-          ${stageId ? 'AND l.stageId = ?' : ''}
+          l."languageId" = $2
+          ${stageId ? 'AND l."stageId" = $3' : ''}
         ORDER BY ${orderByClause}
         LIMIT ${limit} OFFSET ${skip}
       `;
@@ -266,8 +266,8 @@ export class LessonRepository implements LessonRepositoryInterface {
         FROM
           lesson AS l
         WHERE
-          l.languageId = ?
-          ${stageId ? 'AND l.stageId = ?' : ''}
+          l."languageId" = $1
+          ${stageId ? 'AND l."stageId" = $2' : ''}
       `;
 
       const countParams = [languageId];
@@ -337,30 +337,30 @@ export class LessonRepository implements LessonRepositoryInterface {
         COALESCE(lv.name, l.name) AS lesson_name,
         COALESCE(lv.description, l.description) AS lesson_description,
         COALESCE(lv.content, l.content) AS lesson_content,
-        l.languageId AS lesson_languageId,
-        l.stageId AS lesson_stageId,
-        COALESCE(lv.createdAt, l.createdAt) AS lesson_createdAt,
-        COALESCE(lv.updatedAt, l.updatedAt) AS lesson_updatedAt,
+        l."languageId" AS lesson_languageId,
+        l."stageId" AS lesson_stageId,
+        COALESCE(lv."createdAt", l."createdAt") AS lesson_createdAt,
+        COALESCE(lv."updatedAt", l."updatedAt") AS lesson_updatedAt,
         COALESCE(qv.id, q.id) AS quiz_id,
         qs.id AS submission_id,
-        qs.userId AS submission_userId,
-        COALESCE(qs.quizId, qs.quizVariantId) AS submission_quizId,
+        qs."userId" AS submission_userId,
+        COALESCE(qs."quizId", qs."quizVariantId") AS submission_quizId,
         qs.score AS submission_score,
-        qs.submittedAt AS submission_submittedAt,
+        qs."submittedAt" AS submission_submittedAt,
         qs.answers AS submission_answers,
         CASE WHEN lv.id IS NOT NULL THEN true ELSE false END AS is_regional_variant
       FROM
         lesson AS l
-        LEFT JOIN lesson_variant AS lv ON lv.baseLessonId = l.id AND lv.regionId = ?
-        LEFT JOIN quiz AS q ON q.lessonId = l.id
-        LEFT JOIN quiz_variant AS qv ON qv.lessonVariantId = lv.id
+        LEFT JOIN lesson_variant AS lv ON lv."baseLessonId" = l.id AND lv."regionId" = $1
+        LEFT JOIN quiz AS q ON q."lessonId" = l.id
+        LEFT JOIN quiz_variant AS qv ON qv."lessonVariantId" = lv.id
         LEFT JOIN quiz_submission AS qs ON (
-          (qs.quizId = q.id AND q.id IS NOT NULL) OR 
-          (qs.quizVariantId = qv.id AND qv.id IS NOT NULL)
-        ) AND qs.userId = ?
+          (qs."quizId" = q.id AND q.id IS NOT NULL) OR 
+          (qs."quizVariantId" = qv.id AND qv.id IS NOT NULL)
+        ) AND qs."userId" = $2
       WHERE
-        l.languageId = ?
-        ${stageId ? 'AND l.stageId = ?' : ''}
+        l."languageId" = $3
+        ${stageId ? 'AND l."stageId" = $4' : ''}
       ORDER BY ${orderByClause}
       LIMIT ${limit} OFFSET ${skip}
     `;
@@ -377,8 +377,8 @@ export class LessonRepository implements LessonRepositoryInterface {
       FROM
         lesson AS l
       WHERE
-        l.languageId = ?
-        ${stageId ? 'AND l.stageId = ?' : ''}
+        l."languageId" = $1
+        ${stageId ? 'AND l."stageId" = $2' : ''}
     `;
 
     const countParams = [languageId];
