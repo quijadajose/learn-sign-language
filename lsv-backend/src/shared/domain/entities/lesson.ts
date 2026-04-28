@@ -2,6 +2,7 @@ import {
   Column,
   CreateDateColumn,
   Entity,
+  ManyToMany,
   ManyToOne,
   OneToMany,
   PrimaryGeneratedColumn,
@@ -12,6 +13,7 @@ import { Stages } from './stage';
 import { Language } from './language';
 import { Quiz } from './quiz';
 import { LessonVariant } from './lessonVariant';
+import { Sign } from './sign';
 
 @Entity()
 export class Lesson {
@@ -49,4 +51,7 @@ export class Lesson {
 
   @OneToMany(() => LessonVariant, (variant) => variant.baseLesson)
   variants: LessonVariant[];
+
+  @ManyToMany(() => Sign, (sign) => sign.lessons)
+  signs: Sign[];
 }

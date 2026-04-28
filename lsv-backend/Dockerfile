@@ -1,4 +1,4 @@
-FROM node:20.20.1-alpine3.22 AS development
+FROM node:24-alpine AS development
 
 WORKDIR /src/app
 
@@ -8,8 +8,8 @@ RUN npm install
 
 COPY src ./src
 COPY test ./test
-COPY nest-cli.json .
-COPY tsconfig*.json .
+COPY nest-cli.json ./
+COPY tsconfig*.json ./
 COPY .env* ./
 
 RUN npm run build
@@ -17,7 +17,7 @@ RUN npm run build
 ################
 ## PRODUCTION ##
 ################
-FROM node:20.20.1-alpine3.22 AS production
+FROM node:24-alpine AS production
 
 ARG NODE_ENV=production
 ENV NODE_ENV=${NODE_ENV}

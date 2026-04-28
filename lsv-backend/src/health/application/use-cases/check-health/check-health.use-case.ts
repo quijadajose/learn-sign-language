@@ -40,6 +40,7 @@ export class CheckHealthUseCase {
           options: {
             host: this.configService.get<string>('VALKEY_HOST'),
             port: this.configService.get<number>('VALKEY_PORT'),
+            password: this.configService.get<string>('VALKEY_PASSWORD'),
           },
         }),
     ]);
