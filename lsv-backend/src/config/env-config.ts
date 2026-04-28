@@ -27,6 +27,9 @@ export class EnvConfig {
   VALKEY_PORT: number;
 
   @IsString()
+  VALKEY_PASSWORD: string;
+
+  @IsString()
   FRONTEND_URL: string;
 
   @IsNumber()

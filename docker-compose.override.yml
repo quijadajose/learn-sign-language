@@ -16,9 +16,33 @@ services:
     build:
       context: ./lsv-frontend
       dockerfile: Dockerfile
-    ports:
-      - "8080:80"
 
   lsv-db:
     ports:
       - "5432:5432"
+
+  lsv-pgadmin:
+    image: dpage/pgadmin4
+    restart: unless-stopped
+    environment:
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_EMAIL}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_PASSWORD}
+      PGADMIN_CONFIG_SERVER_MODE: 'False'
+    ports:
+      - "5050:80"
+    networks:
+      - lsv_network
+    depends_on:
+      - lsv-db
+
+  lsv-redis-commander:
+    image: rediscommander/redis-commander:latest
+    restart: unless-stopped
+    environment:
+      - REDIS_HOSTS=local:lsv-valkey:6379:0:${VALKEY_PASSWORD}
+    ports:
+      - "8081:8081"
+    networks:
+      - lsv_network
+    depends_on:
+      - lsv-valkey

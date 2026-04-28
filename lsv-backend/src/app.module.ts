@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common';
+import { BullModule } from '@nestjs/bullmq';
 import { APP_FILTER, APP_GUARD } from '@nestjs/core';
 import { join } from 'path';
 import { ConfigModule, ConfigService } from '@nestjs/config';
@@ -35,12 +36,17 @@ import { OptionVariant } from './shared/domain/entities/optionVariant';
 import { Country } from './shared/domain/entities/iso-3166-2/countries';
 import { Division } from './shared/domain/entities/iso-3166-2/divisions';
 import { SeederService } from './seeder/seeder.service';
+import { Sign } from './shared/domain/entities/sign';
+import { SignVariant } from './shared/domain/entities/signVariant';
+import { LessonModel } from './shared/domain/entities/lessonModel';
+import { SignRecording } from './shared/domain/entities/signRecording';
 import { ModeratorPermission } from './shared/domain/entities/moderatorPermission';
 import { ModeratorModule } from './moderator/moderator.module';
 import { SentryGlobalFilter, SentryModule } from '@sentry/nestjs/setup';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { ThrottlerStorageRedisService } from '@nest-lab/throttler-storage-redis';
 import { HealthModule } from './health/health.module';
+import { SignRecordModule } from './sign-record/sign-record.module';
 
 @Module({
   imports: [
@@ -48,6 +54,16 @@ import { HealthModule } from './health/health.module';
     ConfigModule.forRoot({
       validate,
       isGlobal: true,
+    }),
+    BullModule.forRootAsync({
+      inject: [ConfigService],
+      useFactory: (config: ConfigService) => ({
+        connection: {
+          host: config.get('VALKEY_HOST'),
+          port: config.get('VALKEY_PORT'),
+          password: config.get('VALKEY_PASSWORD'),
+        },
+      }),
     }),
     TypeOrmModule.forRootAsync({
       inject: [ConfigService],
@@ -78,6 +94,10 @@ import { HealthModule } from './health/health.module';
           Country,
           Division,
           ModeratorPermission,
+          Sign,
+          SignVariant,
+          SignRecording,
+          LessonModel,
         ],
         synchronize: configService.get<string>('NODE_ENV') === 'development',
         migrations: [join(__dirname, '/db/migrations/*.{ts,js}')],
@@ -96,6 +116,7 @@ import { HealthModule } from './health/health.module';
     CountryDivisionModule,
     ModeratorModule,
     HealthModule,
+    SignRecordModule,
     ThrottlerModule.forRootAsync({
       inject: [ConfigService],
       useFactory: (config: ConfigService) => ({
@@ -108,6 +129,7 @@ import { HealthModule } from './health/health.module';
         storage: new ThrottlerStorageRedisService({
           host: config.get('VALKEY_HOST'),
           port: config.get('VALKEY_PORT'),
+          password: config.get('VALKEY_PASSWORD'),
         }),
       }),
     }),
