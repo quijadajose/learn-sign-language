@@ -3,3 +3,5 @@ node_modules
 .env.test
 .env.production
 *.local
+__pycache__
+lsv-frontend/public/flags

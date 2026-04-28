@@ -1,6 +1,8 @@
 services:
   lsv-api:
-    image: ghcr.io/quijadajose/lsv-backend:latest
+    build:
+      context: ./lsv-backend
+      target: development
     restart: unless-stopped
     depends_on:
       - lsv-db
@@ -11,10 +13,21 @@ services:
       - DB_HOST=lsv-db
     networks:
       - lsv_network
+    volumes:
+      - lsv_shared_data:/src/app/shared
+    ports:
+      - "3000:3000"
 
   lsv-frontend:
-    image: ghcr.io/quijadajose/lsv-frontend:latest
+    build:
+      context: ./lsv-frontend
+      target: development
     restart: unless-stopped
+    ports:
+      - "8080:5173"
+    volumes:
+      - ./lsv-frontend:/app
+      - /app/node_modules
     env_file:
       - ./.env
     networks:
@@ -32,7 +45,7 @@ services:
       - lsv_network
     volumes:
       - valkey_data:/data
-    command: valkey-server --save 60 1 --loglevel warning
+    command: valkey-server --save 60 1 --loglevel warning --requirepass ${VALKEY_PASSWORD:-password}
 
   lsv-db:
     image: postgres:18.3-alpine
@@ -44,7 +57,7 @@ services:
     env_file:
       - ./.env
     volumes:
-      - db_data_psql:/var/lib/postgresql/data
+      - db_data_psql:/var/lib/postgresql
       - ./lsv-backend/init-db:/docker-entrypoint-initdb.d
     networks:
       - lsv_network
@@ -54,6 +67,26 @@ services:
         max-size: "10m"
         max-file: "3"
 
+
+  lsv-model-trainer:
+    build:
+      context: ./lsv-model-trainer
+    restart: unless-stopped
+    depends_on:
+      - lsv-valkey
+    env_file:
+      - ./.env
+    volumes:
+      - lsv_shared_data:/shared
+      - ./lsv-model-trainer:/app
+    networks:
+      - lsv_network
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 2G
+
 networks:
   lsv_network:
     external: true
@@ -62,3 +95,4 @@ networks:
 volumes:
   db_data_psql:
   valkey_data:
+  lsv_shared_data:

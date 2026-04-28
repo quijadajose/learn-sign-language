@@ -18,6 +18,10 @@ import { OptionVariant } from '../shared/domain/entities/optionVariant';
 import { Country } from '../shared/domain/entities/iso-3166-2/countries';
 import { Division } from '../shared/domain/entities/iso-3166-2/divisions';
 import { ModeratorPermission } from '../shared/domain/entities/moderatorPermission';
+import { Sign } from '../shared/domain/entities/sign';
+import { SignVariant } from '../shared/domain/entities/signVariant';
+import { SignRecording } from '../shared/domain/entities/signRecording';
+import { LessonModel } from '../shared/domain/entities/lessonModel';
 
 export const AppDataSource = new DataSource({
   type: 'postgres',
@@ -46,6 +50,10 @@ export const AppDataSource = new DataSource({
     Country,
     Division,
     ModeratorPermission,
+    Sign,
+    SignVariant,
+    SignRecording,
+    LessonModel,
   ],
   migrations: [__dirname + '/migrations/*.{ts,js}'],
   synchronize: false,
