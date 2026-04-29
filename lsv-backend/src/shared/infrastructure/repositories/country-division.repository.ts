@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, Like, In } from 'typeorm';
+import { Repository, Like, In, ILike } from 'typeorm';
 import { Country } from '../../domain/entities/iso-3166-2/countries';
 import { Division } from '../../domain/entities/iso-3166-2/divisions';
 import { CountryDivisionRepositoryInterface } from '../../domain/ports/country-division.repository.interface';
@@ -54,7 +54,7 @@ export class CountryDivisionRepository implements CountryDivisionRepositoryInter
   async searchCountries(search: string): Promise<Country[]> {
     return await this.countryRepository.find({
       where: {
-        name: Like(`%${search}%`),
+        name: ILike(`%${search}%`),
       },
       order: { name: 'ASC' },
       take: 20,
@@ -66,7 +66,7 @@ export class CountryDivisionRepository implements CountryDivisionRepositoryInter
   ): Promise<CountryWithDivisionsDto[]> {
     const countries = await this.countryRepository.find({
       where: {
-        name: Like(`%${search}%`),
+        name: ILike(`%${search}%`),
       },
       relations: ['divisions'],
       order: { name: 'ASC' },
@@ -175,10 +175,9 @@ export class CountryDivisionRepository implements CountryDivisionRepositoryInter
     }
 
     if (search) {
-      queryBuilder.andWhere(
-        'division.name LIKE :search COLLATE utf8mb4_general_ci',
-        { search: `%${search}%` },
-      );
+      queryBuilder.andWhere('division.name ILIKE :search', {
+        search: `%${search}%`,
+      });
     }
 
     queryBuilder.orderBy('division.name', 'ASC').skip(skip).take(limit);
