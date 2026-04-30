@@ -1,117 +1,111 @@
 import os
 import json
+import requests
+import numpy as np
 import tensorflow as tf
-assert tf.__version__.startswith('2')
-import matplotlib.pyplot as plt
-from flask import Flask, request, jsonify
-from mediapipe_model_maker import gesture_recognizer
-from werkzeug.utils import secure_filename
+from bullmq import Worker
+import asyncio
+import logging
+import threading
+from pathlib import Path
+from trainer_logic import train_lstm_model
 
-app = Flask(__name__)
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+logger = logging.getLogger(__name__)
 
-# Ruta para subir archivos
-UPLOAD_FOLDER = 'uploads'
-app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+REDIS_HOST = os.getenv('VALKEY_HOST', 'lsv-valkey')
+REDIS_PORT = int(os.getenv('VALKEY_PORT', 6379))
+REDIS_PASSWORD = os.getenv('VALKEY_PASSWORD', None)
+API_URL = os.getenv('API_URL', 'http://lsv-api:3000')
+API_REQUEST_TIMEOUT = 30
+TRAINING_QUEUE_NAME = 'training-queue'
 
-# Asegúrate de que la carpeta de subida exista
-os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+def is_safe_path(base_dir, path):
+    try:
+        base = Path(base_dir).resolve()
+        target = Path(path).resolve()
+        return base in target.parents or base == target
+    except Exception:
+        return False
 
-@app.route('/upload', methods=['POST'])
-def upload_files():
-    # Obtener el JSON de los datos de la lección
-    lesson_data = json.loads(request.form['lesson'])
+async def process_job(job, token):
+    logger.info(f"Procesando trabajo {job.id}: {job.name}")
+    data = job.data
     
-    # Inicializar el índice global de la imagen
-    global_image_index = 0
+    lesson_variant_id = data.get('lessonVariantId')
+    model_id = data.get('modelId')
+    data_path = data.get('dataPath')
+    output_path = data.get('outputPath')
+
+    base_data_dir = os.environ.get('DATA_BASE_DIR', '/')
+    if not is_safe_path(base_data_dir, data_path) or not is_safe_path(base_data_dir, output_path):
+        logger.error(f"Alerta de seguridad: Paths inválidos detectados. data_path={data_path}, output_path={output_path}")
+        raise ValueError("Invalid paths detected")
+
+    try:
+        with open(data_path, 'r') as f:
+            raw_data = json.load(f)
+            
+        logger.info(f"Muestras cargadas: {len(raw_data)}")
+        
+        if not raw_data or len(raw_data) == 0:
+            logger.warning("No hay suficientes datos para iniciar el entrenamiento.")
+            raise ValueError("No training data available")
+        
+        stop_event = threading.Event()
+        
+        async def on_progress(percent, accuracy):
+            try:
+                print(f"DEBUG: Reportando progreso {percent}%", flush=True)
+                await job.updateProgress({
+                    "progress": percent,
+                    "accuracy": accuracy,
+                    "modelId": model_id
+                })
+            except Exception as e:
+                logger.warning(f"No se pudo actualizar progreso del trabajo {job.id}. Cancelando entrenamiento... Error: {e}")
+                stop_event.set()
+
+        main_loop = asyncio.get_event_loop()
+        def on_progress_sync(percent, accuracy):
+            if main_loop.is_running():
+                asyncio.run_coroutine_threadsafe(on_progress(percent, accuracy), main_loop)
+
+        model_results = await asyncio.to_thread(
+            train_lstm_model, raw_data, output_path, on_progress_sync, stop_event
+        )
+
+        logger.info(f"Entrenamiento completado para modelo {model_id}")
+        
+        return {
+            "modelId": model_id,
+            "lessonVariantId": lesson_variant_id,
+            **model_results
+        }
+        
+    except Exception as e:
+        logger.error(f"Error en entrenamiento: {e}", exc_info=True)
+        raise e
+
+if __name__ == "__main__":
+    logger.info(f"Worker de entrenamiento iniciado. Conectando a {REDIS_HOST}:{REDIS_PORT}...")
     
-    # Procesar cada lección
-    for lesson in lesson_data:
-        lesson_name = secure_filename(lesson['name'])
-        lesson_dir = os.path.join(app.config['UPLOAD_FOLDER'], lesson_name)
-        
-        # Crear el directorio de la lección si no existe
-        os.makedirs(lesson_dir, exist_ok=True)
-        
-        for word in lesson['word']:
-            word_name = secure_filename(word['name'])
-            num_parts = len(word['parts'])
-            for part_index, part in enumerate(word['parts']):
-                # Determinar el nombre del directorio de la parte
-                if num_parts > 1:
-                    part_dir = os.path.join(app.config['UPLOAD_FOLDER'], f"{word_name}-part-{part_index}")
-                else:
-                    part_dir = os.path.join(app.config['UPLOAD_FOLDER'], word_name)
-                # Crear el directorio de la parte si no existe
-                os.makedirs(part_dir, exist_ok=True)
-                
-                for image_filename in part['images']:
-                    # Los archivos se reciben en el request.files
-                    file_key = f"image_{global_image_index}"
-                    print(f"Looking for file with key: {file_key}")
-                    if file_key in request.files:
-                        file = request.files[file_key]
-                        if file.filename == '':
-                            print(f"Filename for key {file_key} is empty")
-                            continue
-                        safe_filename = secure_filename(file.filename)
-                        
-                        # Ensure absolute paths for secure comparison
-                        base_dir = os.path.abspath(part_dir)
-                        file_path = os.path.abspath(os.path.join(base_dir, safe_filename))
-                        
-                        if not file_path.startswith(base_dir + os.sep):
-                            raise Exception("Invalid file path")
-                            
-                        print(f"Saving file: {file.filename} to {file_path}")
-                        file.save(file_path)
-                    else:
-                        print(f"File {file_key} not found in request")
-                    
-                    # Incrementar el índice global de la imagen
-                    global_image_index += 1
-    train_gesture_model('uploads','salida')
-    return jsonify({"message": "Files uploaded and processed successfully"}), 200
+    worker = Worker(TRAINING_QUEUE_NAME, process_job, {
+        "connection": {
+            "host": REDIS_HOST,
+            "port": REDIS_PORT,
+            "password": REDIS_PASSWORD
+        },
+        "concurrency": 1,
+        "lockDuration": 300000
+    })
+    
+    logger.info("Worker esperando trabajos...")
 
-def train_gesture_model(input_path, output_path):
-    # Visualizar ejemplos del conjunto de datos
-    NUM_EXAMPLES = 5
-    labels = os.listdir(input_path)
-
-    for label in labels:
-        label_dir = os.path.join(input_path, label)
-        example_filenames = os.listdir(label_dir)[:NUM_EXAMPLES]
-        fig, axs = plt.subplots(1, NUM_EXAMPLES, figsize=(10, 2))
-        for i in range(NUM_EXAMPLES):
-            axs[i].imshow(plt.imread(os.path.join(label_dir, example_filenames[i])))
-            axs[i].get_xaxis().set_visible(False)
-            axs[i].get_yaxis().set_visible(False)
-        fig.suptitle(f'Showing {NUM_EXAMPLES} examples for {label}')
-        plt.show()
-
-    # Cargar y procesar el conjunto de datos
-    data = gesture_recognizer.Dataset.from_folder(
-        dirname=input_path,
-        hparams=gesture_recognizer.HandDataPreprocessingParams()
-    )
-
-    train_data, rest_data = data.split(0.8)
-    validation_data, test_data = rest_data.split(0.5)
-
-    # Configurar las opciones del modelo y entrenar el reconocedor de gestos
-    hparams = gesture_recognizer.HParams(export_dir=output_path)
-    options = gesture_recognizer.GestureRecognizerOptions(hparams=hparams)
-    model = gesture_recognizer.GestureRecognizer.create(
-        train_data=train_data,
-        validation_data=validation_data,
-        options=options
-    )
-
-    # Evaluar el rendimiento del modelo
-    loss, acc = model.evaluate(test_data, batch_size=1)
-    print(f"Test loss:{loss}, Test accuracy:{acc}")
-
-    # Exportar a un modelo TensorFlow Lite
-    model.export_model()
-    os.system(f'ls {output_path}')
-if __name__ == '__main__':
-    app.run(debug=False, host='localhost', port=3001)
+    loop = asyncio.get_event_loop()
+    try:
+        loop.run_forever()
+    except KeyboardInterrupt:
+        logger.info("Worker detenido por el usuario.")
+    finally:
+        loop.close()
