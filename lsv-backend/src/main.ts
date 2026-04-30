@@ -3,11 +3,29 @@ import { AppModule } from './app.module';
 import { ConfigService } from '@nestjs/config';
 import { ValidationPipe } from '@nestjs/common';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import { json, urlencoded } from 'express';
 import './instrument';
 
+import { NestExpressApplication } from '@nestjs/platform-express';
+import { join } from 'path';
+import { getCorsOrigins } from './config/cors.config';
+
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+  const app = await NestFactory.create<NestExpressApplication>(AppModule);
   const configService = app.get(ConfigService);
+
+  // Serve static files from shared volume (models, etc)
+  app.useStaticAssets(join(process.cwd(), 'shared'), {
+    prefix: '/shared'
+  });
+
+  // Límites específicos para grabación de señas (pesado)
+  app.use('/sign-record', json({ limit: '50mb' }));
+  app.use('/sign-record', urlencoded({ extended: true, limit: '50mb' }));
+
+  // Límites globales estrictos para el resto (seguridad)
+  app.use(json({ limit: '1mb' }));
+  app.use(urlencoded({ extended: true, limit: '1mb' }));
 
   // Swagger disponible solo en modo desarrollo
   const nodeEnv = configService.get<string>('NODE_ENV') || 'development';
@@ -28,16 +46,9 @@ async function bootstrap() {
   }
 
   const port = configService.get<number>('PORT') ?? 3000;
-  const frontendUrl =
-    configService.get<string>('FRONTEND_URL') ?? 'http://localhost:8080';
 
   app.enableCors({
-    origin: [
-      frontendUrl,
-      'http://localhost',
-      'http://localhost:8080',
-      'http://localhost:5173',
-    ],
+    origin: getCorsOrigins(),
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
     credentials: true,
   });

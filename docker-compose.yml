@@ -85,7 +85,6 @@ services:
       resources:
         limits:
           cpus: '1.0'
-          memory: 2G
 
 networks:
   lsv_network:
