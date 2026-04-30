@@ -16,7 +16,10 @@ async function bootstrap() {
 
   // Serve static files from shared volume (models, etc)
   app.useStaticAssets(join(process.cwd(), 'shared'), {
-    prefix: '/shared'
+    prefix: '/shared',
+    setHeaders: (res) => {
+      res.set('Access-Control-Allow-Origin', '*');
+    },
   });
 
   // Límites específicos para grabación de señas (pesado)
