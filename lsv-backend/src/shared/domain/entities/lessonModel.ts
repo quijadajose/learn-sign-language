@@ -43,7 +43,7 @@ export class LessonModel {
 
   @ManyToOne(() => LessonVariant, {
     onDelete: 'CASCADE',
-    nullable: true
+    nullable: true,
   })
   lessonVariant: LessonVariant;
 
