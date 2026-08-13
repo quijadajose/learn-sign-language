@@ -215,7 +215,7 @@ export default function RegionManagement() {
         loading={deleteLoading}
       />
 
-      <div className="fixed right-4 top-4 z-[9999] space-y-2">
+      <div className="fixed right-4 top-4 z-9999 space-y-2">
         {toasts.map((toast) => (
           <Toast key={toast.id}>
             <div

@@ -70,7 +70,7 @@ export default function StageLanguagePicker({
               key={language.id}
               type="button"
               onClick={() => onSelect(language.id)}
-              className={`flex min-w-[12rem] items-center gap-3 rounded-xl border px-4 py-3 text-left transition ${
+              className={`flex min-w-48 items-center gap-3 rounded-xl border px-4 py-3 text-left transition ${
                 selected
                   ? "border-blue-500 bg-blue-50 ring-2 ring-blue-500 dark:border-blue-400 dark:bg-blue-900/30 dark:ring-blue-400"
                   : "border-gray-200 bg-white hover:border-blue-300 dark:border-gray-700 dark:bg-gray-800 dark:hover:border-blue-600"
