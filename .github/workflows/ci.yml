@@ -1,0 +1,157 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+jobs:
+  ml-feature-contract:
+    name: ML feature contract sync
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+      - run: node scripts/sync-ml-feature-contract.mjs --check
+
+  backend:
+    name: Backend lint, architecture & test
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: lsv-backend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: npm
+          cache-dependency-path: lsv-backend/package-lock.json
+      - run: npm ci
+      - run: npm run lint:check
+      - run: npm run validate-infrastructure
+      - run: npm test -- --coverage --passWithNoTests
+      - run: npm run build
+
+  backend-e2e-smoke:
+    name: Backend e2e smoke
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: lsv-backend
+    services:
+      postgres:
+        image: postgres:18.3-alpine
+        env:
+          POSTGRES_USER: user
+          POSTGRES_PASSWORD: password
+          POSTGRES_DB: plataforma
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U user -d plataforma"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: npm
+          cache-dependency-path: lsv-backend/package-lock.json
+      - name: Start Valkey
+        run: |
+          docker run -d --name lsv-valkey \
+            -p 6379:6379 \
+            valkey/valkey:8.0-alpine \
+            valkey-server --requirepass password
+          for i in $(seq 1 30); do
+            if docker exec lsv-valkey valkey-cli -a password ping 2>/dev/null | grep -q PONG; then
+              exit 0
+            fi
+            sleep 1
+          done
+          echo "Valkey failed to become ready" >&2
+          exit 1
+      - run: npm ci
+      - name: Run e2e smoke
+        # Prefer workflow env over .env.test credentials for CI isolation.
+        run: |
+          node ./node_modules/jest/bin/jest.js \
+            --config ./test/jest-e2e.json \
+            --runInBand \
+            --testPathPatterns=auth.e2e-spec \
+            --testPathPatterns=health.e2e-spec \
+            --testPathPatterns=sign-record.e2e-spec \
+            --testPathPatterns=quizzes.e2e-spec \
+            --testPathPatterns=user-lesson.e2e-spec \
+            --testPathPatterns=moderators.e2e-spec
+        env:
+          NODE_ENV: test
+          FRONTEND_URL: http://localhost:8080
+          API_PORT: "3000"
+          JWT_SECRET: ci-test-jwt-secret-not-for-prod
+          API_ADMIN_EMAIL: admin@example.com
+          API_ADMIN_PASSWORD: password
+          API_USER_EMAIL: user@example.com
+          API_USER_PASSWORD: password
+          DB_HOST: 127.0.0.1
+          DB_PORT: "5432"
+          DB_USERNAME: user
+          DB_PASSWORD: password
+          DB_DATABASE: plataforma
+          VALKEY_HOST: 127.0.0.1
+          VALKEY_PORT: "6379"
+          VALKEY_PASSWORD: password
+          GOOGLE_CLIENT_ID: test-google-client-id
+          GOOGLE_CLIENT_SECRET: test-google-client-secret
+          GOOGLE_CALLBACK_URL: http://localhost:3000/auth/google/callback
+          EMAIL_HOST: localhost
+          EMAIL_PORT: "587"
+          EMAIL_USER: test@example.com
+          EMAIL_PASSWORD: test
+          EMAIL_SECURE: "false"
+
+  frontend:
+    name: Frontend lint, typecheck & test
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: lsv-frontend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: npm
+          cache-dependency-path: lsv-frontend/package-lock.json
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm run lint
+      - run: npm test -- --coverage
+
+  model-trainer:
+    name: Model trainer lint, typecheck & test
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: lsv-model-trainer
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install test and lint dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements-dev.txt
+      - name: Ruff
+        run: ruff check .
+      # Sin argumento para respetar la lista `files` de pyproject.toml.
+      - name: Mypy
+        run: mypy
+      - run: python -m unittest discover -s tests -v

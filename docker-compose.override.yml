@@ -17,6 +17,14 @@ services:
       context: ./lsv-frontend
       dockerfile: Dockerfile
 
+  lsv-model-trainer:
+    volumes:
+      - ./lsv-model-trainer:/app
+
+  lsv-valkey:
+    ports:
+      - "6379:6379"
+
   lsv-db:
     ports:
       - "5432:5432"
