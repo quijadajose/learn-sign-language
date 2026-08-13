@@ -146,7 +146,7 @@ describe('Quizzes (e2e)', () => {
       await request(app.getHttpServer())
         .delete(`/quiz/${quizId}`)
         .set('Authorization', `Bearer ${adminToken}`)
-        .expect(200);
+        .expect(204);
     });
   });
 });

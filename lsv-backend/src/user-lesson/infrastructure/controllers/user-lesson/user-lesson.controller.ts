@@ -12,12 +12,24 @@ import {
 import { AuthGuard } from '@nestjs/passport';
 import { PaginationDto } from 'src/shared/domain/dto/PaginationDto';
 import { UserLessonService } from 'src/user-lesson/application/services/user-lesson/user-lesson.service';
+import {
+  SetLessonCompletionDto,
+  StartLessonDto,
+} from 'src/user-lesson/domain/dto/user-lesson.dto';
+import {
+  DocGetUserLessonByUser,
+  DocSetLessonCompletion,
+  DocStartLesson,
+  DocUserLesson,
+} from './docs/user-lesson.docs';
 
+@DocUserLesson()
 @Controller('user-lesson')
 @UseGuards(AuthGuard('jwt'))
 export class UserLessonController {
   constructor(private readonly userLessonService: UserLessonService) {}
   @Get('by-user/:id')
+  @DocGetUserLessonByUser()
   getUserLessonByUserId(
     @Param('id', ParseUUIDPipe) id: string,
     @Query() pagination: PaginationDto,
@@ -26,26 +38,24 @@ export class UserLessonController {
   }
 
   @Post('start')
-  startLesson(
-    @Req() req,
-    @Body('lessonId') lessonId: string,
-    @Body('regionId') regionId?: string,
-  ) {
+  @DocStartLesson()
+  startLesson(@Req() req, @Body() body: StartLessonDto) {
     const userId = req.user.sub;
-    return this.userLessonService.startLesson(userId, lessonId, regionId);
+    return this.userLessonService.startLesson(
+      userId,
+      body.lessonId,
+      body.regionId,
+    );
   }
 
   @Post('set-lesson-completion')
-  setLessonCompletion(
-    @Req() req,
-    @Body('lessonId') lessonId: string,
-    @Body('isComplete') isComplete: boolean,
-  ) {
+  @DocSetLessonCompletion()
+  setLessonCompletion(@Req() req, @Body() body: SetLessonCompletionDto) {
     const userId = req.user.sub;
     return this.userLessonService.setLessonCompletion(
       userId,
-      lessonId,
-      isComplete,
+      body.lessonId,
+      body.isComplete,
     );
   }
 }

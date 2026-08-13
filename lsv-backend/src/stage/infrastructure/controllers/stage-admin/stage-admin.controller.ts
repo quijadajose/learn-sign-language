@@ -21,7 +21,15 @@ import {
   PaginatedResponseDto,
 } from 'src/shared/domain/dto/PaginationDto';
 import { Stages } from 'src/shared/domain/entities/stage';
+import {
+  DocCreateStage,
+  DocDeleteStage,
+  DocGetStagesByLanguageId,
+  DocStage,
+  DocUpdateStage,
+} from './docs/stage.docs';
 
+@DocStage()
 @Controller('stage')
 export class StageController {
   constructor(private readonly stageService: StageService) {}
@@ -29,6 +37,7 @@ export class StageController {
   @UseGuards(ResourceAccessGuard)
   @RequireResourcePermission(PermissionScope.LANGUAGE, { body: 'languageId' })
   @Post()
+  @DocCreateStage()
   async create(@Body() createStageDto: StageDto) {
     return this.stageService.createStage(createStageDto);
   }
@@ -40,6 +49,7 @@ export class StageController {
   })
   @Put(':id')
   @HttpCode(204)
+  @DocUpdateStage()
   async update(
     @Param('id', ParseUUIDPipe) id: string,
     @Body() createStageDto: StageDto,
@@ -53,6 +63,7 @@ export class StageController {
   })
   @Delete(':id')
   @HttpCode(204)
+  @DocDeleteStage()
   async delete(@Param('id', ParseUUIDPipe) id: string) {
     return this.stageService.deleteStage(id);
   }
@@ -63,6 +74,7 @@ export class StageController {
     { allowRegionModerators: true },
   )
   @Get(':id')
+  @DocGetStagesByLanguageId()
   async findAll(
     @Query() pagination: PaginationDto,
     @Param('id', ParseUUIDPipe) id: string,

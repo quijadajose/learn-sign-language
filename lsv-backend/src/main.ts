@@ -2,7 +2,7 @@ import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { ConfigService } from '@nestjs/config';
 import { Logger, ValidationPipe } from '@nestjs/common';
-import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import { SwaggerModule } from '@nestjs/swagger';
 import { JwtService } from '@nestjs/jwt';
 import { json, urlencoded, Request, Response, NextFunction } from 'express';
 import './instrument';
@@ -12,6 +12,10 @@ import { join } from 'path';
 import { getCorsOrigins } from './config/cors.config';
 import { createSharedModelsAuthMiddleware } from './shared/infrastructure/middleware/shared-models-auth.middleware';
 import { resolveLocale, translate } from './i18n';
+import {
+  buildOpenApiDocument,
+  persistOpenApiDocument,
+} from './shared/infrastructure/openapi/openapi';
 
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
@@ -62,25 +66,24 @@ async function bootstrap() {
   app.use(json({ limit: '1mb' }));
   app.use(urlencoded({ extended: true, limit: '1mb' }));
 
-  // Swagger disponible solo en modo desarrollo
+  // Swagger en desarrollo, o si se pide exportar el spec
   const nodeEnv = configService.get<string>('NODE_ENV') || 'development';
-  if (nodeEnv === 'development') {
-    const config = new DocumentBuilder()
-      .setTitle('API LSV')
-      .setDescription('Documentación de la API del backend LSV')
-      .setVersion('1.0')
-      .addBearerAuth()
-      .build();
-
-    const document = SwaggerModule.createDocument(app, config);
-    SwaggerModule.setup('api/docs', app, document);
-
-    logger.log(
-      `Swagger UI: http://localhost:${configService.get<number>('PORT') ?? 3000}/api/docs`,
-    );
-  }
-
   const port = configService.get<number>('PORT') ?? 3000;
+  const serverUrl =
+    configService.get<string>('API_PUBLIC_URL') || `http://localhost:${port}`;
+  const shouldWriteOpenApi =
+    nodeEnv === 'development' ||
+    configService.get<string>('WRITE_OPENAPI') === 'true';
+
+  if (shouldWriteOpenApi) {
+    const document = buildOpenApiDocument(app, serverUrl);
+    persistOpenApiDocument(document);
+    if (nodeEnv === 'development') {
+      SwaggerModule.setup('api/docs', app, document);
+      logger.log(`Swagger UI: http://localhost:${port}/api/docs`);
+      logger.log(`OpenAPI spec escrito en swagger.json`);
+    }
+  }
 
   app.enableCors({
     origin: getCorsOrigins(),

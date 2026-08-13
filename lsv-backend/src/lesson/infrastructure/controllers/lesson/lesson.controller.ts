@@ -4,6 +4,7 @@ import {
   Controller,
   Delete,
   Get,
+  HttpCode,
   Param,
   ParseUUIDPipe,
   Post,
@@ -30,13 +31,34 @@ import { GetLessonsWithSubmissionsQueryDto } from 'src/lesson/domain/dto/get-les
 import { AuthGuard } from '@nestjs/passport';
 import { CreateLessonVariantDto } from 'src/lesson/domain/dto/create-lesson-variant/create-lesson-variant-dto';
 import { LessonVariant } from 'src/shared/domain/entities/lessonVariant';
+import {
+  DocCreateLesson,
+  DocCreateLessonVariant,
+  DocDeleteLessonVariant,
+  DocFindAllLessons,
+  DocFindOneLesson,
+  DocGetLessonVariant,
+  DocGetLessonVariants,
+  DocGetLessonWithQuizzes,
+  DocGetLessonsByLanguage,
+  DocGetLessonsWithSubmissions,
+  DocGetQuizzesByLesson,
+  DocGetRegionalLesson,
+  DocLesson,
+  DocRemoveLesson,
+  DocUpdateLesson,
+  DocUpdateLessonVariant,
+  DocUploadLessonImage,
+} from './docs/lesson.docs';
 
+@DocLesson()
 @Controller('lesson')
 export class LessonController {
   constructor(private readonly lessonAdminService: LessonService) {}
 
   @UseGuards(AuthGuard('jwt'))
   @Get('by-language/:languageId')
+  @DocGetLessonsByLanguage()
   async getLessonsByLanguage(
     @Param('languageId', ParseUUIDPipe) languageId: string,
     @Query() query: GetLessonsQueryDto,
@@ -50,6 +72,7 @@ export class LessonController {
 
   @UseGuards(AuthGuard('jwt'))
   @Get('by-language/:languageId/with-submissions')
+  @DocGetLessonsWithSubmissions()
   async getLessonsByLanguageWithSubmissions(
     @Param('languageId', ParseUUIDPipe) languageId: string,
     @Query() query: GetLessonsWithSubmissionsQueryDto,
@@ -72,6 +95,7 @@ export class LessonController {
   @UseGuards(RolesGuard)
   @Roles('admin')
   @Get()
+  @DocFindAllLessons()
   async findAll(
     @Query() query: GetLessonsQueryDto,
   ): Promise<PaginatedResponseDto<Lesson>> {
@@ -92,6 +116,7 @@ export class LessonController {
     { allowRegionModerators: true },
   )
   @Post()
+  @DocCreateLesson()
   async create(@Body() createLessonDto: CreateLessonDto): Promise<Lesson> {
     return this.lessonAdminService.createLesson(createLessonDto);
   }
@@ -106,6 +131,7 @@ export class LessonController {
     { allowRegionModerators: true },
   )
   @Post(':id/image')
+  @DocUploadLessonImage()
   @UseInterceptors(
     FileInterceptor('file', {
       fileFilter: (req, file, cb) => {
@@ -140,6 +166,7 @@ export class LessonController {
   @UseGuards(RolesGuard)
   @Roles('admin')
   @Get('by-language/:languageId')
+  @DocGetLessonsByLanguage()
   async getLessonsByLanguageAdmin(
     @Param('languageId', ParseUUIDPipe) languageId: string,
     @Query() query: GetLessonsQueryDto,
@@ -153,6 +180,7 @@ export class LessonController {
 
   @UseGuards(AuthGuard('jwt'))
   @Get(':id/with-quizzes')
+  @DocGetLessonWithQuizzes()
   async getLessonWithQuizzes(
     @Param('id', ParseUUIDPipe) id: string,
   ): Promise<Lesson> {
@@ -160,6 +188,7 @@ export class LessonController {
   }
   @UseGuards(AuthGuard('jwt'))
   @Get(':id/quizzes')
+  @DocGetQuizzesByLesson()
   async getQuizzesByLessonId(
     @Param('id', ParseUUIDPipe) id: string,
     @Query('regionId') regionId?: string,
@@ -187,6 +216,7 @@ export class LessonController {
     { allowRegionModerators: true },
   )
   @Put(':id')
+  @DocUpdateLesson()
   async update(
     @Param('id', ParseUUIDPipe) id: string,
     @Body() createLessonDto: CreateLessonDto,
@@ -204,6 +234,8 @@ export class LessonController {
     { allowRegionModerators: true },
   )
   @Delete(':id')
+  @HttpCode(204)
+  @DocRemoveLesson()
   async remove(@Param('id', ParseUUIDPipe) id: string): Promise<void> {
     return this.lessonAdminService.deleteLesson(id);
   }
@@ -218,6 +250,7 @@ export class LessonController {
     { allowRegionModerators: true },
   )
   @Get(':id')
+  @DocFindOneLesson()
   async findOne(@Param('id', ParseUUIDPipe) id: string): Promise<Lesson> {
     return this.lessonAdminService.getLessonById(id);
   }
@@ -232,6 +265,7 @@ export class LessonController {
     { allowRegionModerators: true },
   )
   @Get(':id/variants')
+  @DocGetLessonVariants()
   async getLessonVariants(
     @Param('id', ParseUUIDPipe) lessonId: string,
   ): Promise<LessonVariant[]> {
@@ -241,6 +275,7 @@ export class LessonController {
   @UseGuards(ResourceAccessGuard)
   @RequireResourcePermission(PermissionScope.REGION, { body: 'regionId' })
   @Post(':id/variants')
+  @DocCreateLessonVariant()
   async createLessonVariant(
     @Param('id', ParseUUIDPipe) lessonId: string,
     @Body() createVariantDto: CreateLessonVariantDto,
@@ -254,6 +289,7 @@ export class LessonController {
   @UseGuards(RolesGuard)
   @Roles('admin')
   @Get(':id/variants/:variantId')
+  @DocGetLessonVariant()
   async getLessonVariant(
     @Param('id', ParseUUIDPipe) lessonId: string,
     @Param('variantId', ParseUUIDPipe) variantId: string,
@@ -267,6 +303,7 @@ export class LessonController {
     resolve: 'variant.regionId',
   })
   @Put(':id/variants/:variantId')
+  @DocUpdateLessonVariant()
   async updateLessonVariant(
     @Param('id', ParseUUIDPipe) lessonId: string,
     @Param('variantId', ParseUUIDPipe) variantId: string,
@@ -285,6 +322,7 @@ export class LessonController {
     resolve: 'variant.regionId',
   })
   @Delete(':id/variants/:variantId')
+  @DocDeleteLessonVariant()
   async deleteLessonVariant(
     @Param('id', ParseUUIDPipe) lessonId: string,
     @Param('variantId', ParseUUIDPipe) variantId: string,
@@ -295,6 +333,7 @@ export class LessonController {
 
   @UseGuards(AuthGuard('jwt'))
   @Get('regional/:id')
+  @DocGetRegionalLesson()
   async getRegionalLesson(
     @Param('id', ParseUUIDPipe) lessonId: string,
     @Query('regionId') regionId?: string,

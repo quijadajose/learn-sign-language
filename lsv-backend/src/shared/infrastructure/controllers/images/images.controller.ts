@@ -21,6 +21,7 @@ import type { Response } from 'express';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { UploadPictureUseCase } from 'src/shared/application/use-cases/upload-picture-use-case/upload-picture-use-case';
 import { IsString } from 'class-validator';
+import { ApiProperty } from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
 import { RolesGuard } from 'src/auth/infrastructure/guards/roles/roles.guard';
 import { Roles } from 'src/auth/infrastructure/decorators/roles.decorator';
@@ -28,6 +29,7 @@ import { DocGetImage, DocImages, DocUploadPicture } from './docs/images.docs';
 import { withI18nParams } from 'src/i18n';
 
 export class UploadImageDto {
+  @ApiProperty({ format: 'uuid' })
   @IsString()
   id: string;
 }
