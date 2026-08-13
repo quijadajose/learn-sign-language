@@ -1,104 +1,110 @@
-# API de Reconocimiento de Gestos para Lenguaje de Señas
+# LSV Model Trainer
 
-Esta API permite subir datos y entrenar modelos de reconocimiento de gestos para el Lenguaje de Señas, utilizando Machine Learning para procesar y clasificar las señas.
+Worker de entrenamiento de modelos de señas (MLP estático / LSTM dinámico).
 
-## Tecnologías Utilizadas
+Consume jobs de la cola BullMQ `training-queue` (Redis/Valkey), lee el JSON de
+landmarks desde el volumen compartido, entrena con TensorFlow y exporta el
+modelo a TensorFlow.js.
 
-- **Framework**: Flask
-- **Machine Learning**: TensorFlow y Mediapipe Model Maker
-- **Visualización**: Matplotlib
+## Flujo
 
-## Endpoints Disponibles
+1. El backend (`TriggerTrainingUseCase`) escribe `/shared/training_data/<id>.json`
+   y encola un job con `dataPath`, `outputPath`, `modelId`, `modelType`.
+2. Este worker valida paths (bajo `DATA_BASE_DIR`), valida samples 258D y entrena.
+3. El resultado del job (accuracy, labels, URLs TFJS, métricas) lo consume el
+   backend para marcar el `LessonModel` como `READY`.
 
-### POST `/upload`
+## Payload de entrenamiento
 
-Este endpoint permite subir un conjunto de datos de lecciones para entrenar un modelo de reconocimiento de gestos.
-
-#### Detalles de la petición
-
-- **Headers**:
-  - `Content-Type: multipart/form-data`
-- **Cuerpo de la petición**:
-  - Campo `lesson`: Un JSON que describe las lecciones, palabras y partes.
-  - Archivos de imagen: Se deben enviar las imágenes referenciadas en el JSON con claves formateadas como `image_0`, `image_1`, etc.
-
-#### Ejemplo de JSON
+Formato actual:
 
 ```json
 {
-  "lesson": [
-    {
-      "name": "Lección 1",
-      "word": [
-        {
-          "name": "Hola",
-          "parts": [
-            {
-              "images": ["image_0", "image_1"]
-            }
-          ]
-        }
-      ]
-    }
-  ]
+  "modelType": "dynamic",
+  "samples": [
+    { "signName": "Hola", "landmarks": [[0.1, 0.2, "...258 floats"], "...frames"] }
+  ],
+  "globalStaticNoise": []
 }
 ```
 
-#### Respuesta Exitosa
+También se acepta el formato legacy (lista plana de samples) **solo si** el job
+BullMQ incluye `modelType` (`static` | `dynamic`). Sin eso el worker falla en
+lugar de asumir `dynamic`.
 
-- **Código**: 200
-- **Cuerpo**:
+## Observabilidad
 
-```json
-{
-  "message": "Files uploaded and processed successfully"
-}
+- `GET :8089/healthz` — ready cuando el worker BullMQ está escuchando
+- `GET :8089/metrics` — contadores Prometheus (`trainer_jobs_*`, RSS)
+
+## Variables de entorno
+
+| Variable | Default | Descripción |
+|----------|---------|-------------|
+| `VALKEY_HOST` | `lsv-valkey` | Host Redis/Valkey |
+| `VALKEY_PORT` | `6379` | Puerto |
+| `VALKEY_PASSWORD` | _(vacío)_ | Password opcional |
+| `DATA_BASE_DIR` | `/shared` | Raíz permitida para `dataPath` / `outputPath` |
+| `TRAINING_LOCK_DURATION_MS` | `1800000` (30m) | Lock BullMQ; debe cubrir el fit completo |
+| `TRAINER_HEALTH_PORT` | `8089` | Health + métricas |
+| `TRAINER_MAX_PAYLOAD_MB` | `512` | Tamaño máximo del JSON de entrenamiento |
+| `TRAINER_SHUTDOWN_TIMEOUT_S` | `30` | Espera al job en curso durante el shutdown |
+| `TRAINER_REDIS_CONNECT_ATTEMPTS` | `10` | Reintentos de conexión a Valkey al arrancar |
+| `TRAINER_REDIS_CONNECT_DELAY_S` | `3` | Espera entre reintentos |
+
+El servicio **no** recibe el `.env` completo: solo necesita las tres variables
+de Valkey. El `stop_grace_period` del compose (60s) debe ser mayor que
+`TRAINER_SHUTDOWN_TIMEOUT_S` para que el job en vuelo alcance a cancelarse en
+vez de quedar stalled.
+
+## Requisitos del dataset
+
+El split de validación es estratificado y se dimensiona con
+`resolve_split_plan`, que garantiza `n_test >= n_clases` y `n_train >= n_clases`
+(sklearn falla si no se cumple). En la práctica:
+
+- mínimo **2 grabaciones por seña**, si no la clase queda fuera del estrato y se
+  entrena sin estratificar;
+- con menos de 10 muestras de validación el worker adjunta un warning en
+  `logs.warnings`: el `accuracy` reportado no es una medida confiable.
+
+La augmentación (ruido, escala, espejo, time warp, frame dropout) se aplica
+**solo al set de train**. El espejo permuta los landmarks simétricos del pose de
+MediaPipe además de negar la X, así que el modelo también aprende la versión
+zurda de cada seña.
+
+## Ejecución
+
+Con Docker Compose (servicio `lsv-model-trainer`):
+
+```bash
+docker compose up -d --build lsv-model-trainer
 ```
 
-## Configuración
+Local (requiere Valkey y volumen `/shared`):
 
-1. Instala las dependencias necesarias:
+```bash
+pip install -r requirements.txt
+python -u main.py
+```
 
-2. Asegúrate de que la carpeta `uploads` exista o será creada automáticamente.
+## Tests
 
-3. Ejecuta la API:
+Los tests de utilidades/validación solo necesitan NumPy (nada de TensorFlow):
 
-   ```bash
-   python main.py
-   ```
+```bash
+pip install -r requirements-dev.txt
+ruff check .
+mypy
+python -m unittest discover -s tests -v
+```
 
-4. Accede a la API en `http://localhost:3001`.
-
-## Estructura del Proyecto
+## Estructura
 
 ```text
-/
-|-- main.py               # Archivo principal de la API
-|-- uploads/              # Carpeta para los datos subidos
-|-- salida/               # Carpeta donde se exportan los modelos entrenados
+main.py            # Worker BullMQ
+trainer_logic.py   # Entrenamiento static/dynamic + export TFJS
+utils.py           # Escala de pose, recorte 258→202, features 202→340, resample, augment
+validation.py      # Paths seguros + validación y normalización de samples
+tests/             # Unit tests (sin TensorFlow)
 ```
-
-## Contribuciones
-
-¡Las contribuciones son bienvenidas! Sigue estos pasos para colaborar:
-
-1. Haz un fork de este repositorio.
-2. Crea una rama para tu funcionalidad:
-
-   ```bash
-   git checkout -b feature/nueva-funcionalidad
-   ```
-
-3. Realiza tus cambios y haz un commit:
-
-   ```bash
-   git commit -m "Agrega nueva funcionalidad"
-   ```
-
-4. Sube tus cambios:
-
-   ```bash
-   git push origin feature/nueva-funcionalidad
-   ```
-
-5. Abre un pull request.
