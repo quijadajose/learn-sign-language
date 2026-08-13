@@ -1,0 +1,36 @@
+{
+  "appName": "Learn Sign Language",
+  "logoAlt": "logo",
+  "loading": "Loading...",
+  "save": "Save",
+  "cancel": "Cancel",
+  "delete": "Delete",
+  "edit": "Edit",
+  "create": "Create",
+  "back": "Back",
+  "next": "Next",
+  "previous": "Previous",
+  "search": "Search",
+  "close": "Close",
+  "confirm": "Confirm",
+  "yes": "Yes",
+  "no": "No",
+  "error": "Error",
+  "success": "Success",
+  "retry": "Retry",
+  "actions": "Actions",
+  "locale": {
+    "label": "Interface language",
+    "es": "Español",
+    "en": "English",
+    "profileHint": "By default we use your browser language. Change this only if you want to override it.",
+    "useBrowser": "Use browser language",
+    "current": "Current: {{language}}"
+  },
+  "api": {
+    "success": "Operation successful",
+    "unexpected": "An unexpected error occurred",
+    "requestFailed": "An error occurred while processing your request",
+    "sessionExpired": "Your session has expired. Please sign in again."
+  }
+}

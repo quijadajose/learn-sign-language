@@ -1,37 +1,22 @@
 import React, { useEffect, useState } from "react";
-import {
-  Button,
-  TextInput,
-  Card,
-  Label,
-  Spinner,
-  Toast,
-  ToastToggle,
-} from "flowbite-react";
-import { HiCheck, HiX } from "react-icons/hi";
+import { Card, Spinner } from "flowbite-react";
 import { BACKEND_BASE_URL } from "./config";
 import { useNavigate } from "react-router-dom";
 import { userApi } from "./services/api";
 import { useAuth } from "./context/AuthContext";
-
-interface UserProfile {
-  id: string;
-  email: string;
-  firstName: string;
-  lastName: string;
-  currentPassword?: string;
-  newPassword?: string;
-  confirmPassword?: string;
-  createdAt: string;
-  age: number;
-  isRightHanded: boolean;
-  role: string;
-  photo?: string;
-}
+import { useToast } from "./components/ToastProvider";
+import LocaleSwitcher from "./components/LocaleSwitcher";
+import type { UserData } from "./types/user";
+import {
+  ProfileFormActions,
+  ProfileFormFields,
+  type ProfileFormData,
+} from "./ProfileFormFields";
 
 export const ResponsiveProfileForm = () => {
   const { user, token, login } = useAuth();
-  const [profile, setProfile] = useState<UserProfile | null>(null);
+  const addToast = useToast();
+  const [profile, setProfile] = useState<ProfileFormData | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isEditing, setIsEditing] = useState(false);
@@ -39,56 +24,55 @@ export const ResponsiveProfileForm = () => {
   const [newPhotoFile, setNewPhotoFile] = useState<File | null>(null);
   const navigate = useNavigate();
 
-  const [toastMessages, setToastMessages] = useState<
-    { id: number; type: "success" | "error"; message: string }[]
-  >([]);
-
-  const addToast = (type: "success" | "error", message: string) => {
-    const id = Date.now();
-    setToastMessages((prev) => [...prev, { id, type, message }]);
-    setTimeout(() => {
-      setToastMessages((prev) => prev.filter((toast) => toast.id !== id));
-    }, 4000);
-  };
-
   useEffect(() => {
     if (!token) {
       setError("Authentication token not found. Please log in again.");
       addToast("error", "No estás autenticado. Redirigiendo al login...");
-      setTimeout(() => navigate("/login"), 3000);
-      return;
+      const redirectId = setTimeout(() => navigate("/login"), 3000);
+      return () => clearTimeout(redirectId);
     }
 
+    let cancelled = false;
+
     if (user) {
-      setProfile(user as unknown as UserProfile);
+      setProfile(user as unknown as ProfileFormData);
     } else {
       const fetchProfileData = async () => {
         setLoading(true);
-        const response = await userApi.getMe();
-        if (response.success) {
-          setProfile(response.data);
-          login(response.data, token);
-        } else {
-          setError(`Failed to fetch profile: ${response.message}`);
-          addToast("error", `Error al cargar el perfil: ${response.message}`);
+        try {
+          const response = await userApi.getMe();
+          if (cancelled) return;
+          if (response.success) {
+            setProfile(response.data);
+            login(response.data, token);
+          } else {
+            setError(`Failed to fetch profile: ${response.message}`);
+            addToast("error", `Error al cargar el perfil: ${response.message}`);
+          }
+        } finally {
+          setLoading(false);
         }
-        setLoading(false);
       };
-      fetchProfileData();
+      void fetchProfileData();
     }
-  }, [user, token, navigate]);
+
+    return () => {
+      cancelled = true;
+    };
+  }, [user, token, navigate, addToast, login]);
 
   useEffect(() => {
     if (!profile) return;
 
-    if (newPhotoFile) {
-      const objectUrl = URL.createObjectURL(newPhotoFile);
-      setPreview(objectUrl);
-      return () => URL.revokeObjectURL(objectUrl);
-    } else {
+    if (!newPhotoFile) {
       const imageUrl = `${BACKEND_BASE_URL}/images/user/${encodeURIComponent(profile.id)}?size=lg&v=${Date.now()}`;
       setPreview(imageUrl);
+      return;
     }
+
+    const objectUrl = URL.createObjectURL(newPhotoFile);
+    setPreview(objectUrl);
+    return () => URL.revokeObjectURL(objectUrl);
   }, [newPhotoFile, profile]);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -110,7 +94,7 @@ export const ResponsiveProfileForm = () => {
       : undefined;
 
     setProfile((prev) => ({
-      ...(prev as UserProfile),
+      ...(prev as ProfileFormData),
       [name]: isCheckbox ? checked : value,
     }));
   };
@@ -137,7 +121,15 @@ export const ResponsiveProfileForm = () => {
     try {
       const { currentPassword, newPassword, confirmPassword } = profile;
 
-      const profileUpdateBody: any = {
+      const profileUpdateBody: {
+        email: string;
+        firstName: string;
+        lastName: string;
+        age: number;
+        isRightHanded: boolean;
+        oldPassword?: string;
+        newPassword?: string;
+      } = {
         email: profile.email,
         firstName: profile.firstName,
         lastName: profile.lastName,
@@ -154,7 +146,6 @@ export const ResponsiveProfileForm = () => {
             "error",
             "Por favor completa todos los campos de contraseña para cambiarla.",
           );
-          setLoading(false);
           return;
         }
 
@@ -163,7 +154,6 @@ export const ResponsiveProfileForm = () => {
             "error",
             "La nueva contraseña y su confirmación no coinciden.",
           );
-          setLoading(false);
           return;
         }
 
@@ -214,19 +204,17 @@ export const ResponsiveProfileForm = () => {
       };
       setProfile(finalProfileData);
 
-      // Actualizamos el contexto
-      login(finalProfileData as any, token!);
+      login(finalProfileData as unknown as UserData, token!);
 
       setIsEditing(false);
       setNewPhotoFile(null);
       addToast("success", "Perfil actualizado correctamente.");
-    } catch (error: any) {
-      if (!toastMessages.some((t) => t.type === "error")) {
-        addToast(
-          "error",
-          `Error al guardar el perfil: ${error.message || "Ocurrió un error inesperado."}`,
-        );
-      }
+    } catch (error: unknown) {
+      const message =
+        error instanceof Error
+          ? error.message
+          : "Ocurrió un error inesperado.";
+      addToast("error", `Error al guardar el perfil: ${message}`);
     } finally {
       setLoading(false);
     }
@@ -243,38 +231,9 @@ export const ResponsiveProfileForm = () => {
 
   if (error) {
     return (
-      <>
-        <div className="fixed right-5 top-5 z-50 flex flex-col gap-3">
-          {toastMessages.map((toast) => (
-            <Toast key={toast.id}>
-              <div
-                className={`inline-flex size-8 shrink-0 items-center justify-center rounded-lg ${
-                  toast.type === "success"
-                    ? "bg-green-100 text-green-500 dark:bg-green-800 dark:text-green-200"
-                    : "bg-red-100 text-red-500 dark:bg-red-800 dark:text-red-200"
-                }`}
-              >
-                {toast.type === "success" ? (
-                  <HiCheck className="size-5" />
-                ) : (
-                  <HiX className="size-5" />
-                )}
-              </div>
-              <div className="ml-3 text-sm font-normal">{toast.message}</div>
-              <ToastToggle
-                onDismiss={() =>
-                  setToastMessages((prev) =>
-                    prev.filter((t) => t.id !== toast.id),
-                  )
-                }
-              />
-            </Toast>
-          ))}
-        </div>
-        <div className="container mx-auto px-4 pt-2 text-center text-red-600 dark:text-red-400">
-          <p>Error: {error}</p>
-        </div>
-      </>
+      <div className="container mx-auto px-4 pt-2 text-center text-red-600 dark:text-red-400">
+        <p>Error: {error}</p>
+      </div>
     );
   }
 
@@ -287,313 +246,44 @@ export const ResponsiveProfileForm = () => {
   }
 
   return (
-    <>
-      <div className="fixed right-5 top-5 z-50 flex flex-col gap-3">
-        {toastMessages.map((toast) => (
-          <Toast key={toast.id}>
-            <div
-              className={`inline-flex size-8 shrink-0 items-center justify-center rounded-lg ${
-                toast.type === "success"
-                  ? "bg-green-100 text-green-500 dark:bg-green-800 dark:text-green-200"
-                  : "bg-red-100 text-red-500 dark:bg-red-800 dark:text-red-200"
-              }`}
-            >
-              {toast.type === "success" ? (
-                <HiCheck className="size-5" />
-              ) : (
-                <HiX className="size-5" />
-              )}
-            </div>
-            <div className="ml-3 text-sm font-normal">{toast.message}</div>
-            <ToastToggle
-              onDismiss={() =>
-                setToastMessages((prev) =>
-                  prev.filter((t) => t.id !== toast.id),
-                )
-              }
-            />
-          </Toast>
-        ))}
-      </div>
+    <div className="container mx-auto px-4 pt-2">
+      <Card>
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+          Perfil
+        </h1>
+        <ProfileFormFields
+          profile={profile}
+          preview={preview}
+          isEditing={isEditing}
+          loading={loading}
+          onInputChange={handleInputChange}
+          onFileChange={handleFileChange}
+          onPreviewError={() => {
+            setPreview("/user.svg");
+          }}
+          onHandednessChange={(isRightHanded) =>
+            setProfile((p) => (p ? { ...p, isRightHanded } : null))
+          }
+        />
+        <ProfileFormActions
+          isEditing={isEditing}
+          loading={loading}
+          onCancel={() => {
+            setIsEditing(false);
+            setNewPhotoFile(null);
+          }}
+          onSave={handleSave}
+          onEdit={() => setIsEditing(true)}
+        />
+      </Card>
 
-      <div className="container mx-auto px-4 pt-2">
-        <Card>
-          <h1 className="text-2xl font-bold text-gray-500 dark:text-gray-400">
-            Perfil
-          </h1>
-          <form className="grid grid-cols-1 gap-4 md:grid-cols-2">
-            <div className="col-span-1 flex flex-col items-center justify-center text-center md:col-span-2">
-              <img
-                src={preview || "/user.svg"}
-                alt="Profile"
-                className="mb-4 size-40 rounded-full border object-cover dark:border-gray-600"
-                onError={(e) => {
-                  const target = e.target as HTMLImageElement;
-                  if (target.src !== window.location.origin + "/user.svg") {
-                    target.src = "/user.svg";
-                    setPreview("/user.svg");
-                  }
-                }}
-              />
-              {isEditing && (
-                <div className="w-full max-w-xs">
-                  <Label htmlFor="photo" className="sr-only">
-                    Change profile picture
-                  </Label>
-                  <input
-                    id="photo"
-                    type="file"
-                    accept="image/*"
-                    onChange={handleFileChange}
-                    className="block w-full cursor-pointer rounded-lg border border-gray-300 bg-gray-50 text-sm text-gray-900 focus:outline-none dark:border-gray-600 dark:bg-gray-700 dark:text-gray-400 dark:placeholder:text-gray-400"
-                  />
-                  <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                    PNG, JPG, GIF (Max 2MB).
-                  </p>
-                </div>
-              )}
-            </div>
-
-            <div>
-              <Label
-                className="text-gray-500 dark:text-gray-400"
-                htmlFor="firstName"
-              >
-                Nombre
-              </Label>
-              <TextInput
-                id="firstName"
-                name="firstName"
-                value={profile.firstName}
-                onChange={handleInputChange}
-                disabled={!isEditing || loading}
-                required
-              />
-            </div>
-            <div>
-              <Label
-                className="text-gray-500 dark:text-gray-400"
-                htmlFor="lastName"
-              >
-                Apellido
-              </Label>
-              <TextInput
-                id="lastName"
-                name="lastName"
-                value={profile.lastName}
-                onChange={handleInputChange}
-                disabled={!isEditing || loading}
-                required
-              />
-            </div>
-            <div>
-              <Label
-                className="text-gray-500 dark:text-gray-400"
-                htmlFor="email"
-              >
-                Email
-              </Label>
-              <TextInput
-                id="email"
-                name="email"
-                type="email"
-                value={profile.email}
-                onChange={handleInputChange}
-                disabled={!isEditing || loading}
-                required
-              />
-            </div>
-            <div>
-              <Label className="text-gray-500 dark:text-gray-400" htmlFor="age">
-                Edad
-              </Label>
-              <TextInput
-                id="age"
-                name="age"
-                type="number"
-                value={profile.age}
-                onChange={handleInputChange}
-                disabled={!isEditing || loading}
-                min="1"
-              />
-            </div>
-
-            {isEditing && (
-              <>
-                <div className="mt-4 border-t pt-4 dark:border-gray-600 md:col-span-2">
-                  <h3 className="mb-2 text-lg font-semibold text-gray-700 dark:text-gray-300">
-                    Cambiar Contraseña
-                  </h3>
-                </div>
-
-                <div>
-                  <Label
-                    htmlFor="currentPassword"
-                    className="text-gray-500 dark:text-gray-400"
-                  >
-                    Contraseña Actual
-                  </Label>
-                  <TextInput
-                    id="currentPassword"
-                    name="currentPassword"
-                    type="password"
-                    placeholder="Deja en blanco si no cambias"
-                    value={profile.currentPassword || ""}
-                    onChange={handleInputChange}
-                    disabled={loading}
-                  />
-                </div>
-
-                <div>
-                  <Label
-                    htmlFor="newPassword"
-                    className="text-gray-500 dark:text-gray-400"
-                  >
-                    Nueva Contraseña
-                  </Label>
-                  <TextInput
-                    id="newPassword"
-                    name="newPassword"
-                    type="password"
-                    placeholder="Mínimo 6 caracteres"
-                    value={profile.newPassword || ""}
-                    onChange={handleInputChange}
-                    disabled={loading}
-                  />
-                </div>
-
-                <div className="md:col-span-2">
-                  <Label
-                    htmlFor="confirmPassword"
-                    className="text-gray-500 dark:text-gray-400"
-                  >
-                    Repetir Nueva Contraseña
-                  </Label>
-                  <TextInput
-                    id="confirmPassword"
-                    name="confirmPassword"
-                    type="password"
-                    placeholder="Repite la nueva contraseña"
-                    value={profile.confirmPassword || ""}
-                    onChange={handleInputChange}
-                    disabled={loading}
-                  />
-                </div>
-              </>
-            )}
-
-            <div>
-              <Label
-                className="text-gray-500 dark:text-gray-400"
-                htmlFor="role"
-              >
-                Rol
-              </Label>
-              <TextInput
-                id="role"
-                name="role"
-                value={profile.role}
-                disabled
-                className="border-gray-300 bg-gray-100 dark:border-gray-600 dark:bg-gray-700"
-              />
-            </div>
-            <div>
-              <Label
-                className="text-gray-500 dark:text-gray-400"
-                htmlFor="createdAt"
-              >
-                Miembro Desde
-              </Label>
-              <TextInput
-                id="createdAt"
-                name="createdAt"
-                value={new Date(profile.createdAt).toLocaleDateString()}
-                disabled
-                className="border-gray-300 bg-gray-100 dark:border-gray-600 dark:bg-gray-700"
-              />
-            </div>
-
-            <div className="md:col-span-2">
-              <Label className="mb-2 block text-gray-500 dark:text-gray-400">
-                Mano dominante
-              </Label>
-              <div className="flex items-center space-x-4">
-                <Label
-                  htmlFor="rightHanded"
-                  className="flex cursor-pointer items-center text-gray-500 dark:text-gray-400"
-                >
-                  <input
-                    id="rightHanded"
-                    type="radio"
-                    name="isRightHanded"
-                    value="true"
-                    checked={profile.isRightHanded === true}
-                    onChange={() =>
-                      setProfile((p) =>
-                        p ? { ...p, isRightHanded: true } : null,
-                      )
-                    }
-                    disabled={!isEditing || loading}
-                    className="mr-2 size-4 border-gray-300 text-blue-600 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:ring-offset-gray-800 dark:focus:ring-blue-600"
-                  />
-                  Diestro
-                </Label>
-                <Label
-                  htmlFor="leftHanded"
-                  className="flex cursor-pointer items-center text-gray-500 dark:text-gray-400"
-                >
-                  <input
-                    id="leftHanded"
-                    type="radio"
-                    name="isRightHanded"
-                    value="false"
-                    checked={profile.isRightHanded === false}
-                    onChange={() =>
-                      setProfile((p) =>
-                        p ? { ...p, isRightHanded: false } : null,
-                      )
-                    }
-                    disabled={!isEditing || loading}
-                    className="mr-2 size-4 border-gray-300 text-blue-600 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:ring-offset-gray-800 dark:focus:ring-blue-600"
-                  />
-                  Zurdo
-                </Label>
-              </div>
-            </div>
-          </form>
-
-          <div className="mt-6 flex justify-end space-x-3 border-t border-gray-200 pt-4 dark:border-gray-700">
-            {isEditing ? (
-              <>
-                <Button
-                  color="gray"
-                  onClick={() => {
-                    setIsEditing(false);
-                    setNewPhotoFile(null);
-                  }}
-                  disabled={loading}
-                >
-                  Cancelar
-                </Button>
-                <Button color="success" onClick={handleSave} disabled={loading}>
-                  {loading && <Spinner size="sm" className="mr-2" />}
-                  {loading ? "Guardando..." : "Guardar Cambios"}
-                </Button>
-              </>
-            ) : (
-              <Button
-                color="blue"
-                className="bg-blue-700 hover:bg-blue-800"
-                onClick={() => setIsEditing(true)}
-                disabled={loading}
-              >
-                Editar Perfil
-              </Button>
-            )}
-          </div>
-        </Card>
-      </div>
-    </>
+      <Card className="mt-4">
+        <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
+          Preferencias
+        </h2>
+        <LocaleSwitcher withPreferences />
+      </Card>
+    </div>
   );
 };
 

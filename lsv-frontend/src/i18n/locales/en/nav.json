@@ -1,0 +1,20 @@
+{
+  "dashboard": "Dashboard",
+  "leaderboard": "Leaderboard",
+  "profile": "Profile",
+  "signOut": "Sign out",
+  "changeSignLanguage": "Change sign language",
+  "manageSignLanguages": "Manage sign languages",
+  "learningLabel": "Learning",
+  "mySignLanguages": "My sign languages",
+  "enrollAnotherLanguage": "Enroll in another language",
+  "manageRegions": "Manage regions",
+  "management": "Management",
+  "languages": "Languages",
+  "stages": "Stages",
+  "lessons": "Lessons",
+  "regions": "Regions",
+  "signStudio": "Sign Studio",
+  "moderators": "Moderators",
+  "userSettings": "User settings"
+}

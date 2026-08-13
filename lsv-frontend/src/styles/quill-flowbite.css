@@ -1,6 +1,4 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@reference "tailwindcss";
 
 .ql-snow.ql-container {
   @apply rounded-b-lg border border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-900;
@@ -9,6 +7,40 @@
   font-size: 1rem;
   height: 100%;
   position: relative;
+}
+
+/* Keep toolbar + editor inside any fixed height on .quill-flowbite */
+.quill-flowbite:not(.quill-seamless) {
+  display: flex;
+  flex-direction: column;
+}
+
+.quill-flowbite:not(.quill-seamless) > .quill {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.quill-flowbite:not(.quill-seamless) .ql-container {
+  flex: 1 1 auto;
+  height: auto;
+  min-height: 0;
+  overflow: hidden;
+}
+
+/* Read-only lesson content: blend into the parent card */
+.quill-flowbite.quill-seamless .ql-snow.ql-container {
+  @apply rounded-none border-0 bg-transparent dark:bg-transparent;
+}
+
+.quill-flowbite.quill-seamless .ql-toolbar.ql-snow {
+  display: none;
+}
+
+.quill-flowbite.quill-seamless .ql-editor {
+  min-height: 0;
+  padding: 0;
 }
 
 .ql-snow .ql-editor {
@@ -263,7 +295,7 @@ polygon.ql-stroke {
 .ql-snow .ql-toolbar .ql-picker-item:hover .ql-fill,
 .ql-snow.ql-toolbar .ql-picker-item.ql-selected .ql-fill,
 .ql-snow .ql-toolbar .ql-picker-item.ql-selected .ql-fill {
-  @apply fill-gray-900 dark:fill-white !important;
+  @apply fill-gray-900! dark:fill-white!;
 }
 
 .ql-snow.ql-toolbar button:hover .ql-stroke,
@@ -287,7 +319,7 @@ polygon.ql-stroke {
 .ql-snow .ql-toolbar .ql-picker-label.ql-active .ql-stroke-miter,
 .ql-snow .ql-toolbar .ql-picker-item:hover .ql-stroke-miter,
 .ql-snow .ql-toolbar .ql-picker-item.ql-selected .ql-stroke-miter {
-  @apply stroke-gray-900 dark:stroke-white !important;
+  @apply stroke-gray-900! dark:stroke-white!;
 }
 
 .ql-snow .ql-picker-label {
@@ -316,6 +348,6 @@ polygon.ql-stroke {
 
 .ql-snow .ql-picker-item:hover .ql-fill,
 .ql-snow .ql-picker-item:hover .ql-stroke {
-  @apply fill-gray-900 dark:fill-white !important;
-  @apply stroke-gray-900 dark:stroke-white !important;
+  @apply fill-gray-900! dark:fill-white!;
+  @apply stroke-gray-900! dark:stroke-white!;
 }

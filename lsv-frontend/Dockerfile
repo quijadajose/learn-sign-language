@@ -8,7 +8,7 @@ RUN npm install
 FROM base AS development
 COPY . .
 EXPOSE 5173
-CMD ["npm", "run", "dev", "--", "--host"]
+CMD ["npm", "run", "dev"]
 
 # Build stage for production
 FROM base AS builder

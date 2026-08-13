@@ -1,0 +1,53 @@
+{
+  "nav": {
+    "about": "Acerca de",
+    "features": "Características",
+    "collaborate": "Colaborar",
+    "login": "Iniciar sesión",
+    "register": "Registro"
+  },
+  "hero": {
+    "title": "Aprende Lenguaje de Señas",
+    "subtitle": "La plataforma te permite aprender lenguaje de señas de diversos países. Diviértete, practica y comunícate con la comunidad sorda.",
+    "ctaStart": "Empieza ahora",
+    "ctaAccount": "Ya tengo una cuenta",
+    "mockupAlt": "mockup"
+  },
+  "features": {
+    "title": "¿Por qué nuestra plataforma?",
+    "subtitle": "Ofrecemos una experiencia integral para aprender y practicar diversos lenguajes de señas de forma fácil.",
+    "easySignup": {
+      "title": "Registro Sencillo",
+      "body": "Regístrate y accede a todo el contenido. Sigue tu progreso a lo largo de los diferentes niveles."
+    },
+    "multilang": {
+      "title": "Multilenguaje",
+      "body": "Accede a lecciones de lenguaje de señas de diferentes países y regiones."
+    },
+    "interactive": {
+      "title": "Material Interactivo",
+      "body": "Aprende con videos, ejercicios prácticos y evaluaciones que te ayudarán a consolidar tus conocimientos."
+    },
+    "evaluation": {
+      "title": "Evaluación Continua"
+    },
+    "ranking": {
+      "title": "Ranking y Motivación",
+      "body": "Compite amistosamente con otros usuarios, sube en el ranking y mantén la motivación para seguir aprendiendo."
+    }
+  },
+  "collaborate": {
+    "title": "¿Quieres agregar un nuevo idioma?",
+    "body": "Nuestra plataforma está creciendo. Si representas a una escuela, asociación o eres un experto que desea cargar lecciones de lenguaje de señas de tu país, ¡queremos colaborar contigo!",
+    "email": "Contactar por Correo",
+    "issues": "Ver Panel de Issues"
+  },
+  "footer": {
+    "brand": "Plataforma de Señas",
+    "collaborate": "Colaborar",
+    "status": "Estado del Sistema",
+    "privacy": "Política de Privacidad",
+    "terms": "Condiciones del Servicio",
+    "logoAlt": "Plataforma Logo"
+  }
+}

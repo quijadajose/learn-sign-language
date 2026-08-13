@@ -1,0 +1,36 @@
+{
+  "appName": "Aprende Lenguaje de Señas",
+  "logoAlt": "logo",
+  "loading": "Cargando...",
+  "save": "Guardar",
+  "cancel": "Cancelar",
+  "delete": "Eliminar",
+  "edit": "Editar",
+  "create": "Crear",
+  "back": "Volver",
+  "next": "Siguiente",
+  "previous": "Anterior",
+  "search": "Buscar",
+  "close": "Cerrar",
+  "confirm": "Confirmar",
+  "yes": "Sí",
+  "no": "No",
+  "error": "Error",
+  "success": "Éxito",
+  "retry": "Reintentar",
+  "actions": "Acciones",
+  "locale": {
+    "label": "Idioma de la interfaz",
+    "es": "Español",
+    "en": "English",
+    "profileHint": "Por defecto se usa el idioma del navegador. Solo cámbialo si quieres forzar otro.",
+    "useBrowser": "Usar idioma del navegador",
+    "current": "Actual: {{language}}"
+  },
+  "api": {
+    "success": "Operación exitosa",
+    "unexpected": "Ha ocurrido un error inesperado",
+    "requestFailed": "Ha ocurrido un error al procesar tu solicitud",
+    "sessionExpired": "Tu sesión ha expirado. Por favor, inicia sesión nuevamente."
+  }
+}

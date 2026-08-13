@@ -6,6 +6,7 @@ interface LayoutProps {
   fields: ReactNode[];
   button: ReactNode;
   back?: ReactNode;
+  footer?: ReactNode;
 }
 
 export default function Layout({
@@ -14,6 +15,7 @@ export default function Layout({
   fields,
   button,
   back,
+  footer,
 }: LayoutProps) {
   return (
     <div className="relative flex size-full items-center justify-center px-6 py-8">
@@ -28,6 +30,7 @@ export default function Layout({
           <div className="space-y-4 md:space-y-6">{fields}</div>
         </div>
         {button}
+        {footer}
       </div>
       {back && <div className="absolute left-4 top-5">{back}</div>}
     </div>

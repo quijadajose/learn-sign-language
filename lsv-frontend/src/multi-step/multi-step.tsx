@@ -1,74 +1,78 @@
 import type { ReactNode } from "react";
 import type { MotionProps } from "motion/react";
-import type { OnNext, OnBack, GetState, SetState } from "@formity/react";
+import type { Next, Back, GetState, SetState } from "@formity/react";
 
 import { useCallback, useMemo, useState } from "react";
-import { AnimatePresence, motion } from "motion/react";
+import { AnimatePresence, LazyMotion, domAnimation, m } from "motion/react";
 
 import { MultiStepContext } from "./multi-step-context";
+import type { MultiStepValue } from "./multi-step-value";
 
-interface MultiStepProps {
+interface MultiStepProps<T extends Record<string, unknown>> {
   step: string;
-  onNext: OnNext;
-  onBack: OnBack;
-  getState: GetState;
+  next: Next<T>;
+  back: Back<T>;
+  getState: GetState<T>;
   setState: SetState;
   children: ReactNode;
 }
 
-export function MultiStep({
+export function MultiStep<T extends Record<string, unknown>>({
   step,
-  onNext,
-  onBack,
+  next,
+  back,
   getState,
   setState,
   children,
-}: MultiStepProps) {
+}: MultiStepProps<T>) {
   const [animate, setAnimate] = useState<"next" | "back" | false>(false);
 
-  const handleNext = useCallback<OnNext>(
-    (values) => {
+  const handleNext = useCallback<Next<T>>(
+    (fields) => {
       setAnimate("next");
-      setTimeout(() => onNext(values), 0);
+      setTimeout(() => next(fields), 0);
     },
-    [onNext],
+    [next],
   );
 
-  const handleBack = useCallback<OnBack>(
-    (values) => {
+  const handleBack = useCallback<Back<T>>(
+    (fields) => {
       setAnimate("back");
-      setTimeout(() => onBack(values), 0);
+      setTimeout(() => back(fields), 0);
     },
-    [onBack],
+    [back],
   );
 
-  const values = useMemo(
-    () => ({ onNext: handleNext, onBack: handleBack, getState, setState }),
+  const value = useMemo(
+    () =>
+      ({ next: handleNext, back: handleBack, getState, setState }) as MultiStepValue,
     [handleNext, handleBack, getState, setState],
   );
 
   return (
-    <AnimatePresence
-      mode="popLayout"
-      initial={false}
-      onExitComplete={() => setAnimate(false)}
-    >
-      <motion.div
-        key={step}
-        inherit={Boolean(animate)}
-        animate={{
-          x: 0,
-          opacity: 1,
-          transition: { delay: 0.25, duration: 0.25 },
-        }}
-        {...motionProps(animate)}
-        className="h-full"
+    <LazyMotion features={domAnimation}>
+      <AnimatePresence
+        mode="popLayout"
+        initial={false}
+        onExitComplete={() => setAnimate(false)}
       >
-        <MultiStepContext.Provider value={values}>
-          {children}
-        </MultiStepContext.Provider>
-      </motion.div>
-    </AnimatePresence>
+        <m.div
+          key={step}
+          inherit={Boolean(animate)}
+          animate={{
+            x: 0,
+            opacity: 1,
+            transition: { delay: 0.25, duration: 0.25 },
+          }}
+          {...motionProps(animate)}
+          className="h-full"
+        >
+          <MultiStepContext.Provider value={value}>
+            {children}
+          </MultiStepContext.Provider>
+        </m.div>
+      </AnimatePresence>
+    </LazyMotion>
   );
 }
 

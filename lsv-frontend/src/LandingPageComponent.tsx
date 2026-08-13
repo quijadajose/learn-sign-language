@@ -3,7 +3,6 @@ import {
   Navbar,
   DarkThemeToggle,
   Footer,
-  NavbarBrand,
   NavbarToggle,
   NavbarCollapse,
   NavbarLink,
@@ -11,6 +10,8 @@ import {
   FooterDivider,
 } from "flowbite-react";
 import { Link } from "react-router-dom";
+import { useTranslation } from "react-i18next";
+
 const scrollToSection = (id: string) => {
   const section = document.getElementById(id);
   if (section) {
@@ -22,27 +23,27 @@ const scrollToSection = (id: string) => {
 };
 
 export default function LandingPageComponent() {
+  const { t } = useTranslation("landing");
+
   return (
     <>
       <Navbar
         fluid
         className="fixed left-0 top-0 z-50 w-full border-b border-gray-200 bg-white/90 shadow-sm backdrop-blur-md dark:border-gray-800 dark:bg-gray-900/90"
       >
-        <NavbarBrand>
-          <Link to="/" className="flex items-center">
-            <img
-              src="/logo.svg"
-              className="mr-3 h-8 dark:invert sm:h-10"
-              alt="Plataforma Logo"
-            />
-          </Link>
-        </NavbarBrand>
+        <Link to="/" className="flex items-center">
+          <img
+            src="/logo.svg"
+            className="mr-3 h-8 dark:invert sm:h-10"
+            alt={t("footer.logoAlt")}
+          />
+        </Link>
         <div className="flex items-center gap-2 md:order-2">
           <Button color="gray" size="sm" as={Link} to="/login">
-            Iniciar sesión
+            {t("nav.login")}
           </Button>
           <Button color="blue" size="sm" as={Link} to="/register">
-            Registro
+            {t("nav.register")}
           </Button>
           <div className="ml-2 flex items-center gap-1 border-l border-gray-200 pl-2 dark:border-gray-700">
             <DarkThemeToggle className="hover:bg-gray-100 dark:hover:bg-gray-800" />
@@ -55,19 +56,19 @@ export default function LandingPageComponent() {
             className="cursor-pointer font-bold text-gray-700 hover:text-blue-600 dark:text-gray-300 dark:hover:text-white"
             active
           >
-            Acerca de
+            {t("nav.about")}
           </NavbarLink>
           <NavbarLink
             onClick={() => scrollToSection("features")}
             className="cursor-pointer font-bold text-gray-700 hover:text-blue-600 dark:text-gray-300 dark:hover:text-white"
           >
-            Características
+            {t("nav.features")}
           </NavbarLink>
           <NavbarLink
             onClick={() => scrollToSection("collaborate")}
             className="cursor-pointer font-bold text-gray-700 hover:text-blue-600 dark:text-gray-300 dark:hover:text-white"
           >
-            Colaborar
+            {t("nav.collaborate")}
           </NavbarLink>
         </NavbarCollapse>
       </Navbar>
@@ -75,18 +76,17 @@ export default function LandingPageComponent() {
         <div className="mx-auto grid max-w-screen-xl px-4 py-8 lg:grid-cols-12 lg:gap-8 lg:py-16 xl:gap-0">
           <div className="mr-auto place-self-center lg:col-span-7">
             <h1 className="mb-4 max-w-2xl text-4xl font-extrabold leading-none dark:text-white md:text-5xl xl:text-6xl">
-              Aprende Lenguaje de Señas
+              {t("hero.title")}
             </h1>
             <p className="mb-6 max-w-2xl font-light text-gray-500 dark:text-gray-400 md:text-lg lg:mb-8 lg:text-xl">
-              La plataforma te permite aprender lenguaje de señas de diversos
-              países. Diviértete, practica y comunícate con la comunidad sorda.
+              {t("hero.subtitle")}
             </p>
 
             <Link
               to="/register"
               className="mr-3 inline-flex items-center justify-center rounded-lg bg-blue-700 px-5 py-3 text-center text-base font-medium text-white hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 dark:focus:ring-blue-900"
             >
-              Empieza ahora
+              {t("hero.ctaStart")}
               <svg
                 className="-mr-1 ml-2 size-5"
                 fill="currentColor"
@@ -104,11 +104,11 @@ export default function LandingPageComponent() {
               to="/login"
               className="inline-flex items-center justify-center rounded-lg border border-gray-300 px-5 py-3 text-center text-base font-medium text-gray-900 hover:bg-gray-100 focus:ring-4 focus:ring-gray-100 dark:border-gray-700 dark:text-white dark:hover:bg-gray-700 dark:focus:ring-gray-800"
             >
-              Ya tengo una cuenta
+              {t("hero.ctaAccount")}
             </Link>
           </div>
           <div className="hidden lg:col-span-5 lg:mt-0 lg:flex">
-            <img src="/image1.svg" alt="mockup" />
+            <img src="/image1.svg" alt={t("hero.mockupAlt")} />
           </div>
         </div>
       </section>
@@ -117,53 +117,48 @@ export default function LandingPageComponent() {
         <div className="mx-auto max-w-screen-xl px-4 py-8 sm:py-16 lg:px-6">
           <div className="mb-8 max-w-screen-md lg:mb-16">
             <h2 className="mb-4 text-4xl font-extrabold text-gray-900 dark:text-white">
-              ¿Por qué nuestra plataforma?
+              {t("features.title")}
             </h2>
             <p className="text-gray-500 dark:text-gray-400 sm:text-xl">
-              Ofrecemos una experiencia integral para aprender y practicar
-              diversos lenguajes de señas de forma fácil.
+              {t("features.subtitle")}
             </p>
           </div>
           <div className="space-y-8 md:grid md:grid-cols-2 md:gap-12 md:space-y-0 lg:grid-cols-3">
             <div>
               <h3 className="mb-2 text-xl font-bold dark:text-white">
-                Registro Sencillo
+                {t("features.easySignup.title")}
               </h3>
               <p className="text-gray-500 dark:text-gray-400">
-                Regístrate y accede a todo el contenido. Sigue tu progreso a lo
-                largo de los diferentes niveles.
+                {t("features.easySignup.body")}
               </p>
             </div>
             <div>
               <h3 className="mb-2 text-xl font-bold dark:text-white">
-                Multilenguaje
+                {t("features.multilang.title")}
               </h3>
               <p className="text-gray-500 dark:text-gray-400">
-                Accede a lecciones de lenguaje de señas de diferentes países y
-                regiones.
+                {t("features.multilang.body")}
               </p>
             </div>
             <div>
               <h3 className="mb-2 text-xl font-bold dark:text-white">
-                Material Interactivo
+                {t("features.interactive.title")}
               </h3>
               <p className="text-gray-500 dark:text-gray-400">
-                Aprende con videos, ejercicios prácticos y evaluaciones que te
-                ayudarán a consolidar tus conocimientos.
+                {t("features.interactive.body")}
               </p>
             </div>
             <div>
               <h3 className="mb-2 text-xl font-bold dark:text-white">
-                Evaluación Continua
+                {t("features.evaluation.title")}
               </h3>
             </div>
             <div>
               <h3 className="mb-2 text-xl font-bold dark:text-white">
-                Ranking y Motivación
+                {t("features.ranking.title")}
               </h3>
               <p className="text-gray-500 dark:text-gray-400">
-                Compite amistosamente con otros usuarios, sube en el ranking y
-                mantén la motivación para seguir aprendiendo.
+                {t("features.ranking.body")}
               </p>
             </div>
           </div>
@@ -174,27 +169,25 @@ export default function LandingPageComponent() {
         <div className="mx-auto max-w-screen-xl px-4 py-8 lg:px-6 lg:py-16">
           <div className="mx-auto max-w-screen-sm text-center">
             <h2 className="mb-4 text-4xl font-extrabold leading-tight tracking-tight text-gray-900 dark:text-white">
-              ¿Quieres agregar un nuevo idioma?
+              {t("collaborate.title")}
             </h2>
             <p className="mb-6 font-light text-gray-500 dark:text-gray-400 md:text-lg">
-              Nuestra plataforma está creciendo. Si representas a una escuela,
-              asociación o eres un experto que desea cargar lecciones de
-              lenguaje de señas de tu país, ¡queremos colaborar contigo!
+              {t("collaborate.body")}
             </p>
             <div className="flex flex-col space-y-4 sm:flex-row sm:justify-center sm:space-x-4 sm:space-y-0">
               <Button
                 color="blue"
                 size="lg"
-                href="mailto:quijadajose@gmail.com" // Placeholder or actual email
+                href="mailto:quijadajose@gmail.com"
               >
-                Contactar por Correo
+                {t("collaborate.email")}
               </Button>
               <Button
                 color="gray"
                 size="lg"
                 href="https://github.com/quijadajose/learn-sign-language/issues"
               >
-                Ver Panel de Issues
+                {t("collaborate.issues")}
               </Button>
             </div>
           </div>
@@ -206,8 +199,8 @@ export default function LandingPageComponent() {
           <div className="w-full justify-between sm:flex sm:items-center sm:justify-between">
             <FooterBrand
               src="/logo.svg"
-              alt="Logo"
-              name="Plataforma de Señas"
+              alt={t("footer.logoAlt")}
+              name={t("footer.brand")}
               className="dark:invert"
             />
             <a
@@ -216,7 +209,7 @@ export default function LandingPageComponent() {
               rel="noopener noreferrer"
               className="text-sm text-gray-500 hover:underline dark:text-gray-400"
             >
-              Colaborar
+              {t("footer.collaborate")}
             </a>
             <a
               href="https://stats.uptimerobot.com/n46WRvlnZD"
@@ -224,19 +217,19 @@ export default function LandingPageComponent() {
               rel="noopener noreferrer"
               className="text-sm text-gray-500 hover:underline dark:text-gray-400"
             >
-              Estado del Sistema
+              {t("footer.status")}
             </a>
             <Link
               to="/privacy-policy"
               className="text-sm text-gray-500 hover:underline dark:text-gray-400"
             >
-              Política de Privacidad
+              {t("footer.privacy")}
             </Link>
             <Link
               to="/terms-of-service"
               className="text-sm text-gray-500 hover:underline dark:text-gray-400"
             >
-              Condiciones del Servicio
+              {t("footer.terms")}
             </Link>
           </div>
           <FooterDivider />

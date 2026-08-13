@@ -1,6 +1,6 @@
 import { useState, useCallback } from "react";
 import { Formity, OnReturn } from "@formity/react";
-import { schema, Values } from "./schema";
+import { flow, Schema } from "./schema";
 import { Toast, ToastToggle } from "flowbite-react";
 import { HiCheck, HiX } from "react-icons/hi";
 import { useNavigate, Link } from "react-router-dom";
@@ -24,7 +24,7 @@ export default function Register() {
     }, 4000);
   };
 
-  const onReturn = useCallback<OnReturn<Values>>(
+  const onReturn = useCallback<OnReturn<Schema>>(
     async (values) => {
       try {
         const response = await authApi.register(values);
@@ -46,7 +46,7 @@ export default function Register() {
 
   return (
     <>
-      <div className="fixed right-5 top-5 z-50 flex flex-col gap-3">
+      <div className="fixed right-5 top-5 z-[9999] flex flex-col gap-3">
         {toastMessages.map((toast) => (
           <Toast key={toast.id}>
             <div
@@ -75,7 +75,7 @@ export default function Register() {
       </div>
 
       <div className="flex flex-col">
-        <Formity<Values> schema={schema} onReturn={onReturn} />
+        <Formity<Schema> flow={flow} onReturn={onReturn} />
       </div>
 
       <div className="mx-auto mb-8 mt-4 max-w-md px-6 text-center text-xs text-gray-500 dark:text-gray-400">

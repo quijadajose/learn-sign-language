@@ -45,18 +45,25 @@ export default function StageProgressView({ language }: Props) {
     null,
   );
   const stageStorageKey = `selectedStageId_${language.id}`;
+  const explicitStorageKey = `selectedStageExplicit_${language.id}`;
   const [persistedStageId, setPersistedStageId] = useLocalStorage<
     string | null
   >(stageStorageKey, null);
+  const [explicitStageSelection, setExplicitStageSelection] = useLocalStorage(
+    explicitStorageKey,
+    false,
+  );
   const addToast = useToast();
   const navigate = useNavigate();
 
   useEffect(() => {
+    let cancelled = false;
+
     if (language?.id) {
       setSelectedLanguageId(language.id);
     }
 
-    const fetchStagesProgress = async () => {
+    (async () => {
       if (!token) {
         setError("No estás autenticado.");
         setLoading(false);
@@ -65,49 +72,76 @@ export default function StageProgressView({ language }: Props) {
       setLoading(true);
       try {
         const response = await lessonApi.getStagesProgress(language.id);
+        if (cancelled) return;
         if (!response.success)
           throw new Error(response.message || "Error al cargar progreso");
-        const data: StageProgress[] = response.data.data;
+        const data: StageProgress[] = [...(response.data.data ?? [])].sort(
+          (a, b) =>
+            a.name.localeCompare(b.name, undefined, {
+              numeric: true,
+              sensitivity: "base",
+            }),
+        );
         setStages(data);
         if (data.length > 0) {
           let initialStage: StageProgress | undefined;
 
-          if (persistedStageId) {
+          // Only honor a saved stage when the user picked it on purpose
+          // (not the old auto-pin from DESC ordering).
+          if (persistedStageId && explicitStageSelection) {
             initialStage = data.find((s) => s.id === persistedStageId);
           }
 
           if (!initialStage) {
+            const withLessons = data.filter(
+              (s) => parseInt(s.totalLessons || "0", 10) > 0,
+            );
+            const pool = withLessons.length > 0 ? withLessons : data;
             initialStage =
-              data.find((s) => parseFloat(s.progress || "0") > 0) || data[0];
+              pool.find((s) => parseFloat(s.progress || "0") < 100) || pool[0];
           }
 
           if (initialStage) {
             setSelectedStage(initialStage);
-            setPersistedStageId(initialStage.id);
           }
         }
-      } catch (err: any) {
-        setError(err.message);
-        addToast("error", err.message);
+      } catch (err: unknown) {
+        if (cancelled) return;
+        const message =
+          err instanceof Error ? err.message : "Error al cargar progreso";
+        setError(message);
+        addToast("error", message);
       } finally {
         setLoading(false);
       }
+    })();
+
+    return () => {
+      cancelled = true;
     };
-    fetchStagesProgress();
-  }, [language, token, addToast]);
+  }, [
+    language,
+    token,
+    addToast,
+    persistedStageId,
+    explicitStageSelection,
+    setSelectedLanguageId,
+  ]);
 
   const handleSelectStage = (stageId: string) => {
     const stage = stages.find((s) => s.id === stageId);
-    if (stage) {
-      setPersistedStageId(stageId);
-      setSelectedStage(stage);
-      navigate(`/lessons/stage/${stageId}`, {
-        state: {
-          languageId: language.id,
-          regionId: selectedRegionId,
-        },
-      });
+    if (!stage || parseInt(stage.totalLessons || "0", 10) <= 0) {
+      return;
     }
+    setPersistedStageId(stageId);
+    setExplicitStageSelection(true);
+    setSelectedStage(stage);
+    navigate(`/lessons/stage/${stageId}`, {
+      state: {
+        languageId: language.id,
+        regionId: selectedRegionId,
+      },
+    });
   };
 
   return (

@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 
-import { motion } from "framer-motion";
+import { LazyMotion, domAnimation, m } from "motion/react";
 
 interface ScreenProps {
   progress: { total: number; current: number };
@@ -9,10 +9,12 @@ interface ScreenProps {
 
 export default function Screen({ progress, children }: ScreenProps) {
   return (
-    <div className="relative w-full bg-gray-50 dark:bg-gray-900">
-      <Progress total={progress.total} current={progress.current} />
-      <div>{children}</div>
-    </div>
+    <LazyMotion features={domAnimation}>
+      <div className="relative w-full bg-gray-50 dark:bg-gray-900">
+        <Progress total={progress.total} current={progress.current} />
+        <div>{children}</div>
+      </div>
+    </LazyMotion>
   );
 }
 
@@ -22,11 +24,14 @@ interface ProgressProps {
 }
 
 function Progress({ total, current }: ProgressProps) {
+  const ratio = total > 0 ? current / total : 0;
+
   return (
     <div className="absolute inset-x-0 top-0 h-1 bg-blue-500/50">
-      <motion.div
-        className="h-full bg-blue-700"
-        animate={{ width: `${(current / total) * 100}%` }}
+      <m.div
+        className="h-full origin-left bg-blue-700"
+        style={{ width: "100%" }}
+        animate={{ scaleX: ratio }}
         initial={false}
       />
     </div>
