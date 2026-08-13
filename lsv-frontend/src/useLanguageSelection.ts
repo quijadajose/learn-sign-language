@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useLocalStorage } from "./hooks/useLocalStorage";
 import { useToast } from "./components/ToastProvider";
 import { languageApi, regionApi } from "./services/api";
@@ -57,6 +57,21 @@ export function useLanguageSelection(onLanguageSelected: (lang: Language) => voi
     useState(false);
   const addToast = useToast();
 
+  // Snapshot values the init effect reads-then-writes. Putting them in the
+  // dependency array would re-fetch (and toast "Continuando con…") on every
+  // language/region change. loadRegions is recreated each render.
+  const selectedLanguageIdRef = useRef(selectedLanguageId);
+  const selectedRegionIdRef = useRef(selectedRegionId);
+  const setSelectedLanguageIdRef = useRef(setSelectedLanguageId);
+  const setSelectedRegionIdRef = useRef(setSelectedRegionId);
+  const loadRegionsRef = useRef<
+    (languageId: string) => Promise<"empty" | Region | null>
+  >(async () => null);
+  selectedLanguageIdRef.current = selectedLanguageId;
+  selectedRegionIdRef.current = selectedRegionId;
+  setSelectedLanguageIdRef.current = setSelectedLanguageId;
+  setSelectedRegionIdRef.current = setSelectedRegionId;
+
   useEffect(() => {
     let active = true;
 
@@ -87,9 +102,8 @@ export function useLanguageSelection(onLanguageSelected: (lang: Language) => voi
           enrolledResponse.data;
 
         if (enrolledData.data.length > 0) {
-          // Ya no necesitamos leer manualmente de localStorage
-          const storedLanguageId = selectedLanguageId;
-          const storedRegionId = selectedRegionId;
+          const storedLanguageId = selectedLanguageIdRef.current;
+          const storedRegionId = selectedRegionIdRef.current;
 
           // Buscar el idioma seleccionado en los idiomas inscritos
           let selectedLanguage = null;
@@ -123,8 +137,8 @@ export function useLanguageSelection(onLanguageSelected: (lang: Language) => voi
                 }
               }
 
-              setSelectedLanguageId(selectedLanguage.id);
-              setSelectedRegionId(selectedRegion.id);
+              setSelectedLanguageIdRef.current(selectedLanguage.id);
+              setSelectedRegionIdRef.current(selectedRegion.id);
               addToast(
                 "success",
                 `Continuando con ${selectedLanguage.name} - ${selectedRegion.name}.`,
@@ -151,8 +165,8 @@ export function useLanguageSelection(onLanguageSelected: (lang: Language) => voi
             // El usuario tiene idioma y región inscritos
             // Precargar sin mostrar el panel
             const firstRegion = enrolledRegionsResponse.data.data[0].region;
-            setSelectedLanguageId(firstLanguage.id);
-            setSelectedRegionId(firstRegion.id);
+            setSelectedLanguageIdRef.current(firstLanguage.id);
+            setSelectedRegionIdRef.current(firstRegion.id);
             addToast(
               "success",
               `Continuando con ${firstLanguage.name} - ${firstRegion.name}.`,
@@ -163,9 +177,9 @@ export function useLanguageSelection(onLanguageSelected: (lang: Language) => voi
           // Si tiene idioma pero no región, mostrar el panel de selección de región
           if (enrolledData.data.length === 1) {
             const enrolledLanguage = enrolledData.data[0].language;
-            setSelectedLanguageId(enrolledLanguage.id);
+            setSelectedLanguageIdRef.current(enrolledLanguage.id);
             // Cargar regiones para este idioma y mostrar el panel de selección
-            await loadRegions(enrolledLanguage.id);
+            await loadRegionsRef.current(enrolledLanguage.id);
             if (!active) return;
             setShowRegionSelection(true);
             setTitle("Selecciona tu región:");
@@ -199,7 +213,7 @@ export function useLanguageSelection(onLanguageSelected: (lang: Language) => voi
         if (availableData.total === 1 && availableData.data.length === 1) {
           const singleLanguage = availableData.data[0];
           setLanguages([singleLanguage]);
-          setSelectedLanguageId(singleLanguage.id);
+          setSelectedLanguageIdRef.current(singleLanguage.id);
           setSelectedLanguage(singleLanguage);
           setTotalPages(1);
           addToast(
@@ -228,7 +242,7 @@ export function useLanguageSelection(onLanguageSelected: (lang: Language) => voi
     return () => {
       active = false;
     };
-  }, [token, currentPage, selectedRegionId]);
+  }, [token, currentPage, addToast]);
 
   const handleSelect = (lang: Language) => {
     setSelectedLanguageId(lang.id);
@@ -290,6 +304,7 @@ export function useLanguageSelection(onLanguageSelected: (lang: Language) => voi
       setLoading(false);
     }
   };
+  loadRegionsRef.current = loadRegions;
 
   const enrollLanguage = async (
     selected: Language,
