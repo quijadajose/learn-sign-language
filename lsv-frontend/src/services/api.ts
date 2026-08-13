@@ -1,25 +1,85 @@
 import { BACKEND_BASE_URL } from "../config";
+import i18n, { getUiLocale } from "../i18n";
+import type {
+  CustomTrainingFilters,
+  LessonModelDto,
+  LessonModelsBundleDto,
+  PaginatedSignsDto,
+  BulkCreateSignsResultDto,
+  SaveLandmarksPayload,
+  SignDto,
+  SignRecordingDto,
+} from "../types/signRecord";
+import type { SignDetectionType } from "../utils/signDetection";
+
+let handlingTokenExpiration = false;
 
 const handleTokenExpiration = () => {
-  localStorage.removeItem("auth");
-  localStorage.removeItem("user");
-  localStorage.removeItem("selectedLanguageId");
-  const event = new CustomEvent("show-toast", {
-    detail: {
-      type: "error",
-      message: "Tu sesión ha expirado. Por favor, inicia sesión nuevamente.",
-    },
-  });
-  window.dispatchEvent(event);
+  if (handlingTokenExpiration) return;
+  handlingTokenExpiration = true;
 
-  window.location.href = "/login";
+  window.dispatchEvent(
+    new CustomEvent("show-toast", {
+      detail: {
+        type: "error",
+        message: i18n.t("api.sessionExpired"),
+      },
+    }),
+  );
+  // AuthProvider clears React + localStorage state; PrivateRoute navigates to /login.
+  window.dispatchEvent(new Event("session-expired"));
+
+  // Re-arm after sync listeners run (dedupes parallel 401s in the same burst).
+  queueMicrotask(() => {
+    handlingTokenExpiration = false;
+  });
 };
 
-export interface ApiResponse<T = any> {
+/**
+ * Default payload for untyped ApiService calls.
+ * Prefer specifying an explicit generic at the call site when possible.
+ */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type UntypedApiPayload = any;
+
+export interface ApiResponse<T = UntypedApiPayload> {
   data?: T;
   message?: string;
   success: boolean;
   status?: number;
+}
+
+/**
+ * Desenvuelve el envelope típico del backend Nest:
+ * `ApiResponse.data` puede ser `T` o `{ data: T, ... }`.
+ */
+export function unwrapApiData<T = unknown>(responseData: unknown): T {
+  if (
+    responseData &&
+    typeof responseData === "object" &&
+    "data" in responseData &&
+    (responseData as { data: unknown }).data !== undefined &&
+    (responseData as { data: unknown }).data !== null
+  ) {
+    return (responseData as { data: T }).data;
+  }
+  return responseData as T;
+}
+
+/** Como unwrapApiData, pero siempre devuelve un array (`data` o `items`). */
+export function unwrapApiList<T = unknown>(responseData: unknown): T[] {
+  if (Array.isArray(responseData)) return responseData as T[];
+
+  const value = unwrapApiData<unknown>(responseData);
+  if (Array.isArray(value)) return value as T[];
+
+  if (value && typeof value === "object") {
+    const obj = value as { data?: unknown; items?: unknown };
+    if (Array.isArray(obj.data)) return obj.data as T[];
+    if (Array.isArray(obj.items)) return obj.items as T[];
+  }
+
+  return [];
 }
 
 export interface ApiError {
@@ -48,12 +108,24 @@ export class ApiService {
     return token ? { Authorization: `Bearer ${token}` } : {};
   }
 
+  private static getLocaleHeaders(): Record<string, string> {
+    return { "Accept-Language": getUiLocale() };
+  }
+
+  /** Mutating methods default to no retries to avoid duplicate side effects on timeout. */
+  private static retriesForMethod(method: string, override?: number): number {
+    if (override !== undefined) return override;
+    const upper = method.toUpperCase();
+    if (upper === "GET" || upper === "HEAD") return this.defaultRetries;
+    return 0;
+  }
+
   private static async handleResponse<T>(
     response: Response,
   ): Promise<ApiResponse<T>> {
     try {
       const contentType = response.headers.get("content-type");
-      let data: any;
+      let data: unknown;
 
       if (contentType && contentType.includes("application/json")) {
         data = await response.json();
@@ -61,58 +133,75 @@ export class ApiService {
         data = await response.text();
       }
 
+      const dataMessage =
+        data &&
+        typeof data === "object" &&
+        "message" in data
+          ? (data as { message: unknown }).message
+          : undefined;
+
       if (response.ok) {
         return {
-          data,
-          message: data?.message || "Operación exitosa",
+          data: data as T,
+          message:
+            typeof dataMessage === "string"
+              ? dataMessage
+              : i18n.t("api.success"),
           success: true,
           status: response.status,
         };
       } else {
-        if (response.status === 401) {
+        // Solo expirar sesión si había token; un 401 de login no debe forzar redirect.
+        if (response.status === 401 && localStorage.getItem("auth")) {
           handleTokenExpiration();
           return {
-            message:
-              "Tu sesión ha expirado. Por favor, inicia sesión nuevamente.",
+            message: i18n.t("api.sessionExpired"),
             success: false,
             status: response.status,
           };
         }
 
+        let errorMessage: unknown =
+          dataMessage ?? data ?? i18n.t("api.requestFailed");
+        if (Array.isArray(errorMessage)) {
+          errorMessage = errorMessage[0]; // Take the first error string if it's an array
+        } else if (typeof errorMessage === "object" && errorMessage !== null) {
+          errorMessage = JSON.stringify(errorMessage);
+        }
+
         return {
-          message:
-            data?.message ||
-            data ||
-            "Ha ocurrido un error al procesar tu solicitud",
+          message: String(errorMessage),
           success: false,
           status: response.status,
         };
       }
     } catch (error) {
       return {
-        message: "Ha ocurrido un error inesperado",
+        message: i18n.t("api.unexpected"),
         success: false,
         status: response.status,
       };
     }
   }
 
-  private static async makeRequest<T = any>(
+  private static async makeRequest<T = UntypedApiPayload>(
     endpoint: string,
     method: string,
-    body?: any,
+    body?: unknown,
     config: RequestConfig = {},
   ): Promise<ApiResponse<T>> {
     const {
       headers = {},
       timeout = this.defaultTimeout,
-      retries = this.defaultRetries,
+      retries,
     } = config;
+    const maxRetries = this.retriesForMethod(method, retries);
 
     const url = `${this.baseURL}${endpoint}`;
-    const requestHeaders = {
+    const requestHeaders: Record<string, string> = {
       "Content-Type": "application/json",
       ...this.getAuthHeaders(),
+      ...this.getLocaleHeaders(),
       ...headers,
     };
 
@@ -125,10 +214,10 @@ export class ApiService {
       requestConfig.body = JSON.stringify(body);
     } else if (body instanceof FormData) {
       requestConfig.body = body;
-      delete (requestHeaders as any)["Content-Type"];
+      delete requestHeaders["Content-Type"];
     }
 
-    for (let attempt = 0; attempt <= retries; attempt++) {
+    for (let attempt = 0; attempt <= maxRetries; attempt++) {
       try {
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), timeout);
@@ -141,7 +230,7 @@ export class ApiService {
         clearTimeout(timeoutId);
         return await this.handleResponse<T>(response);
       } catch (error) {
-        if (attempt === retries) {
+        if (attempt === maxRetries) {
           if (error instanceof Error && error.name === "AbortError") {
             return {
               message: "La petición ha excedido el tiempo límite",
@@ -150,6 +239,13 @@ export class ApiService {
           }
           return {
             message: "Error de conexión",
+            success: false,
+          };
+        }
+        // Do not retry aborts/timeouts — the server may have already committed.
+        if (error instanceof Error && error.name === "AbortError") {
+          return {
+            message: "La petición ha excedido el tiempo límite",
             success: false,
           };
         }
@@ -165,48 +261,48 @@ export class ApiService {
     };
   }
 
-  static async get<T = any>(
+  static async get<T = UntypedApiPayload>(
     endpoint: string,
     config: RequestConfig = {},
   ): Promise<ApiResponse<T>> {
     return this.makeRequest<T>(endpoint, "GET", undefined, config);
   }
 
-  static async post<T = any>(
+  static async post<T = UntypedApiPayload>(
     endpoint: string,
-    body?: any,
+    body?: unknown,
     config: RequestConfig = {},
   ): Promise<ApiResponse<T>> {
     return this.makeRequest<T>(endpoint, "POST", body, config);
   }
 
-  static async put<T = any>(
+  static async put<T = UntypedApiPayload>(
     endpoint: string,
-    body?: any,
+    body?: unknown,
     config: RequestConfig = {},
   ): Promise<ApiResponse<T>> {
     return this.makeRequest<T>(endpoint, "PUT", body, config);
   }
 
-  static async patch<T = any>(
+  static async patch<T = UntypedApiPayload>(
     endpoint: string,
-    body?: any,
+    body?: unknown,
     config: RequestConfig = {},
   ): Promise<ApiResponse<T>> {
     return this.makeRequest<T>(endpoint, "PATCH", body, config);
   }
 
-  static async delete<T = any>(
+  static async delete<T = UntypedApiPayload>(
     endpoint: string,
     config: RequestConfig = {},
   ): Promise<ApiResponse<T>> {
     return this.makeRequest<T>(endpoint, "DELETE", undefined, config);
   }
 
-  static async upload<T = any>(
+  static async upload<T = UntypedApiPayload>(
     endpoint: string,
     file: File,
-    additionalData: Record<string, any> = {},
+    additionalData: Record<string, string | Blob> = {},
     config: UploadConfig = {},
   ): Promise<ApiResponse<T>> {
     const formData = new FormData();
@@ -217,6 +313,7 @@ export class ApiService {
     });
 
     const { onProgress, ...requestConfig } = config;
+    void onProgress;
 
     return this.makeRequest<T>(endpoint, "POST", formData, {
       ...requestConfig,
@@ -226,11 +323,14 @@ export class ApiService {
     });
   }
 
-  static buildUrl(endpoint: string, params: Record<string, any> = {}): string {
+  static buildUrl(
+    endpoint: string,
+    params: object = {},
+  ): string {
     const searchParams = new URLSearchParams();
-    Object.entries(params).forEach(([key, value]) => {
+    Object.entries(params as Record<string, unknown>).forEach(([key, value]) => {
       if (value !== undefined && value !== null) {
-        searchParams.append(key, value.toString());
+        searchParams.append(key, String(value));
       }
     });
 
@@ -247,9 +347,18 @@ export const authApi = {
     ApiService.post("/auth/password/reset/confirm", { newPassword, token }),
 
   login: (email: string, password: string) =>
-    ApiService.post("/auth/login", { email, password }),
+    ApiService.post<{ data: { user: import("../types/user").UserData; token: string } }>(
+      "/auth/login",
+      { email, password },
+    ),
 
-  register: (userData: any) => ApiService.post("/auth/register", userData),
+  exchangeGoogleCode: (code: string) =>
+    ApiService.post<{ data: { token: string } }>("/auth/google/exchange", {
+      code,
+    }),
+
+  register: (userData: Record<string, unknown>) =>
+    ApiService.post("/auth/register", userData),
 };
 
 export const userApi = {
@@ -257,24 +366,24 @@ export const userApi = {
 
   getMe: () => ApiService.get("/users/me"),
 
-  updateProfile: (userData: any) => ApiService.put("/user/profile", userData),
+  updateProfile: (userData: unknown) =>
+    ApiService.put("/user/profile", userData),
 
-  updateMe: (userData: any) => ApiService.put("/users/me", userData),
+  updateMe: (userData: unknown) => ApiService.put("/users/me", userData),
 
-  changePassword: (passwordData: any) =>
+  changePassword: (passwordData: unknown) =>
     ApiService.put("/user/change-password", passwordData),
 
   uploadUserImage: (file: File, userId: string) =>
     ApiService.upload("/images/upload/user", file, {
       id: userId,
-      format: "png",
     }),
 };
 
 export const lessonApi = {
-  getLessons: () => ApiService.get("/lessons"),
+  getLessons: () => ApiService.get("/lesson"),
 
-  getLesson: (id: string) => ApiService.get(`/lessons/${id}`),
+  getLesson: (id: string) => ApiService.get(`/lesson/${id}`),
 
   getUserLesson: (lessonId: string) =>
     ApiService.get(`/users/lesson/${lessonId}`),
@@ -288,11 +397,18 @@ export const lessonApi = {
       isComplete,
     }),
 
-  updateProgress: (lessonId: string, progress: any) =>
-    ApiService.put(`/lessons/${lessonId}/progress`, progress),
+  updateProgress: (lessonId: string, progress: unknown) =>
+    ApiService.put(`/lesson/${lessonId}/progress`, progress),
 
-  getStagesProgress: (languageId: string) =>
-    ApiService.get(`/users/stages-progress/${languageId}`),
+  getStagesProgress: (languageId: string) => {
+    const url = ApiService.buildUrl(`/users/stages-progress/${languageId}`, {
+      page: "1",
+      limit: "100",
+      orderBy: "name",
+      sortOrder: "ASC",
+    });
+    return ApiService.get(url);
+  },
 
   getLessonsWithSubmissions: (
     languageId: string,
@@ -358,18 +474,22 @@ export const quizApi = {
 
   getQuizForAdmin: (quizId: string) => ApiService.get(`/quiz/admin/${quizId}`),
 
-  submitQuiz: (quizId: string, answers: any[]) =>
+  submitQuiz: (quizId: string, answers: unknown[]) =>
     ApiService.post(`/quiz/${quizId}/submissions`, { answers }),
 
-  createQuiz: (quizData: any) => ApiService.post("/quiz", quizData),
+  createQuiz: (quizData: unknown) => ApiService.post("/quiz", quizData),
 
-  updateQuiz: (quizId: string, quizData: any) =>
+  updateQuiz: (quizId: string, quizData: unknown) =>
     ApiService.put(`/quiz/${quizId}`, quizData),
 
   deleteQuiz: (quizId: string) => ApiService.delete(`/quiz/${quizId}`),
 
-  uploadQuizImage: (file: File, id: string, format: string = "png") =>
-    ApiService.upload("/images/upload/quiz", file, { id, format }),
+  uploadQuizImage: (file: File, id: string, format?: string) =>
+    ApiService.upload(
+      "/images/upload/quiz",
+      file,
+      format ? { id, format } : { id },
+    ),
 };
 
 export const adminApi = {
@@ -382,30 +502,23 @@ export const adminApi = {
   getLanguage: (languageId: string) =>
     ApiService.get(`/languages/${languageId}`),
 
-  createLanguage: (languageData: any) =>
+  createLanguage: (languageData: unknown) =>
     ApiService.post("/languages", languageData),
 
-  updateLanguage: (languageId: string, languageData: any) =>
+  updateLanguage: (languageId: string, languageData: unknown) =>
     ApiService.put(`/languages/${languageId}`, languageData),
 
   deleteLanguage: (languageId: string) =>
     ApiService.delete(`/languages/${languageId}`),
 
   uploadLanguageImage: (file: File, languageId: string) => {
-    const fileExtension = file.name.split(".").pop()?.toLowerCase();
-    const validFormats = ["png", "jpeg", "jpg", "webp"];
-    const format = validFormats.includes(fileExtension || "")
-      ? fileExtension!
-      : "png";
-
     return ApiService.upload("/images/upload/languages", file, {
       id: languageId,
-      format: format,
     });
   },
 
-  uploadLessonImage: (file: File) =>
-    ApiService.upload("/images/upload/lesson", file),
+  uploadLessonImage: (file: File, id: string) =>
+    ApiService.upload("/images/upload/lesson", file, { id }),
 
   getLessonsByLanguage: (
     languageId: string,
@@ -413,7 +526,12 @@ export const adminApi = {
     limit: number = 100,
     stageId?: string,
   ) => {
-    const params: any = { page, limit, orderBy: "name", sortOrder: "ASC" };
+    const params: Record<string, string | number> = {
+      page,
+      limit,
+      orderBy: "name",
+      sortOrder: "ASC",
+    };
     if (stageId) {
       params.stageId = stageId;
     }
@@ -426,9 +544,10 @@ export const adminApi = {
 
   getLesson: (lessonId: string) => ApiService.get(`/lesson/${lessonId}`),
 
-  createLesson: (lessonData: any) => ApiService.post("/lesson", lessonData),
+  createLesson: (lessonData: unknown) =>
+    ApiService.post("/lesson", lessonData),
 
-  updateLesson: (lessonId: string, lessonData: any) =>
+  updateLesson: (lessonId: string, lessonData: unknown) =>
     ApiService.put(`/lesson/${lessonId}`, lessonData),
 
   deleteLesson: (lessonId: string) => ApiService.delete(`/lesson/${lessonId}`),
@@ -460,9 +579,9 @@ export const stageApi = {
     return ApiService.get(url);
   },
 
-  createStage: (stageData: any) => ApiService.post("/stage", stageData),
+  createStage: (stageData: unknown) => ApiService.post("/stage", stageData),
 
-  updateStage: (stageId: string, stageData: any) => {
+  updateStage: (stageId: string, stageData: unknown) => {
     return ApiService.put(`/stage/${stageId}`, stageData);
   },
 
@@ -492,7 +611,7 @@ export const languageApi = {
     limit: number = 100,
     languageId?: string,
   ) => {
-    const params: any = {
+    const params: Record<string, string | number> = {
       page,
       limit,
       orderBy: "createdAt",
@@ -517,7 +636,12 @@ export const languageApi = {
 
 export const regionApi = {
   getRegions: (page: number = 1, limit: number = 100, languageId?: string) => {
-    const params: any = { page, limit, orderBy: "name", sortOrder: "ASC" };
+    const params: Record<string, string | number> = {
+      page,
+      limit,
+      orderBy: "name",
+      sortOrder: "ASC",
+    };
     if (languageId) {
       params.languageId = languageId;
     }
@@ -527,9 +651,10 @@ export const regionApi = {
 
   getRegion: (regionId: string) => ApiService.get(`/region/${regionId}`),
 
-  createRegion: (regionData: any) => ApiService.post("/region", regionData),
+  createRegion: (regionData: unknown) =>
+    ApiService.post("/region", regionData),
 
-  updateRegion: (regionId: string, regionData: any) =>
+  updateRegion: (regionId: string, regionData: unknown) =>
     ApiService.put(`/region/${regionId}`, regionData),
 
   deleteRegion: (regionId: string) => ApiService.delete(`/region/${regionId}`),
@@ -542,13 +667,13 @@ export const lessonVariantApi = {
   getLessonVariant: (lessonId: string, variantId: string) =>
     ApiService.get(`/lesson/${lessonId}/variants/${variantId}`),
 
-  createLessonVariant: (lessonId: string, variantData: any) =>
+  createLessonVariant: (lessonId: string, variantData: unknown) =>
     ApiService.post(`/lesson/${lessonId}/variants`, variantData),
 
   updateLessonVariant: (
     lessonId: string,
     variantId: string,
-    variantData: any,
+    variantData: unknown,
   ) => ApiService.put(`/lesson/${lessonId}/variants/${variantId}`, variantData),
 
   deleteLessonVariant: (lessonId: string, variantId: string) =>
@@ -646,6 +771,93 @@ export const moderatorApi = {
 
   revokePermission: (permissionId: string) =>
     ApiService.delete(`/admin/moderators/${permissionId}`),
+};
+
+export const signRecordApi = {
+  saveLandmarks: (data: SaveLandmarksPayload) =>
+    ApiService.post<{ id: string }>("/sign-record/landmarks", data),
+
+  triggerCustomTraining: (filters: CustomTrainingFilters) =>
+    ApiService.post<{
+      jobId?: string;
+      jobs?: Array<{ jobId?: string; modelType?: SignDetectionType }>;
+      message?: string;
+    }>("/sign-record/train/custom", filters),
+
+  getLessonSigns: (lessonId: string, regionId?: string) => {
+    const url = ApiService.buildUrl(`/sign-record/lesson/${lessonId}/signs`, {
+      ...(regionId && regionId !== "global" ? { regionId } : {}),
+    });
+    return ApiService.get<PaginatedSignsDto | SignDto[]>(url);
+  },
+
+  getGlobalSigns: (regionId?: string) => {
+    const url = ApiService.buildUrl(`/sign-record/global`, {
+      ...(regionId && regionId !== "global" ? { regionId } : {}),
+    });
+    return ApiService.get<SignDto[]>(url);
+  },
+
+  getSignRecordings: (signId: string, regionId?: string) => {
+    const url = ApiService.buildUrl(`/sign-record/sign/${signId}/recordings`, {
+      ...(regionId && regionId !== "global" ? { regionId } : {}),
+    });
+    return ApiService.get<SignRecordingDto[]>(url);
+  },
+
+  deleteRecording: (id: string) =>
+    ApiService.delete<void>(`/sign-record/recording/${id}`),
+
+  createSign: (
+    name: string,
+    languageId: string,
+    lessonId?: string,
+    isGlobal: boolean = false,
+    detectionType: SignDetectionType = "static",
+  ) =>
+    ApiService.post<SignDto>("/sign-record/sign", {
+      name,
+      languageId,
+      lessonId,
+      isGlobal,
+      detectionType,
+    }),
+
+  createSignsBulk: (
+    languageId: string,
+    lessonId: string,
+    signs: { name: string; detectionType?: SignDetectionType }[],
+  ) =>
+    ApiService.post<BulkCreateSignsResultDto>("/sign-record/signs", {
+      languageId,
+      lessonId,
+      signs,
+    }),
+
+  updateSign: (
+    id: string,
+    name: string,
+    detectionType?: SignDetectionType,
+  ) =>
+    ApiService.patch<SignDto>(`/sign-record/sign/${id}`, {
+      name,
+      detectionType,
+    }),
+
+  deleteSign: (id: string) =>
+    ApiService.delete<void>(`/sign-record/sign/${id}`),
+
+  getLessonModel: (lessonId: string, regionId?: string) => {
+    const url = ApiService.buildUrl(`/sign-record/lesson/${lessonId}/model`, {
+      ...(regionId && regionId !== "global" ? { regionId } : {}),
+    });
+    return ApiService.get<LessonModelsBundleDto>(url);
+  },
+
+  getModels: () => ApiService.get<LessonModelDto[]>(`/sign-record/models`),
+
+  deleteModel: (id: string) =>
+    ApiService.delete<void>(`/sign-record/model/${id}`),
 };
 
 export default ApiService;

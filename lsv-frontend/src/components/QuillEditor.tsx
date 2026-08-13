@@ -1,11 +1,20 @@
-import { useRef, useEffect, forwardRef, useImperativeHandle } from "react";
-import ReactQuill from "react-quill-new";
+import {
+  useRef,
+  forwardRef,
+  useImperativeHandle,
+  useMemo,
+  useCallback,
+} from "react";
+import ReactQuill, { Quill } from "react-quill-new";
+import type { QuillOptions } from "quill";
 import "react-quill-new/dist/quill.snow.css";
+import "../styles/quill-flowbite.css";
+import { sanitizeLessonHtml } from "../utils/sanitizeHtml";
 
 interface QuillEditorProps {
   value: string;
   onChange?: (value: string) => void;
-  modules?: any;
+  modules?: QuillOptions["modules"];
   formats?: string[];
   theme?: string;
   placeholder?: string;
@@ -14,9 +23,16 @@ interface QuillEditorProps {
 }
 
 export interface QuillEditorRef {
-  getEditor: () => any;
+  getEditor: () => Quill | undefined;
 }
 
+/**
+ * Quill's HTML (esp. getSemanticHTML) is not byte-identical to DOMPurify output.
+ * Feeding sanitized HTML back as a controlled `value` makes react-quill call
+ * setContents → onChange → setState → setContents in a loop ("Maximum update
+ * depth exceeded"). Keep Quill's last HTML when it sanitizes to the same string
+ * as the parent value, and only propagate user-originated edits.
+ */
 const QuillEditor = forwardRef<QuillEditorRef, QuillEditorProps>(
   (
     {
@@ -32,57 +48,46 @@ const QuillEditor = forwardRef<QuillEditorRef, QuillEditorProps>(
     ref,
   ) => {
     const quillRef = useRef<ReactQuill>(null);
+    const lastQuillHtmlRef = useRef<string | null>(null);
 
     useImperativeHandle(ref, () => ({
       getEditor: () => quillRef.current?.getEditor(),
     }));
 
-    useEffect(() => {
-      // Silenciar warnings y Errores relacionados con findDOMNode y MutationEvent
-      const originalConsoleWarn = console.warn;
-      const originalConsoleError = console.error;
+    const safeValue = useMemo(() => sanitizeLessonHtml(value), [value]);
 
-      console.warn = (...args) => {
-        const message = args[0];
-        if (
-          typeof message === "string" &&
-          (message.includes("findDOMNode") ||
-            message.includes("DOMNodeInserted") ||
-            message.includes("MutationEvent"))
-        ) {
-          return;
-        }
-        originalConsoleWarn.apply(console, args);
-      };
-      if (import.meta.env.DEV) {
-        console.error = (...args) => {
-          const message = args[0];
-          if (
-            typeof message === "string" &&
-            (message.includes("findDOMNode") ||
-              message.includes("DOMNodeInserted") ||
-              message.includes("MutationEvent"))
-          ) {
-            return;
-          }
-          originalConsoleError.apply(console, args);
-        };
+    const editorValue = useMemo(() => {
+      const last = lastQuillHtmlRef.current;
+      if (last !== null && sanitizeLessonHtml(last) === safeValue) {
+        return last;
       }
+      return safeValue;
+    }, [safeValue]);
 
-      return () => {
-        console.warn = originalConsoleWarn;
-        console.error = originalConsoleError;
-      };
-    }, []);
+    const handleChange = useCallback(
+      (next: string, _delta: unknown, source: string) => {
+        lastQuillHtmlRef.current = next;
+        // Ignore programmatic setContents from react-quill's controlled updates.
+        if (source !== "user") return;
+        const sanitized = sanitizeLessonHtml(next);
+        if (sanitized === value) return;
+        onChange?.(sanitized);
+      },
+      [onChange, value],
+    );
 
     return (
       <div
-        className={`quill-flowbite rounded-md bg-gray-50 dark:bg-gray-700 ${className}`}
+        className={
+          className.includes("quill-seamless")
+            ? `quill-flowbite ${className}`
+            : `quill-flowbite rounded-md bg-gray-50 dark:bg-gray-700 ${className}`
+        }
       >
         <ReactQuill
           ref={quillRef}
-          value={value}
-          onChange={onChange}
+          value={editorValue}
+          onChange={readOnly ? undefined : handleChange}
           modules={modules}
           formats={formats}
           theme={theme}

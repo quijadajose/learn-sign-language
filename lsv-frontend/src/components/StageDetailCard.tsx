@@ -21,7 +21,7 @@ function ProgressRing({ progress }: { progress: number }) {
   const offset = circumference - (progress / 100) * circumference;
 
   return (
-    <div className="relative flex h-16 w-16 items-center justify-center">
+    <div className="relative flex size-16 items-center justify-center">
       <svg className="absolute -rotate-90" width="64" height="64">
         <circle
           cx="32"
@@ -68,10 +68,16 @@ export default function StageDetailCard({ stage }: Props) {
     `selectedStageId_${selectedLanguageId}`,
     null,
   );
+  const [, setExplicitStageSelection] = useLocalStorage(
+    `selectedStageExplicit_${selectedLanguageId}`,
+    false,
+  );
 
   const handleViewLessons = () => {
+    if (parseInt(stage.totalLessons || "0", 10) <= 0) return;
     if (selectedLanguageId) {
       setPersistedStageId(stage.id);
+      setExplicitStageSelection(true);
     }
     navigate(`/lessons/stage/${stage.id}`, {
       state: {
@@ -82,29 +88,36 @@ export default function StageDetailCard({ stage }: Props) {
   };
 
   const progressPercent = parseFloat(stage.progress || "0");
+  const hasLessons = parseInt(stage.totalLessons || "0", 10) > 0;
 
   return (
     <div className="relative z-0 mb-10 overflow-hidden rounded-3xl border border-gray-200/50 bg-white/70 p-8 shadow-2xl backdrop-blur-md dark:border-gray-700/60 dark:bg-gray-800/90">
       {/* Visual Decorations */}
       <div className="pointer-events-none absolute inset-0 overflow-hidden rounded-3xl">
-        <div className="absolute -right-20 -top-20 h-64 w-64 rounded-full bg-indigo-500/10 blur-3xl" />
-        <div className="absolute -bottom-20 -left-20 h-64 w-64 rounded-full bg-purple-500/10 blur-3xl" />
+        <div className="absolute -right-20 -top-20 size-64 rounded-full bg-indigo-500/10 blur-3xl" />
+        <div className="absolute -bottom-20 -left-20 size-64 rounded-full bg-purple-500/10 blur-3xl" />
         <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/5 via-transparent to-purple-500/5 dark:from-indigo-900/10 dark:to-purple-900/10" />
       </div>
 
       <div className="relative flex flex-col gap-8 md:flex-row md:items-center">
         {/* Progress Visual */}
-        <div className="flex flex-shrink-0 items-center justify-center">
+        <div className="flex shrink-0 items-center justify-center">
           <ProgressRing progress={progressPercent} />
         </div>
 
         {/* Content */}
         <div className="flex-1">
           <div className="mb-2 flex items-center gap-3">
-            <span className="flex items-center gap-1 rounded-full bg-indigo-500/10 px-3 py-1 text-[10px] font-black uppercase tracking-wider text-indigo-600 dark:bg-indigo-500/20 dark:text-indigo-300">
-              <HiLightningBolt className="h-3 w-3" />
-              Continuar Aprendiendo
-            </span>
+            {hasLessons ? (
+              <span className="flex items-center gap-1 rounded-full bg-indigo-500/10 px-3 py-1 text-[10px] font-black uppercase tracking-wider text-indigo-600 dark:bg-indigo-500/20 dark:text-indigo-300">
+                <HiLightningBolt className="size-3" />
+                Continuar Aprendiendo
+              </span>
+            ) : (
+              <span className="rounded-full bg-amber-500/10 px-3 py-1 text-[10px] font-black uppercase tracking-wider text-amber-600 dark:bg-amber-500/15 dark:text-amber-400">
+                Próximamente
+              </span>
+            )}
           </div>
           <h2 className="mb-2 text-3xl font-black tracking-tight text-gray-900 dark:text-white md:text-4xl">
             {stage.name}
@@ -137,7 +150,7 @@ export default function StageDetailCard({ stage }: Props) {
               </div>
               <div className="h-2 w-full overflow-hidden rounded-full bg-gray-100 dark:bg-gray-700">
                 <div
-                  className="h-full rounded-full bg-gradient-to-r from-indigo-500 to-purple-500 shadow-[0_0_10px_rgba(99,102,241,0.3)] transition-all duration-1000 ease-out"
+                  className="h-full rounded-full bg-gradient-to-r from-indigo-500 to-purple-500 shadow-[0_0_10px_rgba(99,102,241,0.3)] transition-[width] duration-1000 ease-out"
                   style={{ width: `${progressPercent}%` }}
                 />
               </div>
@@ -146,14 +159,26 @@ export default function StageDetailCard({ stage }: Props) {
         </div>
 
         {/* Action Button */}
-        <div className="flex flex-shrink-0 flex-col gap-3">
-          <button
-            onClick={handleViewLessons}
-            className="group flex items-center justify-center gap-3 rounded-2xl bg-indigo-600 px-8 py-4 text-sm font-bold text-white shadow-lg transition-all hover:bg-indigo-500 hover:shadow-indigo-500/40 active:scale-[0.98]"
-          >
-            <HiBookOpen className="h-5 w-5 transition-transform group-hover:rotate-12" />
-            Ver Lecciones
-          </button>
+        <div className="flex shrink-0 flex-col gap-3">
+          {hasLessons ? (
+            <button
+              type="button"
+              onClick={handleViewLessons}
+              className="group flex items-center justify-center gap-3 rounded-2xl bg-indigo-600 px-8 py-4 text-sm font-bold text-white shadow-lg transition-[background-color,box-shadow,transform] hover:bg-indigo-500 hover:shadow-indigo-500/40 active:scale-[0.98]"
+            >
+              <HiBookOpen className="size-5 transition-transform group-hover:rotate-12" />
+              Ver Lecciones
+            </button>
+          ) : (
+            <div className="flex cursor-not-allowed flex-col items-center gap-1 rounded-2xl border border-dashed border-gray-300 bg-gray-50 px-8 py-4 text-center dark:border-gray-600 dark:bg-gray-700/40">
+              <span className="text-sm font-bold text-gray-500 dark:text-gray-300">
+                Próximamente
+              </span>
+              <span className="text-xs text-gray-400 dark:text-gray-500">
+                Sin lecciones aún
+              </span>
+            </div>
+          )}
         </div>
       </div>
     </div>

@@ -1,0 +1,53 @@
+{
+  "nav": {
+    "about": "About",
+    "features": "Features",
+    "collaborate": "Collaborate",
+    "login": "Sign in",
+    "register": "Sign up"
+  },
+  "hero": {
+    "title": "Learn Sign Language",
+    "subtitle": "The platform lets you learn sign languages from many countries. Have fun, practice, and communicate with the Deaf community.",
+    "ctaStart": "Get started",
+    "ctaAccount": "I already have an account",
+    "mockupAlt": "mockup"
+  },
+  "features": {
+    "title": "Why our platform?",
+    "subtitle": "We offer a complete experience to learn and practice different sign languages with ease.",
+    "easySignup": {
+      "title": "Easy signup",
+      "body": "Sign up and access all content. Track your progress across different levels."
+    },
+    "multilang": {
+      "title": "Multilingual",
+      "body": "Access sign language lessons from different countries and regions."
+    },
+    "interactive": {
+      "title": "Interactive material",
+      "body": "Learn with videos, practical exercises, and assessments that help you consolidate knowledge."
+    },
+    "evaluation": {
+      "title": "Continuous assessment"
+    },
+    "ranking": {
+      "title": "Ranking and motivation",
+      "body": "Compete friendly with other users, climb the ranking, and stay motivated to keep learning."
+    }
+  },
+  "collaborate": {
+    "title": "Want to add a new language?",
+    "body": "Our platform is growing. If you represent a school, association, or are an expert who wants to upload sign language lessons from your country, we want to collaborate with you!",
+    "email": "Contact by email",
+    "issues": "View issues board"
+  },
+  "footer": {
+    "brand": "Sign Language Platform",
+    "collaborate": "Collaborate",
+    "status": "System status",
+    "privacy": "Privacy Policy",
+    "terms": "Terms of Service",
+    "logoAlt": "Platform logo"
+  }
+}

@@ -1,6 +1,5 @@
 import {
   Navbar,
-  NavbarBrand,
   DarkThemeToggle,
   Footer,
   FooterBrand,
@@ -15,18 +14,16 @@ export default function TermsOfService() {
         fluid
         className="fixed left-0 top-0 z-50 w-full border-b border-gray-200 bg-white/90 shadow-sm backdrop-blur-md dark:border-gray-800 dark:bg-gray-900/90"
       >
-        <NavbarBrand>
-          <Link to="/" className="flex items-center">
-            <img
-              src="/logo.svg"
-              className="mr-3 h-8 dark:invert sm:h-10"
-              alt="Plataforma Logo"
-            />
-            <span className="self-center whitespace-nowrap text-xl font-semibold dark:text-white">
-              Aprende lenguaje de señas
-            </span>
-          </Link>
-        </NavbarBrand>
+        <Link to="/" className="flex items-center">
+          <img
+            src="/logo.svg"
+            className="mr-3 h-8 dark:invert sm:h-10"
+            alt="Plataforma Logo"
+          />
+          <span className="self-center whitespace-nowrap text-xl font-semibold dark:text-white">
+            Aprende lenguaje de señas
+          </span>
+        </Link>
         <div className="flex items-center gap-2 md:order-2">
           <Button color="blue" size="sm" as={Link} to="/">
             Volver al inicio
@@ -35,7 +32,7 @@ export default function TermsOfService() {
         </div>
       </Navbar>
 
-      <main className="mx-auto max-w-4xl flex-grow px-4 pb-16 pt-32 lg:px-6">
+      <main className="mx-auto max-w-4xl grow px-4 pb-16 pt-32 lg:px-6">
         <h1 className="mb-8 text-3xl font-extrabold text-gray-900 dark:text-white md:text-4xl">
           Condiciones del Servicio
         </h1>

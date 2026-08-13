@@ -33,13 +33,15 @@ export interface ModeratorPermission {
   createdAt: string;
 }
 
+export type UserRole = "admin" | "moderator" | "user";
+
 export interface UserData {
   id: string;
   email: string;
   firstName: string;
   lastName: string;
   photo?: string;
-  role?: string;
+  role?: UserRole | string;
   age?: number;
   isRightHanded?: boolean;
   createdAt?: string;
