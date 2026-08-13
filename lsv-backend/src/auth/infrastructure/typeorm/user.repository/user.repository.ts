@@ -14,22 +14,24 @@ export class UserRepository implements UserRepositoryInterface {
   async findById(id: string): Promise<User | null> {
     return this.userRepository.findOne({
       where: { id },
-      relations: [
-        'moderatorPermissions',
-        'moderatorPermissions.language',
-        'moderatorPermissions.region',
-      ],
+      relations: {
+        moderatorPermissions: {
+          language: true,
+          region: true,
+        },
+      },
     });
   }
 
   async findByEmail(email: string): Promise<User | null> {
     return this.userRepository.findOne({
       where: { email },
-      relations: [
-        'moderatorPermissions',
-        'moderatorPermissions.language',
-        'moderatorPermissions.region',
-      ],
+      relations: {
+        moderatorPermissions: {
+          language: true,
+          region: true,
+        },
+      },
     });
   }
 

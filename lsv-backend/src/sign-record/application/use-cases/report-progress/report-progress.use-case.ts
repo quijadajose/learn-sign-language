@@ -21,8 +21,9 @@ export class ReportProgressUseCase {
         status: 'TRAINING',
       });
     } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
       this.logger.error(
-        `Error updating progress for model ${modelId}: ${error.message}`,
+        `Error updating progress for model ${modelId}: ${message}`,
       );
     }
 

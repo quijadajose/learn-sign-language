@@ -1,6 +1,7 @@
 import { BadRequestException, Inject, NotFoundException } from '@nestjs/common';
 import { LanguageRepositoryInterface } from 'src/language/domain/ports/language.repository.interface/language.repository.interface';
 import { CreateLanguageDto } from '../../../domain/dto/create-language/create-language';
+import { Language } from 'src/shared/domain/entities/language';
 
 export class UpdateLanguagesUseCase {
   constructor(
@@ -10,7 +11,7 @@ export class UpdateLanguagesUseCase {
   async execute(
     updateLanguageDto: CreateLanguageDto,
     id: string,
-  ): Promise<any> {
+  ): Promise<Language> {
     const { name } = updateLanguageDto;
 
     const languageToUpdate = await this.languageRepository.findById(id);
@@ -29,7 +30,7 @@ export class UpdateLanguagesUseCase {
     }
     const updatedLanguage = await this.languageRepository.update(
       id,
-      updateLanguageDto as any,
+      updateLanguageDto,
     );
     return updatedLanguage;
   }

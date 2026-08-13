@@ -1,0 +1,17 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "strictNullChecks": true,
+    "noImplicitAny": true,
+    "strictBindCallApply": true,
+    "noFallthroughCasesInSwitch": true,
+    "forceConsistentCasingInFileNames": true,
+    "incremental": false,
+    "noEmit": true
+  },
+  "include": [
+    "src/sign-record/domain/**/*.ts",
+    "src/auth/infrastructure/oauth-code.store.ts"
+  ],
+  "exclude": ["node_modules", "dist", "**/*.spec.ts"]
+}

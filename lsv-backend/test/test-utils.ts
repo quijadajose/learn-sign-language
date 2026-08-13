@@ -1,6 +1,11 @@
+import { INestApplication } from '@nestjs/common';
 import { DataSource } from 'typeorm';
 import * as bcrypt from 'bcrypt';
 import request from 'supertest';
+import {
+  FEATURES_COUNT,
+  HAND_FEATURE_START,
+} from 'src/sign-record/domain/utils/landmark-validation';
 
 /**
  * Limpia todas las tablas de la base de datos de pruebas.
@@ -40,7 +45,7 @@ export async function cleanDatabase(dataSource: DataSource) {
  * Si el usuario no existe, lo crea directamente en la DB para saltarse la restricción del controlador.
  */
 export async function getAdminToken(
-  app: any,
+  app: INestApplication,
   dataSource: DataSource,
 ): Promise<string> {
   const adminEmail = 'test-admin@example.com';
@@ -89,8 +94,8 @@ export async function getAdminToken(
  * Obtiene un token de usuario normal para los tests.
  */
 export async function getUserToken(
-  app: any,
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  app: INestApplication,
+
   _dataSource: DataSource,
 ): Promise<string> {
   const userEmail = `test-user-${Date.now()}@example.com`;
@@ -122,7 +127,7 @@ export async function getUserToken(
  * Asigna permisos de moderador a un usuario y obtiene su token.
  */
 export async function getModeratorToken(
-  app: any,
+  app: INestApplication,
   dataSource: DataSource,
   adminToken: string,
   scope: 'language' | 'region',
@@ -157,6 +162,16 @@ export async function getModeratorToken(
     })
     .expect(201);
 
+  // RolesGuard lee `role` del JWT. Asignar el permiso no promociona al usuario;
+  // sin esto el token seguiría siendo `user` y fallaría @Roles('moderator').
+  const repo = dataSource.getRepository('User');
+  const user = await repo.findOne({ where: { id: userId } });
+  if (!user) {
+    throw new Error(`Moderator user ${userId} not found after assign`);
+  }
+  user['role'] = 'moderator';
+  await repo.save(user);
+
   // 3. Login
   const response = await request(app.getHttpServer())
     .post('/auth/login')
@@ -164,4 +179,98 @@ export async function getModeratorToken(
     .expect(200);
 
   return response.body.data.token;
+}
+
+/** Frames MediaPipe válidos (258 features) con mano activa para pasar validación. */
+export function validLandmarkFrames(frameCount = 2): number[][] {
+  return Array.from({ length: frameCount }, () => {
+    const flat = Array<number>(FEATURES_COUNT).fill(0);
+    for (let i = HAND_FEATURE_START; i < FEATURES_COUNT; i += 1) {
+      flat[i] = 1;
+    }
+    return flat;
+  });
+}
+
+export type LanguageCurriculum = {
+  languageId: string;
+  regionId: string;
+  stageId: string;
+  lessonId: string;
+  lessonVariantId: string;
+};
+
+/** Language → region → stage → lesson → variant, listo para sign-record / train. */
+export async function createLanguageCurriculum(
+  app: INestApplication,
+  adminToken: string,
+  prefix: string,
+): Promise<LanguageCurriculum> {
+  const http = request(app.getHttpServer());
+  const suffix = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+  const auth = { Authorization: `Bearer ${adminToken}` };
+
+  const langRes = await http
+    .post('/languages')
+    .set(auth)
+    .send({
+      name: `${prefix} Lang ${suffix}`,
+      description: 'e2e',
+      countryCode: 'US',
+    })
+    .expect(201);
+
+  const languageId = langRes.body.id as string;
+
+  const regionRes = await http
+    .post('/region')
+    .set(auth)
+    .send({
+      name: `${prefix} Region ${suffix}`,
+      code: `E${suffix.replace(/-/g, '').slice(-8)}`.slice(0, 10),
+      description: 'e2e',
+      languageId,
+    })
+    .expect(201);
+
+  const stageRes = await http
+    .post('/stage')
+    .set(auth)
+    .send({
+      name: `${prefix} Stage`,
+      description: 'e2e',
+      languageId,
+    })
+    .expect(201);
+
+  const lessonRes = await http
+    .post('/lesson')
+    .set(auth)
+    .send({
+      name: `${prefix} Lesson`,
+      description: 'e2e',
+      content: 'e2e',
+      languageId,
+      stageId: stageRes.body.id,
+    })
+    .expect(201);
+
+  const variantRes = await http
+    .post(`/lesson/${lessonRes.body.id}/variants`)
+    .set(auth)
+    .send({
+      name: `${prefix} Variant`,
+      description: 'e2e',
+      content: 'e2e',
+      regionId: regionRes.body.id,
+    })
+    .expect(201);
+
+  return {
+    languageId,
+    regionId: regionRes.body.id,
+    stageId: stageRes.body.id,
+    lessonId: lessonRes.body.id,
+    lessonVariantId: variantRes.body.id,
+  };
 }

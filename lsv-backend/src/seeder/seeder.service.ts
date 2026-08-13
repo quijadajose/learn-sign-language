@@ -254,7 +254,10 @@ export class SeederService implements OnModuleInit {
       await this.seedLessonVariants();
       await this.seedQuizVariants();
     } catch (error) {
-      console.error('Error en Seeder:', error?.message ?? error);
+      console.error(
+        'Error en Seeder:',
+        error instanceof Error ? error.message : error,
+      );
       throw error;
     }
   }
@@ -395,7 +398,10 @@ export class SeederService implements OnModuleInit {
       createdCountries =
         await this.countryDivisionService.createCountries(countriesToCreate);
     } catch (error) {
-      console.error('Error creando países en bulk:', error?.message ?? error);
+      console.error(
+        'Error creando países en bulk:',
+        error instanceof Error ? error.message : error,
+      );
     }
 
     let createdDivisions = [];
@@ -405,7 +411,7 @@ export class SeederService implements OnModuleInit {
     } catch (error) {
       console.error(
         'Error creando divisiones en bulk:',
-        error?.message ?? error,
+        error instanceof Error ? error.message : error,
       );
     }
 
@@ -441,7 +447,7 @@ export class SeederService implements OnModuleInit {
       } catch (error) {
         console.error(
           `Error creando lenguaje ${langData.name}:`,
-          error?.message ?? error,
+          error instanceof Error ? error.message : error,
         );
       }
     }
@@ -489,7 +495,7 @@ export class SeederService implements OnModuleInit {
         } catch (error) {
           console.error(
             `Error creando stage ${stageData.name} para ${langData.name}:`,
-            error?.message ?? error,
+            error instanceof Error ? error.message : error,
           );
         }
       }
@@ -526,7 +532,10 @@ export class SeederService implements OnModuleInit {
             `Región ${regionData.name} creada para ${langData.name}: ${region.id}`,
           );
         } catch (error) {
-          if (error.message?.includes('already exists')) {
+          if (
+            error instanceof Error &&
+            error.message?.includes('already exists')
+          ) {
             // Si la región ya existe, intentar obtenerla por código
             // Necesitamos obtener todas las regiones del lenguaje y buscar por código
             const allRegions = await this.regionService.getAllRegions(
@@ -549,7 +558,7 @@ export class SeederService implements OnModuleInit {
           } else {
             console.error(
               `Error creando región ${regionData.name} para ${langData.name}:`,
-              error?.message ?? error,
+              error instanceof Error ? error.message : error,
             );
           }
         }
@@ -619,12 +628,15 @@ export class SeederService implements OnModuleInit {
               `Lesson ${lessonData.name} creada para ${langData.name} - ${stageData.name}: ${lesson.id}`,
             );
           } catch (error) {
-            if (error.message?.includes('already in use')) {
+            if (
+              error instanceof Error &&
+              error.message?.includes('already in use')
+            ) {
               console.log(`Lesson ${lessonData.name} ya existe, saltando...`);
             } else {
               console.error(
                 `Error creando lesson ${lessonData.name} para ${langData.name} - ${stageData.name}:`,
-                error?.message ?? error,
+                error instanceof Error ? error.message : error,
               );
             }
           }
@@ -666,7 +678,7 @@ export class SeederService implements OnModuleInit {
           } catch (error) {
             console.error(
               `Error creando quiz para ${lessonData.name}:`,
-              error?.message ?? error,
+              error instanceof Error ? error.message : error,
             );
           }
         }
@@ -738,14 +750,17 @@ export class SeederService implements OnModuleInit {
               `Lesson variant base creada para ${lessonData.name} - ${defaultRegion.name}`,
             );
           } catch (error) {
-            if (error.message?.includes('Ya existe una variante base')) {
+            if (
+              error instanceof Error &&
+              error.message?.includes('Ya existe una variante base')
+            ) {
               console.log(
                 `Variante base ya existe para ${lessonData.name}, saltando...`,
               );
             } else {
               console.error(
                 `Error creando variant base para ${lessonData.name}:`,
-                error?.message ?? error,
+                error instanceof Error ? error.message : error,
               );
             }
           }
@@ -770,7 +785,7 @@ export class SeederService implements OnModuleInit {
           } catch (error) {
             console.error(
               `Error creando variant regional 1 para ${lessonData.name}:`,
-              error?.message ?? error,
+              error instanceof Error ? error.message : error,
             );
           }
 
@@ -794,7 +809,7 @@ export class SeederService implements OnModuleInit {
           } catch (error) {
             console.error(
               `Error creando variant regional 2 para ${lessonData.name}:`,
-              error?.message ?? error,
+              error instanceof Error ? error.message : error,
             );
           }
         }
@@ -852,7 +867,7 @@ export class SeederService implements OnModuleInit {
             } catch (error) {
               console.error(
                 `Error creando quiz variant para ${lessonData.name} - ${regionData.name}:`,
-                error?.message ?? error,
+                error instanceof Error ? error.message : error,
               );
             }
           }

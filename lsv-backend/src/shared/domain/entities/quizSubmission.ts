@@ -2,6 +2,7 @@ import {
   Column,
   CreateDateColumn,
   Entity,
+  Index,
   ManyToOne,
   PrimaryGeneratedColumn,
 } from 'typeorm';
@@ -10,6 +11,7 @@ import { Quiz } from './quiz';
 import { QuizVariant } from './quizVariant';
 
 @Entity()
+@Index('IDX_quiz_submission_userId_quizId', ['user', 'quiz'])
 export class QuizSubmission {
   @PrimaryGeneratedColumn('uuid')
   id: string;

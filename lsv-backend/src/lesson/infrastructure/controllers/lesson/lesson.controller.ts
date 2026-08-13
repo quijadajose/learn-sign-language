@@ -19,10 +19,11 @@ import { CreateLessonDto } from 'src/lesson/domain/dto/create-lesson/create-less
 import { LessonService } from 'src/lesson/application/services/lesson/lesson.service';
 import { Roles } from 'src/auth/infrastructure/decorators/roles.decorator';
 import { RolesGuard } from 'src/auth/infrastructure/guards/roles/roles.guard';
-import { RequireResourcePermission } from 'src/auth/infrastructure/decorators/require-resource-permission.decorator';
+import { RequireResourcePermission } from 'src/permissions/infrastructure/decorators/require-resource-permission.decorator';
 import { PermissionScope } from 'src/shared/domain/entities/moderatorPermission';
-import { ResourceAccessGuard } from 'src/auth/infrastructure/guards/resource-access/resource-access.guard';
+import { ResourceAccessGuard } from 'src/permissions/infrastructure/guards/resource-access/resource-access.guard';
 import { Lesson } from 'src/shared/domain/entities/lesson';
+import { Quiz } from 'src/shared/domain/entities/quiz';
 import { PaginatedResponseDto } from 'src/shared/domain/dto/PaginationDto';
 import { GetLessonsQueryDto } from 'src/lesson/domain/dto/get-lessons-query-dto';
 import { GetLessonsWithSubmissionsQueryDto } from 'src/lesson/domain/dto/get-lessons-with-submissions-query-dto';
@@ -162,7 +163,17 @@ export class LessonController {
   async getQuizzesByLessonId(
     @Param('id', ParseUUIDPipe) id: string,
     @Query('regionId') regionId?: string,
-  ): Promise<any> {
+  ): Promise<
+    | Quiz[]
+    | Array<{
+        id: string;
+        questions: Array<{
+          id: string;
+          text: string;
+          options: Array<{ id: string; text: string }>;
+        }>;
+      }>
+  > {
     return this.lessonAdminService.getQuizzesByLessonId(id, regionId);
   }
 

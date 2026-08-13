@@ -1,6 +1,6 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, Like, In, ILike } from 'typeorm';
+import { Repository, In, ILike } from 'typeorm';
 import { Country } from '../../domain/entities/iso-3166-2/countries';
 import { Division } from '../../domain/entities/iso-3166-2/divisions';
 import { CountryDivisionRepositoryInterface } from '../../domain/ports/country-division.repository.interface';
@@ -31,8 +31,8 @@ export class CountryDivisionRepository implements CountryDivisionRepositoryInter
     if (!countriesData || countriesData.length === 0) return [];
     const codes = countriesData.map((c) => c.code);
     const existing = await this.countryRepository.findBy({
-      code: In(codes as any),
-    } as any);
+      code: In(codes),
+    });
     const existingCodes = new Set(existing.map((e) => e.code));
     const toCreate = countriesData.filter((c) => !existingCodes.has(c.code));
     if (toCreate.length === 0) return existing;
@@ -46,7 +46,9 @@ export class CountryDivisionRepository implements CountryDivisionRepositoryInter
 
   async findAllCountries(): Promise<Country[]> {
     return await this.countryRepository.find({
-      relations: ['divisions'],
+      relations: {
+        divisions: true,
+      },
       order: { name: 'ASC' },
     });
   }
@@ -68,7 +70,9 @@ export class CountryDivisionRepository implements CountryDivisionRepositoryInter
       where: {
         name: ILike(`%${search}%`),
       },
-      relations: ['divisions'],
+      relations: {
+        divisions: true,
+      },
       order: { name: 'ASC' },
       take: 20,
     });
@@ -90,9 +94,7 @@ export class CountryDivisionRepository implements CountryDivisionRepositoryInter
   }): Promise<Division> {
     const country = await this.findCountryByCode(divisionData.countryCode);
     if (!country) {
-      throw new Error(
-        `Country with code ${divisionData.countryCode} not found`,
-      );
+      throw new NotFoundException('errors.country.notFound');
     }
 
     const division = this.divisionRepository.create({
@@ -112,8 +114,8 @@ export class CountryDivisionRepository implements CountryDivisionRepositoryInter
     if (!divisionsData || divisionsData.length === 0) return [];
     const codes = divisionsData.map((d) => d.code);
     const existing = await this.divisionRepository.findBy({
-      code: In(codes as any),
-    } as any);
+      code: In(codes),
+    });
     const existingCodes = new Set(existing.map((e) => e.code));
 
     // Load countries for mapping
@@ -121,8 +123,8 @@ export class CountryDivisionRepository implements CountryDivisionRepositoryInter
       new Set(divisionsData.map((d) => d.countryCode)),
     );
     const countries = await this.countryRepository.findBy({
-      code: In(countryCodes as any),
-    } as any);
+      code: In(countryCodes),
+    });
     const countryMap = new Map(countries.map((c) => [c.code, c]));
 
     const toCreate = divisionsData.filter(
@@ -141,21 +143,27 @@ export class CountryDivisionRepository implements CountryDivisionRepositoryInter
   async findDivisionByCode(code: string): Promise<Division | null> {
     return await this.divisionRepository.findOne({
       where: { code },
-      relations: ['country'],
+      relations: {
+        country: true,
+      },
     });
   }
 
   async findDivisionsByCountryCode(countryCode: string): Promise<Division[]> {
     return await this.divisionRepository.find({
       where: { country: { code: countryCode } },
-      relations: ['country'],
+      relations: {
+        country: true,
+      },
       order: { name: 'ASC' },
     });
   }
 
   async findAllDivisions(): Promise<Division[]> {
     return await this.divisionRepository.find({
-      relations: ['country'],
+      relations: {
+        country: true,
+      },
       order: { name: 'ASC' },
     });
   }

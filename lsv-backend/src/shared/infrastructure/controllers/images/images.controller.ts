@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   Body,
   Controller,
   Get,
@@ -9,6 +10,7 @@ import {
   Res,
   StreamableFile,
   UploadedFile,
+  UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
 import { createReadStream, existsSync } from 'fs';
@@ -19,12 +21,18 @@ import type { Response } from 'express';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { UploadPictureUseCase } from 'src/shared/application/use-cases/upload-picture-use-case/upload-picture-use-case';
 import { IsString } from 'class-validator';
+import { AuthGuard } from '@nestjs/passport';
+import { RolesGuard } from 'src/auth/infrastructure/guards/roles/roles.guard';
+import { Roles } from 'src/auth/infrastructure/decorators/roles.decorator';
 import { DocGetImage, DocImages, DocUploadPicture } from './docs/images.docs';
+import { withI18nParams } from 'src/i18n';
 
 export class UploadImageDto {
   @IsString()
   id: string;
 }
+
+const ALLOWED_UPLOAD_FOLDERS = new Set(['user', 'quiz', 'languages', 'lesson']);
 
 @DocImages()
 @Controller('images')
@@ -73,8 +81,9 @@ export class ImagesController {
     return new StreamableFile(fileStream);
   }
 
-  @Public()
   @Post('upload/:folder')
+  @UseGuards(AuthGuard('jwt'), RolesGuard)
+  @Roles('admin', 'moderator')
   @UseInterceptors(FileInterceptor('file'))
   @DocUploadPicture()
   async uploadPicture(
@@ -82,6 +91,13 @@ export class ImagesController {
     @UploadedFile() file: Express.Multer.File,
     @Body() body: UploadImageDto,
   ): Promise<string[]> {
+    if (!ALLOWED_UPLOAD_FOLDERS.has(folder)) {
+      throw new BadRequestException(
+        withI18nParams('errors.image.invalidFolderAllowed', {
+          folders: [...ALLOWED_UPLOAD_FOLDERS].join(', '),
+        }),
+      );
+    }
     const { id } = body;
     return await this.uploadPictureUseCase.execute(id, folder, file);
   }

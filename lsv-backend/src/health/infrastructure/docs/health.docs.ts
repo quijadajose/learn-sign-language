@@ -3,7 +3,11 @@ import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 
 export const DocHealth = () => applyDecorators(ApiTags('Health Check'));
 
-const healthResponse = (status: number, description: string, properties: any) =>
+const healthResponse = (
+  status: number,
+  description: string,
+  properties: Record<string, unknown>,
+) =>
   ApiResponse({
     status,
     description,

@@ -14,7 +14,10 @@ export class TypeOrmLessonVariantRepository implements LessonVariantRepositoryIn
   async findByIdWithBaseAndRegion(id: string): Promise<LessonVariant | null> {
     return this.repository.findOne({
       where: { id },
-      relations: ['baseLesson', 'region'],
+      relations: {
+        baseLesson: true,
+        region: true,
+      },
     });
   }
 }
