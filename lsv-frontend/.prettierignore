@@ -1,0 +1,2 @@
+# Keep generator output byte-stable for scripts/sync-ml-feature-contract.mjs --check
+**/*.generated.ts

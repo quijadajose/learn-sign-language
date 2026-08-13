@@ -6,11 +6,6 @@ export const FIXED_DYNAMIC_SEQUENCE_LENGTH = 30 as const;
 export const FEATURES_SCHEMA_STATIC = 'static-v2' as const;
 export const FEATURES_SCHEMA_DYNAMIC = 'dynamic-v3' as const;
 export const LEGACY_FEATURES_SCHEMA_STATIC = ['static-v1'] as const;
-export const LEGACY_FEATURES_SCHEMA_DYNAMIC = [
-  'dynamic-v1',
-  'dynamic-v2',
-] as const;
-export const MODEL_POSE_LANDMARKS = [
-  0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 23, 24,
-] as const;
+export const LEGACY_FEATURES_SCHEMA_DYNAMIC = ['dynamic-v1', 'dynamic-v2'] as const;
+export const MODEL_POSE_LANDMARKS = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 23, 24] as const;
 export const VELOCITY_POSE_LANDMARKS = [13, 14, 15, 16] as const;
