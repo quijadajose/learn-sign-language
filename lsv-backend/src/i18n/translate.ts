@@ -6,7 +6,7 @@ import {
   type MessageTree,
 } from './messages';
 
-const I18N_KEY_PATTERN = /^(errors|success)(\.[a-zA-Z0-9_]+)+$/;
+export const I18N_KEY_PATTERN = /^(errors|success)(\.[a-zA-Z0-9_]+)+$/;
 
 function lookup(tree: MessageTree, key: string): string | undefined {
   const parts = key.split('.');

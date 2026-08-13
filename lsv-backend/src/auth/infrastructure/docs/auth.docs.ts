@@ -1,4 +1,4 @@
-import { applyDecorators } from '@nestjs/common';
+import { applyDecorators, HttpCode } from '@nestjs/common';
 import {
   ApiOperation,
   ApiBody,
@@ -397,4 +397,47 @@ export const DocGoogleAuthRedirect = () => {
   return applyDecorators(ApiExcludeEndpoint());
 };
 
-import { HttpCode } from '@nestjs/common';
+export const DocExchangeGoogleCode = () =>
+  applyDecorators(
+    ApiOperation({
+      summary: 'Intercambiar código OAuth de Google por JWT',
+      description:
+        'El frontend envía el `code` recibido en /auth/google/callback y obtiene el token JWT.',
+    }),
+    ApiBody({
+      schema: {
+        type: 'object',
+        required: ['code'],
+        properties: {
+          code: {
+            type: 'string',
+            minLength: 16,
+            example: 'oauth-one-time-code',
+          },
+        },
+      },
+    }),
+    ApiResponse({
+      status: 201,
+      description: 'Token JWT emitido',
+      schema: {
+        type: 'object',
+        properties: {
+          message: { type: 'string', example: 'User logged in successfully' },
+          data: {
+            type: 'object',
+            properties: {
+              token: {
+                type: 'string',
+                example: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9',
+              },
+            },
+          },
+        },
+      },
+    }),
+    ApiResponse({
+      status: 401,
+      description: 'Código inválido o expirado',
+    }),
+  );

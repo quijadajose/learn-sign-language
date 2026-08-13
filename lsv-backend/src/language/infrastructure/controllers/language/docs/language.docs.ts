@@ -7,6 +7,7 @@ import {
   ApiQuery,
   ApiTags,
 } from '@nestjs/swagger';
+import { LanguageResponseDto } from 'src/shared/infrastructure/openapi/resource-responses';
 
 export const DocLanguage = () => applyDecorators(ApiTags('Languages'));
 
@@ -243,6 +244,7 @@ export const DocGetLanguage = () => {
     ApiResponse({
       status: 200,
       description: 'Lenguaje encontrado exitosamente',
+      type: LanguageResponseDto,
     }),
     ApiResponse({
       status: 401,

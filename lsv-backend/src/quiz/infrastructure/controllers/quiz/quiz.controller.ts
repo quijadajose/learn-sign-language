@@ -4,6 +4,7 @@ import {
   Controller,
   Delete,
   Get,
+  HttpCode,
   Param,
   ParseUUIDPipe,
   Post,
@@ -139,6 +140,7 @@ export class QuizController {
     { allowRegionModerators: true },
   )
   @Delete(':id')
+  @HttpCode(204)
   @DocDeleteQuiz()
   async delete(@Param('id', ParseUUIDPipe) id: string): Promise<void> {
     return this.quizService.deleteQuiz(id);

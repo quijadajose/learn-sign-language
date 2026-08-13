@@ -14,7 +14,11 @@ import {
 } from '@nestjs/swagger';
 import { QuizDto } from 'src/quiz/domain/dto/quiz/quiz-dto';
 import { SubmissionDto } from 'src/quiz/application/dto/submission/submission-dto';
-import { Quiz } from 'src/shared/domain/entities/quiz';
+import {
+  QuizAdminDto,
+  QuizPublicDto,
+  QuizSubmissionResponseDto,
+} from 'src/shared/infrastructure/openapi/resource-responses';
 
 export const DocQuiz = () => applyDecorators(ApiTags('Quiz'));
 
@@ -78,7 +82,7 @@ export const DocCreateQuiz = () =>
     ApiResponse({
       status: 201,
       description: 'Quiz creado exitosamente',
-      type: Quiz,
+      type: QuizAdminDto,
       examples: {
         'quiz-creado': {
           summary: 'Quiz creado exitosamente',
@@ -270,6 +274,7 @@ export const DocGetAllQuizzes = () =>
     ApiResponse({
       status: 200,
       description: 'Lista de quizzes obtenida exitosamente',
+      type: [QuizPublicDto],
       examples: {
         'lista-quizzes': {
           summary: 'Lista de quizzes obtenida exitosamente',
@@ -331,6 +336,7 @@ export const DocGetQuizForAdmin = () =>
     ApiResponse({
       status: 200,
       description: 'Quiz obtenido exitosamente para administrador',
+      type: QuizAdminDto,
     }),
     ApiUnauthorizedResponse({
       description: 'Token de autenticación inválido o faltante',
@@ -413,7 +419,7 @@ export const DocUpdateQuiz = () =>
     ApiResponse({
       status: 200,
       description: 'Quiz actualizado exitosamente',
-      type: Quiz,
+      type: QuizAdminDto,
       examples: {
         'quiz-actualizado': {
           summary: 'Quiz actualizado exitosamente',
@@ -497,6 +503,7 @@ export const DocGetQuizById = () =>
     ApiResponse({
       status: 200,
       description: 'Quiz obtenido exitosamente',
+      type: QuizPublicDto,
     }),
     ApiNotFoundResponse({
       description: 'Quiz no encontrado',
@@ -546,6 +553,7 @@ export const DocSubmission = () =>
       status: 201,
       description:
         'Respuesta enviada exitosamente. La puntuación es sobre 100 puntos.',
+      type: QuizSubmissionResponseDto,
       examples: {
         'submission-response': {
           summary: 'Respuesta exitosa con puntuación sobre 100',
@@ -589,6 +597,7 @@ export const DocGetSubmission = () =>
     ApiResponse({
       status: 200,
       description: 'Respuestas obtenidas exitosamente',
+      type: [QuizSubmissionResponseDto],
       examples: {
         'submission-list': {
           summary: 'Lista de respuestas enviadas por el usuario',
@@ -656,7 +665,7 @@ export const DocDeleteQuiz = () =>
       format: 'uuid',
     }),
     ApiResponse({
-      status: 200,
+      status: 204,
       description: 'Quiz eliminado exitosamente',
     }),
     ApiUnauthorizedResponse({

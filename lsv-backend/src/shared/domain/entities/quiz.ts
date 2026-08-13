@@ -1,3 +1,4 @@
+import { ApiProperty } from '@nestjs/swagger';
 import {
   Entity,
   Index,
@@ -12,6 +13,7 @@ import { Question } from './question';
 @Entity()
 @Index('IDX_quiz_lessonId', ['lesson'])
 export class Quiz {
+  @ApiProperty({ format: 'uuid' })
   @PrimaryGeneratedColumn('uuid')
   id: string;
 

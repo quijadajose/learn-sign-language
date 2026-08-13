@@ -13,12 +13,19 @@ import {
 } from 'src/shared/domain/dto/PaginationDto';
 import { LeaderboardDto } from 'src/leaderboard/domain/dto/leaderboard/leaderboard';
 import { AuthGuard } from '@nestjs/passport';
+import {
+  DocGetGeneralLeaderboard,
+  DocGetLeaderboardByLanguage,
+  DocLeaderboard,
+} from './docs/leaderboard.docs';
 
+@DocLeaderboard()
 @Controller('leaderboard')
 export class LeaderboardController {
   constructor(private readonly leaderboardService: LeaderboardService) {}
   @UseGuards(AuthGuard('jwt'))
   @Get('/')
+  @DocGetGeneralLeaderboard()
   async getGeneralLeaderboard(
     @Query() pagination: PaginationDto,
   ): Promise<PaginatedResponseDto<LeaderboardDto>> {
@@ -26,6 +33,7 @@ export class LeaderboardController {
   }
   @UseGuards(AuthGuard('jwt'))
   @Get('language/:id')
+  @DocGetLeaderboardByLanguage()
   async getLeaderboardByLanguage(
     @Param('id', ParseUUIDPipe) id: string,
     @Query() pagination: PaginationDto,

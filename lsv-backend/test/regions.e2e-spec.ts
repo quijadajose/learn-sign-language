@@ -97,7 +97,7 @@ describe('Regions (e2e)', () => {
       await request(app.getHttpServer())
         .delete(`/region/${regionId}`)
         .set('Authorization', `Bearer ${adminToken}`)
-        .expect(200);
+        .expect(204);
     });
   });
 });

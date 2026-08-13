@@ -116,7 +116,7 @@ describe('Lessons (e2e)', () => {
       await request(app.getHttpServer())
         .delete(`/lesson/${lessonId}`)
         .set('Authorization', `Bearer ${adminToken}`)
-        .expect(200); // LessonController.remove devuelve message { message: '...' }
+        .expect(204);
     });
   });
 });

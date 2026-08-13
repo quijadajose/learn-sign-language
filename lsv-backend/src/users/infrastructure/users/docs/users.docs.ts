@@ -11,6 +11,11 @@ import {
 } from '@nestjs/swagger';
 import { UpdateUserDto } from 'src/auth/domain/dto/update-user/update-user';
 import { EnrollUserInLanguageDto } from '../enroll-user-in-language.dto';
+import {
+  MessageResponseDto,
+  PaginatedUserRegionResponseDto,
+  UserRegionResponseDto,
+} from 'src/shared/infrastructure/openapi/resource-responses';
 
 export const DocUsers = () => applyDecorators(ApiTags('Usuarios'));
 
@@ -829,6 +834,7 @@ export const DocFindUserRegions = () => {
     ApiResponse({
       status: 200,
       description: 'Regiones inscritas obtenidas exitosamente',
+      type: PaginatedUserRegionResponseDto,
     }),
     ApiResponse({
       status: 401,
@@ -862,6 +868,7 @@ export const DocEnrollRegion = () => {
     ApiResponse({
       status: 201,
       description: 'Usuario inscrito exitosamente en la región',
+      type: UserRegionResponseDto,
     }),
     ApiResponse({
       status: 400,
@@ -897,6 +904,7 @@ export const DocUnenrollFromLanguage = () => {
     ApiResponse({
       status: 200,
       description: 'Usuario desinscrito exitosamente del idioma',
+      type: MessageResponseDto,
     }),
     ApiResponse({
       status: 400,
@@ -932,6 +940,7 @@ export const DocUnenrollFromRegion = () => {
     ApiResponse({
       status: 200,
       description: 'Usuario desinscrito exitosamente de la región',
+      type: MessageResponseDto,
     }),
     ApiResponse({
       status: 401,
