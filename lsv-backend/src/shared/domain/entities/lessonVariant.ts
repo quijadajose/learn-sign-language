@@ -2,6 +2,7 @@ import {
   Column,
   CreateDateColumn,
   Entity,
+  Index,
   ManyToOne,
   OneToMany,
   PrimaryGeneratedColumn,
@@ -9,8 +10,13 @@ import {
 } from 'typeorm';
 import { Lesson } from './lesson';
 import { Region } from './region';
+import type { QuizVariant } from './quizVariant';
 
 @Entity()
+@Index('IDX_lesson_variant_baseLessonId_regionId', ['baseLesson', 'region'])
+@Index('IDX_lesson_variant_base_baseLessonId', ['baseLesson'], {
+  where: '"isBase" = true',
+})
 export class LessonVariant {
   @PrimaryGeneratedColumn('uuid')
   id: string;
@@ -42,8 +48,11 @@ export class LessonVariant {
   })
   region: Region;
 
-  @OneToMany('QuizVariant', (quizVariant: any) => quizVariant.lessonVariant)
-  quizVariants: any[];
+  @OneToMany(
+    'QuizVariant',
+    (quizVariant: QuizVariant) => quizVariant.lessonVariant,
+  )
+  quizVariants: QuizVariant[];
 
   @CreateDateColumn()
   createdAt: Date;

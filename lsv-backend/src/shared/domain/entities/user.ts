@@ -2,6 +2,7 @@ import {
   Column,
   CreateDateColumn,
   Entity,
+  Index,
   OneToMany,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
@@ -13,6 +14,10 @@ import { UserRegion } from './userRegion';
 import { ModeratorPermission } from './moderatorPermission';
 
 @Entity()
+@Index('UQ_user_googleId', ['googleId'], {
+  unique: true,
+  where: '"googleId" IS NOT NULL',
+})
 export class User {
   @PrimaryGeneratedColumn('uuid')
   id: string;

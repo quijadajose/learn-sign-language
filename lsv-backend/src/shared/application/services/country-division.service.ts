@@ -39,9 +39,7 @@ export class CountryDivisionService {
         createCountryDto.code,
       );
     if (existingCountry) {
-      throw new ConflictException(
-        `Country with code ${createCountryDto.code} already exists`,
-      );
+      throw new ConflictException('errors.country.alreadyExists');
     }
 
     return await this.countryDivisionRepository.createCountry(createCountryDto);
@@ -51,7 +49,7 @@ export class CountryDivisionService {
     const country =
       await this.countryDivisionRepository.findCountryByCode(code);
     if (!country) {
-      throw new NotFoundException(`Country with code ${code} not found`);
+      throw new NotFoundException('errors.country.notFound');
     }
     return country;
   }
@@ -80,17 +78,13 @@ export class CountryDivisionService {
         createDivisionDto.code,
       );
     if (existingDivision) {
-      throw new ConflictException(
-        `Division with code ${createDivisionDto.code} already exists`,
-      );
+      throw new ConflictException('errors.division.alreadyExists');
     }
     const country = await this.countryDivisionRepository.findCountryByCode(
       createDivisionDto.countryCode,
     );
     if (!country) {
-      throw new NotFoundException(
-        `Country with code ${createDivisionDto.countryCode} not found`,
-      );
+      throw new NotFoundException('errors.country.notFound');
     }
 
     return await this.countryDivisionRepository.createDivision(
@@ -102,7 +96,7 @@ export class CountryDivisionService {
     const division =
       await this.countryDivisionRepository.findDivisionByCode(code);
     if (!division) {
-      throw new NotFoundException(`Division with code ${code} not found`);
+      throw new NotFoundException('errors.division.notFound');
     }
     return division;
   }
@@ -111,7 +105,7 @@ export class CountryDivisionService {
     const country =
       await this.countryDivisionRepository.findCountryByCode(countryCode);
     if (!country) {
-      throw new NotFoundException(`Country with code ${countryCode} not found`);
+      throw new NotFoundException('errors.country.notFound');
     }
 
     return await this.countryDivisionRepository.findDivisionsByCountryCode(
@@ -131,9 +125,7 @@ export class CountryDivisionService {
         searchDto.countryCode,
       );
       if (!country) {
-        throw new NotFoundException(
-          `Country with code ${searchDto.countryCode} not found`,
-        );
+        throw new NotFoundException('errors.country.notFound');
       }
     }
 

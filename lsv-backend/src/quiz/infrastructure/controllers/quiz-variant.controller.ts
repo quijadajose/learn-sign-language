@@ -10,9 +10,9 @@ import {
   ParseUUIDPipe,
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
-import { RequireResourcePermission } from 'src/auth/infrastructure/decorators/require-resource-permission.decorator';
+import { RequireResourcePermission } from 'src/permissions/infrastructure/decorators/require-resource-permission.decorator';
 import { PermissionScope } from 'src/shared/domain/entities/moderatorPermission';
-import { ResourceAccessGuard } from 'src/auth/infrastructure/guards/resource-access/resource-access.guard';
+import { ResourceAccessGuard } from 'src/permissions/infrastructure/guards/resource-access/resource-access.guard';
 import { QuizVariantService } from 'src/quiz/application/services/quiz-variant.service';
 import { CreateQuizVariantDto } from 'src/quiz/domain/dto/create-quiz-variant-dto';
 import { QuizVariant } from 'src/shared/domain/entities/quizVariant';

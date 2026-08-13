@@ -6,6 +6,7 @@ import {
   PrimaryGeneratedColumn,
 } from 'typeorm';
 import { QuizVariant } from './quizVariant';
+import type { OptionVariant } from './optionVariant';
 
 @Entity()
 export class QuestionVariant {
@@ -22,7 +23,7 @@ export class QuestionVariant {
 
   @OneToMany(
     'OptionVariant',
-    (optionVariant: any) => optionVariant.questionVariant,
+    (optionVariant: OptionVariant) => optionVariant.questionVariant,
   )
-  optionVariants: any[];
+  optionVariants: OptionVariant[];
 }

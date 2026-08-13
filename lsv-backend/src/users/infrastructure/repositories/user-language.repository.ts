@@ -45,7 +45,7 @@ export class UserLanguageRepository implements UserLanguageRepositoryInterface {
 
     const findOptions: FindManyOptions<UserLanguage> = {
       where: { userId },
-      relations: ['language'],
+      relations: { language: true },
       skip,
       take: limit,
     };

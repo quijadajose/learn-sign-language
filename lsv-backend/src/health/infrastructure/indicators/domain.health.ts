@@ -34,7 +34,7 @@ export class DomainHealthIndicator {
     } catch (error) {
       return session.up({
         message: 'Domain expiration check failed (WHOIS)',
-        error: error.message,
+        error: error instanceof Error ? error.message : String(error),
       });
     }
   }

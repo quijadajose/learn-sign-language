@@ -2,7 +2,7 @@ import { NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { LeaderboardDto } from 'src/leaderboard/domain/dto/leaderboard/leaderboard';
 import { QuizDto } from 'src/quiz/domain/dto/quiz/quiz-dto';
-import { SubmissionDto } from 'src/quiz/application/dto/submission/submission-dto';
+import { Submission } from 'src/quiz/domain/dto/submission/submission.dto';
 import { QuizRepositoryInterface } from 'src/quiz/domain/ports/quiz.repository.interface/quiz.repository.interface';
 import {
   PaginationDto,
@@ -42,7 +42,7 @@ export class QuizRepository implements QuizRepositoryInterface {
 
     const skip = (page - 1) * limit;
 
-    const findOptions: any = {
+    const findOptions: FindManyOptions<Quiz> = {
       skip,
       take: limit,
     };
@@ -79,7 +79,11 @@ export class QuizRepository implements QuizRepositoryInterface {
 
     const existingQuiz = await this.quizRepository.findOne({
       where: { id },
-      relations: ['questions', 'questions.options'],
+      relations: {
+        questions: {
+          options: true,
+        },
+      },
     });
 
     if (!existingQuiz) {
@@ -185,7 +189,7 @@ export class QuizRepository implements QuizRepositoryInterface {
           },
         },
       },
-      relations: ['lesson', 'lesson.language'],
+      relations: { lesson: { language: true } },
       skip,
       take: limit,
     };
@@ -201,7 +205,13 @@ export class QuizRepository implements QuizRepositoryInterface {
   getQuizById(quizId: string): Promise<Quiz> {
     return this.quizRepository.findOne({
       where: { id: quizId },
-      relations: ['lesson', 'questions', 'questions.options'],
+      relations: {
+        lesson: true,
+
+        questions: {
+          options: true,
+        },
+      },
       select: {
         id: true,
         lesson: {
@@ -223,7 +233,13 @@ export class QuizRepository implements QuizRepositoryInterface {
   getQuizForAdmin(quizId: string): Promise<Quiz> {
     return this.quizRepository.findOne({
       where: { id: quizId },
-      relations: ['lesson', 'questions', 'questions.options'],
+      relations: {
+        lesson: true,
+
+        questions: {
+          options: true,
+        },
+      },
       select: {
         id: true,
         lesson: {
@@ -242,7 +258,11 @@ export class QuizRepository implements QuizRepositoryInterface {
       },
     });
   }
-  async submissionTest(user: User, quiz: Quiz, submissionDto: SubmissionDto) {
+  async submissionTest(
+    user: User,
+    quiz: Quiz,
+    submissionDto: Submission,
+  ): Promise<{ id: string; submittedAt: Date; score: number }> {
     const correctOptions = await this.optionRepository.find({
       where: {
         question: {
@@ -250,7 +270,9 @@ export class QuizRepository implements QuizRepositoryInterface {
         },
         isCorrect: true,
       },
-      relations: ['question'],
+      relations: {
+        question: true,
+      },
     });
 
     const correctAnswersMap = new Map<string, string>(); // questionId -> optionId
@@ -273,7 +295,7 @@ export class QuizRepository implements QuizRepositoryInterface {
     const submission = this.submissionRepository.create({
       user: user,
       quiz: quiz,
-      answers: JSON.stringify(submissionDto.answers) as any,
+      answers: JSON.stringify(submissionDto.answers) as unknown as JSON,
       score: Math.round(score),
     });
     const savedSubmission = await this.submissionRepository.save(submission);

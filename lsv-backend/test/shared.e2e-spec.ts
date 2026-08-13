@@ -64,22 +64,39 @@ describe('Shared (Country, Division, Images) (e2e)', () => {
       writeFileSync(filePath, minPng);
 
       const response = await request(app.getHttpServer())
-        .post('/images/upload/test-folder')
+        .post('/images/upload/user')
         .set('Authorization', `Bearer ${adminToken}`)
         .field('id', 'test-id')
         .attach('file', filePath)
         .expect(201);
 
       expect(Array.isArray(response.body)).toBe(true);
-      expect(response.body[0]).toContain('/images/test-folder/test-id');
+      expect(response.body[0]).toContain('/images/user/test-id');
       uploadedFilename = 'test-id';
+      unlinkSync(filePath);
+    });
+
+    it('/images/upload/:folder (POST) - Should reject unauthenticated upload', async () => {
+      const filePath = join(__dirname, 'shared-test-unauth.png');
+      const minPng = Buffer.from(
+        'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8/5+hHgAHggJ/PchI7wAAAABJRU5ErkJggg==',
+        'base64',
+      );
+      writeFileSync(filePath, minPng);
+
+      await request(app.getHttpServer())
+        .post('/images/upload/user')
+        .field('id', 'test-id-2')
+        .attach('file', filePath)
+        .expect(401);
+
       unlinkSync(filePath);
     });
 
     it('/images/:folder/:filename (GET) - Should return image', async () => {
       if (uploadedFilename) {
         await request(app.getHttpServer())
-          .get(`/images/test-folder/${uploadedFilename}`)
+          .get(`/images/user/${uploadedFilename}`)
           .expect(200);
       }
     });

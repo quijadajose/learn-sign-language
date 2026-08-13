@@ -7,16 +7,9 @@ import { UpdateStageUseCase } from './application/use-cases/update-stage-use-cas
 import { DeleteStageUseCase } from './application/use-cases/delete-stage-use-case/delete-stage-use-case';
 import { LessonModule } from 'src/lesson/lesson.module';
 import { LanguageModule } from 'src/language/language.module';
-import { ModeratorModule } from 'src/moderator/moderator.module';
-import { AuthModule } from 'src/auth/auth.module';
 
 @Module({
-  imports: [
-    forwardRef(() => LessonModule),
-    LanguageModule,
-    forwardRef(() => ModeratorModule),
-    forwardRef(() => AuthModule),
-  ],
+  imports: [forwardRef(() => LessonModule), LanguageModule],
   providers: [
     StageService,
     GetStagesFromLanguageUseCase,

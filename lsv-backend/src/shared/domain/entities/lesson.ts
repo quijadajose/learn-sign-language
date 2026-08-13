@@ -2,6 +2,7 @@ import {
   Column,
   CreateDateColumn,
   Entity,
+  Index,
   ManyToMany,
   ManyToOne,
   OneToMany,
@@ -16,6 +17,11 @@ import { LessonVariant } from './lessonVariant';
 import { Sign } from './sign';
 
 @Entity()
+@Index('IDX_lesson_languageId_stageId_createdAt', [
+  'language',
+  'stage',
+  'createdAt',
+])
 export class Lesson {
   @PrimaryGeneratedColumn('uuid')
   id: string;

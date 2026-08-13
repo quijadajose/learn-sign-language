@@ -11,8 +11,8 @@ export class TypeOrmSignVariantRepository implements SignVariantRepositoryInterf
     private readonly repository: Repository<SignVariant>,
   ) {}
 
-  async findOne(options: any): Promise<SignVariant | null> {
-    return this.repository.findOne(options);
+  async findById(id: string): Promise<SignVariant | null> {
+    return this.repository.findOne({ where: { id } });
   }
 
   create(data: DeepPartial<SignVariant>): SignVariant {

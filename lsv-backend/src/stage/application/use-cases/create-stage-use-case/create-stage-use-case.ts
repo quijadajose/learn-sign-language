@@ -11,7 +11,7 @@ export class CreateStageUseCase {
     @Inject('StageRepositoryInterface')
     private readonly stageRepository: StageRepositoryInterface,
   ) {}
-  async execute(createstageDto: StageDto): Promise<any> {
+  async execute(createstageDto: StageDto): Promise<Stages> {
     const { name } = createstageDto;
     const language = await this.languageRepository.findById(
       createstageDto.languageId,

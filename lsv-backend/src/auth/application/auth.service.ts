@@ -47,7 +47,7 @@ export class AuthService {
     const user = await this.findUserUseCase.findByEmail(loginUserDto.email);
 
     if (!user) {
-      throw new UnauthorizedException('Invalid credentials');
+      throw new UnauthorizedException('errors.auth.invalidCredentials');
     }
 
     const isPasswordValid = await this.hashService.compare(
@@ -55,7 +55,7 @@ export class AuthService {
       user.hashPassword,
     );
     if (!isPasswordValid) {
-      throw new UnauthorizedException('Invalid credentials');
+      throw new UnauthorizedException('errors.auth.invalidCredentials');
     }
 
     const token = this.generateToken(user);
@@ -75,7 +75,8 @@ export class AuthService {
 
     const resetToken = this.generateToken(user, '15m');
     const frontEndUrl = this.configService.get<string>('FRONTEND_URL');
-    const resetUrl = `${frontEndUrl}/reset-password?token=${resetToken}`;
+    // Fragment keeps the token out of query logs / Referer.
+    const resetUrl = `${frontEndUrl}/reset-password#token=${encodeURIComponent(resetToken)}`;
 
     const emailParams: EmailParams = {
       to: email,
@@ -89,14 +90,14 @@ export class AuthService {
     const payload: JwtPayload = this.tokenService.verifyToken(token);
 
     if (!payload) {
-      throw new BadRequestException('Invalid or expired token');
+      throw new BadRequestException('errors.auth.invalidOrExpiredToken');
     }
 
     const { sub: userId } = payload;
 
     const user = await this.findUserUseCase.findById(userId);
     if (!user) {
-      throw new BadRequestException('User not found');
+      throw new BadRequestException('errors.user.notFound');
     }
 
     user.hashPassword = await this.hashService.hash(newPassword);
@@ -113,7 +114,7 @@ export class AuthService {
   async getUserProfile(userId: string): Promise<User> {
     const user = await this.findUserUseCase.findById(userId);
     if (!user) {
-      throw new BadRequestException('User not found');
+      throw new BadRequestException('errors.user.notFound');
     }
     return user;
   }
@@ -123,7 +124,7 @@ export class AuthService {
   ): Promise<User> {
     const user = await this.findUserUseCase.findById(userId);
     if (!user) {
-      throw new BadRequestException('User not found');
+      throw new BadRequestException('errors.user.notFound');
     }
     if (updateUserDto.oldPassword && updateUserDto.newPassword) {
       const isCurrentPassword = await this.hashService.compare(
@@ -131,7 +132,7 @@ export class AuthService {
         user.hashPassword,
       );
       if (!isCurrentPassword) {
-        throw new BadRequestException('Current password does not match');
+        throw new BadRequestException('errors.auth.currentPasswordMismatch');
       }
 
       const isSamePassword = await this.hashService.compare(
@@ -139,9 +140,7 @@ export class AuthService {
         user.hashPassword,
       );
       if (isSamePassword) {
-        throw new BadRequestException(
-          'New password must be different from the old password',
-        );
+        throw new BadRequestException('errors.auth.newPasswordSameAsOld');
       }
 
       updateUserDto.hashPassword = await this.hashService.hash(

@@ -9,9 +9,7 @@ export class DeleteRecordingUseCase {
   ) {}
 
   async execute(id: string) {
-    const recording = await this.signRecordingRepository.findOne({
-      where: { id },
-    });
+    const recording = await this.signRecordingRepository.findById(id);
     if (!recording) throw new NotFoundException('Grabación no encontrada');
     await this.signRecordingRepository.remove(recording);
     return { success: true };

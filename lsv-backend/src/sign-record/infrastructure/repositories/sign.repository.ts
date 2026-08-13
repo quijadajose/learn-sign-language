@@ -1,7 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, DeepPartial } from 'typeorm';
+import { DeepPartial, Repository, SelectQueryBuilder } from 'typeorm';
 import { Sign } from '../../../shared/domain/entities/sign';
+import { SignRecording } from '../../../shared/domain/entities/signRecording';
 import { SignRepositoryInterface } from '../../domain/ports/sign.repository.interface';
 
 @Injectable()
@@ -12,11 +13,7 @@ export class TypeOrmSignRepository implements SignRepositoryInterface {
   ) {}
 
   async findById(id: string): Promise<Sign | null> {
-    return this.repository.findOne({ where: { id } as any });
-  }
-
-  async find(options?: any): Promise<Sign[]> {
-    return this.repository.find(options);
+    return this.repository.findOne({ where: { id } });
   }
 
   async save(sign: Sign): Promise<Sign> {
@@ -37,18 +34,7 @@ export class TypeOrmSignRepository implements SignRepositoryInterface {
       .leftJoinAndSelect('sign.variants', 'variants')
       .where('sign.isGlobal = :isGlobal', { isGlobal: true });
 
-    if (regionId) {
-      qb.loadRelationCountAndMap(
-        'sign.recordingsCount',
-        'sign.recordings',
-        'recordings',
-        (qb) => qb.where('recordings.regionId = :regionId', { regionId }),
-      );
-    } else {
-      qb.loadRelationCountAndMap('sign.recordingsCount', 'sign.recordings');
-    }
-
-    return qb.getMany();
+    return this.withRecordingsCount(qb, regionId);
   }
 
   async findForLessonWithRecordingsCount(
@@ -62,28 +48,58 @@ export class TypeOrmSignRepository implements SignRepositoryInterface {
         lessonId,
       });
 
-    if (regionId) {
-      qb.loadRelationCountAndMap(
-        'sign.recordingsCount',
-        'sign.recordings',
-        'recordings',
-        (qb) => qb.where('recordings.regionId = :regionId', { regionId }),
-      );
-    } else {
-      qb.loadRelationCountAndMap('sign.recordingsCount', 'sign.recordings');
-    }
-
-    return qb.getMany();
+    return this.withRecordingsCount(qb, regionId);
   }
 
   async findForTraining(lessonId: string): Promise<Sign[]> {
     return this.repository.find({
       where: [{ lessons: { id: lessonId } }, { isGlobal: true }],
-      relations: ['variants', 'variants.region'],
+      relations: {
+        variants: {
+          region: true,
+        },
+      },
     });
   }
 
   create(data: DeepPartial<Sign>): Sign {
     return this.repository.create(data);
+  }
+
+  private async withRecordingsCount(
+    qb: SelectQueryBuilder<Sign>,
+    regionId?: string,
+  ): Promise<Sign[]> {
+    const signs = await qb.getMany();
+    if (signs.length === 0) return signs;
+
+    const countsQb = this.repository.manager
+      .createQueryBuilder(SignRecording, 'recordings')
+      .innerJoin('recordings.sign', 'sign')
+      .select('sign.id', 'signId')
+      .addSelect('COUNT(recordings.id)', 'count')
+      .where('sign.id IN (:...signIds)', {
+        signIds: signs.map((entity) => entity.id),
+      })
+      .groupBy('sign.id');
+
+    if (regionId) {
+      countsQb
+        .innerJoin('recordings.region', 'region')
+        .andWhere('region.id = :regionId', { regionId });
+    }
+
+    const rows = await countsQb.getRawMany<{ signId: string; count: string }>();
+    const countBySignId = new Map(
+      rows.map((row) => [row.signId, Number(row.count)]),
+    );
+
+    for (const sign of signs) {
+      Object.assign(sign, {
+        recordingsCount: countBySignId.get(sign.id) ?? 0,
+      });
+    }
+
+    return signs;
   }
 }
