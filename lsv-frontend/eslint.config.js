@@ -27,7 +27,6 @@ export default tseslint.config(
           caughtErrors: "none",
         },
       ],
-      complexity: ["warn", 12],
       "react-refresh/only-export-components": [
         "warn",
         { allowConstantExport: true },
@@ -37,23 +36,35 @@ export default tseslint.config(
   eslintPluginTailwindcss.configs.recommended,
   {
     settings: {
-      tailwindcss: {
-        cssConfigPath: "./src/index.css",
-        callees: ["twMerge", "createTheme"],
-        classRegex: "^(class(Name)|theme)?$",
-        whitelist: [
-          "mirror",
-          "snow",
-          "scrollbar-hide",
-          "quill-flowbite",
-          "dark",
-        ],
-      },
+      tailwindcss:
+        /** @type {import("eslint-plugin-tailwindcss").PluginSettings} */
+        ({
+          cssConfigPath: "./src/index.css",
+          // `cn` wraps clsx/twMerge; linting those callees flags the `inputs` param as a class.
+          functions: ["cn", "createTheme"],
+        }),
     },
     rules: {
       // Ordering is handled by prettier-plugin-tailwindcss.
       "tailwindcss/classnames-order": "off",
       "tailwindcss/enforces-shorthand": "off",
+      // Suggests e.g. scale-1.01, which is not a real utility (no-custom-classname then flags it).
+      "tailwindcss/no-unnecessary-arbitrary-value": "off",
+      "tailwindcss/no-custom-classname": [
+        "warn",
+        {
+          whitelist: [
+            "dark",
+            "font-inherit",
+            "mirror",
+            "quill-flowbite",
+            "quill-seamless",
+            "react-select-container",
+            "scrollbar-hide",
+            "snow",
+          ],
+        },
+      ],
     },
   },
   eslintConfigPrettier,

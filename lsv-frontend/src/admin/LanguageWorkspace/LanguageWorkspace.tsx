@@ -106,7 +106,7 @@ export default function LanguageWorkspace() {
   return (
     <>
       {toast && (
-        <div className="fixed right-5 top-5 z-[9999]">
+        <div className="fixed right-5 top-5 z-9999">
           <Toast>
             <div
               className={`inline-flex size-8 shrink-0 items-center justify-center rounded-lg ${

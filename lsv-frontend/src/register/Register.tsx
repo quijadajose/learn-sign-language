@@ -46,7 +46,7 @@ export default function Register() {
 
   return (
     <>
-      <div className="fixed right-5 top-5 z-[9999] flex flex-col gap-3">
+      <div className="fixed right-5 top-5 z-9999 flex flex-col gap-3">
         {toastMessages.map((toast) => (
           <Toast key={toast.id}>
             <div
