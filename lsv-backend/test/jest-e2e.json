@@ -16,5 +16,6 @@
   },
   "modulePathIgnorePatterns": [
     "<rootDir>/dist/"
-  ]
+  ],
+  "forceExit": true
 }

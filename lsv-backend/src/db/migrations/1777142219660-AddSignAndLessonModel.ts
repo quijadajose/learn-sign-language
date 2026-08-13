@@ -14,6 +14,9 @@ export class AddSignAndLessonModel1777142219660 implements MigrationInterface {
       `CREATE TABLE "sign" ("id" uuid NOT NULL DEFAULT uuid_generate_v4(), "name" character varying NOT NULL, "isGlobal" boolean NOT NULL DEFAULT false, "landmarks" jsonb, "createdAt" TIMESTAMP NOT NULL DEFAULT now(), "updatedAt" TIMESTAMP NOT NULL DEFAULT now(), CONSTRAINT "PK_e3de9d3ec946837ec087cf0f54a" PRIMARY KEY ("id"))`,
     );
     await queryRunner.query(
+      `CREATE TYPE "public"."lesson_model_status_enum" AS ENUM('PENDING', 'TRAINING', 'READY', 'FAILED')`,
+    );
+    await queryRunner.query(
       `CREATE TABLE "lesson_model" ("id" uuid NOT NULL DEFAULT uuid_generate_v4(), "status" "public"."lesson_model_status_enum" NOT NULL DEFAULT 'PENDING', "modelJsonUrl" character varying, "binUrls" text, "accuracy" double precision, "progress" double precision NOT NULL DEFAULT '0', "trainingJobId" character varying, "labels" text, "name" character varying, "trainingLogs" json, "createdAt" TIMESTAMP NOT NULL DEFAULT now(), "updatedAt" TIMESTAMP NOT NULL DEFAULT now(), "lessonVariantId" uuid, CONSTRAINT "PK_43268921eee37c67d0bebaadf80" PRIMARY KEY ("id"))`,
     );
     await queryRunner.query(
@@ -78,6 +81,7 @@ export class AddSignAndLessonModel1777142219660 implements MigrationInterface {
     );
     await queryRunner.query(`DROP TABLE "lesson_signs"`);
     await queryRunner.query(`DROP TABLE "lesson_model"`);
+    await queryRunner.query(`DROP TYPE "public"."lesson_model_status_enum"`);
     await queryRunner.query(`DROP TABLE "sign"`);
     await queryRunner.query(`DROP TABLE "sign_recording"`);
     await queryRunner.query(`DROP TABLE "sign_variant"`);
