@@ -1,15 +1,15 @@
 import { useFormContext } from "react-hook-form";
 
-import { useMultiStep } from "../../multi-step";
+import { useMultiStep } from "../../multi-step/use-multi-step";
 import { Button } from "flowbite-react";
 
 export default function BackButton() {
   const { getValues } = useFormContext();
-  const { onBack } = useMultiStep();
+  const { back } = useMultiStep();
   return (
     <>
       <Button
-        onClick={() => onBack(getValues())}
+        onClick={() => back(getValues())}
         className="m-0 rounded-full p-0 text-white"
       >
         <svg

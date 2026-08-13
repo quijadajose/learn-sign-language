@@ -1,11 +1,17 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import { Card, Spinner, Button, Alert } from "flowbite-react";
-import { useLocalStorage } from "./hooks/useLocalStorage";
+import { useAuth } from "./context/AuthContext";
 import { useToast } from "./components/ToastProvider";
 import { HiExclamationCircle, HiArrowLeft } from "react-icons/hi";
 import QuillEditor from "./components/QuillEditor";
-import { lessonApi, lessonVariantApi } from "./services/api";
+import {
+  lessonApi,
+  lessonVariantApi,
+  signRecordApi,
+  unwrapApiData,
+} from "./services/api";
+import type { LessonModelsBundleDto } from "./types/signRecord";
 
 interface Stage {
   id: string;
@@ -41,6 +47,11 @@ interface LessonVariant {
   updatedAt: string;
 }
 
+function hasReadyPracticeModel(bundle: LessonModelsBundleDto | null): boolean {
+  if (!bundle) return false;
+  return Boolean(bundle.static?.modelJsonUrl || bundle.dynamic?.modelJsonUrl);
+}
+
 export default function LessonView() {
   const { lessonId } = useParams<{ lessonId: string }>();
   const [searchParams] = useSearchParams();
@@ -51,13 +62,14 @@ export default function LessonView() {
   );
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [isComplete, setIsComplete] = useState(false);
-  const [updatingCompletion, setUpdatingCompletion] = useState(false);
-  const [token] = useLocalStorage<string | null>("auth", null);
+  const [canPractice, setCanPractice] = useState(false);
+  const { token } = useAuth();
   const addToast = useToast();
 
   useEffect(() => {
-    const fetchLesson = async () => {
+    const controller = new AbortController();
+
+    void (async () => {
       if (!token || !lessonId) {
         setError("Faltan datos para cargar la lección.");
         setLoading(false);
@@ -65,42 +77,41 @@ export default function LessonView() {
       }
 
       setLoading(true);
+      setCanPractice(false);
       const regionId = searchParams.get("regionId");
 
       try {
         let lessonData: Lesson | LessonVariant | null = null;
         let actualLessonId = lessonId;
 
-        // Si hay regionId, intentar obtener la lección regional
         if (regionId) {
           const variantResponse = await lessonVariantApi.getRegionalLesson(
             lessonId,
             regionId,
           );
+          if (controller.signal.aborted) return;
 
           if (variantResponse.success && variantResponse.data) {
-            const data = variantResponse.data;
-            // Verificar si es una variante: tiene propiedad 'region' o 'baseLesson'
+            const data = unwrapApiData<Lesson | LessonVariant>(
+              variantResponse.data,
+            );
             if ("region" in data || "baseLesson" in data) {
-              // Es una variante regional
               lessonData = data as LessonVariant;
               setLessonVariant(data as LessonVariant);
               setLesson(null);
-              // Usar el ID de la lección base para startLesson
               actualLessonId =
                 (data as LessonVariant).baseLesson?.id || lessonId;
             } else {
-              // Es una lección normal
               lessonData = data as Lesson;
               setLesson(data as Lesson);
               setLessonVariant(null);
             }
           } else {
-            // Si falla, intentar obtener la lección normal
             const lessonResponse = await lessonApi.getUserLesson(lessonId);
-            if (lessonResponse.success) {
-              lessonData = lessonResponse.data;
-              setLesson(lessonResponse.data);
+            if (controller.signal.aborted) return;
+            if (lessonResponse.success && lessonResponse.data) {
+              lessonData = unwrapApiData<Lesson>(lessonResponse.data);
+              setLesson(lessonData as Lesson);
               setLessonVariant(null);
             } else {
               throw new Error(
@@ -109,11 +120,11 @@ export default function LessonView() {
             }
           }
         } else {
-          // Sin regionId, obtener la lección normal
           const lessonResponse = await lessonApi.getUserLesson(lessonId);
-          if (lessonResponse.success) {
-            lessonData = lessonResponse.data;
-            setLesson(lessonResponse.data);
+          if (controller.signal.aborted) return;
+          if (lessonResponse.success && lessonResponse.data) {
+            lessonData = unwrapApiData<Lesson>(lessonResponse.data);
+            setLesson(lessonData as Lesson);
             setLessonVariant(null);
           } else {
             throw new Error(
@@ -122,56 +133,39 @@ export default function LessonView() {
           }
         }
 
-        if (lessonData) {
-          // Iniciar la lección usando el ID base si es una variante
-          const startResponse = await lessonApi.startLesson(
+        if (lessonData && !controller.signal.aborted) {
+          await lessonApi.startLesson(actualLessonId, regionId || undefined);
+
+          const modelRes = await signRecordApi.getLessonModel(
             actualLessonId,
             regionId || undefined,
           );
-          if (startResponse.success) {
-            addToast("success", "Lección iniciada correctamente");
+          if (controller.signal.aborted) return;
+
+          if (modelRes.success && modelRes.data) {
+            const bundle = unwrapApiData<LessonModelsBundleDto>(modelRes.data);
+            setCanPractice(hasReadyPracticeModel(bundle));
+          } else {
+            setCanPractice(false);
           }
         }
-      } catch (err: any) {
-        const errorMessage = err.message || "Error al cargar la lección";
+      } catch (err: unknown) {
+        if (controller.signal.aborted) return;
+        const errorMessage =
+          err instanceof Error ? err.message : "Error al cargar la lección";
         setError(errorMessage);
         addToast("error", errorMessage);
       } finally {
-        setLoading(false);
+        if (!controller.signal.aborted) {
+          setLoading(false);
+        }
       }
+    })();
+
+    return () => {
+      controller.abort();
     };
-
-    fetchLesson();
   }, [lessonId, token, addToast, searchParams]);
-
-  const handleMarkAsComplete = async () => {
-    if (!token || !lessonId) return;
-
-    setUpdatingCompletion(true);
-
-    const newCompletionStatus = !isComplete;
-    const response = await lessonApi.setLessonCompletion(
-      lessonId,
-      newCompletionStatus,
-    );
-
-    if (response.success) {
-      setIsComplete(newCompletionStatus);
-      addToast(
-        "success",
-        newCompletionStatus
-          ? "Lección marcada como completada"
-          : "Lección desmarcada como completada",
-      );
-    } else {
-      addToast(
-        "error",
-        response.message || "Error al actualizar el estado de la lección",
-      );
-    }
-
-    setUpdatingCompletion(false);
-  };
 
   const handleGoBack = () => {
     navigate(-1);
@@ -198,7 +192,7 @@ export default function LessonView() {
         </Alert>
         <div className="mt-4">
           <Button color="gray" onClick={handleGoBack}>
-            <HiArrowLeft className="mr-2 h-4 w-4" />
+            <HiArrowLeft className="mr-2 size-4" />
             Volver
           </Button>
         </div>
@@ -214,7 +208,7 @@ export default function LessonView() {
         </Alert>
         <div className="mt-4">
           <Button color="gray" onClick={handleGoBack}>
-            <HiArrowLeft className="mr-2 h-4 w-4" />
+            <HiArrowLeft className="mr-2 size-4" />
             Volver
           </Button>
         </div>
@@ -226,7 +220,7 @@ export default function LessonView() {
     <div className="mx-auto w-full max-w-4xl p-6">
       <div className="mb-6">
         <Button color="gray" onClick={handleGoBack}>
-          <HiArrowLeft className="mr-2 h-4 w-4" />
+          <HiArrowLeft className="mr-2 size-4" />
           Volver
         </Button>
       </div>
@@ -245,38 +239,47 @@ export default function LessonView() {
           <h3 className="mb-4 text-xl font-semibold text-gray-900 dark:text-white">
             Contenido de la lección
           </h3>
-          <div className="rounded-lg border border-gray-200 dark:border-gray-700">
-            <QuillEditor
-              value={lesson?.content || lessonVariant?.content || ""}
-              readOnly={true}
-              theme="snow"
-              modules={{
-                toolbar: false,
-              }}
-              className="border-none bg-gray-50"
-            />
-          </div>
+          <QuillEditor
+            value={lesson?.content || lessonVariant?.content || ""}
+            readOnly={true}
+            theme="snow"
+            modules={{
+              toolbar: false,
+            }}
+            className="quill-seamless"
+          />
         </div>
 
-        <div className="flex justify-center">
-          <Button
-            color={isComplete ? "warning" : "success"}
-            size="lg"
-            onClick={handleMarkAsComplete}
-            disabled={updatingCompletion}
-          >
-            {updatingCompletion ? (
-              <>
-                <Spinner size="sm" className="mr-2" />
-                Procesando...
-              </>
-            ) : isComplete ? (
-              "Desmarcar como finalizada"
-            ) : (
-              "Marcar como finalizada"
-            )}
-          </Button>
-        </div>
+        {canPractice && (
+          <div className="mt-8 flex flex-col items-center space-y-4 pt-4">
+            <h3 className="text-xl font-bold dark:text-white">
+              ¿Listo para el reto?
+            </h3>
+            <p className="max-w-md text-center text-gray-600 dark:text-gray-400">
+              Pon a prueba lo aprendido usando tu cámara para reconocer las
+              señas de esta lección con nuestra IA.
+            </p>
+            <Button
+              size="xl"
+              onClick={() => {
+                const regionId = searchParams.get("regionId");
+                const from = regionId
+                  ? `/lesson/${lessonId}?regionId=${regionId}`
+                  : `/lesson/${lessonId}`;
+
+                const practicePath = regionId
+                  ? `/lesson/${lessonId}/practice?regionId=${regionId}`
+                  : `/lesson/${lessonId}/practice`;
+
+                navigate(practicePath, {
+                  state: { from, regionId: regionId ?? undefined },
+                });
+              }}
+            >
+              ¡Practiquemos! 🎥
+            </Button>
+          </div>
+        )}
       </Card>
     </div>
   );

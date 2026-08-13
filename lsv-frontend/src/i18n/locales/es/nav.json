@@ -1,0 +1,20 @@
+{
+  "dashboard": "Dashboard",
+  "leaderboard": "Ranking",
+  "profile": "Perfil",
+  "signOut": "Cerrar sesión",
+  "changeSignLanguage": "Cambiar idioma de señas",
+  "manageSignLanguages": "Gestionar idiomas de señas",
+  "learningLabel": "Aprendo",
+  "mySignLanguages": "Mis idiomas de señas",
+  "enrollAnotherLanguage": "Inscribirse en otro idioma",
+  "manageRegions": "Gestionar regiones",
+  "management": "Gestión",
+  "languages": "Idiomas",
+  "stages": "Etapas",
+  "lessons": "Lecciones",
+  "regions": "Regiones",
+  "signStudio": "Sign Studio",
+  "moderators": "Moderadores",
+  "userSettings": "Configuración de usuario"
+}

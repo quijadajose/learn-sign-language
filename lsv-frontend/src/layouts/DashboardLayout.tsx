@@ -1,11 +1,10 @@
-import { ReactNode, useState, useEffect } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
+import { ReactNode, useState, useEffect, useCallback } from "react";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import {
   Avatar,
   DarkThemeToggle,
   Dropdown,
   Navbar,
-  NavbarBrand,
   NavbarToggle,
   NavbarCollapse,
   NavbarLink,
@@ -13,66 +12,53 @@ import {
   DropdownItem,
   DropdownDivider,
 } from "flowbite-react";
-import { HiTranslate } from "react-icons/hi";
+import { useTranslation } from "react-i18next";
 import { BACKEND_BASE_URL } from "../config";
-import { userApi } from "../services/api";
 import LanguageSwitcher from "../components/LanguageSwitcher";
+import SignLanguageContextSwitcher from "../components/SignLanguageContextSwitcher";
 import { usePermissions } from "../hooks/usePermissions";
 import { useAuth } from "../context/AuthContext";
+import type { LanguageSwitcherTab } from "../components/LanguageSwitcher/types";
 
 interface Props {
   children: ReactNode;
 }
 
-interface Language {
-  id: string;
-  name: string;
-  description: string;
-  createdAt: string;
-  updatedAt: string;
+function handleLanguageChanged() {
+  window.location.reload();
 }
 
 const DashboardLayout = ({ children }: Props) => {
+  const { t } = useTranslation(["nav", "common"]);
   const navigate = useNavigate();
   const location = useLocation();
-  const { user, logout, refreshUser, token } = useAuth();
+  const { user, logout, token, isHydrating } = useAuth();
   const [avatarError, setAvatarError] = useState(false);
   const [avatarTimestamp, setAvatarTimestamp] = useState(Date.now());
   const [showLanguageSwitcher, setShowLanguageSwitcher] = useState(false);
+  const [languageSwitcherTab, setLanguageSwitcherTab] =
+    useState<LanguageSwitcherTab>("enroll");
   const { isAdmin, isModerator, hasAnyLanguagePermission } = usePermissions();
 
-  const handleLogout = () => {
+  const openLanguageManager = useCallback((tab: LanguageSwitcherTab) => {
+    setLanguageSwitcherTab(tab);
+    setShowLanguageSwitcher(true);
+  }, []);
+
+  const handleLogout = useCallback(() => {
     logout();
     navigate("/login");
-  };
-
-  const handleLanguageChanged = (_language: Language) => {
-    window.location.reload();
-  };
+  }, [logout, navigate]);
 
   useEffect(() => {
-    const fetchUserData = async () => {
-      if (!token || token === "undefined") {
-        handleLogout();
-        return;
-      }
-
-      if (!user) {
-        try {
-          const response = await userApi.getMe();
-          if (response.success && response.data) {
-            refreshUser(); // Esto forzará al AuthContext a leer de nuevo o podemos extenderlo
-          } else if (response.status === 401 || response.status === 403) {
-            handleLogout();
-          }
-        } catch (error) {
-          console.error("Error fetching user data:", error);
-        }
-      }
-    };
-
-    fetchUserData();
-  }, [navigate, token, user]);
+    if (!token || token === "undefined") {
+      handleLogout();
+      return;
+    }
+    if (!isHydrating && !user) {
+      handleLogout();
+    }
+  }, [token, user, isHydrating, handleLogout]);
 
   useEffect(() => {
     setAvatarTimestamp(Date.now());
@@ -91,14 +77,19 @@ const DashboardLayout = ({ children }: Props) => {
         rounded
         className="sticky top-0 z-[60] bg-white/80 shadow-sm backdrop-blur-md dark:bg-gray-900/80"
       >
-        <NavbarBrand href="/dashboard">
+        <Link to="/dashboard" className="flex items-center">
           <img
             src="/logo.svg"
             className="mr-3 h-6 dark:invert sm:h-9"
-            alt="Logo"
+            alt={t("common:logoAlt")}
           />
-        </NavbarBrand>
-        <div className="flex md:order-2">
+        </Link>
+        <div className="flex items-center gap-2 md:order-2">
+          <SignLanguageContextSwitcher
+            onManageEnroll={() => openLanguageManager("enroll")}
+            onManageRegions={() => openLanguageManager("regions")}
+            onLanguageChanged={handleLanguageChanged}
+          />
           <DarkThemeToggle />
 
           {user ? (
@@ -108,7 +99,7 @@ const DashboardLayout = ({ children }: Props) => {
               label={
                 <Avatar
                   className="text-gray-800 dark:text-white"
-                  alt="User settings"
+                  alt={t("userSettings")}
                   img={avatarImgSrc}
                   rounded
                   onError={() => {
@@ -128,17 +119,13 @@ const DashboardLayout = ({ children }: Props) => {
                 </span>
               </DropdownHeader>
               <DropdownItem onClick={() => navigate("/dashboard")}>
-                Dashboard
+                {t("dashboard")}
               </DropdownItem>
               <DropdownItem onClick={() => navigate("/profile")}>
-                Profile
-              </DropdownItem>
-              <DropdownItem onClick={() => setShowLanguageSwitcher(true)}>
-                <HiTranslate className="mr-2 size-4" />
-                Cambiar Idioma
+                {t("profile")}
               </DropdownItem>
               <DropdownDivider />
-              <DropdownItem onClick={handleLogout}>Sign out</DropdownItem>
+              <DropdownItem onClick={handleLogout}>{t("signOut")}</DropdownItem>
             </Dropdown>
           ) : (
             <div className="size-10 animate-pulse rounded-full bg-gray-200 dark:bg-gray-700"></div>
@@ -149,14 +136,24 @@ const DashboardLayout = ({ children }: Props) => {
           <NavbarLink
             href="/dashboard"
             active={location.pathname === "/dashboard"}
+            onClick={(e) => {
+              if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+              e.preventDefault();
+              navigate("/dashboard");
+            }}
           >
-            Dashboard
+            {t("dashboard")}
           </NavbarLink>
           <NavbarLink
             href="/leaderboard"
             active={location.pathname === "/leaderboard"}
+            onClick={(e) => {
+              if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+              e.preventDefault();
+              navigate("/leaderboard");
+            }}
           >
-            Leaderboard
+            {t("leaderboard")}
           </NavbarLink>
           {(isAdmin || isModerator) && (
             <Dropdown
@@ -164,7 +161,7 @@ const DashboardLayout = ({ children }: Props) => {
               inline
               label={
                 <span className="block rounded py-2 pl-3 pr-4 text-gray-700 hover:bg-gray-100 dark:border-gray-700 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white md:border-0 md:p-0 md:hover:bg-transparent md:hover:text-blue-700 md:dark:hover:bg-transparent md:dark:hover:text-white">
-                  Gestión
+                  {t("management")}
                 </span>
               }
             >
@@ -178,7 +175,7 @@ const DashboardLayout = ({ children }: Props) => {
                         : ""
                     }
                   >
-                    Languages
+                    {t("languages")}
                   </DropdownItem>
                   <DropdownItem
                     onClick={() => navigate("/admin/stages")}
@@ -188,7 +185,7 @@ const DashboardLayout = ({ children }: Props) => {
                         : ""
                     }
                   >
-                    Stages
+                    {t("stages")}
                   </DropdownItem>
                 </>
               )}
@@ -200,7 +197,7 @@ const DashboardLayout = ({ children }: Props) => {
                     : ""
                 }
               >
-                Lessons
+                {t("lessons")}
               </DropdownItem>
               <DropdownItem
                 onClick={() => navigate("/admin/regions")}
@@ -210,7 +207,17 @@ const DashboardLayout = ({ children }: Props) => {
                     : ""
                 }
               >
-                Regions
+                {t("regions")}
+              </DropdownItem>
+              <DropdownItem
+                onClick={() => navigate("/admin/sign-studio")}
+                className={
+                  location.pathname.startsWith("/admin/sign-studio")
+                    ? "bg-blue-50 dark:bg-gray-700"
+                    : ""
+                }
+              >
+                {t("signStudio")}
               </DropdownItem>
               {isAdmin && (
                 <DropdownItem
@@ -221,7 +228,7 @@ const DashboardLayout = ({ children }: Props) => {
                       : ""
                   }
                 >
-                  Moderators
+                  {t("moderators")}
                 </DropdownItem>
               )}
             </Dropdown>
@@ -232,7 +239,7 @@ const DashboardLayout = ({ children }: Props) => {
         <main className="min-h-screen p-4 dark:bg-gray-800">{children}</main>
       ) : (
         <div className="flex min-h-screen items-center justify-center dark:bg-gray-800">
-          <p className="text-gray-500 dark:text-gray-400">Loading...</p>
+          <p className="text-gray-500 dark:text-gray-400">{t("common:loading")}</p>
         </div>
       )}
 
@@ -240,6 +247,7 @@ const DashboardLayout = ({ children }: Props) => {
         isOpen={showLanguageSwitcher}
         onClose={() => setShowLanguageSwitcher(false)}
         onLanguageChanged={handleLanguageChanged}
+        initialTab={languageSwitcherTab}
       />
     </>
   );

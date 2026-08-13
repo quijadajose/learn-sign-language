@@ -1,10 +1,141 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import 'tailwindcss';
+@import 'flowbite-react/plugin/tailwindcss';
+
+
+@source '../node_modules/flowbite-react/dist/**/*.js';
+@source '../.flowbite-react/class-list.json';
+
+@custom-variant dark (&:is(.dark *));
+
+@theme {
+  --font-sans: Inter, sans-serif;
+  --font-display: Outfit, sans-serif;
+
+  --color-primary-50: #eff6ff;
+  --color-primary-100: #dbeafe;
+  --color-primary-200: #bfdbfe;
+  --color-primary-300: #93c5fd;
+  --color-primary-400: #60a5fa;
+  --color-primary-500: #3b82f6;
+  --color-primary-600: #2563eb;
+  --color-primary-700: #1d4ed8;
+  --color-primary-800: #1e40af;
+  --color-primary-900: #1e3a8a;
+  --color-primary-950: #172554;
+
+  --color-secondary-50: #f0fdf4;
+  --color-secondary-100: #dcfce7;
+  --color-secondary-200: #bbf7d0;
+  --color-secondary-300: #86efac;
+  --color-secondary-400: #4ade80;
+  --color-secondary-500: #22c55e;
+  --color-secondary-600: #16a34a;
+  --color-secondary-700: #15803d;
+  --color-secondary-800: #166534;
+  --color-secondary-900: #14532d;
+  --color-secondary-950: #052e16;
+
+  --color-accent-50: #fff7ed;
+  --color-accent-100: #ffedd5;
+  --color-accent-200: #fed7aa;
+  --color-accent-300: #fdba74;
+  --color-accent-400: #fb923c;
+  --color-accent-500: #f97316;
+  --color-accent-600: #ea580c;
+  --color-accent-700: #c2410c;
+  --color-accent-800: #9a3412;
+  --color-accent-900: #7c2d12;
+  --color-accent-950: #431407;
+
+  --color-dark: #111827;
+  --color-dark-card: #1f2937;
+  --color-dark-hover: #374151;
+
+  --animate-fade-in: fadeIn 0.5s ease-out;
+  --animate-fade-in-up: fadeInUp 0.5s ease-out;
+  --animate-pulse-slow: pulse 3s infinite;
+  --animate-float: float 3s ease-in-out infinite;
+
+  --shadow-glass: 0 4px 30px rgba(0, 0, 0, 0.1);
+  --shadow-glass-inset: inset 0 0 10px rgba(255, 255, 255, 0.1);
+
+  @keyframes fadeIn {
+    0% {
+      opacity: 0;
+    }
+    100% {
+      opacity: 1;
+    }
+  }
+  @keyframes fadeInUp {
+    0% {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+    100% {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+  @keyframes float {
+    0%,
+    100% {
+      transform: translateY(0);
+    }
+    50% {
+      transform: translateY(-5px);
+    }
+  }
+}
+
+/*
+  The default border color has changed to `currentcolor` in Tailwind CSS v4,
+  so we've added these compatibility styles to make sure everything still
+  looks the same as it did with Tailwind CSS v3.
+
+  If we ever want to remove these styles, we need to add an explicit border
+  color utility to any element that depends on these defaults.
+*/
+@layer base {
+  *,
+  ::after,
+  ::before,
+  ::backdrop,
+  ::file-selector-button {
+    border-color: var(--color-gray-200, currentcolor);
+  }
+}
+
+@utility glass-panel {
+  @apply rounded-xl border border-white/20 bg-white/70 shadow-glass backdrop-blur-lg dark:border-gray-700/30 dark:bg-gray-800/70;
+}
+
+@utility btn-primary {
+  @apply rounded-lg bg-primary-600 px-4 py-2 text-white shadow-md transition-all duration-300 hover:-translate-y-0.5 hover:bg-primary-700 hover:shadow-lg active:translate-y-0;
+}
+
+@utility card-hover {
+  @apply transition-all duration-300 hover:-translate-y-1 hover:shadow-xl;
+}
 
 @layer base {
   html {
     scroll-behavior: smooth;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    html {
+      scroll-behavior: auto;
+    }
+
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
   }
 
   body {
@@ -18,20 +149,6 @@
   h5,
   h6 {
     @apply font-display tracking-tight text-gray-900 dark:text-white;
-  }
-}
-
-@layer components {
-  .glass-panel {
-    @apply rounded-xl border border-white/20 bg-white/70 shadow-glass backdrop-blur-lg dark:border-gray-700/30 dark:bg-gray-800/70;
-  }
-
-  .btn-primary {
-    @apply rounded-lg bg-primary-600 px-4 py-2 text-white shadow-md transition-all duration-300 hover:-translate-y-0.5 hover:bg-primary-700 hover:shadow-lg active:translate-y-0;
-  }
-
-  .card-hover {
-    @apply transition-all duration-300 hover:-translate-y-1 hover:shadow-xl;
   }
 }
 
@@ -66,12 +183,25 @@
   @apply text-gray-900 dark:text-white;
 }
 
+.react-select-container .react-select__input-container {
+  @apply text-gray-900 dark:text-white;
+}
+
+/* react-select sets an inline-ish emotion color on the input; force inherit in dark mode */
+.react-select-container .react-select__input {
+  color: inherit !important;
+}
+
 .react-select-container .react-select__placeholder {
   @apply text-gray-500 dark:text-gray-400;
 }
 
 .react-select-container .react-select__single-value {
   @apply text-gray-900 dark:text-white;
+}
+
+.react-select-container .react-select__menu-notice {
+  @apply text-gray-500 dark:text-gray-300;
 }
 
 .react-select-container .react-select__menu {
@@ -95,9 +225,16 @@
 }
 
 .react-select-container .react-select__dropdown-indicator {
-  @apply text-gray-400 dark:text-gray-500;
+  @apply text-gray-500 dark:text-gray-300;
 }
 
 .react-select-container .react-select__clear-indicator {
-  @apply text-gray-400 dark:text-gray-500;
+  @apply text-gray-500 dark:text-gray-300;
+}
+
+/* Placeholder avatar SVG: match theme-toggle grey, not pure white */
+.dark img[src="/user.svg"],
+.dark img[src$="/user.svg"] {
+  filter: invert(1) brightness(0.65);
+  opacity: 0.85;
 }

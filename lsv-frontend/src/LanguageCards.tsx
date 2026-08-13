@@ -20,14 +20,19 @@ export default function LanguageCards() {
   );
 
   useEffect(() => {
-    const fetchSelectedLanguage = async () => {
+    let cancelled = false;
+
+    (async () => {
       if (selectedLanguageId) {
         if (!selectedLanguage || selectedLanguage.id !== selectedLanguageId) {
           const response = await languageApi.getEnrolledLanguages();
+          if (cancelled) return;
           if (response.success) {
-            const enrolledData = response.data;
+            const enrolledData = response.data as {
+              data: Array<{ language: Language }>;
+            };
             const foundLanguage = enrolledData.data.find(
-              (el: any) => el.language.id === selectedLanguageId,
+              (el) => el.language.id === selectedLanguageId,
             )?.language;
             if (foundLanguage) {
               setSelectedLanguage(foundLanguage);
@@ -37,10 +42,12 @@ export default function LanguageCards() {
       } else {
         setSelectedLanguage(null);
       }
-    };
+    })();
 
-    fetchSelectedLanguage();
-  }, [selectedLanguageId]);
+    return () => {
+      cancelled = true;
+    };
+  }, [selectedLanguageId, selectedLanguage]);
 
   return (
     <>

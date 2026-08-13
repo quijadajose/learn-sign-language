@@ -1,20 +1,18 @@
-import { useMemo } from "react";
 import { useAuth } from "../context/AuthContext";
 
+/**
+ * Client-side permission helpers for UI visibility only.
+ * Server APIs must enforce the same checks — never trust these alone.
+ */
 export const usePermissions = () => {
   const { user } = useAuth();
 
-  const isAdmin = useMemo(() => {
-    return user?.role === "admin";
-  }, [user?.role]);
+  const isAdmin = user?.role === "admin";
 
-  const isModerator = useMemo(() => {
-    return (
-      !isAdmin &&
-      user?.moderatorPermissions !== undefined &&
-      user.moderatorPermissions.length > 0
-    );
-  }, [isAdmin, user?.moderatorPermissions]);
+  const isModerator =
+    !isAdmin &&
+    user?.moderatorPermissions !== undefined &&
+    user.moderatorPermissions.length > 0;
 
   const hasLanguagePermission = (languageId: string): boolean => {
     if (isAdmin) return true;

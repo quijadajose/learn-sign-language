@@ -1,8 +1,8 @@
-import type { OnNext, OnBack, GetState, SetState } from "@formity/react";
+import type { Next, Back, GetState, SetState } from "@formity/react";
 
 export interface MultiStepValue {
-  onNext: OnNext;
-  onBack: OnBack;
-  getState: GetState;
+  next: Next<Record<string, unknown>>;
+  back: Back<Record<string, unknown>>;
+  getState: GetState<Record<string, unknown>>;
   setState: SetState;
 }
