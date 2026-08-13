@@ -59,7 +59,7 @@ export default function ModeratorManagement() {
 
   return (
     <div className="mx-auto w-full max-w-5xl space-y-6 p-6">
-      <div className="fixed right-5 top-5 z-[9999] flex flex-col gap-3">
+      <div className="fixed right-5 top-5 z-9999 flex flex-col gap-3">
         {toasts.map((toast) => (
           <Toast key={toast.id}>
             <div

@@ -60,7 +60,7 @@ const SignExamCameraView: React.FC<SignExamCameraViewProps> = ({
   return (
     <Card className="overflow-hidden border-none bg-white shadow-2xl dark:bg-gray-900">
       {isLoading ? (
-        <div className="flex h-[480px] flex-col items-center justify-center space-y-4">
+        <div className="flex h-120 flex-col items-center justify-center space-y-4">
           <Spinner size="xl" color="info" />
           <p className="animate-pulse font-medium text-gray-400">
             Cargando inteligencia artificial...
@@ -70,7 +70,7 @@ const SignExamCameraView: React.FC<SignExamCameraViewProps> = ({
         <m.div
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
-          className="flex h-[480px] flex-col items-center justify-center p-8 text-center text-white"
+          className="flex h-120 flex-col items-center justify-center p-8 text-center text-white"
         >
           <div className="rounded-full bg-green-500 p-6 shadow-[0_0_50px_rgba(34,197,94,0.5)]">
             <HiCheckCircle className="size-20" />

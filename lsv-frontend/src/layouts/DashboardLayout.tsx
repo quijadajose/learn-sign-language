@@ -75,7 +75,7 @@ const DashboardLayout = ({ children }: Props) => {
       <Navbar
         fluid
         rounded
-        className="sticky top-0 z-[60] bg-white/80 shadow-sm backdrop-blur-md dark:bg-gray-900/80"
+        className="sticky top-0 z-60 bg-white/80 shadow-sm backdrop-blur-md dark:bg-gray-900/80"
       >
         <Link to="/dashboard" className="flex items-center">
           <img

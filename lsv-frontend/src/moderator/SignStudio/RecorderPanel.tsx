@@ -201,7 +201,7 @@ export function RecorderPanel({
               </div>
             </div>
 
-            <div className="relative flex min-h-[480px] flex-1 items-center justify-center overflow-hidden rounded-lg border-4 border-gray-200 bg-black shadow-inner dark:border-gray-700">
+            <div className="relative flex min-h-120 flex-1 items-center justify-center overflow-hidden rounded-lg border-4 border-gray-200 bg-black shadow-inner dark:border-gray-700">
               {isCameraActive || (isReviewing && landmarksBuffer.length > 0) ? (
                 <>
                   <video

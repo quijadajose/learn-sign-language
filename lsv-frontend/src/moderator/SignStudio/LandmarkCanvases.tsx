@@ -182,7 +182,7 @@ export const PlaybackCanvas: React.FC<{ recording: SignRecording }> = ({ recordi
             className="h-1.5 flex-1 cursor-pointer accent-blue-500"
             aria-label="Posición del replay"
           />
-          <span className="min-w-[4.5rem] text-right text-[11px] tabular-nums text-gray-400">
+          <span className="min-w-18 text-right text-[11px] tabular-nums text-gray-400">
             {frameIndex + 1} / {totalFrames}
           </span>
         </div>
