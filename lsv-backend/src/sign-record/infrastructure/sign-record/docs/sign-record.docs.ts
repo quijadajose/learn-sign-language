@@ -8,6 +8,14 @@ import {
   ApiQuery,
 } from '@nestjs/swagger';
 import { PaginationDto } from 'src/shared/domain/dto/PaginationDto';
+import {
+  BulkSignsResultDto,
+  LessonModelResponseDto,
+  SignRecordingResponseDto,
+  SignResponseDto,
+  SuccessFlagDto,
+  TrainingQueuedResponseDto,
+} from 'src/shared/infrastructure/openapi/resource-responses';
 
 export const DocSignRecord = () => applyDecorators(ApiTags('SignRecord'));
 export const DocSignRecordInternal = () =>
@@ -30,6 +38,7 @@ export const DocSaveLandmarks = () =>
     ApiResponse({
       status: 201,
       description: 'Landmarks guardados exitosamente',
+      type: SignRecordingResponseDto,
     }),
   );
 
@@ -39,7 +48,11 @@ export const DocGetSignRecordings = () =>
       summary: 'Obtener todas las grabaciones de una seña específica',
     }),
     ApiParam({ name: 'signId', format: 'uuid' }),
-    ApiResponse({ status: 200, description: 'Lista de grabaciones' }),
+    ApiResponse({
+      status: 200,
+      description: 'Lista de grabaciones',
+      type: [SignRecordingResponseDto],
+    }),
   );
 
 export const DocTriggerCustomTraining = () =>
@@ -62,7 +75,11 @@ export const DocTriggerCustomTraining = () =>
         },
       },
     }),
-    ApiResponse({ status: 201, description: 'Entrenamiento iniciado' }),
+    ApiResponse({
+      status: 201,
+      description: 'Entrenamiento iniciado',
+      type: TrainingQueuedResponseDto,
+    }),
   );
 
 export const DocTriggerTraining = () =>
@@ -71,13 +88,21 @@ export const DocTriggerTraining = () =>
       summary: 'Iniciar entrenamiento para una variante de lección específica',
     }),
     ApiParam({ name: 'lessonVariantId', format: 'uuid' }),
-    ApiResponse({ status: 201, description: 'Entrenamiento iniciado' }),
+    ApiResponse({
+      status: 201,
+      description: 'Entrenamiento iniciado',
+      type: TrainingQueuedResponseDto,
+    }),
   );
 
 export const DocGetGlobalSigns = () =>
   applyDecorators(
     ApiOperation({ summary: 'Obtener señas globales (ej. "none")' }),
-    ApiResponse({ status: 200, description: 'Lista de señas globales' }),
+    ApiResponse({
+      status: 200,
+      description: 'Lista de señas globales',
+      type: [SignResponseDto],
+    }),
   );
 
 export const DocGetLessonSigns = () =>
@@ -88,7 +113,11 @@ export const DocGetLessonSigns = () =>
         'Intencional: cualquier usuario autenticado (JWT). Usado por SignExam; no restringir a admin/mod.',
     }),
     ApiParam({ name: 'lessonId', format: 'uuid' }),
-    ApiResponse({ status: 200, description: 'Lista de señas de la lección' }),
+    ApiResponse({
+      status: 200,
+      description: 'Lista de señas de la lección',
+      type: [SignResponseDto],
+    }),
   );
 
 export const DocGetLessonModel = () =>
@@ -158,7 +187,11 @@ export const DocGetModels = () =>
       summary: 'Obtener todos los modelos de entrenamiento y su estado',
     }),
     ApiQuery({ type: PaginationDto }),
-    ApiResponse({ status: 200, description: 'Lista de modelos' }),
+    ApiResponse({
+      status: 200,
+      description: 'Lista de modelos',
+      type: [LessonModelResponseDto],
+    }),
   );
 
 export const DocDeleteModel = () =>
@@ -167,14 +200,22 @@ export const DocDeleteModel = () =>
       summary: 'Eliminar un registro de modelo de entrenamiento',
     }),
     ApiParam({ name: 'id', format: 'uuid' }),
-    ApiResponse({ status: 200, description: 'Modelo eliminado' }),
+    ApiResponse({
+      status: 200,
+      description: 'Modelo eliminado',
+      type: SuccessFlagDto,
+    }),
   );
 
 export const DocDeleteRecording = () =>
   applyDecorators(
     ApiOperation({ summary: 'Eliminar una grabación de seña específica' }),
     ApiParam({ name: 'id', format: 'uuid' }),
-    ApiResponse({ status: 200, description: 'Grabación eliminada' }),
+    ApiResponse({
+      status: 200,
+      description: 'Grabación eliminada',
+      type: SuccessFlagDto,
+    }),
   );
 
 export const DocCreateSign = () =>
@@ -193,7 +234,11 @@ export const DocCreateSign = () =>
         required: ['name', 'languageId'],
       },
     }),
-    ApiResponse({ status: 201, description: 'Seña creada' }),
+    ApiResponse({
+      status: 201,
+      description: 'Seña creada',
+      type: SignResponseDto,
+    }),
   );
 
 export const DocCreateSignsBulk = () =>
@@ -226,6 +271,7 @@ export const DocCreateSignsBulk = () =>
     ApiResponse({
       status: 201,
       description: 'Catálogo creado (created + skipped)',
+      type: BulkSignsResultDto,
     }),
   );
 
@@ -244,14 +290,22 @@ export const DocUpdateSign = () =>
         },
       },
     }),
-    ApiResponse({ status: 200, description: 'Seña actualizada' }),
+    ApiResponse({
+      status: 200,
+      description: 'Seña actualizada',
+      type: SignResponseDto,
+    }),
   );
 
 export const DocDeleteSign = () =>
   applyDecorators(
     ApiOperation({ summary: 'Eliminar una seña' }),
     ApiParam({ name: 'id', format: 'uuid' }),
-    ApiResponse({ status: 200, description: 'Seña eliminada' }),
+    ApiResponse({
+      status: 200,
+      description: 'Seña eliminada',
+      type: SignResponseDto,
+    }),
   );
 
 export const DocUpdateModelStatus = () =>

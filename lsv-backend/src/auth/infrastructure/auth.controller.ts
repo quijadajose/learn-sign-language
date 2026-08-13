@@ -14,6 +14,7 @@ import {
 import { Throttle } from '@nestjs/throttler';
 import * as Sentry from '@sentry/nestjs';
 import { IsString, MinLength } from 'class-validator';
+import { ApiProperty } from '@nestjs/swagger';
 import { CreateUserDto } from '../domain/dto/create-user/create-user';
 import { AuthService } from '../application/auth.service';
 import { AuthGuard } from '@nestjs/passport';
@@ -32,9 +33,11 @@ import {
   DocLogin,
   DocRegister,
   DocRequestPasswordReset,
+  DocExchangeGoogleCode,
 } from './docs/auth.docs';
 
 class ExchangeGoogleCodeDto {
+  @ApiProperty({ minLength: 16, example: 'oauth-one-time-code' })
   @IsString()
   @MinLength(16)
   code: string;
@@ -134,6 +137,7 @@ export class AuthController {
   @Public()
   @Throttle({ default: { limit: 10, ttl: 60000 } })
   @Post('google/exchange')
+  @DocExchangeGoogleCode()
   async exchangeGoogleCode(@Body() body: ExchangeGoogleCodeDto) {
     const result = await this.oauthCodeStore.consume(body.code);
     if (!result) {

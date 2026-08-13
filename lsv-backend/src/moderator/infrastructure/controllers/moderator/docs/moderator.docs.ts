@@ -6,6 +6,12 @@ import {
   ApiQuery,
   ApiTags,
 } from '@nestjs/swagger';
+import {
+  MessageResponseDto,
+  ModeratorPermissionResponseDto,
+  ModeratorUserSummaryDto,
+  PaginatedModeratorResponseDto,
+} from 'src/shared/infrastructure/openapi/resource-responses';
 
 export const DocModerator = () => {
   return applyDecorators(ApiTags('Moderators'), ApiBearerAuth());
@@ -21,6 +27,7 @@ export const DocListModerators = () => {
     ApiResponse({
       status: 200,
       description: 'Lista de moderadores obtenida exitosamente',
+      type: PaginatedModeratorResponseDto,
     }),
     ApiResponse({
       status: 401,
@@ -43,6 +50,7 @@ export const DocAssignPermission = () => {
     ApiResponse({
       status: 201,
       description: 'Permiso asignado exitosamente',
+      type: ModeratorPermissionResponseDto,
     }),
     ApiResponse({
       status: 400,
@@ -83,6 +91,7 @@ export const DocSearchUsers = () => {
     ApiResponse({
       status: 200,
       description: 'Lista de usuarios encontrados',
+      type: [ModeratorUserSummaryDto],
     }),
     ApiResponse({
       status: 401,
@@ -104,6 +113,7 @@ export const DocRevokePermission = () => {
     ApiResponse({
       status: 200,
       description: 'Permiso revocado exitosamente',
+      type: MessageResponseDto,
     }),
     ApiResponse({
       status: 401,

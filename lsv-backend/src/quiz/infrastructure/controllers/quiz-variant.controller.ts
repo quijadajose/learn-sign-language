@@ -16,7 +16,15 @@ import { ResourceAccessGuard } from 'src/permissions/infrastructure/guards/resou
 import { QuizVariantService } from 'src/quiz/application/services/quiz-variant.service';
 import { CreateQuizVariantDto } from 'src/quiz/domain/dto/create-quiz-variant-dto';
 import { QuizVariant } from 'src/shared/domain/entities/quizVariant';
+import {
+  DocCreateQuizVariant,
+  DocDeleteQuizVariant,
+  DocGetQuizVariants,
+  DocQuizVariant,
+  DocUpdateQuizVariant,
+} from './quiz-variant.docs';
 
+@DocQuizVariant()
 @Controller('quiz-variants')
 @UseGuards(AuthGuard('jwt'), ResourceAccessGuard)
 export class QuizVariantController {
@@ -27,6 +35,7 @@ export class QuizVariantController {
     resolve: 'variant.regionId',
   })
   @Get('lesson-variant/:lessonVariantId')
+  @DocGetQuizVariants()
   async getQuizVariants(
     @Param('lessonVariantId', ParseUUIDPipe) lessonVariantId: string,
   ): Promise<QuizVariant[]> {
@@ -38,6 +47,7 @@ export class QuizVariantController {
     resolve: 'variant.regionId',
   })
   @Post()
+  @DocCreateQuizVariant()
   async createQuizVariant(
     @Body() createQuizVariantDto: CreateQuizVariantDto,
   ): Promise<QuizVariant> {
@@ -51,6 +61,7 @@ export class QuizVariantController {
     resolve: 'quizVariant.lessonVariant.regionId',
   })
   @Delete(':id')
+  @DocDeleteQuizVariant()
   async deleteQuizVariant(
     @Param('id', ParseUUIDPipe) id: string,
   ): Promise<{ message: string }> {
@@ -63,6 +74,7 @@ export class QuizVariantController {
     resolve: 'quizVariant.lessonVariant.regionId',
   })
   @Put(':id')
+  @DocUpdateQuizVariant()
   async updateQuizVariant(
     @Param('id', ParseUUIDPipe) id: string,
     @Body() updateQuizVariantDto: CreateQuizVariantDto,

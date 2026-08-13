@@ -3,6 +3,7 @@ import {
   Controller,
   Delete,
   Get,
+  HttpCode,
   Param,
   ParseUUIDPipe,
   Post,
@@ -24,7 +25,17 @@ import { CountryDivisionService } from 'src/shared/application/services/country-
 import { CountryWithDivisionsDto } from 'src/shared/domain/dto/country-with-divisions.dto';
 import { SearchCountriesDto } from 'src/shared/domain/dto/search-countries.dto';
 import { Country } from 'src/shared/domain/entities/iso-3166-2/countries';
-import { DocGetCountries, DocRegion } from './docs/region.docs';
+import {
+  DocAssignLanguageToRegions,
+  DocCreateRegion,
+  DocDeleteRegion,
+  DocGetCountries,
+  DocGetCountriesWithDivisions,
+  DocGetRegionById,
+  DocListRegions,
+  DocRegion,
+  DocUpdateRegion,
+} from './docs/region.docs';
 
 @DocRegion()
 @Controller('region')
@@ -36,6 +47,7 @@ export class RegionController {
   ) {}
 
   @Get()
+  @DocListRegions()
   async getAllRegions(
     @Query() query: GetRegionsQueryDto,
   ): Promise<{ data: Region[]; total: number }> {
@@ -51,6 +63,7 @@ export class RegionController {
   }
 
   @Get('countries-with-divisions')
+  @DocGetCountriesWithDivisions()
   async getCountriesWithDivisions(
     @Query() searchDto: SearchCountriesDto,
   ): Promise<CountryWithDivisionsDto[]> {
@@ -58,6 +71,7 @@ export class RegionController {
   }
 
   @Get(':id')
+  @DocGetRegionById()
   async getRegionById(@Param('id', ParseUUIDPipe) id: string): Promise<Region> {
     return this.regionService.getRegionById(id);
   }
@@ -65,6 +79,7 @@ export class RegionController {
   @UseGuards(ResourceAccessGuard)
   @RequireResourcePermission(PermissionScope.LANGUAGE, { body: 'languageId' })
   @Post()
+  @DocCreateRegion()
   async createRegion(
     @Body() createRegionDto: CreateRegionDto,
   ): Promise<Region> {
@@ -74,6 +89,7 @@ export class RegionController {
   @UseGuards(ResourceAccessGuard)
   @RequireResourcePermission(PermissionScope.REGION, { param: 'id' })
   @Put(':id')
+  @DocUpdateRegion()
   async updateRegion(
     @Param('id', ParseUUIDPipe) id: string,
     @Body() updateRegionDto: CreateRegionDto,
@@ -87,6 +103,8 @@ export class RegionController {
     resolve: 'region.languageId',
   })
   @Delete(':id')
+  @HttpCode(204)
+  @DocDeleteRegion()
   async deleteRegion(@Param('id', ParseUUIDPipe) id: string): Promise<void> {
     return this.regionService.deleteRegion(id);
   }
@@ -94,6 +112,7 @@ export class RegionController {
   @UseGuards(RolesGuard)
   @Roles('admin')
   @Post('assign-language')
+  @DocAssignLanguageToRegions()
   async assignLanguageToRegions(): Promise<{
     message: string;
     updated: number;
