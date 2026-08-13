@@ -1,21 +1,21 @@
 # Security Policy
 
-## Supported Versions
-
-Use this section to tell people about which versions of your project are
-currently being supported with security updates.
-
-| Version | Supported          |
-| ------- | ------------------ |
-| 5.1.x   | :white_check_mark: |
-| 5.0.x   | :x:                |
-| 4.0.x   | :white_check_mark: |
-| < 4.0   | :x:                |
-
 ## Reporting a Vulnerability
 
-Use this section to tell people how to report a vulnerability.
+If you discover a security vulnerability in LSV, please report it privately.
 
-Tell them where to go, how often they can expect to get an update on a
-reported vulnerability, what to expect if the vulnerability is accepted or
-declined, etc.
+1. Open a [GitHub security advisory](https://github.com/quijadajose/learn-sign-language/security/advisories/new) on this repository, **or**
+2. Email the maintainers with a description, impact, and steps to reproduce.
+
+Please do **not** open a public issue for security problems until a fix is available.
+
+## Supported Versions
+
+Security fixes are applied to the `main` branch. Deploy from `main` for production.
+
+## Hardening Notes
+
+- Never commit `.env` files or real credentials.
+- Rotate `JWT_SECRET`, database, and Valkey passwords before any production deploy.
+- Image uploads require authentication; only allowlisted folders are accepted.
+- Google OAuth uses a short-lived one-time code exchange (JWT is never placed in redirect query strings). Codes are stored in Valkey with TTL so they work across API replicas.

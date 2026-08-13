@@ -9,10 +9,91 @@ env:
   REGISTRY: ghcr.io
   BACKEND_IMAGE: quijadajose/lsv-backend
   FRONTEND_IMAGE: quijadajose/lsv-frontend
+  TRAINER_IMAGE: quijadajose/lsv-model-trainer
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: 'true'
 
 jobs:
+  smoke:
+    name: E2E smoke before deploy
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: lsv-backend
+    services:
+      postgres:
+        image: postgres:18.3-alpine
+        env:
+          POSTGRES_USER: user
+          POSTGRES_PASSWORD: password
+          POSTGRES_DB: plataforma
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U user -d plataforma"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: npm
+          cache-dependency-path: lsv-backend/package-lock.json
+      - name: Start Valkey
+        run: |
+          docker run -d --name lsv-valkey \
+            -p 6379:6379 \
+            valkey/valkey:8.0-alpine \
+            valkey-server --requirepass password
+          for i in $(seq 1 30); do
+            if docker exec lsv-valkey valkey-cli -a password ping 2>/dev/null | grep -q PONG; then
+              exit 0
+            fi
+            sleep 1
+          done
+          echo "Valkey failed to become ready" >&2
+          exit 1
+      - run: npm ci
+      - name: Run e2e smoke
+        run: |
+          node ./node_modules/jest/bin/jest.js \
+            --config ./test/jest-e2e.json \
+            --runInBand \
+            --testPathPatterns=auth.e2e-spec \
+            --testPathPatterns=health.e2e-spec \
+            --testPathPatterns=sign-record.e2e-spec \
+            --testPathPatterns=quizzes.e2e-spec \
+            --testPathPatterns=user-lesson.e2e-spec \
+            --testPathPatterns=moderators.e2e-spec
+        env:
+          NODE_ENV: test
+          FRONTEND_URL: http://localhost:8080
+          API_PORT: "3000"
+          JWT_SECRET: ci-test-jwt-secret-not-for-prod
+          API_ADMIN_EMAIL: admin@example.com
+          API_ADMIN_PASSWORD: password
+          API_USER_EMAIL: user@example.com
+          API_USER_PASSWORD: password
+          DB_HOST: 127.0.0.1
+          DB_PORT: "5432"
+          DB_USERNAME: user
+          DB_PASSWORD: password
+          DB_DATABASE: plataforma
+          VALKEY_HOST: 127.0.0.1
+          VALKEY_PORT: "6379"
+          VALKEY_PASSWORD: password
+          GOOGLE_CLIENT_ID: test-google-client-id
+          GOOGLE_CLIENT_SECRET: test-google-client-secret
+          GOOGLE_CALLBACK_URL: http://localhost:3000/auth/google/callback
+          EMAIL_HOST: localhost
+          EMAIL_PORT: "587"
+          EMAIL_USER: test@example.com
+          EMAIL_PASSWORD: test
+          EMAIL_SECURE: "false"
+
   build:
+    needs: smoke
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -46,6 +127,13 @@ jobs:
             VITE_SENTRY_DSN=${{ secrets.VITE_SENTRY_DSN }}
           tags: ${{ env.REGISTRY }}/${{ env.FRONTEND_IMAGE }}:latest
 
+      - name: Build and push Model Trainer
+        uses: docker/build-push-action@v5
+        with:
+          context: ./lsv-model-trainer
+          push: true
+          tags: ${{ env.REGISTRY }}/${{ env.TRAINER_IMAGE }}:latest
+
   deploy:
     needs: build
     runs-on: ubuntu-latest
@@ -70,12 +158,9 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
             cd ~/apps/lsv
-            
-            # Login al registro y desplegar
+
             echo ${{ secrets.GITHUB_TOKEN }} | docker login ghcr.io -u ${{ github.actor }} --password-stdin
-            
-            # Forzar pull de las nuevas imágenes
+
             docker compose -f docker-compose.yml -f docker-compose.prod.yml pull
-            
-            # Reiniciar servicios
+
             docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --remove-orphans
