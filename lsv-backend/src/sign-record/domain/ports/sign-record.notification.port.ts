@@ -1,5 +1,5 @@
 export interface SignRecordNotificationPort {
   sendProgress(modelId: string, progress: number, accuracy?: number): void;
-  sendModelReady(modelId: string, modelData: any): void;
+  sendModelReady(modelId: string, modelData: Record<string, unknown>): void;
   emitStatusChange(modelId: string, status: string): void;
 }

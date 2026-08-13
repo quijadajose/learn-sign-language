@@ -19,7 +19,7 @@ export class RegisterUserUseCase {
 
     const existingUser = await this.userRepository.findByEmail(email);
     if (existingUser) {
-      throw new ConflictException('Email already in use');
+      throw new ConflictException('errors.auth.emailInUse');
     }
 
     const newUser = new User();
@@ -38,7 +38,7 @@ export class RegisterUserUseCase {
 
     const existingUser = await this.userRepository.findByEmail(email);
     if (existingUser) {
-      throw new ConflictException('Email already in use');
+      throw new ConflictException('errors.auth.emailInUse');
     }
 
     const newUser = new User();

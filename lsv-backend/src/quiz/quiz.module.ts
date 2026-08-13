@@ -1,4 +1,4 @@
-import { Module, forwardRef } from '@nestjs/common';
+import { Module } from '@nestjs/common';
 import { QuizController } from './infrastructure/controllers/quiz/quiz.controller';
 import { QuizVariantController } from './infrastructure/controllers/quiz-variant.controller';
 import { CreateQuizWithQuestionsAndOptionsUseCase } from './application/use-cases/create-quiz-with-questions-and-options-use-case/create-quiz-with-questions-and-options-use-case';
@@ -21,7 +21,6 @@ import { User } from 'src/shared/domain/entities/user';
 import { SubmissionTestUseCase } from './application/use-cases/submission-test-use-case/submission-test-use-case';
 import { GetUserByIdUseCase } from 'src/users/application/use-cases/get-user-by-id-use-case/get-user-by-id-use-case';
 import { AuthModule } from 'src/auth/auth.module';
-import { ModeratorModule } from 'src/moderator/moderator.module';
 import { GetSubmissionTestFromUserUseCase } from './application/use-cases/get-submission-test-from-user-use-case/get-submission-test-from-user-use-case';
 import { DeleteQuizUseCase } from './application/use-cases/delete-quiz-use-case/delete-quiz-use-case';
 import { UpdateQuizUseCase } from './application/use-cases/update-quiz-use-case/update-quiz-use-case';
@@ -33,8 +32,7 @@ import { UpdateQuizVariantUseCase } from './application/use-cases/update-quiz-va
 
 @Module({
   imports: [
-    forwardRef(() => AuthModule),
-    forwardRef(() => ModeratorModule),
+    AuthModule,
     TypeOrmModule.forFeature([
       Quiz,
       Question,

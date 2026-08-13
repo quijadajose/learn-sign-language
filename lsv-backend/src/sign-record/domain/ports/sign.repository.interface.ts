@@ -2,7 +2,6 @@ import { Sign } from 'src/shared/domain/entities/sign';
 
 export interface SignRepositoryInterface {
   findById(id: string): Promise<Sign | null>;
-  find(options?: any): Promise<Sign[]>;
   save(sign: Sign): Promise<Sign>;
   update(id: string, partialSign: Partial<Sign>): Promise<void>;
   remove(sign: Sign): Promise<Sign>;
@@ -12,5 +11,10 @@ export interface SignRepositoryInterface {
     regionId?: string,
   ): Promise<Sign[]>;
   findForTraining(lessonId: string): Promise<Sign[]>;
-  create(data: Partial<Sign>): Sign;
+  create(
+    data: Partial<Omit<Sign, 'language' | 'lessons'>> & {
+      language?: { id: string };
+      lessons?: { id: string }[];
+    },
+  ): Sign;
 }

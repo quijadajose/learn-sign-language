@@ -30,9 +30,14 @@ export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
   async validate(
     accessToken: string,
     refreshToken: string,
-    profile: any,
+    profile: {
+      id: string;
+      emails: { value: string }[];
+      name: { givenName: string; familyName: string };
+      birthday?: string;
+    },
     done: VerifyCallback,
-  ): Promise<any> {
+  ): Promise<void> {
     const { id, emails, name, birthday } = profile;
 
     let user: User | null = await this.findUserUseCase.findByEmail(

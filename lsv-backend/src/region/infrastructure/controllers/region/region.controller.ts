@@ -12,9 +12,9 @@ import {
 } from '@nestjs/common';
 import { Roles } from 'src/auth/infrastructure/decorators/roles.decorator';
 import { RolesGuard } from 'src/auth/infrastructure/guards/roles/roles.guard';
-import { RequireResourcePermission } from 'src/auth/infrastructure/decorators/require-resource-permission.decorator';
+import { RequireResourcePermission } from 'src/permissions/infrastructure/decorators/require-resource-permission.decorator';
 import { PermissionScope } from 'src/shared/domain/entities/moderatorPermission';
-import { ResourceAccessGuard } from 'src/auth/infrastructure/guards/resource-access/resource-access.guard';
+import { ResourceAccessGuard } from 'src/permissions/infrastructure/guards/resource-access/resource-access.guard';
 import { CreateRegionDto } from 'src/region/domain/create-region.dto';
 import { GetRegionsQueryDto } from 'src/region/domain/dto/get-regions-query.dto';
 import { RegionService } from 'src/region/application/services/region/region.service';

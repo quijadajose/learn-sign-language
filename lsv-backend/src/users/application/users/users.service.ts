@@ -12,10 +12,13 @@ import { GetUserLanguagesUseCase } from '../use-cases/get-user-languages/get-use
 import { GetUserRegionsUseCase } from '../use-cases/get-user-regions/get-user-regions.use-case';
 import { UnenrollUserFromLanguageUseCase } from '../use-cases/unenroll-user-from-language/unenroll-user-from-language.use-case';
 import { UnenrollUserFromRegionUseCase } from '../use-cases/unenroll-user-from-region/unenroll-user-from-region.use-case';
-import { StageRepositoryInterface } from 'src/stage/domain/ports/stage.repository.interface/stage.repository.interface';
+import {
+  StageProgressRow,
+  StageRepositoryInterface,
+} from 'src/stage/domain/ports/stage.repository.interface/stage.repository.interface';
 import { UserRegionRepositoryInterface } from 'src/users/domain/ports/user-region.repository.interface';
 
-interface UserLanguageWithRegions extends UserLanguage {
+export interface UserLanguageWithRegions extends UserLanguage {
   enrolledRegions?: UserRegion[];
 }
 
@@ -92,7 +95,7 @@ export class UsersService {
     userId: string,
     languageId: string,
     pagination: PaginationDto,
-  ): Promise<PaginatedResponseDto<any>> {
+  ): Promise<PaginatedResponseDto<StageProgressRow>> {
     return this.stageRepository.getStagesProgressForUser(
       userId,
       languageId,

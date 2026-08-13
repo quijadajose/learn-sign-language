@@ -1,5 +1,6 @@
 import { LeaderboardDto } from 'src/leaderboard/domain/dto/leaderboard/leaderboard';
 import { QuizDto } from 'src/quiz/domain/dto/quiz/quiz-dto';
+import { Submission } from 'src/quiz/domain/dto/submission/submission.dto';
 import {
   PaginationDto,
   PaginatedResponseDto,
@@ -28,6 +29,11 @@ export interface QuizRepositoryInterface {
     quiz: Quiz,
     pagination: PaginationDto,
   ): Promise<QuizSubmission[]>;
+  submissionTest(
+    user: User,
+    quiz: Quiz,
+    submission: Submission,
+  ): Promise<{ id: string; submittedAt: Date; score: number }>;
   getLeaderboard(
     pagination: PaginationDto,
   ): Promise<PaginatedResponseDto<LeaderboardDto>>;

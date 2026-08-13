@@ -32,10 +32,14 @@ export class UploadPictureUseCase {
 
     const sizes = { original: null, sm: 64, md: 128, lg: 256 };
 
+    if (!/^[a-zA-Z0-9_-]+$/.test(folder)) {
+      throw new BadRequestException('Invalid upload folder name');
+    }
+
     const baseUploadDir = path.resolve('./uploads');
     const uploadsDir = path.join(baseUploadDir, folder);
 
-    if (!uploadsDir.startsWith(baseUploadDir)) {
+    if (!uploadsDir.startsWith(baseUploadDir + path.sep)) {
       throw new BadRequestException('Invalid upload directory');
     }
 

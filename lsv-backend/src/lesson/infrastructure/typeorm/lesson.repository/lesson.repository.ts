@@ -18,7 +18,12 @@ import { Stages } from 'src/shared/domain/entities/stage';
 import { QuizSubmission } from 'src/shared/domain/entities/quizSubmission';
 import { LessonVariant } from 'src/shared/domain/entities/lessonVariant';
 import { CreateLessonVariantDto } from 'src/lesson/domain/dto/create-lesson-variant/create-lesson-variant-dto';
-import { FindManyOptions, Repository, DataSource } from 'typeorm';
+import {
+  FindManyOptions,
+  FindOptionsWhere,
+  Repository,
+  DataSource,
+} from 'typeorm';
 import { QuizService } from 'src/quiz/application/services/quiz/quiz.service';
 import { LessonVariantRepository } from '../lesson-variant.repository/lesson-variant.repository';
 import { RegionRepository } from '../region.repository/region.repository';
@@ -40,6 +45,47 @@ export class LessonRepository implements LessonRepositoryInterface {
     @Inject(forwardRef(() => QuizService))
     private readonly quizService: QuizService,
   ) {}
+
+  /**
+   * Alineado con SignExam: la lección está lista solo si existen modelos READY
+   * para cada detectionType presente en sus señas (static y/o dynamic).
+   */
+  private buildHasReadyModelSql(modelScopeSql: string): string {
+    return `(
+          EXISTS (
+            SELECT 1 FROM lesson_signs ls0 WHERE ls0."lessonId" = l.id
+          )
+          AND (
+            NOT EXISTS (
+              SELECT 1 FROM lesson_signs ls
+              INNER JOIN sign s ON s.id = ls."signId"
+              WHERE ls."lessonId" = l.id
+                AND COALESCE(s."detectionType", 'static') = 'static'
+            )
+            OR EXISTS (
+              SELECT 1 FROM lesson_model lm
+              WHERE lm.status = 'READY'
+                AND lm."modelType" = 'static'
+                AND (${modelScopeSql})
+            )
+          )
+          AND (
+            NOT EXISTS (
+              SELECT 1 FROM lesson_signs ls
+              INNER JOIN sign s ON s.id = ls."signId"
+              WHERE ls."lessonId" = l.id
+                AND s."detectionType" = 'dynamic'
+            )
+            OR EXISTS (
+              SELECT 1 FROM lesson_model lm
+              WHERE lm.status = 'READY'
+                AND lm."modelType" = 'dynamic'
+                AND (${modelScopeSql})
+            )
+          )
+        )`;
+  }
+
   async findPassedLessonIdsForUser(userId: string): Promise<Set<string>> {
     const submissions = await this.quizSubmissionRepository
       .createQueryBuilder('submission')
@@ -59,14 +105,22 @@ export class LessonRepository implements LessonRepositoryInterface {
   findById(id: string): Promise<Lesson | null> {
     return this.lessonRepository.findOne({
       where: { id },
-      relations: ['stage'],
+      relations: {
+        stage: true,
+      },
     });
   }
 
   findByIdWithQuizzes(id: string): Promise<Lesson | null> {
     return this.lessonRepository.findOne({
       where: { id },
-      relations: ['quizzes', 'quizzes.questions', 'quizzes.questions.options'],
+      relations: {
+        quizzes: {
+          questions: {
+            options: true,
+          },
+        },
+      },
     });
   }
 
@@ -110,17 +164,22 @@ export class LessonRepository implements LessonRepositoryInterface {
     } = pagination;
 
     const skip = (page - 1) * limit;
+    const allowedOrderBy = new Set([
+      'createdAt',
+      'updatedAt',
+      'name',
+      'description',
+    ]);
+    const safeOrderBy =
+      orderBy && allowedOrderBy.has(orderBy) ? orderBy : 'createdAt';
+    const safeSortOrder = sortOrder === 'ASC' ? 'ASC' : 'DESC';
 
     const findOptions: FindManyOptions = {
       skip,
       take: limit,
+      order: { [safeOrderBy]: safeSortOrder },
     };
 
-    if (orderBy && sortOrder) {
-      findOptions.order = {
-        [orderBy]: sortOrder,
-      };
-    }
     return this.lessonRepository.find(findOptions);
   }
   save(lesson: Lesson): Promise<Lesson> {
@@ -176,23 +235,36 @@ export class LessonRepository implements LessonRepositoryInterface {
 
     const skip = (page - 1) * limit;
 
-    const whereClause: any = { language: { id: languageId } };
+    const whereClause: FindOptionsWhere<Lesson> = {
+      language: { id: languageId },
+    };
     if (stageId) {
       whereClause.stage = { id: stageId };
     }
 
+    const allowedOrderBy = new Set([
+      'createdAt',
+      'updatedAt',
+      'name',
+      'description',
+    ]);
+    const safeOrderBy =
+      orderBy && allowedOrderBy.has(orderBy) ? orderBy : 'createdAt';
+    const safeSortOrder = sortOrder === 'ASC' ? 'ASC' : 'DESC';
+
     const findOptions: FindManyOptions<Lesson> = {
-      select: ['id', 'name', 'description', 'createdAt', 'updatedAt'],
+      select: {
+        id: true,
+        name: true,
+        description: true,
+        createdAt: true,
+        updatedAt: true,
+      },
       where: whereClause,
       skip,
       take: limit,
+      order: { [safeOrderBy]: safeSortOrder },
     };
-
-    if (orderBy && sortOrder) {
-      findOptions.order = {
-        [orderBy]: sortOrder,
-      };
-    }
 
     const [data, total] = await this.lessonRepository.findAndCount(findOptions);
 
@@ -210,7 +282,7 @@ export class LessonRepository implements LessonRepositoryInterface {
     pagination: PaginationDto,
     stageId?: string,
     regionId?: string,
-  ): Promise<PaginatedResponseDto<any>> {
+  ): Promise<PaginatedResponseDto<Lesson>> {
     const {
       page,
       limit,
@@ -220,10 +292,13 @@ export class LessonRepository implements LessonRepositoryInterface {
 
     const skip = (page - 1) * limit;
 
+    const allowedOrderBy = new Set(['createdAt', 'updatedAt', 'name']);
+    const safeOrderBy = allowedOrderBy.has(orderBy) ? orderBy : 'createdAt';
+    const safeSortOrder = sortOrder === 'ASC' ? 'ASC' : 'DESC';
     const orderByClause =
-      orderBy === 'createdAt'
-        ? `l."${orderBy}" ${sortOrder}, qs."submittedAt" DESC`
-        : `l."${orderBy}" ${sortOrder}`;
+      safeOrderBy === 'createdAt'
+        ? `l."createdAt" ${safeSortOrder}, qs."submittedAt" DESC`
+        : `l."${safeOrderBy}" ${safeSortOrder}`;
 
     const queryParams = [userId, languageId];
 
@@ -247,7 +322,23 @@ export class LessonRepository implements LessonRepositoryInterface {
           qs."quizId" AS submission_quizId,
           qs.score AS submission_score,
           qs."submittedAt" AS submission_submittedAt,
-          qs.answers AS submission_answers
+          qs.answers AS submission_answers,
+          ${this.buildHasReadyModelSql(`
+            (
+              lm."lessonId" = l.id
+              AND (
+                lm."lessonVariantId" IS NULL
+                OR lm."lessonVariantId" IN (
+                  SELECT lv.id FROM lesson_variant lv
+                  WHERE lv."baseLessonId" = l.id AND lv."isBase" = true
+                )
+              )
+            )
+            OR lm."lessonVariantId" IN (
+              SELECT lv.id FROM lesson_variant lv
+              WHERE lv."baseLessonId" = l.id AND lv."isBase" = true
+            )
+          `)} AS has_ready_model
         FROM
           lesson AS l
           LEFT JOIN quiz AS q ON q."lessonId" = l.id
@@ -293,12 +384,18 @@ export class LessonRepository implements LessonRepositoryInterface {
             stageId: row.lesson_stageId,
             createdAt: row.lesson_createdAt,
             updatedAt: row.lesson_updatedAt,
+            hasReadyModel: row.has_ready_model,
+            hasQuiz: Boolean(row.quiz_id),
             maxScore: 0,
             submissions: [],
           });
         }
 
         const lesson = lessonMap.get(lessonId);
+
+        if (row.quiz_id) {
+          lesson.hasQuiz = true;
+        }
 
         if (row.submission_id) {
           if (row.submission_score > lesson.maxScore) {
@@ -321,7 +418,7 @@ export class LessonRepository implements LessonRepositoryInterface {
         }
       });
 
-      const data = Array.from(lessonMap.values());
+      const data = Array.from(lessonMap.values()) as Lesson[];
 
       return {
         data,
@@ -348,7 +445,21 @@ export class LessonRepository implements LessonRepositoryInterface {
         qs.score AS submission_score,
         qs."submittedAt" AS submission_submittedAt,
         qs.answers AS submission_answers,
-        CASE WHEN lv.id IS NOT NULL THEN true ELSE false END AS is_regional_variant
+        CASE WHEN lv.id IS NOT NULL THEN true ELSE false END AS is_regional_variant,
+        ${this.buildHasReadyModelSql(`
+          (
+            lm."lessonId" = l.id
+            AND (
+              lm."lessonVariantId" IS NULL
+              OR lm."lessonVariantId" = lv.id
+            )
+          )
+          OR lm."lessonVariantId" = lv.id
+          OR lm."lessonVariantId" IN (
+            SELECT lv2.id FROM lesson_variant lv2
+            WHERE lv2."baseLessonId" = l.id AND lv2."isBase" = true
+          )
+        `)} AS has_ready_model
       FROM
         lesson AS l
         LEFT JOIN lesson_variant AS lv ON lv."baseLessonId" = l.id AND lv."regionId" = $1
@@ -408,10 +519,16 @@ export class LessonRepository implements LessonRepositoryInterface {
           maxScore: 0,
           submissions: [],
           isRegionalVariant: row.is_regional_variant,
+          hasReadyModel: row.has_ready_model,
+          hasQuiz: Boolean(row.quiz_id),
         });
       }
 
       const lesson = lessonMap.get(lessonId);
+
+      if (row.quiz_id) {
+        lesson.hasQuiz = true;
+      }
 
       if (row.submission_id) {
         if (row.submission_score > lesson.maxScore) {
@@ -434,7 +551,7 @@ export class LessonRepository implements LessonRepositoryInterface {
       }
     });
 
-    const data = Array.from(lessonMap.values());
+    const data = Array.from(lessonMap.values()) as Lesson[];
 
     return {
       data,
@@ -456,16 +573,14 @@ export class LessonRepository implements LessonRepositoryInterface {
       where: { id: lessonId },
     });
     if (!lesson) {
-      throw new NotFoundException(`Lesson with ID ${lessonId} not found`);
+      throw new NotFoundException('errors.lesson.notFound');
     }
 
     const region = await this.regionRepository.findById(
       createVariantDto.regionId,
     );
     if (!region) {
-      throw new NotFoundException(
-        `Region with ID ${createVariantDto.regionId} not found`,
-      );
+      throw new NotFoundException('errors.region.notFound');
     }
 
     if (createVariantDto.isBase) {
@@ -475,9 +590,7 @@ export class LessonRepository implements LessonRepositoryInterface {
           true,
         );
       if (existingBaseVariant) {
-        throw new ConflictException(
-          `Ya existe una variante base para esta lección. Solo puede haber una variante base por lección.`,
-        );
+        throw new ConflictException('errors.lesson.baseVariantExists');
       }
     }
 
@@ -488,9 +601,7 @@ export class LessonRepository implements LessonRepositoryInterface {
       );
 
     if (existingRegionVariant) {
-      throw new ConflictException(
-        `Ya existe una variante para esta región en esta lección.`,
-      );
+      throw new ConflictException('errors.lesson.regionVariantExists');
     }
 
     const variant = new LessonVariant();
@@ -513,9 +624,7 @@ export class LessonRepository implements LessonRepositoryInterface {
     const variant = await this.lessonVariantRepository.findById(variantId);
 
     if (!variant || variant.baseLesson.id !== lessonId) {
-      throw new NotFoundException(
-        `Lesson variant with ID ${variantId} not found for lesson ${lessonId}`,
-      );
+      throw new NotFoundException('errors.lesson.variantNotFound');
     }
 
     return variant;
@@ -536,9 +645,7 @@ export class LessonRepository implements LessonRepositoryInterface {
         updateVariantDto.regionId,
       );
       if (!region) {
-        throw new NotFoundException(
-          `Region with ID ${updateVariantDto.regionId} not found`,
-        );
+        throw new NotFoundException('errors.region.notFound');
       }
       variant.region = region;
     }
@@ -586,16 +693,19 @@ export class LessonRepository implements LessonRepositoryInterface {
     if (!regionId) {
       const lesson = await this.lessonRepository.findOne({
         where: { id: baseLessonId },
-        relations: [
-          'language',
-          'stage',
-          'quizzes',
-          'quizzes.questions',
-          'quizzes.questions.options',
-        ],
+        relations: {
+          language: true,
+          stage: true,
+
+          quizzes: {
+            questions: {
+              options: true,
+            },
+          },
+        },
       });
       if (!lesson) {
-        throw new NotFoundException(`Lesson with ID ${lessonId} not found`);
+        throw new NotFoundException('errors.lesson.notFound');
       }
       return lesson;
     }
@@ -613,17 +723,20 @@ export class LessonRepository implements LessonRepositoryInterface {
     // Si no hay variante, retornar la lección base
     const lesson = await this.lessonRepository.findOne({
       where: { id: baseLessonId },
-      relations: [
-        'language',
-        'stage',
-        'quizzes',
-        'quizzes.questions',
-        'quizzes.questions.options',
-      ],
+      relations: {
+        language: true,
+        stage: true,
+
+        quizzes: {
+          questions: {
+            options: true,
+          },
+        },
+      },
     });
 
     if (!lesson) {
-      throw new NotFoundException(`Lesson with ID ${lessonId} not found`);
+      throw new NotFoundException('errors.lesson.notFound');
     }
 
     return lesson;

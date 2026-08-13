@@ -4,6 +4,7 @@ import request from 'supertest';
 import { AppModule } from './../src/app.module';
 import { DataSource } from 'typeorm';
 import { cleanDatabase } from './test-utils';
+import { OAuthCodeStore } from '../src/auth/infrastructure/oauth-code.store';
 
 describe('Authentication (e2e)', () => {
   let app: INestApplication;
@@ -57,9 +58,31 @@ describe('Authentication (e2e)', () => {
         .send(testUser)
         .expect(201);
 
-      expect(response.body.message).toBe('User registered successfully');
+      expect(response.body.message).toBe('Usuario registrado correctamente');
       expect(response.body.data.user.email).toBe(testUser.email);
+      expect(response.body.data.user.role).toBe('user');
       expect(response.body.data).toHaveProperty('token');
+    });
+
+    it('Should ignore an attempted admin role on register', async () => {
+      const response = await request(app.getHttpServer())
+        .post('/auth/register')
+        .send({
+          ...testUser,
+          email: 'cannot-be-admin@example.com',
+          role: 'admin',
+        })
+        .expect(201);
+
+      expect(response.body.data.user.role).toBe('user');
+
+      const token = response.body.data.token;
+      const me = await request(app.getHttpServer())
+        .get('/users/me')
+        .set('Authorization', `Bearer ${token}`)
+        .expect(200);
+
+      expect(me.body.role).toBe('user');
     });
 
     it('Should fail when registering an existing email', async () => {
@@ -88,8 +111,28 @@ describe('Authentication (e2e)', () => {
         })
         .expect(200);
 
-      expect(response.body.message).toBe('User logged in successfully');
+      expect(response.body.message).toBe('Inicio de sesión exitoso');
       expect(response.body.data).toHaveProperty('token');
+    });
+
+    it('Should return English login message when Accept-Language is en', async () => {
+      await request(app.getHttpServer())
+        .post('/auth/register')
+        .send({
+          ...testUser,
+          email: 'login-en@example.com',
+        });
+
+      const response = await request(app.getHttpServer())
+        .post('/auth/login')
+        .set('Accept-Language', 'en')
+        .send({
+          email: 'login-en@example.com',
+          password: testUser.password,
+        })
+        .expect(200);
+
+      expect(response.body.message).toBe('User logged in successfully');
     });
 
     it('Should fail with incorrect password', async () => {
@@ -132,8 +175,10 @@ describe('Authentication (e2e)', () => {
         .post('/auth/register')
         .send({
           ...testUser,
+          role: 'user',
           email: `profile-${Date.now()}@example.com`,
-        });
+        })
+        .expect(201);
 
       const token = regResponse.body.data.token;
 
@@ -156,6 +201,99 @@ describe('Authentication (e2e)', () => {
       await request(app.getHttpServer())
         .get('/users/me')
         .set('Authorization', `Bearer invalid-token`)
+        .expect(401);
+    });
+
+    it('Should not elevate role via PUT /users/me', async () => {
+      const regResponse = await request(app.getHttpServer())
+        .post('/auth/register')
+        .send({
+          ...testUser,
+          role: 'admin',
+          email: `no-elevate-${Date.now()}@example.com`,
+        })
+        .expect(201);
+
+      const token = regResponse.body.data.token;
+
+      const updated = await request(app.getHttpServer())
+        .put('/users/me')
+        .set('Authorization', `Bearer ${token}`)
+        .send({
+          firstName: 'Jane',
+          role: 'admin',
+        })
+        .expect(200);
+
+      expect(updated.body.role).toBe('user');
+      expect(updated.body.firstName).toBe('Jane');
+    });
+  });
+
+  describe('/auth/password/reset (POST)', () => {
+    const resetMessage =
+      'Si el correo existe, se ha enviado un enlace de restablecimiento.';
+
+    it('Should return the same message for an unknown email', async () => {
+      const response = await request(app.getHttpServer())
+        .post('/auth/password/reset')
+        .send({ email: 'missing-user@example.com' });
+
+      expect([200, 201]).toContain(response.status);
+      expect(response.body.message).toBe(resetMessage);
+    });
+
+    it('Should return the same message for an existing email', async () => {
+      await request(app.getHttpServer())
+        .post('/auth/register')
+        .send({
+          ...testUser,
+          email: 'reset-known@example.com',
+        })
+        .expect(201);
+
+      const response = await request(app.getHttpServer())
+        .post('/auth/password/reset')
+        .send({ email: 'reset-known@example.com' });
+
+      expect([200, 201]).toContain(response.status);
+      expect(response.body.message).toBe(resetMessage);
+    });
+  });
+
+  describe('/auth/google/exchange (POST)', () => {
+    it('Should reject a short code', async () => {
+      await request(app.getHttpServer())
+        .post('/auth/google/exchange')
+        .send({ code: 'short' })
+        .expect(400);
+    });
+
+    it('Should reject an unknown code', async () => {
+      const response = await request(app.getHttpServer())
+        .post('/auth/google/exchange')
+        .send({ code: 'x'.repeat(32) })
+        .expect(401);
+
+      expect(response.body.message).toBe('Código OAuth inválido o expirado');
+    });
+
+    it('Should consume a code only once', async () => {
+      const store = app.get(OAuthCodeStore);
+      const code = await store.create('e2e-oauth-access-token', {
+        id: 'oauth-user',
+      });
+
+      const first = await request(app.getHttpServer())
+        .post('/auth/google/exchange')
+        .send({ code });
+
+      expect([200, 201]).toContain(first.status);
+      expect(first.body.data.token).toBe('e2e-oauth-access-token');
+
+      await request(app.getHttpServer())
+        .post('/auth/google/exchange')
+        .send({ code })
         .expect(401);
     });
   });

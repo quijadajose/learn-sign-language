@@ -1,7 +1,4 @@
-import { Module, forwardRef } from '@nestjs/common';
-import { TypeOrmModule } from '@nestjs/typeorm';
-import { ModeratorPermission } from 'src/shared/domain/entities/moderatorPermission';
-import { ModeratorPermissionRepository } from './infrastructure/typeorm/moderator-permission.repository';
+import { Module } from '@nestjs/common';
 import { ModeratorPermissionService } from './application/services/moderator-permission/moderator-permission.service';
 import { AssignPermissionUseCase } from './application/use-cases/assign-permission-use-case/assign-permission-use-case';
 import { RevokePermissionUseCase } from './application/use-cases/revoke-permission-use-case/revoke-permission-use-case';
@@ -10,31 +7,17 @@ import { ModeratorController } from './infrastructure/controllers/moderator/mode
 import { LanguageModule } from 'src/language/language.module';
 import { RegionModule } from 'src/region/region.module';
 import { AuthModule } from 'src/auth/auth.module';
+import { PermissionsModule } from 'src/permissions/permissions.module';
 
 @Module({
-  imports: [
-    TypeOrmModule.forFeature([ModeratorPermission]),
-    LanguageModule,
-    RegionModule,
-    forwardRef(() => AuthModule),
-  ],
+  imports: [PermissionsModule, LanguageModule, RegionModule, AuthModule],
   providers: [
     ModeratorPermissionService,
     AssignPermissionUseCase,
     RevokePermissionUseCase,
     ListModeratorsUseCase,
-    {
-      provide: 'ModeratorPermissionRepositoryInterface',
-      useClass: ModeratorPermissionRepository,
-    },
   ],
   controllers: [ModeratorController],
-  exports: [
-    ModeratorPermissionService,
-    {
-      provide: 'ModeratorPermissionRepositoryInterface',
-      useClass: ModeratorPermissionRepository,
-    },
-  ],
+  exports: [ModeratorPermissionService],
 })
 export class ModeratorModule {}

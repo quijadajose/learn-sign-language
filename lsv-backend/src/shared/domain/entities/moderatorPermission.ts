@@ -5,6 +5,7 @@ import {
   ManyToOne,
   CreateDateColumn,
   JoinColumn,
+  Index,
 } from 'typeorm';
 import { User } from './user';
 import { Language } from './language';
@@ -16,6 +17,7 @@ export enum PermissionScope {
 }
 
 @Entity()
+@Index('IDX_moderator_permission_userId', ['userId'])
 export class ModeratorPermission {
   @PrimaryGeneratedColumn('uuid')
   id: string;

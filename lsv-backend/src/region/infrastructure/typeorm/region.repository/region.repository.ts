@@ -19,7 +19,9 @@ export class RegionRepository implements RegionRepositoryInterface {
   async findById(id: string): Promise<Region | null> {
     return await this.regionRepository.findOne({
       where: { id },
-      relations: ['language'],
+      relations: {
+        language: true,
+      },
     });
   }
 
@@ -33,7 +35,9 @@ export class RegionRepository implements RegionRepositoryInterface {
       skip,
       take: limit,
       order: { name: 'ASC' },
-      relations: ['language'],
+      relations: {
+        language: true,
+      },
     });
 
     return {
@@ -56,7 +60,9 @@ export class RegionRepository implements RegionRepositoryInterface {
       skip,
       take: limit,
       order: { name: 'ASC' },
-      relations: ['language'],
+      relations: {
+        language: true,
+      },
     });
 
     return {
@@ -79,7 +85,9 @@ export class RegionRepository implements RegionRepositoryInterface {
     await this.regionRepository.update(id, regionData);
     const updatedRegion = await this.regionRepository.findOne({
       where: { id },
-      relations: ['language'],
+      relations: {
+        language: true,
+      },
     });
     if (!updatedRegion) {
       throw new Error('Region not found after update');
@@ -90,21 +98,27 @@ export class RegionRepository implements RegionRepositoryInterface {
   async findByCode(code: string): Promise<Region | null> {
     return await this.regionRepository.findOne({
       where: { code },
-      relations: ['language'],
+      relations: {
+        language: true,
+      },
     });
   }
 
   async findDefaultRegion(): Promise<Region | null> {
     return await this.regionRepository.findOne({
       where: { isDefault: true },
-      relations: ['language'],
+      relations: {
+        language: true,
+      },
     });
   }
 
   async findDefaultByLanguageId(languageId: string): Promise<Region | null> {
     return await this.regionRepository.findOne({
       where: { isDefault: true, languageId },
-      relations: ['language'],
+      relations: {
+        language: true,
+      },
     });
   }
 }

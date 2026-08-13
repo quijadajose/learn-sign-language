@@ -4,14 +4,32 @@ import { AuthService } from '../application/auth.service';
 import { AuthServiceMock } from '../application/__mocks__/auth.service';
 import { CreateUserDto } from '../domain/dto/create-user/create-user';
 import { LoginUserDto } from '../application/dto/login-user/login-user';
+import { ConfigService } from '@nestjs/config';
+import { OAuthCodeStore } from './oauth-code.store';
+import { UnauthorizedException } from '@nestjs/common';
 
 describe('AuthController', () => {
   let authController: AuthController;
+  let oauthCodeStore: {
+    create: jest.Mock;
+    consume: jest.Mock;
+  };
 
   beforeEach(async () => {
+    oauthCodeStore = {
+      create: jest.fn(),
+      consume: jest.fn(),
+    };
     const module: TestingModule = await Test.createTestingModule({
       controllers: [AuthController],
-      providers: [{ provide: AuthService, useValue: AuthServiceMock }],
+      providers: [
+        { provide: AuthService, useValue: AuthServiceMock },
+        {
+          provide: ConfigService,
+          useValue: { get: jest.fn().mockReturnValue('http://localhost:8080') },
+        },
+        { provide: OAuthCodeStore, useValue: oauthCodeStore },
+      ],
     }).compile();
 
     authController = module.get<AuthController>(AuthController);
@@ -83,6 +101,29 @@ describe('AuthController', () => {
       expect(result).toEqual({
         message: 'Password has been successfully reset.',
       });
+    });
+  });
+
+  describe('google exchange', () => {
+    it('exchanges a valid one-time code', async () => {
+      oauthCodeStore.consume.mockResolvedValue({
+        accessToken: 'access-token',
+        user: { id: 'u1' },
+      });
+      const result = await authController.exchangeGoogleCode({
+        code: 'valid-code',
+      });
+      expect(result).toEqual({
+        message: 'User logged in successfully',
+        data: { token: 'access-token' },
+      });
+    });
+
+    it('rejects invalid codes', async () => {
+      oauthCodeStore.consume.mockResolvedValue(null);
+      await expect(
+        authController.exchangeGoogleCode({ code: 'not-a-valid-code-here' }),
+      ).rejects.toBeInstanceOf(UnauthorizedException);
     });
   });
 });

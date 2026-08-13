@@ -6,7 +6,7 @@ import {
   PaginationDto,
 } from 'src/shared/domain/dto/PaginationDto';
 import { Language } from 'src/shared/domain/entities/language';
-import { Repository } from 'typeorm';
+import { FindManyOptions, Repository } from 'typeorm';
 
 @Injectable()
 export class LanguageRepository implements LanguageRepositoryInterface {
@@ -35,7 +35,7 @@ export class LanguageRepository implements LanguageRepositoryInterface {
 
     const skip = (page - 1) * limit;
 
-    const findOptions: any = {
+    const findOptions: FindManyOptions<Language> = {
       skip,
       take: limit,
     };
@@ -59,7 +59,7 @@ export class LanguageRepository implements LanguageRepositoryInterface {
   async deleteById(id: string): Promise<void> {
     await this.languageRepository.delete(id);
   }
-  async update(id: string, language: Language): Promise<Language> {
+  async update(id: string, language: Partial<Language>): Promise<Language> {
     await this.languageRepository.update(id, language);
     return this.languageRepository.findOne({ where: { id } });
   }

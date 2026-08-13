@@ -1,25 +1,57 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { ConfigService } from '@nestjs/config';
-import { ValidationPipe } from '@nestjs/common';
+import { Logger, ValidationPipe } from '@nestjs/common';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
-import { json, urlencoded } from 'express';
+import { JwtService } from '@nestjs/jwt';
+import { json, urlencoded, Request, Response, NextFunction } from 'express';
 import './instrument';
 
 import { NestExpressApplication } from '@nestjs/platform-express';
 import { join } from 'path';
 import { getCorsOrigins } from './config/cors.config';
+import { createSharedModelsAuthMiddleware } from './shared/infrastructure/middleware/shared-models-auth.middleware';
+import { resolveLocale, translate } from './i18n';
 
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
   const configService = app.get(ConfigService);
+  const jwtService = app.get(JwtService);
+  const logger = new Logger('Bootstrap');
 
-  // Serve static files from shared volume (models, etc)
+  // Bloquear training_data (volumen interno para el trainer)
+  app.use('/shared/training_data', (req: Request, res: Response) => {
+    const locale = resolveLocale(req.headers['accept-language']);
+    res
+      .status(403)
+      .json({ message: translate('errors.common.forbidden', locale) });
+  });
+
+  // CORS acotado para artefactos /shared/models
+  app.use('/shared', (req: Request, res: Response, next: NextFunction) => {
+    const origin = req.headers.origin;
+    if (typeof origin === 'string' && getCorsOrigins().includes(origin)) {
+      res.setHeader('Access-Control-Allow-Origin', origin);
+      res.setHeader('Access-Control-Allow-Credentials', 'true');
+      res.setHeader(
+        'Access-Control-Allow-Headers',
+        'Authorization, Content-Type, Accept-Language',
+      );
+    }
+    if (req.method === 'OPTIONS') {
+      return res.sendStatus(204);
+    }
+    return next();
+  });
+
+  // JWT obligatorio para TFJS bajo /shared/models
+  app.use(
+    '/shared',
+    createSharedModelsAuthMiddleware(configService, jwtService),
+  );
+
   app.useStaticAssets(join(process.cwd(), 'shared'), {
     prefix: '/shared',
-    setHeaders: (res) => {
-      res.set('Access-Control-Allow-Origin', '*');
-    },
   });
 
   // Límites específicos para grabación de señas (pesado)
@@ -43,7 +75,7 @@ async function bootstrap() {
     const document = SwaggerModule.createDocument(app, config);
     SwaggerModule.setup('api/docs', app, document);
 
-    console.log(
+    logger.log(
       `Swagger UI: http://localhost:${configService.get<number>('PORT') ?? 3000}/api/docs`,
     );
   }
@@ -52,8 +84,9 @@ async function bootstrap() {
 
   app.enableCors({
     origin: getCorsOrigins(),
-    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
+    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
     credentials: true,
+    allowedHeaders: ['Authorization', 'Content-Type', 'Accept-Language'],
   });
 
   app.useGlobalPipes(

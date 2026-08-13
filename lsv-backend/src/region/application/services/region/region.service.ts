@@ -2,8 +2,10 @@ import {
   Injectable,
   NotFoundException,
   ConflictException,
+  BadRequestException,
   Inject,
 } from '@nestjs/common';
+import { withI18nParams } from 'src/i18n';
 import { RegionRepositoryInterface } from 'src/region/domain/region.repository.interface';
 import { CreateRegionDto } from 'src/region/domain/create-region.dto';
 import { Region } from 'src/shared/domain/entities/region';
@@ -39,7 +41,7 @@ export class RegionService {
   async getRegionById(id: string): Promise<Region> {
     const region = await this.regionRepository.findById(id);
     if (!region) {
-      throw new NotFoundException(`Region with ID ${id} not found`);
+      throw new NotFoundException('errors.region.notFound');
     }
     return region;
   }
@@ -49,14 +51,12 @@ export class RegionService {
       createRegionDto.code,
     );
     if (existingRegion) {
-      throw new ConflictException(
-        `Region with code ${createRegionDto.code} already exists`,
-      );
+      throw new ConflictException('errors.region.alreadyExists');
     }
 
     const languageId = createRegionDto.languageId;
     if (!languageId) {
-      throw new Error('languageId is required to create a region');
+      throw new BadRequestException('errors.region.languageRequired');
     }
 
     if (createRegionDto.isDefault) {
@@ -64,7 +64,9 @@ export class RegionService {
         await this.regionRepository.findDefaultByLanguageId(languageId);
       if (existingDefault) {
         throw new ConflictException(
-          `Ya existe una región base para este idioma (${existingDefault.name}). Solo puede haber una región base por idioma.`,
+          withI18nParams('errors.region.defaultExists', {
+            name: existingDefault.name,
+          }),
         );
       }
     }
@@ -77,9 +79,7 @@ export class RegionService {
         );
       } catch (error) {
         if (error instanceof NotFoundException) {
-          throw new NotFoundException(
-            `Division with code ${createRegionDto.divisionCode} not found in ISO-3166-2 records`,
-          );
+          throw new NotFoundException('errors.division.notFound');
         }
         throw error;
       }
@@ -90,7 +90,7 @@ export class RegionService {
       languageId,
     };
 
-    const region = this.regionRepository.save(regionData as any);
+    const region = this.regionRepository.save(regionData as Region);
     return region;
   }
 
@@ -100,7 +100,7 @@ export class RegionService {
   ): Promise<Region> {
     const existingRegion = await this.regionRepository.findById(id);
     if (!existingRegion) {
-      throw new NotFoundException(`Region with ID ${id} not found`);
+      throw new NotFoundException('errors.region.notFound');
     }
 
     if (updateRegionDto.code !== existingRegion.code) {
@@ -108,9 +108,7 @@ export class RegionService {
         updateRegionDto.code,
       );
       if (regionWithSameCode && regionWithSameCode.id !== id) {
-        throw new ConflictException(
-          `Region with code ${updateRegionDto.code} already exists`,
-        );
+        throw new ConflictException('errors.region.alreadyExists');
       }
     }
 
@@ -122,7 +120,9 @@ export class RegionService {
 
       if (existingDefault && existingDefault.id !== id) {
         throw new ConflictException(
-          `Ya existe una región base para este idioma (${existingDefault.name}). Solo puede haber una región base por idioma.`,
+          withI18nParams('errors.region.defaultExists', {
+            name: existingDefault.name,
+          }),
         );
       }
     }
@@ -134,9 +134,7 @@ export class RegionService {
         );
       } catch (error) {
         if (error instanceof NotFoundException) {
-          throw new NotFoundException(
-            `Division with code ${updateRegionDto.divisionCode} not found in ISO-3166-2 records`,
-          );
+          throw new NotFoundException('errors.division.notFound');
         }
         throw error;
       }
@@ -148,10 +146,10 @@ export class RegionService {
   async deleteRegion(id: string): Promise<void> {
     const region = await this.regionRepository.findById(id);
     if (!region) {
-      throw new NotFoundException(`Region with ID ${id} not found`);
+      throw new NotFoundException('errors.region.notFound');
     }
     if (region.isDefault) {
-      throw new ConflictException('Cannot delete the default region');
+      throw new ConflictException('errors.region.cannotDeleteDefault');
     }
 
     await this.regionRepository.deleteById(id);
@@ -160,6 +158,7 @@ export class RegionService {
   async assignLanguageToRegions(): Promise<{
     message: string;
     updated: number;
+    i18nParams?: Record<string, string | number>;
   }> {
     const languages = await this.languageService.getAllLanguages({
       page: 1,
@@ -167,7 +166,7 @@ export class RegionService {
     });
 
     if (languages.data.length === 0) {
-      throw new Error('No languages available to assign to regions');
+      throw new BadRequestException('errors.region.noLanguagesToAssign');
     }
 
     const languageId = languages.data[0].id;
@@ -191,7 +190,9 @@ export class RegionService {
     }
 
     return {
-      message: `Successfully assigned language ${languageId} to ${updatedCount} regions`,
+      ...withI18nParams('success.languageAssignedToRegions', {
+        count: updatedCount,
+      }),
       updated: updatedCount,
     };
   }

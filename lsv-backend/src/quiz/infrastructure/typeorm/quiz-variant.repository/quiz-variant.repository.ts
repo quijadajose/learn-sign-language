@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { QuizVariant } from 'src/shared/domain/entities/quizVariant';
@@ -6,6 +6,7 @@ import { QuestionVariant } from 'src/shared/domain/entities/questionVariant';
 import { OptionVariant } from 'src/shared/domain/entities/optionVariant';
 import { QuizSubmission } from 'src/shared/domain/entities/quizSubmission';
 import { User } from 'src/shared/domain/entities/user';
+import { LessonVariant } from 'src/shared/domain/entities/lessonVariant';
 import { Submission } from 'src/quiz/domain/dto/submission/submission.dto';
 
 @Injectable()
@@ -24,23 +25,28 @@ export class QuizVariantRepository {
   async findByLessonVariantId(lessonVariantId: string): Promise<QuizVariant[]> {
     return await this.quizVariantRepository.find({
       where: { lessonVariant: { id: lessonVariantId } },
-      relations: [
-        'lessonVariant',
-        'lessonVariant.region',
-        'questionVariants',
-        'questionVariants.optionVariants',
-      ],
+      relations: {
+        lessonVariant: {
+          region: true,
+        },
+
+        questionVariants: {
+          optionVariants: true,
+        },
+      },
     });
   }
 
   async findById(id: string): Promise<QuizVariant | null> {
     return await this.quizVariantRepository.findOne({
       where: { id },
-      relations: [
-        'lessonVariant',
-        'questionVariants',
-        'questionVariants.optionVariants',
-      ],
+      relations: {
+        lessonVariant: true,
+
+        questionVariants: {
+          optionVariants: true,
+        },
+      },
     });
   }
 
@@ -69,20 +75,20 @@ export class QuizVariantRepository {
     }>,
   ): Promise<QuizVariant> {
     const quizVariant = await this.create({
-      lessonVariant: { id: lessonVariantId } as any,
+      lessonVariant: { id: lessonVariantId } as LessonVariant,
     });
 
     for (const questionData of questions) {
       const questionVariant = await this.questionVariantRepository.save({
         question: questionData.question,
-        quizVariant: { id: quizVariant.id } as any,
+        quizVariant: { id: quizVariant.id } as QuizVariant,
       });
 
       for (const optionData of questionData.options) {
         await this.optionVariantRepository.save({
           text: optionData.text,
           isCorrect: optionData.isCorrect,
-          questionVariant: { id: questionVariant.id } as any,
+          questionVariant: { id: questionVariant.id } as QuestionVariant,
         });
       }
     }
@@ -100,11 +106,15 @@ export class QuizVariantRepository {
   ): Promise<QuizVariant> {
     const existingQuizVariant = await this.quizVariantRepository.findOne({
       where: { id },
-      relations: ['questionVariants', 'questionVariants.optionVariants'],
+      relations: {
+        questionVariants: {
+          optionVariants: true,
+        },
+      },
     });
 
     if (!existingQuizVariant) {
-      throw new Error('Quiz variant not found');
+      throw new NotFoundException('errors.quiz.variantNotFound');
     }
 
     // Delete existing questions and options
@@ -124,7 +134,9 @@ export class QuizVariantRepository {
 
     // Update lesson variant if provided
     if (lessonVariantId) {
-      existingQuizVariant.lessonVariant = { id: lessonVariantId } as any;
+      existingQuizVariant.lessonVariant = {
+        id: lessonVariantId,
+      } as LessonVariant;
       await this.quizVariantRepository.save(existingQuizVariant);
     }
 
@@ -132,14 +144,14 @@ export class QuizVariantRepository {
     for (const questionData of questions) {
       const questionVariant = await this.questionVariantRepository.save({
         question: questionData.question,
-        quizVariant: { id: existingQuizVariant.id } as any,
+        quizVariant: { id: existingQuizVariant.id } as QuizVariant,
       });
 
       for (const optionData of questionData.options) {
         await this.optionVariantRepository.save({
           text: optionData.text,
           isCorrect: optionData.isCorrect,
-          questionVariant: { id: questionVariant.id } as any,
+          questionVariant: { id: questionVariant.id } as QuestionVariant,
         });
       }
     }
@@ -159,7 +171,9 @@ export class QuizVariantRepository {
         },
         isCorrect: true,
       },
-      relations: ['questionVariant'],
+      relations: {
+        questionVariant: true,
+      },
     });
 
     const correctAnswersMap = new Map<string, string>(); // questionId -> optionId
@@ -180,7 +194,7 @@ export class QuizVariantRepository {
     const quizSubmission = this.submissionRepository.create({
       user: user,
       quizVariant: quizVariant,
-      answers: JSON.stringify(submission.answers) as any,
+      answers: JSON.stringify(submission.answers) as unknown as JSON,
       score: Math.round(score),
     });
     const savedSubmission =

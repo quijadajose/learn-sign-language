@@ -10,7 +10,6 @@ COPY src ./src
 COPY test ./test
 COPY nest-cli.json ./
 COPY tsconfig*.json ./
-COPY .env* ./
 
 RUN npm run build
 
@@ -26,7 +25,7 @@ WORKDIR /src/app
 
 COPY --from=development /src/app/ .
 
-EXPOSE 8080
+EXPOSE 3000
 
 # Run app
 CMD [ "node", "dist/main" ]

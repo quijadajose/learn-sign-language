@@ -1,6 +1,9 @@
 import { InjectRepository } from '@nestjs/typeorm';
 import { StageDto } from 'src/shared/domain/dto/create-stage/create-stage-dto';
-import { StageRepositoryInterface } from 'src/stage/domain/ports/stage.repository.interface/stage.repository.interface';
+import {
+  StageProgressRow,
+  StageRepositoryInterface,
+} from 'src/stage/domain/ports/stage.repository.interface/stage.repository.interface';
 import {
   PaginatedResponseDto,
   PaginationDto,
@@ -37,17 +40,17 @@ export class StageRepository implements StageRepositoryInterface {
     } = pagination;
 
     const skip = (page - 1) * limit;
+    const allowedOrderBy = new Set(['createdAt', 'updatedAt', 'name']);
+    const safeOrderBy =
+      orderBy && allowedOrderBy.has(orderBy) ? orderBy : 'name';
+    const safeSortOrder = sortOrder === 'ASC' ? 'ASC' : 'DESC';
 
-    const findOptions: any = {
+    const findOptions: FindManyOptions = {
       skip,
       take: limit,
+      order: { [safeOrderBy]: safeSortOrder },
     };
 
-    if (orderBy && sortOrder) {
-      findOptions.order = {
-        [orderBy]: sortOrder,
-      };
-    }
     return this.stageRepository.find(findOptions);
   }
   save(stage: Stages): Promise<Stages> {
@@ -73,18 +76,18 @@ export class StageRepository implements StageRepositoryInterface {
 
     const skip = (page - 1) * limit;
 
+    const allowedOrderBy = new Set(['createdAt', 'updatedAt', 'name']);
+    const safeOrderBy =
+      orderBy && allowedOrderBy.has(orderBy) ? orderBy : 'name';
+    const safeSortOrder = sortOrder === 'ASC' ? 'ASC' : 'DESC';
+
     const findOptions: FindManyOptions = {
-      select: ['id', 'name', 'description'],
+      select: { id: true, name: true, description: true },
       where: { language: { id: languageId } },
       skip,
       take: limit,
+      order: { [safeOrderBy]: safeSortOrder },
     };
-
-    if (orderBy && sortOrder) {
-      findOptions.order = {
-        [orderBy]: sortOrder,
-      };
-    }
 
     return this.stageRepository
       .findAndCount(findOptions)
@@ -96,7 +99,9 @@ export class StageRepository implements StageRepositoryInterface {
   async findByLanguageId(languageId: string): Promise<Stages[]> {
     return this.stageRepository.find({
       where: { language: { id: languageId } },
-      relations: ['lessons'],
+      relations: {
+        lessons: true,
+      },
     });
   }
 
@@ -104,9 +109,15 @@ export class StageRepository implements StageRepositoryInterface {
     userId: string,
     languageId: string,
     pagination: PaginationDto,
-  ): Promise<PaginatedResponseDto<any>> {
-    const { page, limit, orderBy = 'name', sortOrder = 'ASC' } = pagination;
+  ): Promise<PaginatedResponseDto<StageProgressRow>> {
+    // Learning path is always beginner → advanced (A1 → C2).
+    // Do not inherit PaginationDto's global DESC default.
+    const { page = 1, limit = 100, orderBy = 'name' } = pagination;
     const skip = (page - 1) * limit;
+    const allowedOrderBy = new Set(['name', 'description']);
+    const safeOrderBy =
+      orderBy && allowedOrderBy.has(orderBy) ? orderBy : 'name';
+    const safeSortOrder = 'ASC' as const;
 
     const queryBuilder = this.stageRepository
       .createQueryBuilder('s')
@@ -135,18 +146,13 @@ export class StageRepository implements StageRepositoryInterface {
       .where('s.languageId = :languageId', { languageId })
       .groupBy('s.id')
       .addGroupBy('s.name')
-      .addGroupBy('s.description');
-
-    if (orderBy && sortOrder) {
-      queryBuilder.orderBy(`s.${orderBy}`, sortOrder);
-    } else {
-      queryBuilder.orderBy('s.name', 'ASC');
-    }
+      .addGroupBy('s.description')
+      .orderBy(`s.${safeOrderBy}`, safeSortOrder);
 
     queryBuilder.skip(skip).take(limit);
 
     const [data, total] = await Promise.all([
-      queryBuilder.getRawMany(),
+      queryBuilder.getRawMany<StageProgressRow>(),
       this.stageRepository
         .createQueryBuilder('s')
         .select('COUNT(DISTINCT s.id)', 'count')

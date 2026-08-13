@@ -70,7 +70,6 @@ export class QuizService {
       quiz = await this.getQuizByIdUseCase.execute(quizId);
     } catch {
       // Si no se encuentra el quiz normal, continuar para buscar quiz variant
-      quiz = null;
     }
 
     if (quiz) {
@@ -94,9 +93,7 @@ export class QuizService {
       );
     }
 
-    throw new NotFoundException(
-      `Quiz with ID ${quizId} not found (neither as Quiz nor as QuizVariant).`,
-    );
+    throw new NotFoundException('errors.quiz.notFound');
   }
   async getQuizSubmissionTestFromUser(
     userId: string,

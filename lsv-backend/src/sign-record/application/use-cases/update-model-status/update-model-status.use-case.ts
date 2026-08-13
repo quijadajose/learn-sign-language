@@ -1,4 +1,5 @@
 import { Inject, Injectable } from '@nestjs/common';
+import { LessonModel } from 'src/shared/domain/entities/lessonModel';
 import { LessonModelRepositoryInterface } from 'src/sign-record/domain/ports/lesson-model.repository.interface';
 import { SignRecordNotificationPort } from 'src/sign-record/domain/ports/sign-record.notification.port';
 
@@ -16,7 +17,7 @@ export class UpdateModelStatusUseCase {
     status: 'PENDING' | 'TRAINING' | 'READY' | 'FAILED',
     errorMessage?: string,
   ) {
-    const updateData: any = { status };
+    const updateData: Partial<LessonModel> = { status };
     if (errorMessage) {
       updateData.trainingLogs = { error: errorMessage };
     }

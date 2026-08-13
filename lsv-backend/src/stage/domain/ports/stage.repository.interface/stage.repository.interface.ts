@@ -5,6 +5,15 @@ import {
 } from 'src/shared/domain/dto/PaginationDto';
 import { Stages } from 'src/shared/domain/entities/stage';
 
+export interface StageProgressRow {
+  id: string;
+  name: string;
+  description: string;
+  totalLessons: string;
+  completedLessons: string;
+  progress: string;
+}
+
 export interface StageRepositoryInterface {
   findById(id: string): Promise<Stages | null>;
   findByNameInLanguage(
@@ -24,5 +33,5 @@ export interface StageRepositoryInterface {
     userId: string,
     languageId: string,
     pagination: PaginationDto,
-  ): Promise<PaginatedResponseDto<any>>;
+  ): Promise<PaginatedResponseDto<StageProgressRow>>;
 }

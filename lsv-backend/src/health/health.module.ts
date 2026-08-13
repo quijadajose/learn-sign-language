@@ -6,7 +6,7 @@ import {
   DomainHealthIndicator,
   ApiHealthIndicator,
 } from './infrastructure/indicators';
-import { CheckHealthUseCase } from './application/use-cases/check-health/check-health.use-case';
+import { CheckHealthService } from './infrastructure/services/check-health.service';
 
 @Module({
   imports: [TerminusModule],
@@ -15,7 +15,7 @@ import { CheckHealthUseCase } from './application/use-cases/check-health/check-h
     SslHealthIndicator,
     DomainHealthIndicator,
     ApiHealthIndicator,
-    CheckHealthUseCase,
+    CheckHealthService,
   ],
 })
 export class HealthModule {}

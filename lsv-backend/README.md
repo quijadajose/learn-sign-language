@@ -1,120 +1,172 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
-</p>
+# LSV Backend
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+API NestJS de la plataforma de aprendizaje de LSV: autenticación, contenido
+(lenguas / regiones / etapas / lecciones / quizzes), Sign Studio y
+orquestación del entrenamiento ML.
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://coveralls.io/github/nestjs/nest?branch=master" target="_blank"><img src="https://coveralls.io/repos/github/nestjs/nest/badge.svg?branch=master#9" alt="Coverage" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg" alt="Donate us"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-    <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow" alt="Follow us on Twitter"></a>
-    <a href="https://stats.uptimerobot.com/n46WRvlnZD" target="_blank"><img src="https://img.shields.io/badge/Estado-Monitor-brightgreen" alt="Status" /></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+El setup del monorepo (Compose, red `web-proxy`, `.env`) está en el
+[README raíz](../README.md). El contrato de features ML está en
+[`schemas/ml-feature-contract.json`](../schemas/ml-feature-contract.json).
+El worker que consume la cola está documentado en
+[`lsv-model-trainer/README.md`](../lsv-model-trainer/README.md).
 
-## Description
+## Arquitectura
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+Cortes verticales por feature. Cada slice sigue capas hexagonales:
 
-## Project setup
-
-```bash
-$ pnpm install
+```text
+src/<feature>/
+  domain/          # entidades, puertos, reglas (sin Nest)
+  application/     # use-cases / servicios de aplicación
+  infrastructure/  # controllers, TypeORM, adapters (BullMQ, disco, mail)
 ```
 
-## Compile and run the project
+Las reglas las aplica `dependency-cruiser` (`.dependency-cruiser.js`):
 
-```bash
-# development
-$ pnpm run start
+- `domain` no importa `application` ni `infrastructure`
+- `application` solo habla con puertos de `domain`, no con adapters
+- un slice no importa la `infrastructure` de otro (componer vía módulos Nest)
 
-# watch mode
-$ pnpm run start:dev
-$ docker-compose up
+Kernel compartido: `src/shared/` (entidades TypeORM, uploads, middleware de
+`/shared`). Auth y permissions son concerns transversales (guards/decorators).
 
-# production mode
-$ pnpm run start:prod
+## Módulos
+
+| Slice | Rol |
+|-------|-----|
+| `auth` | registro, login, JWT, Google OAuth, reset de password |
+| `permissions` / `moderator` | RBAC por lengua/región |
+| `language` / `region` / `stage` / `lesson` / `quiz` | contenido y variantes |
+| `user-lesson` / `leaderboard` / `users` | progreso y ranking |
+| `sign-record` | grabaciones, landmarks, cola de entrenamiento, modelos |
+| `health` | probes de API, Postgres, Valkey, SSL y dominio |
+
+## Auth y permisos
+
+JWT global (`JwtAuthGuard`). Rutas públicas llevan `@Public()`.
+
+- **Email/password:** `POST /auth/register`, `POST /auth/login`
+- **Google:** `GET /auth/google` → callback guarda un código de un solo uso en
+  Valkey y redirige a `{FRONTEND_URL}/login?code=...`. El front intercambia el
+  código en `POST /auth/google/exchange`. El JWT **no** va en el redirect.
+- **Reset:** `POST /auth/password/reset` + `POST /auth/password/reset/confirm`
+- **Roles:** `admin` (acceso total), `moderator` (scopes de lengua/región vía
+  `ResourceAccessGuard`), `user`
+- Throttling Redis (100 req/min por defecto; auth más estricto)
+
+Header de API: `Authorization: Bearer <jwt>`.
+
+## Pipeline de señas
+
+1. El moderador guarda grabaciones y landmarks (`/sign-record`, body hasta 50 mb).
+2. `TriggerTrainingUseCase` escribe
+   `{SHARED_DATA_DIR}/training_data/<modelId>.json`, crea un `LessonModel`
+   `PENDING` y encola `train-lesson-model` en BullMQ (`training-queue`).
+3. El worker valida paths bajo `DATA_BASE_DIR`, entrena (MLP estático / LSTM
+   dinámico) y exporta TFJS a `{WORKER_SHARED_DATA_DIR}/models/model_<id>/`.
+4. `SignRecordEvents` escucha la cola: `TRAINING` → progreso →
+   `SaveModelResultsUseCase` marca el modelo `READY` y notifica por WebSocket.
+5. Artefactos: `GET /shared/models/...` exige JWT. `GET /shared/training_data`
+   está bloqueado (403).
+
+Jobs con `attempts: 1`. Si falla el enqueue, el use-case hace rollback
+(cola + JSON + fila `LessonModel`).
+
+Payload que escribe el backend (el worker lo documenta con más detalle):
+
+```json
+{
+  "modelType": "dynamic",
+  "samples": [{ "signName": "Hola", "landmarks": [[0.1, 0.2]] }],
+  "globalStaticNoise": []
+}
 ```
 
-## Database Migrations
+Puede disparar **dos** jobs por variante de lección (estático y dinámico) si
+hay grabaciones de ambos tipos.
 
-This project uses TypeORM migrations to manage database changes. It leverages Node.js native `.env` file support (v20.6.0+).
+## Variables de entorno
 
-```bash
-# Generate a migration (after changing entities)
-$ pnpm run migration:generate src/db/migrations/MigrationName
+Validadas al arrancar (`src/config/env-config.ts`). Copia
+[`.env.example`](../.env.example) en la raíz del monorepo.
 
-# Run pending migrations
-$ pnpm run migration:run
+| Variable | Uso |
+|----------|-----|
+| `NODE_ENV` | `development` \| `production` \| `test` |
+| `API_PORT` | Puerto declarado (Compose publica `3000:3000`) |
+| `FRONTEND_URL` | CORS + redirect de OAuth |
+| `JWT_SECRET` | Firma JWT (obligatorio y distinto en cada entorno) |
+| `DB_*` | Postgres (`lsv-db` en Compose, `127.0.0.1` en host) |
+| `VALKEY_*` | Cola BullMQ, OAuth codes, throttling |
+| `GOOGLE_*` | OAuth (`GOOGLE_CALLBACK_URL` debe coincidir con la consola) |
+| `EMAIL_*` | SMTP para reset de password |
+| `API_ADMIN_*` / `API_USER_*` | Seed de cuentas (cambiar antes de prod) |
+| `SENTRY_DSN` | Opcional |
+| `SHARED_DATA_DIR` | Vista API del volumen (`/src/app/shared` en Docker) |
+| `WORKER_SHARED_DATA_DIR` | Paths que se meten en el job (`/shared`) |
+| `RUN_MIGRATIONS` | Default `true`. `false` si las corre un job aparte (multi-réplica) |
 
-# Revert the last migration
-$ pnpm run migration:revert
-```
+El proceso escucha en `3000` salvo que se defina `PORT`. Compose inyecta
+`SHARED_DATA_DIR` y `WORKER_SHARED_DATA_DIR`; no hace falta ponerlas en `.env`
+para el flujo Docker.
 
-> [!IMPORTANT]
-> Migrations are automatically run in development and production when the server starts via `migrationsRun: true` in `app.module.ts`.
+## Ejecución
 
-## Run tests
-
-```bash
-# unit tests
-$ pnpm run test
-
-# e2e tests
-$ pnpm run test:e2e
-$ docker-compose run --rm lsv-api pnpm run test:e2e
-
-# test coverage
-$ pnpm run test:cov
-```
-
-## Deployment
-
-When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
-
-If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
+Con Docker Compose (recomendado):
 
 ```bash
-$ pnpm install -g mau
-$ mau deploy
+cp .env.example .env
+docker network create web-proxy   # solo la primera vez
+docker compose up -d --build lsv-api
 ```
 
-With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
+API: http://localhost:3000  
+Swagger (solo `NODE_ENV=development`): http://localhost:3000/api/docs
 
-## Resources
+Local (requiere Postgres y Valkey alcanzables vía `.env`):
 
-Check out a few resources that may come in handy when working with NestJS:
+```bash
+npm ci
+npm run start:dev
+```
 
-- Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
-- For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).
-- To dive deeper and get more hands-on experience, check out our official video [courses](https://courses.nestjs.com/).
-- Deploy your application to AWS with the help of [NestJS Mau](https://mau.nestjs.com) in just a few clicks.
-- Visualize your application graph and interact with the NestJS application in real-time using [NestJS Devtools](https://devtools.nestjs.com).
-- Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
-- To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
-- Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
+Producción: `npm run build` && `npm run start:prod` (o imagen Compose
+`docker-compose.prod.yml`).
 
-## Support
+## Migraciones (TypeORM)
 
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
+`synchronize: false`. En un solo proceso las migraciones corren al arrancar
+(`migrationsRun`).
 
-## Stay in touch
+```bash
+npm run migration:generate src/db/migrations/Nombre
+npm run migration:run
+npm run migration:revert
+```
 
-- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
+Los scripts usan `--env-file=.env` relativo a `lsv-backend/`. Si el `.env`
+vive en la raíz del monorepo, ejecútalos desde Compose o apunta el env file.
 
-## License
+## Tests y quality gates
 
-Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+```bash
+npm ci
+npm run lint:check
+npm run validate-infrastructure   # dependency-cruiser
+npm run typecheck:strict          # sign-record/domain + oauth-code.store
+npm test                          # unit (Jest, umbral global bajo)
+npm run test:e2e:smoke            # auth + health + sign-record
+# npm run test:e2e                # suite e2e completa (Postgres + Valkey)
+```
+
+Smoke e2e lee `../.env.test`. CI: [`.github/workflows/ci.yml`](../.github/workflows/ci.yml).
+
+## Observabilidad e i18n
+
+- Health (públicos): `GET /health/api`, `/health/database`, `/health/valkey`,
+  `/health/ssl`, `/health/domain`
+- Body: 50 mb en `/sign-record`, 1 mb en el resto
+- Mensajes de error ES/EN vía `Accept-Language` (`src/i18n/`)
+- Sentry (`src/instrument.ts`) si hay `SENTRY_DSN`
+
+Vulnerabilidades: [SECURITY.md](../SECURITY.md).

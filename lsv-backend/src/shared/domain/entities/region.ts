@@ -2,6 +2,7 @@ import {
   Column,
   CreateDateColumn,
   Entity,
+  Index,
   ManyToOne,
   OneToMany,
   PrimaryGeneratedColumn,
@@ -10,8 +11,14 @@ import {
 import { Language } from './language';
 import { Division } from './iso-3166-2/divisions';
 import { UserRegion } from './userRegion';
+import type { LessonVariant } from './lessonVariant';
 
 @Entity()
+@Index('IDX_region_languageId', ['languageId'])
+@Index('IDX_region_code', ['code'])
+@Index('IDX_region_default_languageId', ['languageId'], {
+  where: '"isDefault" = true',
+})
 export class Region {
   @PrimaryGeneratedColumn('uuid')
   id: string;
@@ -44,8 +51,8 @@ export class Region {
   })
   division: Division;
 
-  @OneToMany('LessonVariant', (variant: any) => variant.region)
-  lessonVariants: any[];
+  @OneToMany('LessonVariant', (variant: LessonVariant) => variant.region)
+  lessonVariants: LessonVariant[];
 
   @OneToMany(() => UserRegion, (userRegion) => userRegion.region)
   userRegions: UserRegion[];

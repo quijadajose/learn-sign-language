@@ -1,8 +1,7 @@
 import { SignRecording } from 'src/shared/domain/entities/signRecording';
 
 export interface SignRecordingRepositoryInterface {
-  find(options?: any): Promise<SignRecording[]>;
-  findOne(options: any): Promise<SignRecording | null>;
+  findById(id: string): Promise<SignRecording | null>;
   create(data: Partial<SignRecording>): SignRecording;
   save(recording: SignRecording): Promise<SignRecording>;
   remove(recording: SignRecording): Promise<SignRecording>;
@@ -14,6 +13,10 @@ export interface SignRecordingRepositoryInterface {
     signIds?: string[];
     lessonId?: string;
   }): Promise<SignRecording[]>;
+  findValidatedForLessonTraining(
+    lessonId: string,
+    regionId?: string,
+  ): Promise<SignRecording[]>;
   findBySignAndRegion(
     signId: string,
     regionId?: string,

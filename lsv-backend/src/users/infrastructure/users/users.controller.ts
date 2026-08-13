@@ -24,7 +24,11 @@ import { Language } from 'src/shared/domain/entities/language';
 import { Lesson } from 'src/shared/domain/entities/lesson';
 import { UserLanguage } from 'src/shared/domain/entities/userLanguage';
 import { UserRegion } from 'src/shared/domain/entities/userRegion';
-import { UsersService } from 'src/users/application/users/users.service';
+import {
+  UserLanguageWithRegions,
+  UsersService,
+} from 'src/users/application/users/users.service';
+import { StageProgressRow } from 'src/stage/domain/ports/stage.repository.interface/stage.repository.interface';
 import { EnrollUserInLanguageDto } from './enroll-user-in-language.dto';
 import { GetUserRegionsQueryDto } from './get-user-regions-query.dto';
 import {
@@ -107,7 +111,7 @@ export class UsersController {
   findUserLanguages(
     @Req() req,
     @Query() pagination: PaginationDto,
-  ): Promise<PaginatedResponseDto<any>> {
+  ): Promise<PaginatedResponseDto<UserLanguageWithRegions>> {
     return this.usersService.findUserLanguages(req.user.sub, pagination);
   }
 
@@ -140,7 +144,7 @@ export class UsersController {
     @Req() req,
     @Param('languageId', ParseUUIDPipe) languageId: string,
     @Query() pagination: PaginationDto,
-  ): Promise<PaginatedResponseDto<any>> {
+  ): Promise<PaginatedResponseDto<StageProgressRow>> {
     const userId = req.user.sub;
     return this.usersService.getStagesProgress(userId, languageId, pagination);
   }

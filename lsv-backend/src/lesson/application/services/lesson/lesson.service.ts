@@ -55,7 +55,7 @@ export class LessonService {
     languageId: string,
     pagination: PaginationDto,
     stageId?: string,
-  ): Promise<PaginatedResponseDto<any>> {
+  ): Promise<PaginatedResponseDto<Lesson>> {
     return await this.getLessonByLaguageUseCase.execute(
       languageId,
       pagination,
@@ -86,18 +86,16 @@ export class LessonService {
           );
 
           // Convertir quiz variants al formato de quizzes normales
-          return quizVariants.map((qv: any) => ({
+          return quizVariants.map((qv) => ({
             id: qv.id,
-            questions: (qv.questionVariants || []).map((qvQuestion: any) => ({
+            questions: (qv.questionVariants || []).map((qvQuestion) => ({
               id: qvQuestion.id,
               text: qvQuestion.question,
-              options: (qvQuestion.optionVariants || []).map(
-                (qvOption: any) => ({
-                  id: qvOption.id,
-                  text: qvOption.text,
-                  // No incluir isCorrect para el frontend
-                }),
-              ),
+              options: (qvQuestion.optionVariants || []).map((qvOption) => ({
+                id: qvOption.id,
+                text: qvOption.text,
+                // No incluir isCorrect para el frontend
+              })),
             })),
           }));
         }
@@ -116,7 +114,7 @@ export class LessonService {
     pagination: PaginationDto,
     stageId?: string,
     regionId?: string,
-  ): Promise<PaginatedResponseDto<any>> {
+  ): Promise<PaginatedResponseDto<Lesson>> {
     return await this.getLessonsByLanguageWithSubmissionsUseCase.execute(
       languageId,
       userId,

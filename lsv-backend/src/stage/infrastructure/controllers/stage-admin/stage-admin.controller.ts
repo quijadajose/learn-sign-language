@@ -13,9 +13,9 @@ import {
 } from '@nestjs/common';
 import { StageDto } from 'src/shared/domain/dto/create-stage/create-stage-dto';
 import { StageService } from 'src/stage/application/services/stage/stage.service';
-import { RequireResourcePermission } from 'src/auth/infrastructure/decorators/require-resource-permission.decorator';
+import { RequireResourcePermission } from 'src/permissions/infrastructure/decorators/require-resource-permission.decorator';
 import { PermissionScope } from 'src/shared/domain/entities/moderatorPermission';
-import { ResourceAccessGuard } from 'src/auth/infrastructure/guards/resource-access/resource-access.guard';
+import { ResourceAccessGuard } from 'src/permissions/infrastructure/guards/resource-access/resource-access.guard';
 import {
   PaginationDto,
   PaginatedResponseDto,

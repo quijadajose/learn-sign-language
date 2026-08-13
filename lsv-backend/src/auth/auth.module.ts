@@ -1,5 +1,6 @@
-import { Module, forwardRef } from '@nestjs/common';
+import { Module } from '@nestjs/common';
 import * as nodemailer from 'nodemailer';
+import Redis from 'ioredis';
 import { AuthService } from './application/auth.service';
 import { AuthController } from './infrastructure/auth.controller';
 import { TypeOrmModule } from '@nestjs/typeorm';
@@ -18,27 +19,11 @@ import { UpdateUserUseCase } from './domain/use-cases/update-user/update-user';
 import { SendEmailUseCase } from './domain/use-cases/send-email/send-email';
 import { APP_GUARD } from '@nestjs/core';
 import { JwtAuthGuard } from './infrastructure/guards/jwt-auth/jwt-auth.guard';
-import { ResourceIdResolver } from './infrastructure/guards/resource-access/resource-id-resolver';
-import { ResourceAccessGuard } from './infrastructure/guards/resource-access/resource-access.guard';
-import { Lesson } from 'src/shared/domain/entities/lesson';
-import { Region } from 'src/shared/domain/entities/region';
-import { Stages } from 'src/shared/domain/entities/stage';
-import { LessonVariant } from 'src/shared/domain/entities/lessonVariant';
-import { Quiz } from 'src/shared/domain/entities/quiz';
-import { QuizVariant } from 'src/shared/domain/entities/quizVariant';
-import { ModeratorModule } from '../moderator/moderator.module';
+import { OAuthCodeStore } from './infrastructure/oauth-code.store';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([
-      User,
-      Lesson,
-      Region,
-      Stages,
-      LessonVariant,
-      Quiz,
-      QuizVariant,
-    ]),
+    TypeOrmModule.forFeature([User]),
     JwtModule.registerAsync({
       useFactory: async (configService: ConfigService) => ({
         secret: configService.get<string>('JWT_SECRET'),
@@ -46,7 +31,6 @@ import { ModeratorModule } from '../moderator/moderator.module';
       }),
       inject: [ConfigService],
     }),
-    forwardRef(() => ModeratorModule),
   ],
   providers: [
     GoogleStrategy,
@@ -73,7 +57,10 @@ import { ModeratorModule } from '../moderator/moderator.module';
             pass: configService.get<string>('EMAIL_PASSWORD'),
           },
           tls: {
-            rejectUnauthorized: false, // Ayuda con problemas de certificados en desarrollo
+            rejectUnauthorized:
+              configService.get<string>('NODE_ENV') === 'development'
+                ? false
+                : true,
           },
         });
       },
@@ -94,8 +81,18 @@ import { ModeratorModule } from '../moderator/moderator.module';
       provide: 'UserRepositoryInterface',
       useClass: UserRepository,
     },
-    ResourceIdResolver,
-    ResourceAccessGuard,
+    {
+      provide: 'OAUTH_CODE_REDIS',
+      inject: [ConfigService],
+      useFactory: (config: ConfigService) =>
+        new Redis({
+          host: config.get<string>('VALKEY_HOST'),
+          port: Number(config.get('VALKEY_PORT')),
+          password: config.get<string>('VALKEY_PASSWORD'),
+          maxRetriesPerRequest: 3,
+        }),
+    },
+    OAuthCodeStore,
   ],
   controllers: [AuthController],
   exports: [
@@ -107,8 +104,7 @@ import { ModeratorModule } from '../moderator/moderator.module';
     'TokenService',
     'HashService',
     'UserRepositoryInterface',
-    ResourceIdResolver,
-    ResourceAccessGuard,
+    OAuthCodeStore,
   ],
 })
 export class AuthModule {}

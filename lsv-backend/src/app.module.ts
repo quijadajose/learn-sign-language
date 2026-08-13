@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
 import { BullModule } from '@nestjs/bullmq';
-import { APP_FILTER, APP_GUARD } from '@nestjs/core';
+import { APP_FILTER, APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
 import { join } from 'path';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
@@ -42,11 +42,14 @@ import { LessonModel } from './shared/domain/entities/lessonModel';
 import { SignRecording } from './shared/domain/entities/signRecording';
 import { ModeratorPermission } from './shared/domain/entities/moderatorPermission';
 import { ModeratorModule } from './moderator/moderator.module';
+import { PermissionsModule } from './permissions/permissions.module';
 import { SentryGlobalFilter, SentryModule } from '@sentry/nestjs/setup';
-import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
+import { ThrottlerModule } from '@nestjs/throttler';
 import { ThrottlerStorageRedisService } from '@nest-lab/throttler-storage-redis';
 import { HealthModule } from './health/health.module';
 import { SignRecordModule } from './sign-record/sign-record.module';
+import { AppThrottlerGuard } from './auth/infrastructure/guards/app-throttler.guard';
+import { I18nHttpExceptionFilter, I18nResponseInterceptor } from './i18n';
 
 @Module({
   imports: [
@@ -99,11 +102,14 @@ import { SignRecordModule } from './sign-record/sign-record.module';
           SignRecording,
           LessonModel,
         ],
-        synchronize: configService.get<string>('NODE_ENV') === 'development',
+        synchronize: false,
         migrations: [join(__dirname, '/db/migrations/*.{ts,js}')],
-        migrationsRun: configService.get<string>('NODE_ENV') !== 'development',
+        // Default true for single-instance deploys. Set RUN_MIGRATIONS=false
+        // when running migrations as a separate job (multi-replica).
+        migrationsRun: configService.get<string>('RUN_MIGRATIONS') !== 'false',
       }),
     }),
+    PermissionsModule,
     AuthModule,
     UsersModule,
     LessonModule,
@@ -123,7 +129,8 @@ import { SignRecordModule } from './sign-record/sign-record.module';
         throttlers: [
           {
             ttl: 60000,
-            limit: 100,
+            // E2E suites share Valkey with many register/login calls.
+            limit: config.get<string>('NODE_ENV') === 'test' ? 10_000 : 100,
           },
         ],
         storage: new ThrottlerStorageRedisService({
@@ -141,8 +148,16 @@ import { SignRecordModule } from './sign-record/sign-record.module';
       useClass: SentryGlobalFilter,
     },
     {
+      provide: APP_FILTER,
+      useClass: I18nHttpExceptionFilter,
+    },
+    {
+      provide: APP_INTERCEPTOR,
+      useClass: I18nResponseInterceptor,
+    },
+    {
       provide: APP_GUARD,
-      useClass: ThrottlerGuard,
+      useClass: AppThrottlerGuard,
     },
     UploadPictureUseCase,
     SeederService,

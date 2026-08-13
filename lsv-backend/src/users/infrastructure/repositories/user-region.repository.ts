@@ -24,7 +24,11 @@ export class UserRegionRepository implements UserRegionRepositoryInterface {
         userId: user.id,
         regionId: region.id,
       },
-      relations: ['region', 'region.language'],
+      relations: {
+        region: {
+          language: true,
+        },
+      },
     });
 
     if (existing) {
@@ -47,7 +51,11 @@ export class UserRegionRepository implements UserRegionRepositoryInterface {
         userId: user.id,
         regionId: region.id,
       },
-      relations: ['region', 'region.language'],
+      relations: {
+        region: {
+          language: true,
+        },
+      },
     });
 
     if (userRegionWithRelations) {
@@ -75,7 +83,7 @@ export class UserRegionRepository implements UserRegionRepositoryInterface {
 
     const findOptions: FindManyOptions<UserRegion> = {
       where: { userId },
-      relations: ['region', 'region.language'],
+      relations: { region: { language: true } },
       skip,
       take: limit,
     };
@@ -144,7 +152,9 @@ export class UserRegionRepository implements UserRegionRepositoryInterface {
         userId,
         regionId,
       },
-      relations: ['region'],
+      relations: {
+        region: true,
+      },
     });
   }
 

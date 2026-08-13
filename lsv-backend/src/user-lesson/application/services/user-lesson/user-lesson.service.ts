@@ -31,7 +31,7 @@ export class UserLessonService {
   async startLesson(userId: string, lessonId: string, regionId?: string) {
     const user = await this.findUserUseCase.findById(userId);
     if (!user) {
-      throw new NotFoundException(`User with ID ${userId} not found`);
+      throw new NotFoundException('errors.user.notFound');
     }
 
     let baseLessonId = lessonId;
@@ -46,9 +46,7 @@ export class UserLessonService {
         baseLessonId = lessonOrVariant.baseLesson.id;
       }
     } catch {
-      throw new NotFoundException(
-        `Lesson with ID ${lessonId} not found${regionId ? ` for region ${regionId}` : ''}`,
-      );
+      throw new NotFoundException('errors.lesson.notFound');
     }
 
     // Usar siempre el ID de la lección base para user_lesson
@@ -71,7 +69,7 @@ export class UserLessonService {
       }
     } catch {
       // Si no se encuentra como lección ni como variante, lanzamos 404
-      throw new NotFoundException(`Lesson with ID ${lessonId} not found`);
+      throw new NotFoundException('errors.lesson.notFound');
     }
 
     await this.setLessonCompletionUseCase.execute(

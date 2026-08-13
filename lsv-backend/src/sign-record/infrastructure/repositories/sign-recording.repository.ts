@@ -1,10 +1,17 @@
 import { Injectable } from '@nestjs/common';
 import { isUUID } from 'class-validator';
 import { InjectRepository } from '@nestjs/typeorm';
-import { DataSource, Repository, DeepPartial, IsNull } from 'typeorm';
+import {
+  DataSource,
+  Repository,
+  DeepPartial,
+  IsNull,
+  FindOptionsWhere,
+} from 'typeorm';
 import { SignRecording } from '../../../shared/domain/entities/signRecording';
 import { Sign } from '../../../shared/domain/entities/sign';
 import { SignVariant } from '../../../shared/domain/entities/signVariant';
+import { Region } from '../../../shared/domain/entities/region';
 import { SignRecordingRepositoryInterface } from '../../domain/ports/sign-recording.repository.interface';
 
 @Injectable()
@@ -15,12 +22,8 @@ export class TypeOrmSignRecordingRepository implements SignRecordingRepositoryIn
     private readonly dataSource: DataSource,
   ) {}
 
-  async find(options?: any): Promise<SignRecording[]> {
-    return this.repository.find(options);
-  }
-
-  async findOne(options: any): Promise<SignRecording | null> {
-    return this.repository.findOne(options);
+  async findById(id: string): Promise<SignRecording | null> {
+    return this.repository.findOne({ where: { id } });
   }
 
   create(data: DeepPartial<SignRecording>): SignRecording {
@@ -49,8 +52,8 @@ export class TypeOrmSignRecordingRepository implements SignRecordingRepositoryIn
       .leftJoin('sign.lessons', 'lesson')
       .leftJoin('lesson.stage', 'stage');
 
-    const mainConditions = [];
-    const params: any = {};
+    const mainConditions: string[] = [];
+    const params: Record<string, string | string[]> = {};
 
     if (filters.languageId) {
       mainConditions.push('lesson.languageId = :languageId');
@@ -90,6 +93,30 @@ export class TypeOrmSignRecordingRepository implements SignRecordingRepositoryIn
       });
     }
 
+    query.andWhere('recording.isValidated = :isValidated', {
+      isValidated: true,
+    });
+
+    return query.getMany();
+  }
+
+  async findValidatedForLessonTraining(
+    lessonId: string,
+    regionId?: string,
+  ): Promise<SignRecording[]> {
+    const query = this.repository
+      .createQueryBuilder('recording')
+      .leftJoinAndSelect('recording.sign', 'sign')
+      .leftJoin('sign.lessons', 'lesson')
+      .where('(lesson.id = :lessonId OR sign.isGlobal = true)', { lessonId })
+      .andWhere('recording.isValidated = :isValidated', { isValidated: true });
+
+    if (regionId && isUUID(regionId)) {
+      query.andWhere('recording.regionId = :regionId', { regionId });
+    } else {
+      query.andWhere('recording.regionId IS NULL');
+    }
+
     return query.getMany();
   }
 
@@ -97,7 +124,7 @@ export class TypeOrmSignRecordingRepository implements SignRecordingRepositoryIn
     signId: string,
     regionId?: string,
   ): Promise<SignRecording[]> {
-    const where: any = { sign: { id: signId } };
+    const where: FindOptionsWhere<SignRecording> = { sign: { id: signId } };
 
     if (regionId && isUUID(regionId)) {
       where.region = { id: regionId };
@@ -115,6 +142,7 @@ export class TypeOrmSignRecordingRepository implements SignRecordingRepositoryIn
     recording: SignRecording,
     regionId?: string,
   ): Promise<SignRecording> {
+    const MAX_RECORDINGS_PER_SIGN_REGION = 30;
     const queryRunner = this.dataSource.createQueryRunner();
     await queryRunner.connect();
     await queryRunner.startTransaction();
@@ -132,7 +160,7 @@ export class TypeOrmSignRecordingRepository implements SignRecordingRepositoryIn
         if (!variant) {
           variant = queryRunner.manager.create(SignVariant, {
             sign: { id: recording.sign.id } as Sign,
-            region: { id: regionId } as any,
+            region: { id: regionId } as Region,
           });
         }
         variant.landmarks = recording.landmarks;
@@ -141,6 +169,24 @@ export class TypeOrmSignRecordingRepository implements SignRecordingRepositoryIn
         await queryRunner.manager.update(Sign, recording.sign.id, {
           landmarks: recording.landmarks,
         });
+      }
+
+      // Retención: mantener solo las N más recientes por seña+región
+      const existingQb = queryRunner.manager
+        .createQueryBuilder(SignRecording, 'recording')
+        .where('recording.signId = :signId', { signId: recording.sign.id })
+        .orderBy('recording.createdAt', 'DESC')
+        .offset(MAX_RECORDINGS_PER_SIGN_REGION);
+
+      if (regionId) {
+        existingQb.andWhere('recording.regionId = :regionId', { regionId });
+      } else {
+        existingQb.andWhere('recording.regionId IS NULL');
+      }
+
+      const overflow = await existingQb.getMany();
+      if (overflow.length > 0) {
+        await queryRunner.manager.remove(SignRecording, overflow);
       }
 
       await queryRunner.commitTransaction();

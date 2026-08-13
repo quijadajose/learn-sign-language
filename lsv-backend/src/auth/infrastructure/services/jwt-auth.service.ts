@@ -26,11 +26,11 @@ export class JwtAuthService implements TokenService {
         secret: this.configService.get<string>('JWT_SECRET'),
       });
       if (decoded.exp && Date.now() >= decoded.exp * 1000) {
-        throw new UnauthorizedException('Token has expired');
+        throw new UnauthorizedException('errors.auth.tokenExpired');
       }
       return decoded;
     } catch {
-      throw new UnauthorizedException('Invalid token');
+      throw new UnauthorizedException('errors.auth.invalidToken');
     }
   }
 }

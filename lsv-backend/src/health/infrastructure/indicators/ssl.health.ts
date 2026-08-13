@@ -38,7 +38,7 @@ export class SslHealthIndicator {
       return isHealthy ? session.up(data) : session.down(data);
     } catch (error) {
       return session.down({
-        message: error.message,
+        message: error instanceof Error ? error.message : String(error),
       });
     }
   }

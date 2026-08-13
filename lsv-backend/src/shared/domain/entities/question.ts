@@ -1,6 +1,7 @@
 import {
   Column,
   Entity,
+  Index,
   ManyToOne,
   OneToMany,
   PrimaryGeneratedColumn,
@@ -9,6 +10,7 @@ import { Quiz } from './quiz';
 import { Option } from './option';
 
 @Entity()
+@Index('IDX_question_quizId', ['quiz'])
 export class Question {
   @PrimaryGeneratedColumn('uuid')
   id: string;

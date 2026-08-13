@@ -16,9 +16,9 @@ import { LanguageService } from 'src/language/application/services/language/lang
 import { StageService } from 'src/stage/application/services/stage/stage.service';
 import { Roles } from 'src/auth/infrastructure/decorators/roles.decorator';
 import { RolesGuard } from 'src/auth/infrastructure/guards/roles/roles.guard';
-import { RequireResourcePermission } from 'src/auth/infrastructure/decorators/require-resource-permission.decorator';
+import { RequireResourcePermission } from 'src/permissions/infrastructure/decorators/require-resource-permission.decorator';
 import { PermissionScope } from 'src/shared/domain/entities/moderatorPermission';
-import { ResourceAccessGuard } from 'src/auth/infrastructure/guards/resource-access/resource-access.guard';
+import { ResourceAccessGuard } from 'src/permissions/infrastructure/guards/resource-access/resource-access.guard';
 import {
   PaginatedResponseDto,
   PaginationDto,

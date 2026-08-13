@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { FindOptionsSelect, FindOptionsWhere, Repository } from 'typeorm';
 import {
   ModeratorPermission,
   PermissionScope,
@@ -51,7 +51,7 @@ export class ModeratorPermissionRepository implements ModeratorPermissionReposit
   async findByUserId(userId: string): Promise<ModeratorPermission[]> {
     return this.moderatorPermissionRepository.find({
       where: { userId },
-      relations: ['user', 'language', 'region'],
+      relations: { user: true, language: true, region: true },
       select: this.secureSelect,
     });
   }
@@ -62,7 +62,7 @@ export class ModeratorPermissionRepository implements ModeratorPermissionReposit
   ): Promise<ModeratorPermission[]> {
     return this.moderatorPermissionRepository.find({
       where: { userId, scope },
-      relations: ['user', 'language', 'region'],
+      relations: { user: true, language: true, region: true },
       select: this.secureSelect,
     });
   }
@@ -73,12 +73,12 @@ export class ModeratorPermissionRepository implements ModeratorPermissionReposit
   ): Promise<ModeratorPermission | null> {
     return this.moderatorPermissionRepository.findOne({
       where: { userId, scope: PermissionScope.LANGUAGE, languageId },
-      relations: ['user', 'language'],
+      relations: { user: true, language: true },
       select: {
         ...this.secureSelect,
         region: false,
-      },
-    } as any);
+      } as FindOptionsSelect<ModeratorPermission>,
+    });
   }
 
   async findByUserIdAndRegionId(
@@ -87,12 +87,12 @@ export class ModeratorPermissionRepository implements ModeratorPermissionReposit
   ): Promise<ModeratorPermission | null> {
     return this.moderatorPermissionRepository.findOne({
       where: { userId, scope: PermissionScope.REGION, regionId },
-      relations: ['user', 'region'],
+      relations: { user: true, region: true },
       select: {
         ...this.secureSelect,
         language: false,
-      },
-    } as any);
+      } as FindOptionsSelect<ModeratorPermission>,
+    });
   }
 
   async checkUserPermissionForLanguage(
@@ -108,7 +108,7 @@ export class ModeratorPermissionRepository implements ModeratorPermissionReposit
           region: { languageId: languageId },
         },
       ],
-      relations: ['region'],
+      relations: { region: true },
     });
 
     return !!permission;
@@ -117,29 +117,29 @@ export class ModeratorPermissionRepository implements ModeratorPermissionReposit
   async findByLanguageId(languageId: string): Promise<ModeratorPermission[]> {
     return this.moderatorPermissionRepository.find({
       where: { scope: PermissionScope.LANGUAGE, languageId },
-      relations: ['user', 'language'],
+      relations: { user: true, language: true },
       select: {
         ...this.secureSelect,
         region: false,
-      },
-    } as any);
+      } as FindOptionsSelect<ModeratorPermission>,
+    });
   }
 
   async findByRegionId(regionId: string): Promise<ModeratorPermission[]> {
     return this.moderatorPermissionRepository.find({
       where: { scope: PermissionScope.REGION, regionId },
-      relations: ['user', 'region'],
+      relations: { user: true, region: true },
       select: {
         ...this.secureSelect,
         language: false,
-      },
-    } as any);
+      } as FindOptionsSelect<ModeratorPermission>,
+    });
   }
 
   async findById(id: string): Promise<ModeratorPermission | null> {
     return this.moderatorPermissionRepository.findOne({
       where: { id },
-      relations: ['user', 'language', 'region'],
+      relations: { user: true, language: true, region: true },
       select: this.secureSelect,
     });
   }
@@ -160,7 +160,7 @@ export class ModeratorPermissionRepository implements ModeratorPermissionReposit
     const { page, limit } = pagination;
     const skip = (page - 1) * limit;
 
-    const where: any = {};
+    const where: FindOptionsWhere<ModeratorPermission> = {};
     if (languageId) {
       where.scope = PermissionScope.LANGUAGE;
       where.languageId = languageId;
@@ -172,7 +172,7 @@ export class ModeratorPermissionRepository implements ModeratorPermissionReposit
 
     return this.moderatorPermissionRepository.findAndCount({
       where,
-      relations: ['user', 'language', 'region'],
+      relations: { user: true, language: true, region: true },
       select: this.secureSelect,
       skip,
       take: limit,

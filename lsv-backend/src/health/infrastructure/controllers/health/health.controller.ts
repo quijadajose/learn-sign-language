@@ -1,6 +1,6 @@
 import { Controller, Get, Head } from '@nestjs/common';
 import { HealthCheck } from '@nestjs/terminus';
-import { CheckHealthUseCase } from '../../../application/use-cases/check-health/check-health.use-case';
+import { CheckHealthService } from '../../services/check-health.service';
 import { Public } from 'src/auth/infrastructure/decorators/public.decorator';
 import {
   DocHealth,
@@ -15,45 +15,70 @@ import {
 @DocHealth()
 @Controller('health')
 export class HealthController {
-  constructor(private checkHealthUseCase: CheckHealthUseCase) {}
+  constructor(private checkHealthService: CheckHealthService) {}
 
-  @Head('api')
   @Get('api')
   @HealthCheck()
   @DocCheckApi()
   checkApi() {
-    return this.checkHealthUseCase.checkApi();
+    return this.checkHealthService.checkApi();
   }
 
-  @Head('database')
+  @Head('api')
+  @HealthCheck()
+  checkApiHead() {
+    return this.checkHealthService.checkApi();
+  }
+
   @Get('database')
   @HealthCheck()
   @DocCheckDatabase()
   checkDatabase() {
-    return this.checkHealthUseCase.checkDatabase();
+    return this.checkHealthService.checkDatabase();
   }
 
-  @Head('valkey')
+  @Head('database')
+  @HealthCheck()
+  checkDatabaseHead() {
+    return this.checkHealthService.checkDatabase();
+  }
+
   @Get('valkey')
   @HealthCheck()
   @DocCheckValkey()
   checkValkey() {
-    return this.checkHealthUseCase.checkValkey();
+    return this.checkHealthService.checkValkey();
   }
 
-  @Head('ssl')
+  @Head('valkey')
+  @HealthCheck()
+  checkValkeyHead() {
+    return this.checkHealthService.checkValkey();
+  }
+
   @Get('ssl')
   @HealthCheck()
   @DocCheckSsl()
   checkSsl() {
-    return this.checkHealthUseCase.checkSsl();
+    return this.checkHealthService.checkSsl();
   }
 
-  @Head('domain')
+  @Head('ssl')
+  @HealthCheck()
+  checkSslHead() {
+    return this.checkHealthService.checkSsl();
+  }
+
   @Get('domain')
   @HealthCheck()
   @DocCheckDomain()
   checkDomain() {
-    return this.checkHealthUseCase.checkDomain();
+    return this.checkHealthService.checkDomain();
+  }
+
+  @Head('domain')
+  @HealthCheck()
+  checkDomainHead() {
+    return this.checkHealthService.checkDomain();
   }
 }

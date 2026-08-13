@@ -82,9 +82,74 @@ export const DocGetGlobalSigns = () =>
 
 export const DocGetLessonSigns = () =>
   applyDecorators(
-    ApiOperation({ summary: 'Obtener señas asociadas a una lección' }),
+    ApiOperation({
+      summary: 'Obtener señas asociadas a una lección',
+      description:
+        'Intencional: cualquier usuario autenticado (JWT). Usado por SignExam; no restringir a admin/mod.',
+    }),
     ApiParam({ name: 'lessonId', format: 'uuid' }),
     ApiResponse({ status: 200, description: 'Lista de señas de la lección' }),
+  );
+
+export const DocGetLessonModel = () =>
+  applyDecorators(
+    ApiOperation({
+      summary:
+        'Obtener modelos READY de una lección (estático y/o dinámico según existan)',
+      description:
+        'Intencional: cualquier usuario autenticado (JWT). SignExam carga TFJS desde modelJsonUrl; /shared/models requiere Bearer.',
+    }),
+    ApiParam({ name: 'lessonId', format: 'uuid' }),
+    ApiQuery({
+      name: 'regionId',
+      required: false,
+      description: 'Filtra modelos de la variante regional',
+    }),
+    ApiResponse({
+      status: 200,
+      description: 'Modelos de la lección',
+      schema: {
+        type: 'object',
+        properties: {
+          static: {
+            nullable: true,
+            type: 'object',
+            properties: {
+              id: { type: 'string', format: 'uuid' },
+              name: { type: 'string' },
+              modelJsonUrl: { type: 'string' },
+              binUrls: { type: 'array', items: { type: 'string' } },
+              labels: { type: 'array', items: { type: 'string' } },
+              accuracy: { type: 'number' },
+              modelType: { type: 'string', enum: ['static', 'dynamic'] },
+              featuresCount: { type: 'number' },
+              featuresSchemaVersion: { type: 'string', nullable: true },
+              status: { type: 'string' },
+            },
+          },
+          dynamic: {
+            nullable: true,
+            type: 'object',
+            properties: {
+              id: { type: 'string', format: 'uuid' },
+              name: { type: 'string' },
+              modelJsonUrl: { type: 'string' },
+              binUrls: { type: 'array', items: { type: 'string' } },
+              labels: { type: 'array', items: { type: 'string' } },
+              accuracy: { type: 'number' },
+              modelType: { type: 'string', enum: ['static', 'dynamic'] },
+              featuresCount: { type: 'number' },
+              featuresSchemaVersion: { type: 'string', nullable: true },
+              status: { type: 'string' },
+            },
+          },
+        },
+      },
+    }),
+    ApiResponse({
+      status: 404,
+      description: 'Lección o modelos no encontrados',
+    }),
   );
 
 export const DocGetModels = () =>
@@ -120,26 +185,63 @@ export const DocCreateSign = () =>
         type: 'object',
         properties: {
           name: { type: 'string' },
+          languageId: { type: 'string', format: 'uuid' },
           lessonId: { type: 'string', format: 'uuid' },
           isGlobal: { type: 'boolean' },
+          detectionType: { type: 'string', enum: ['static', 'dynamic'] },
         },
-        required: ['name'],
+        required: ['name', 'languageId'],
       },
     }),
     ApiResponse({ status: 201, description: 'Seña creada' }),
   );
 
+export const DocCreateSignsBulk = () =>
+  applyDecorators(
+    ApiOperation({
+      summary: 'Crear varias señas en una lección (catálogo bulk)',
+    }),
+    ApiBody({
+      schema: {
+        type: 'object',
+        properties: {
+          languageId: { type: 'string', format: 'uuid' },
+          lessonId: { type: 'string', format: 'uuid' },
+          signs: {
+            type: 'array',
+            maxItems: 100,
+            items: {
+              type: 'object',
+              properties: {
+                name: { type: 'string' },
+                detectionType: { type: 'string', enum: ['static', 'dynamic'] },
+              },
+              required: ['name'],
+            },
+          },
+        },
+        required: ['languageId', 'lessonId', 'signs'],
+      },
+    }),
+    ApiResponse({
+      status: 201,
+      description: 'Catálogo creado (created + skipped)',
+    }),
+  );
+
 export const DocUpdateSign = () =>
   applyDecorators(
-    ApiOperation({ summary: 'Actualizar el nombre de una seña' }),
+    ApiOperation({
+      summary: 'Actualizar nombre y/o detectionType de una seña',
+    }),
     ApiParam({ name: 'id', format: 'uuid' }),
     ApiBody({
       schema: {
         type: 'object',
         properties: {
           name: { type: 'string' },
+          detectionType: { type: 'string', enum: ['static', 'dynamic'] },
         },
-        required: ['name'],
       },
     }),
     ApiResponse({ status: 200, description: 'Seña actualizada' }),

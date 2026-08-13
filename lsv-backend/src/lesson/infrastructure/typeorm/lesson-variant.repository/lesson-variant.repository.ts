@@ -13,14 +13,20 @@ export class LessonVariantRepository {
   async findById(id: string): Promise<LessonVariant | null> {
     return await this.lessonVariantRepository.findOne({
       where: { id },
-      relations: ['region', 'baseLesson'],
+      relations: {
+        region: true,
+        baseLesson: true,
+      },
     });
   }
 
   async findByLessonId(lessonId: string): Promise<LessonVariant[]> {
     return await this.lessonVariantRepository.find({
       where: { baseLesson: { id: lessonId } },
-      relations: ['region', 'baseLesson'],
+      relations: {
+        region: true,
+        baseLesson: true,
+      },
     });
   }
 
@@ -41,7 +47,10 @@ export class LessonVariantRepository {
         baseLesson: { id: lessonId },
         region: { id: regionId },
       },
-      relations: ['region', 'baseLesson'],
+      relations: {
+        region: true,
+        baseLesson: true,
+      },
     });
   }
 
@@ -54,7 +63,10 @@ export class LessonVariantRepository {
         baseLesson: { id: lessonId },
         isBase: isBase,
       },
-      relations: ['region', 'baseLesson'],
+      relations: {
+        region: true,
+        baseLesson: true,
+      },
     });
   }
 }

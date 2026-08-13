@@ -1,9 +1,16 @@
-import { Entity, ManyToOne, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
+import {
+  Entity,
+  Index,
+  ManyToOne,
+  OneToMany,
+  PrimaryGeneratedColumn,
+} from 'typeorm';
 import { Lesson } from './lesson';
 import { QuizSubmission } from './quizSubmission';
 import { Question } from './question';
 
 @Entity()
+@Index('IDX_quiz_lessonId', ['lesson'])
 export class Quiz {
   @PrimaryGeneratedColumn('uuid')
   id: string;

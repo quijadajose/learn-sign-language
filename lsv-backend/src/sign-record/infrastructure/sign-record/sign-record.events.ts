@@ -41,8 +41,8 @@ export class SignRecordEvents extends QueueEventsHost {
   }
 
   @OnQueueEvent('progress')
-  async onProgress({ jobId, data }: { jobId: string; data: any }) {
-    let parsedData = data;
+  async onProgress({ jobId, data }: { jobId: string; data: unknown }) {
+    let parsedData: unknown = data;
     try {
       if (typeof data === 'string') {
         parsedData = JSON.parse(data);
@@ -52,10 +52,21 @@ export class SignRecordEvents extends QueueEventsHost {
     }
 
     this.logger.log(`Job ${jobId} progress: ${JSON.stringify(parsedData)}`);
+    const progressPayload =
+      parsedData && typeof parsedData === 'object'
+        ? (parsedData as {
+            modelId?: string;
+            progress?: number;
+            accuracy?: number;
+          })
+        : {};
     const modelId =
-      parsedData?.modelId || (await this.getModelIdFromJob(jobId));
+      progressPayload.modelId || (await this.getModelIdFromJob(jobId));
     if (isUUID(modelId)) {
-      await this.signRecordService.reportProgress(modelId, parsedData);
+      await this.signRecordService.reportProgress(modelId, {
+        progress: Number(progressPayload.progress ?? 0),
+        accuracy: Number(progressPayload.accuracy ?? 0),
+      });
     }
   }
 
@@ -65,10 +76,10 @@ export class SignRecordEvents extends QueueEventsHost {
     returnvalue,
   }: {
     jobId: string;
-    returnvalue: any;
+    returnvalue: unknown;
   }) {
     this.logger.log(`Job ${jobId} completed`);
-    let parsedData = returnvalue;
+    let parsedData: unknown = returnvalue;
     try {
       if (typeof returnvalue === 'string') {
         parsedData = JSON.parse(returnvalue);
@@ -78,11 +89,17 @@ export class SignRecordEvents extends QueueEventsHost {
       return;
     }
 
+    const resultPayload =
+      parsedData && typeof parsedData === 'object'
+        ? (parsedData as Record<string, unknown>)
+        : {};
     const modelId =
-      parsedData?.modelId || (await this.getModelIdFromJob(jobId));
+      (typeof resultPayload.modelId === 'string'
+        ? resultPayload.modelId
+        : null) || (await this.getModelIdFromJob(jobId));
     this.logger.log(`Saving results for model ${modelId}`);
     if (isUUID(modelId)) {
-      await this.signRecordService.saveModelResults(modelId, parsedData);
+      await this.signRecordService.saveModelResults(modelId, resultPayload);
     } else {
       this.logger.warn(
         `Model ID ${modelId} is not a valid UUID, skipping saveModelResults`,
