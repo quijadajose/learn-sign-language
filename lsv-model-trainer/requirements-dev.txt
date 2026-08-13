@@ -1,0 +1,5 @@
+# Lint, typecheck y unit tests. No incluye TensorFlow a propósito: los tests
+# cubren utils/validation/tfjs_export, que solo dependen de NumPy.
+numpy==2.0.2
+ruff==0.16.2
+mypy==2.1.0
