@@ -11,6 +11,8 @@ services:
       - ./.env
     environment:
       - DB_HOST=lsv-db
+      - SHARED_DATA_DIR=/src/app/shared
+      - WORKER_SHARED_DATA_DIR=/shared
     networks:
       - lsv_network
     volumes:
@@ -30,6 +32,13 @@ services:
       - /app/node_modules
     env_file:
       - ./.env
+    environment:
+      # Root .env may set NODE_ENV=production; keep Vite in development mode.
+      - NODE_ENV=development
+      # From inside the compose network, proxy /api to the API service.
+      - VITE_API_PROXY_TARGET=http://lsv-api:3000
+      # Browser hits localhost:8080 (mapped to Vite 5173); HMR WS must use 8080.
+      - VITE_HMR_CLIENT_PORT=8080
     networks:
       - lsv_network
     logging:
@@ -45,7 +54,7 @@ services:
       - lsv_network
     volumes:
       - valkey_data:/data
-    command: valkey-server --save 60 1 --loglevel warning --requirepass ${VALKEY_PASSWORD:-password}
+    command: valkey-server --save 60 1 --loglevel warning --requirepass ${VALKEY_PASSWORD:?VALKEY_PASSWORD is required}
 
   lsv-db:
     image: postgres:18.3-alpine
@@ -74,17 +83,30 @@ services:
     restart: unless-stopped
     depends_on:
       - lsv-valkey
-    env_file:
-      - ./.env
+    # Solo necesita Valkey: no se le pasa el .env completo (DB, JWT, OAuth).
+    environment:
+      VALKEY_HOST: ${VALKEY_HOST:-lsv-valkey}
+      VALKEY_PORT: ${VALKEY_PORT:-6379}
+      VALKEY_PASSWORD: ${VALKEY_PASSWORD}
+      DATA_BASE_DIR: /shared
+      TRAINER_HEALTH_PORT: "8089"
+    # El fit puede durar minutos; con los 10s por defecto Docker mata el job a
+    # mitad y queda stalled en BullMQ.
+    stop_grace_period: 60s
     volumes:
       - lsv_shared_data:/shared
-      - ./lsv-model-trainer:/app
     networks:
       - lsv_network
+    expose:
+      - "8089"
     deploy:
       resources:
         limits:
+          cpus: '2.0'
+          memory: 4G
+        reservations:
           cpus: '1.0'
+          memory: 2G
 
 networks:
   lsv_network:

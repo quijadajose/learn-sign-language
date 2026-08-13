@@ -1,20 +1,43 @@
-name: Build and Deploy LSV (Full Stack)
+name: CI
 
 on:
+  pull_request:
   push:
     branches:
       - main
 
-env:
-  REGISTRY: ghcr.io
-  BACKEND_IMAGE: quijadajose/lsv-backend
-  FRONTEND_IMAGE: quijadajose/lsv-frontend
-  TRAINER_IMAGE: quijadajose/lsv-model-trainer
-  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: 'true'
-
 jobs:
-  smoke:
-    name: E2E smoke before deploy
+  ml-feature-contract:
+    name: ML feature contract sync
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+      - run: node scripts/sync-ml-feature-contract.mjs --check
+
+  backend:
+    name: Backend lint, architecture & test
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: lsv-backend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: npm
+          cache-dependency-path: lsv-backend/package-lock.json
+      - run: npm ci
+      - run: npm run lint:check
+      - run: npm run validate-infrastructure
+      - run: npm test -- --coverage --passWithNoTests
+      - run: npm run build
+
+  backend-e2e-smoke:
+    name: Backend e2e smoke
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -56,6 +79,7 @@ jobs:
           exit 1
       - run: npm ci
       - name: Run e2e smoke
+        # Prefer workflow env over .env.test credentials for CI isolation.
         run: |
           node ./node_modules/jest/bin/jest.js \
             --config ./test/jest-e2e.json \
@@ -92,75 +116,42 @@ jobs:
           EMAIL_PASSWORD: test
           EMAIL_SECURE: "false"
 
-  build:
-    needs: smoke
+  frontend:
+    name: Frontend lint, typecheck & test
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      packages: write
-
+    defaults:
+      run:
+        working-directory: lsv-frontend
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Log in to the Container registry
-        uses: docker/login-action@v3
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
         with:
-          registry: ${{ env.REGISTRY }}
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
+          node-version: "24"
+          cache: npm
+          cache-dependency-path: lsv-frontend/package-lock.json
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm run lint
+      - run: npm test -- --coverage
 
-      - name: Build and push Backend
-        uses: docker/build-push-action@v5
-        with:
-          context: ./lsv-backend
-          target: production
-          push: true
-          tags: ${{ env.REGISTRY }}/${{ env.BACKEND_IMAGE }}:latest
-
-      - name: Build and push Frontend
-        uses: docker/build-push-action@v5
-        with:
-          context: ./lsv-frontend
-          push: true
-          build-args: |
-            VITE_SENTRY_DSN=${{ secrets.VITE_SENTRY_DSN }}
-          tags: ${{ env.REGISTRY }}/${{ env.FRONTEND_IMAGE }}:latest
-
-      - name: Build and push Model Trainer
-        uses: docker/build-push-action@v5
-        with:
-          context: ./lsv-model-trainer
-          push: true
-          tags: ${{ env.REGISTRY }}/${{ env.TRAINER_IMAGE }}:latest
-
-  deploy:
-    needs: build
+  model-trainer:
+    name: Model trainer lint, typecheck & test
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: lsv-model-trainer
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Copy docker-compose files to server
-        uses: appleboy/scp-action@v0.1.7
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
         with:
-          host: ${{ secrets.SSH_HOST }}
-          username: ${{ secrets.SSH_USER }}
-          key: ${{ secrets.SSH_PRIVATE_KEY }}
-          source: "docker-compose.yml,docker-compose.prod.yml,Caddyfile"
-          target: "~/apps/lsv"
-
-      - name: Deploy to Server via SSH
-        uses: appleboy/ssh-action@v1.0.3
-        with:
-          host: ${{ secrets.SSH_HOST }}
-          username: ${{ secrets.SSH_USER }}
-          key: ${{ secrets.SSH_PRIVATE_KEY }}
-          script: |
-            cd ~/apps/lsv
-
-            echo ${{ secrets.GITHUB_TOKEN }} | docker login ghcr.io -u ${{ github.actor }} --password-stdin
-
-            docker compose -f docker-compose.yml -f docker-compose.prod.yml pull
-
-            docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --remove-orphans
+          python-version: "3.11"
+      - name: Install test and lint dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements-dev.txt
+      - name: Ruff
+        run: ruff check .
+      # Sin argumento para respetar la lista `files` de pyproject.toml.
+      - name: Mypy
+        run: mypy
+      - run: python -m unittest discover -s tests -v

@@ -1,9 +1,10 @@
 {
-  "dependencies": {},
-  "devDependencies": {
-    "@nestjs/cli": "^11.0.5"
-  },
+  "name": "lsv",
+  "private": true,
   "scripts": {
     "prepare": "husky"
+  },
+  "devDependencies": {
+    "husky": "^9.1.7"
   }
 }
