@@ -2,7 +2,10 @@
 import { Repository, Like } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 import { User } from 'src/shared/domain/entities/user';
-import { UserRepositoryInterface } from 'src/auth/domain/ports/user.repository.interface/user.repository.interface';
+import {
+  UserAuthState,
+  UserRepositoryInterface,
+} from 'src/auth/domain/ports/user.repository.interface/user.repository.interface';
 
 @Injectable()
 export class UserRepository implements UserRepositoryInterface {
@@ -21,6 +24,21 @@ export class UserRepository implements UserRepositoryInterface {
         },
       },
     });
+  }
+
+  async findAuthStateById(id: string): Promise<UserAuthState | null> {
+    const user = await this.userRepository.findOne({
+      where: { id },
+      select: { id: true, tokenVersion: true, role: true },
+    });
+    if (!user) {
+      return null;
+    }
+    return {
+      id: user.id,
+      tokenVersion: user.tokenVersion ?? 0,
+      role: user.role,
+    };
   }
 
   async findByEmail(email: string): Promise<User | null> {

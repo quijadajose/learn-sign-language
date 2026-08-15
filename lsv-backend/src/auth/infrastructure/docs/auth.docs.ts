@@ -17,7 +17,8 @@ export const DocRegister = () => {
   return applyDecorators(
     ApiOperation({
       summary: 'Registrar nuevo usuario',
-      description: 'Crea una nueva cuenta de usuario en el sistema',
+      description:
+        'Crea una cuenta. El email duplicado responde igual (201) para no enumerar cuentas. No emite JWT; hay que iniciar sesión.',
     }),
     ApiBody({
       type: CreateUserDto,
@@ -40,62 +41,14 @@ export const DocRegister = () => {
     }),
     ApiResponse({
       status: 201,
-      description: 'Usuario registrado exitosamente',
+      description:
+        'Usuario registrado exitosamente (también si el email ya existía)',
       schema: {
         type: 'object',
         properties: {
           message: {
             type: 'string',
             example: 'User registered successfully',
-          },
-          data: {
-            type: 'object',
-            properties: {
-              user: {
-                type: 'object',
-                properties: {
-                  email: {
-                    type: 'string',
-                    example: 'email@gmail.com',
-                  },
-                  firstName: {
-                    type: 'string',
-                    example: 'John',
-                  },
-                  lastName: {
-                    type: 'string',
-                    example: 'Doe',
-                  },
-                  age: {
-                    type: 'number',
-                    example: 30,
-                  },
-                  isRightHanded: {
-                    type: 'boolean',
-                    example: true,
-                  },
-                  role: {
-                    type: 'string',
-                    example: 'user',
-                  },
-                  id: {
-                    type: 'string',
-                    example: 'cb00fcba-f592-4451-adb0-557d34a42623',
-                  },
-                  createdAt: {
-                    type: 'string',
-                    format: 'date-time',
-                    example: '2025-09-15T05:21:13.511Z',
-                  },
-                },
-              },
-              token: {
-                type: 'string',
-                description: 'Token JWT para autenticación',
-                example:
-                  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImVtYWlsQGdtYWlsLmNvbSIsInN1YiI6ImNiMDBmY2JhLWY1OTItNDQ1MS1hZGIwLTU1N2QzNGE0MjYyMyIsInJvbGUiOiJ1c2VyIiwiaWF0IjoxNzU3OTAyODczLCJleHAiOjE3NTc5NDYwNzN9.Jz7NaZbT0N5WXWprZp7GLmHZrYZTeGUiK-sWg7xjSrg',
-              },
-            },
           },
         },
       },
@@ -126,27 +79,6 @@ export const DocRegister = () => {
           statusCode: {
             type: 'number',
             example: 400,
-          },
-        },
-      },
-    }),
-    ApiResponse({
-      status: 409,
-      description: 'El email ya está en uso',
-      schema: {
-        type: 'object',
-        properties: {
-          message: {
-            type: 'string',
-            example: 'Email already in use',
-          },
-          error: {
-            type: 'string',
-            example: 'Conflict',
-          },
-          statusCode: {
-            type: 'number',
-            example: 409,
           },
         },
       },

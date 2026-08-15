@@ -28,17 +28,19 @@ describe('Health (e2e smoke)', () => {
     expect(response.body.status).toBe('ok');
   });
 
-  it('GET /health/database is up', async () => {
-    const response = await request(app.getHttpServer())
-      .get('/health/database')
-      .expect(200);
-    expect(response.body.status).toBe('ok');
+  it('GET /health/database requires authentication', async () => {
+    await request(app.getHttpServer()).get('/health/database').expect(401);
   });
 
-  it('GET /health/valkey is up', async () => {
-    const response = await request(app.getHttpServer())
-      .get('/health/valkey')
-      .expect(200);
-    expect(response.body.status).toBe('ok');
+  it('GET /health/valkey requires authentication', async () => {
+    await request(app.getHttpServer()).get('/health/valkey').expect(401);
+  });
+
+  it('GET /health/ssl requires authentication', async () => {
+    await request(app.getHttpServer()).get('/health/ssl').expect(401);
+  });
+
+  it('GET /health/domain requires authentication', async () => {
+    await request(app.getHttpServer()).get('/health/domain').expect(401);
   });
 });

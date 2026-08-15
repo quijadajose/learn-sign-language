@@ -57,14 +57,12 @@ describe('User Lessons (e2e)', () => {
       age: 20,
       isRightHanded: true,
     };
-    const regRes = await request(app.getHttpServer())
-      .post('/auth/register')
-      .send(testUser);
-    userId = regRes.body.data.user.id;
+    await request(app.getHttpServer()).post('/auth/register').send(testUser);
     const loginRes = await request(app.getHttpServer())
       .post('/auth/login')
       .send({ email: testUser.email, password: testUser.password });
     userToken = loginRes.body.data.token;
+    userId = loginRes.body.data.user.id;
   }, 60000);
 
   afterAll(async () => {
@@ -98,5 +96,25 @@ describe('User Lessons (e2e)', () => {
 
     expect(Array.isArray(response.body.data)).toBe(true);
     expect(response.body.data.length).toBeGreaterThan(0);
+  });
+
+  it('/user-lesson/by-user/:id (GET) - Should forbid another user', async () => {
+    const otherUser = {
+      email: 'other-ulesson@example.com',
+      password: 'password123',
+      firstName: 'O',
+      lastName: 'T',
+      age: 22,
+      isRightHanded: true,
+    };
+    await request(app.getHttpServer()).post('/auth/register').send(otherUser);
+    const loginRes = await request(app.getHttpServer())
+      .post('/auth/login')
+      .send({ email: otherUser.email, password: otherUser.password });
+
+    await request(app.getHttpServer())
+      .get(`/user-lesson/by-user/${userId}`)
+      .set('Authorization', `Bearer ${loginRes.body.data.token}`)
+      .expect(403);
   });
 });

@@ -10,6 +10,8 @@ import './instrument';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import { join } from 'path';
 import { getCorsOrigins } from './config/cors.config';
+import { securityHeaders } from './config/security-headers';
+import { requireTrustedOrigin } from './config/trusted-origin';
 import { createSharedModelsAuthMiddleware } from './shared/infrastructure/middleware/shared-models-auth.middleware';
 import { resolveLocale, translate } from './i18n';
 import {
@@ -22,6 +24,9 @@ async function bootstrap() {
   const configService = app.get(ConfigService);
   const jwtService = app.get(JwtService);
   const logger = new Logger('Bootstrap');
+
+  app.use(securityHeaders);
+  app.use(requireTrustedOrigin);
 
   // Bloquear training_data (volumen interno para el trainer)
   app.use('/shared/training_data', (req: Request, res: Response) => {

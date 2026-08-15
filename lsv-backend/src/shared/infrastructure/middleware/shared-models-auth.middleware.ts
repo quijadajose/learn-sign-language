@@ -2,13 +2,13 @@ import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import { Request, Response, NextFunction } from 'express';
 import { resolveLocale, translate } from 'src/i18n';
+import { extractAccessToken } from 'src/shared/infrastructure/extract-access-token';
 
 function isModelsPath(path: string): boolean {
-  // Mounted at `/shared` → Express path is `/models/...`
   return path === '/models' || path.startsWith('/models/');
 }
 
-/** Require a valid Bearer JWT for /shared/models/* TFJS artifacts. */
+/** Require a valid access JWT for /shared/models/* TFJS artifacts. */
 export function createSharedModelsAuthMiddleware(
   configService: ConfigService,
   jwtService: JwtService,
@@ -24,11 +24,7 @@ export function createSharedModelsAuthMiddleware(
       return next();
     }
 
-    const header = req.headers.authorization;
-    const token =
-      typeof header === 'string' && header.startsWith('Bearer ')
-        ? header.slice(7).trim()
-        : '';
+    const token = extractAccessToken(req);
 
     if (!token || !secret) {
       const locale = resolveLocale(req.headers['accept-language']);
@@ -38,7 +34,12 @@ export function createSharedModelsAuthMiddleware(
     }
 
     try {
-      jwtService.verify(token, { secret });
+      const decoded = jwtService.verify(token, { secret }) as {
+        purpose?: string;
+      };
+      if ((decoded.purpose ?? 'access') !== 'access') {
+        throw new Error('reset token');
+      }
       return next();
     } catch {
       const locale = resolveLocale(req.headers['accept-language']);

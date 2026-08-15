@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { FindManyOptions, Repository } from 'typeorm';
+import { pickSafeOrderBy } from 'src/shared/infrastructure/safe-order-by';
 import { UserRegion } from '../../../shared/domain/entities/userRegion';
 import { UserRegionRepositoryInterface } from '../../domain/ports/user-region.repository.interface';
 import {
@@ -88,9 +89,15 @@ export class UserRegionRepository implements UserRegionRepositoryInterface {
       take: limit,
     };
 
-    if (orderBy && sortOrder) {
+    const safeOrderBy = pickSafeOrderBy(orderBy, [
+      'userId',
+      'regionId',
+      'createdAt',
+      'updatedAt',
+    ]);
+    if (safeOrderBy && sortOrder) {
       findOptions.order = {
-        [orderBy]: sortOrder,
+        [safeOrderBy]: sortOrder,
       };
     }
 
@@ -125,8 +132,13 @@ export class UserRegionRepository implements UserRegionRepositoryInterface {
       .where('userRegion.userId = :userId', { userId })
       .andWhere('region.languageId = :languageId', { languageId });
 
-    if (orderBy && sortOrder) {
-      queryBuilder.orderBy(`userRegion.${orderBy}`, sortOrder);
+    const safeOrderBy = pickSafeOrderBy(
+      orderBy,
+      ['userId', 'regionId', 'createdAt', 'updatedAt'],
+      'createdAt',
+    );
+    if (safeOrderBy && sortOrder) {
+      queryBuilder.orderBy(`userRegion.${safeOrderBy}`, sortOrder);
     } else {
       queryBuilder.orderBy('userRegion.createdAt', 'DESC');
     }
