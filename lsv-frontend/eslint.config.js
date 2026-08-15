@@ -8,6 +8,16 @@ import tseslint from "typescript-eslint";
 export default tseslint.config(
   { ignores: ["dist", "**/*.generated.ts", "public/mediapipe/**"] },
   js.configs.recommended,
+  {
+    files: ["public/**/*.js"],
+    languageOptions: {
+      globals: {
+        document: "readonly",
+        localStorage: "readonly",
+        window: "readonly",
+      },
+    },
+  },
   ...tseslint.configs.recommended,
   {
     files: ["**/*.{ts,tsx}"],
