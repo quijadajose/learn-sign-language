@@ -17,4 +17,6 @@ export interface FileStoragePort {
   ): Promise<{ path: string; name: string; mtimeMs: number }[]>;
   /** Ensure shared root exists and is writable; returns false on failure. */
   ensureSharedDirWritable(): Promise<boolean>;
+  /** SHA-256 hex digest of a file. Missing file → null. */
+  sha256File(filePath: string): Promise<string | null>;
 }

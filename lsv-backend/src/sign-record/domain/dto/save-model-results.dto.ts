@@ -6,6 +6,7 @@ import {
   IsOptional,
   IsString,
   IsUUID,
+  Matches,
   Max,
   Min,
 } from 'class-validator';
@@ -61,4 +62,9 @@ export class SaveModelResultsDto {
   @IsOptional()
   @IsString()
   featuresSchemaVersion?: string;
+
+  @ApiProperty({ description: 'SHA-256 of exported model.json' })
+  @IsString()
+  @Matches(/^[a-f0-9]{64}$/)
+  modelJsonSha256: string;
 }

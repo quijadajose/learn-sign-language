@@ -1,5 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { createHash } from 'crypto';
 import * as fs from 'fs/promises';
 import * as path from 'path';
 import { FileStoragePort } from '../../domain/ports/file-storage.port';
@@ -98,6 +99,22 @@ export class LocalFileStorageAdapter implements FileStoragePort {
           'Set SHARED_DATA_DIR to the API volume mount (e.g. /src/app/shared).',
       );
       return false;
+    }
+  }
+
+  async sha256File(filePath: string): Promise<string | null> {
+    try {
+      const buf = await fs.readFile(filePath);
+      return createHash('sha256').update(buf).digest('hex');
+    } catch (err: unknown) {
+      const code =
+        err && typeof err === 'object' && 'code' in err
+          ? (err as { code?: string }).code
+          : undefined;
+      if (code === 'ENOENT') {
+        return null;
+      }
+      throw err;
     }
   }
 }

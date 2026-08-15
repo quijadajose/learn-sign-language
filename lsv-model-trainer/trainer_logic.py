@@ -1,4 +1,5 @@
 import logging
+import hashlib
 import os
 
 import numpy as np
@@ -209,12 +210,16 @@ def export_results(
     logs['testSampleCount'] = eval_metrics['testSampleCount']
 
     features_count = input_shape[-1]
+    with open(model_json_path, 'rb') as model_json_file:
+        model_json_sha256 = hashlib.sha256(model_json_file.read()).hexdigest()
+
     return {
         'accuracy': eval_metrics['accuracy'],
         'labels': actions,
         'logs': logs,
         'modelJsonUrl': model_json_path,
         'binUrls': bin_files,
+        'modelJsonSha256': model_json_sha256,
         'sequenceLength': sequence_length,
         'featuresCount': features_count,
         'modelType': model_type,

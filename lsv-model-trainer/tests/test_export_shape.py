@@ -19,6 +19,7 @@ REQUIRED_RESULT_KEYS = {
     "featuresCount",
     "modelType",
     "featuresSchemaVersion",
+    "modelJsonSha256",
 }
 
 
@@ -36,6 +37,7 @@ def build_fake_export(*, model_type: str = "static") -> dict:
         "logs": {"loss": [0.1], "accuracy": [0.9]},
         "modelJsonUrl": "/shared/models/demo/model.json",
         "binUrls": ["group1-shard1of1.bin"],
+        "modelJsonSha256": "a" * 64,
         "sequenceLength": FIXED_SEQUENCE_LENGTH if model_type == "dynamic" else 1,
         "featuresCount": features,
         "modelType": model_type,
