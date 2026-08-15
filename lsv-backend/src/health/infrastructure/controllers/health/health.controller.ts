@@ -1,7 +1,9 @@
-import { Controller, Get, Head } from '@nestjs/common';
+import { Controller, Get, Head, UseGuards } from '@nestjs/common';
 import { HealthCheck } from '@nestjs/terminus';
 import { CheckHealthService } from '../../services/check-health.service';
 import { Public } from 'src/auth/infrastructure/decorators/public.decorator';
+import { Roles } from 'src/auth/infrastructure/decorators/roles.decorator';
+import { RolesGuard } from 'src/auth/infrastructure/guards/roles/roles.guard';
 import {
   DocHealth,
   DocCheckApi,
@@ -11,12 +13,12 @@ import {
   DocCheckDomain,
 } from '../../docs/health.docs';
 
-@Public()
 @DocHealth()
 @Controller('health')
 export class HealthController {
   constructor(private checkHealthService: CheckHealthService) {}
 
+  @Public()
   @Get('api')
   @HealthCheck()
   @DocCheckApi()
@@ -24,12 +26,15 @@ export class HealthController {
     return this.checkHealthService.checkApi();
   }
 
+  @Public()
   @Head('api')
   @HealthCheck()
   checkApiHead() {
     return this.checkHealthService.checkApi();
   }
 
+  @UseGuards(RolesGuard)
+  @Roles('admin')
   @Get('database')
   @HealthCheck()
   @DocCheckDatabase()
@@ -37,12 +42,16 @@ export class HealthController {
     return this.checkHealthService.checkDatabase();
   }
 
+  @UseGuards(RolesGuard)
+  @Roles('admin')
   @Head('database')
   @HealthCheck()
   checkDatabaseHead() {
     return this.checkHealthService.checkDatabase();
   }
 
+  @UseGuards(RolesGuard)
+  @Roles('admin')
   @Get('valkey')
   @HealthCheck()
   @DocCheckValkey()
@@ -50,12 +59,16 @@ export class HealthController {
     return this.checkHealthService.checkValkey();
   }
 
+  @UseGuards(RolesGuard)
+  @Roles('admin')
   @Head('valkey')
   @HealthCheck()
   checkValkeyHead() {
     return this.checkHealthService.checkValkey();
   }
 
+  @UseGuards(RolesGuard)
+  @Roles('admin')
   @Get('ssl')
   @HealthCheck()
   @DocCheckSsl()
@@ -63,12 +76,16 @@ export class HealthController {
     return this.checkHealthService.checkSsl();
   }
 
+  @UseGuards(RolesGuard)
+  @Roles('admin')
   @Head('ssl')
   @HealthCheck()
   checkSslHead() {
     return this.checkHealthService.checkSsl();
   }
 
+  @UseGuards(RolesGuard)
+  @Roles('admin')
   @Get('domain')
   @HealthCheck()
   @DocCheckDomain()
@@ -76,6 +93,8 @@ export class HealthController {
     return this.checkHealthService.checkDomain();
   }
 
+  @UseGuards(RolesGuard)
+  @Roles('admin')
   @Head('domain')
   @HealthCheck()
   checkDomainHead() {

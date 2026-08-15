@@ -93,7 +93,7 @@ describe('QuizRepository', () => {
       const mockPagination = {
         page: 1,
         limit: 2,
-        orderBy: 'name',
+        orderBy: 'id',
         sortOrder: 'ASC' as SortOrder,
       };
 
@@ -118,7 +118,7 @@ describe('QuizRepository', () => {
       expect(quizRepoMock.find).toHaveBeenCalledWith({
         skip: 0,
         take: 2,
-        order: { name: 'ASC' },
+        order: { id: 'ASC' },
       });
     });
 
@@ -151,6 +151,20 @@ describe('QuizRepository', () => {
       expect(quizRepoMock.find).toHaveBeenCalledWith({
         skip: 3,
         take: 3,
+      });
+    });
+
+    it('ignores orderBy columns that are not allowlisted', async () => {
+      jest.spyOn(quizRepoMock, 'find').mockResolvedValue([]);
+      await quizRepository.findAll({
+        page: 1,
+        limit: 2,
+        orderBy: 'name',
+        sortOrder: 'ASC' as SortOrder,
+      });
+      expect(quizRepoMock.find).toHaveBeenCalledWith({
+        skip: 0,
+        take: 2,
       });
     });
   });

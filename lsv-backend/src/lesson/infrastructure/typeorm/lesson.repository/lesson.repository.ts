@@ -18,6 +18,7 @@ import { Stages } from 'src/shared/domain/entities/stage';
 import { QuizSubmission } from 'src/shared/domain/entities/quizSubmission';
 import { LessonVariant } from 'src/shared/domain/entities/lessonVariant';
 import { CreateLessonVariantDto } from 'src/lesson/domain/dto/create-lesson-variant/create-lesson-variant-dto';
+import { stripQuizAnswerFlags } from 'src/lesson/domain/strip-quiz-answers';
 import {
   FindManyOptions,
   FindOptionsWhere,
@@ -130,17 +131,9 @@ export class LessonRepository implements LessonRepositoryInterface {
       throw new NotFoundException('Lesson not found');
     }
 
-    const quizzesToReturn = lesson.quizzes.map((quiz) => ({
-      ...quiz,
-      questions: quiz.questions.map((question) => ({
-        ...question,
-        options: question.options.map((option) => {
-          // eslint-disable-next-line @typescript-eslint/no-unused-vars
-          const { isCorrect, ...rest } = option;
-          return rest;
-        }),
-      })),
-    }));
+    const quizzesToReturn = lesson.quizzes.map((quiz) =>
+      stripQuizAnswerFlags(quiz),
+    );
 
     return quizzesToReturn as Quiz[];
   }

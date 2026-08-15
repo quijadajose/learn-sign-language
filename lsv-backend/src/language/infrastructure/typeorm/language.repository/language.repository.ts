@@ -7,6 +7,7 @@ import {
 } from 'src/shared/domain/dto/PaginationDto';
 import { Language } from 'src/shared/domain/entities/language';
 import { FindManyOptions, Repository } from 'typeorm';
+import { pickSafeOrderBy } from 'src/shared/infrastructure/safe-order-by';
 
 @Injectable()
 export class LanguageRepository implements LanguageRepositoryInterface {
@@ -40,9 +41,16 @@ export class LanguageRepository implements LanguageRepositoryInterface {
       take: limit,
     };
 
-    if (orderBy && sortOrder) {
+    const safeOrderBy = pickSafeOrderBy(orderBy, [
+      'id',
+      'name',
+      'createdAt',
+      'updatedAt',
+      'countryCode',
+    ]);
+    if (safeOrderBy && sortOrder) {
       findOptions.order = {
-        [orderBy]: sortOrder,
+        [safeOrderBy]: sortOrder,
       };
     }
 

@@ -61,25 +61,17 @@ export class UsersController {
   @UseGuards(AuthGuard('jwt'))
   @DocUserProfile()
   async profile(@Req() req) {
-    const user = await this.authService.getUserProfile(req.user.sub);
-    user.hashPassword = undefined;
-    user.googleId = undefined;
-    user.updatedAt = undefined;
-    return user;
+    return this.authService.getUserProfile(req.user.sub);
   }
 
   @Put('me')
   @UseGuards(AuthGuard('jwt'))
   @DocUpdateProfile()
   async updateProfile(@Req() req, @Body() updateUserDto: UpdateUserDto) {
-    updateUserDto.role = undefined;
     const user = await this.authService.updateUserProfile(
       req.user.sub,
       updateUserDto,
     );
-    user.hashPassword = undefined;
-    user.googleId = undefined;
-    user.updatedAt = undefined;
     return user;
   }
 

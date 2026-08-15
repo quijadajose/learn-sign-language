@@ -51,6 +51,9 @@ export class ImagesController {
     @Query('size') size: 'original' | 'sm' | 'md' | 'lg' = 'original',
     @Res({ passthrough: true }) res: Response,
   ): StreamableFile {
+    if (!ALLOWED_UPLOAD_FOLDERS.has(folder)) {
+      throw new NotFoundException('Image not found');
+    }
     const basePath = join(process.cwd(), 'uploads');
     const id = filename;
     const fileBaseName =

@@ -24,7 +24,7 @@
     "test:cov": "jest --coverage",
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
     "test:e2e": "node --env-file=../.env.test ./node_modules/jest/bin/jest.js --config ./test/jest-e2e.json --runInBand",
-    "test:e2e:smoke": "node --env-file=../.env.test ./node_modules/jest/bin/jest.js --config ./test/jest-e2e.json --runInBand --testPathPatterns=auth.e2e-spec --testPathPatterns=health.e2e-spec --testPathPatterns=sign-record.e2e-spec --testPathPatterns=quizzes.e2e-spec --testPathPatterns=user-lesson.e2e-spec --testPathPatterns=moderators.e2e-spec",
+    "test:e2e:smoke": "node --env-file=../.env.test ./node_modules/jest/bin/jest.js --config ./test/jest-e2e.json --runInBand --testPathPatterns=auth.e2e-spec --testPathPatterns=health.e2e-spec --testPathPatterns=sign-record.e2e-spec --testPathPatterns=quizzes.e2e-spec --testPathPatterns=user-lesson.e2e-spec --testPathPatterns=moderators.e2e-spec --testPathPatterns=critical-flows.e2e-spec",
     "validate-infrastructure": "depcruise --config .dependency-cruiser.js src",
     "openapi:generate": "nest start --entryFile generate-openapi"
   },

@@ -15,7 +15,8 @@ export const DocUserLesson = () => applyDecorators(ApiTags('UserLesson'));
 export const DocGetUserLessonByUser = () =>
   DocOp({
     summary: 'Listar progreso de lecciones de un usuario',
-    description: 'Lista paginada. Requiere JWT.',
+    description:
+      'Lista paginada del progreso del usuario autenticado. Un admin puede consultar otro UUID.',
     okType: PaginatedUserLessonResponseDto,
   });
 

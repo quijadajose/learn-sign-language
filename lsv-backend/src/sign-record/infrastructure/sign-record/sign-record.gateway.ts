@@ -11,6 +11,7 @@ import { DocSignRecord } from './docs/sign-record.docs';
 import { getCorsOrigins } from 'src/config/cors.config';
 import { SignRecordNotificationPort } from '../../domain/ports/sign-record.notification.port';
 import { TokenService } from 'src/auth/domain/ports/token.service/token.service.interface';
+import { extractAccessToken } from 'src/shared/infrastructure/extract-access-token';
 
 @DocSignRecord()
 @WebSocketGateway({
@@ -75,7 +76,12 @@ export class SignRecordGateway
       return header.slice(7).trim();
     }
 
-    return null;
+    const cookieHeader = client.handshake.headers?.cookie;
+    return extractAccessToken({
+      headers: {
+        cookie: typeof cookieHeader === 'string' ? cookieHeader : undefined,
+      },
+    });
   }
 
   emitStatusChange(modelId: string, status: string) {

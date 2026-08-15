@@ -3,7 +3,12 @@ import { INestApplication, ValidationPipe } from '@nestjs/common';
 import request from 'supertest';
 import { AppModule } from './../src/app.module';
 import { DataSource } from 'typeorm';
-import { cleanDatabase, getAdminToken, getUserToken } from './test-utils';
+import {
+  cleanDatabase,
+  findUserIdByEmail,
+  getAdminToken,
+  getUserToken,
+} from './test-utils';
 
 describe('Moderators (e2e)', () => {
   let app: INestApplication;
@@ -40,10 +45,8 @@ describe('Moderators (e2e)', () => {
       .send(testUser);
     if (regRes.status !== 201) {
       console.log('Registration failed:', regRes.status, regRes.body);
-    } else {
-      console.log('Registration success:', regRes.body);
     }
-    targetUserId = regRes.body.data.user.id;
+    targetUserId = await findUserIdByEmail(dataSource, testUser.email);
 
     const langRes = await request(app.getHttpServer())
       .post('/languages')

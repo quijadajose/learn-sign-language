@@ -63,7 +63,8 @@ export const DocCheckDatabase = () =>
   applyDecorators(
     ApiOperation({
       summary: 'Verificar estado de la Base de Datos',
-      description: 'Comprueba la conexión con la base de datos PostgreSQL',
+      description:
+        'Comprueba la conexión con PostgreSQL. Requiere JWT de administrador.',
     }),
     healthResponse(200, 'La base de datos está saludable', {
       database: {
@@ -80,7 +81,8 @@ export const DocCheckValkey = () =>
   applyDecorators(
     ApiOperation({
       summary: 'Verificar estado de Valkey/Redis',
-      description: 'Comprueba la conexión con el servidor Valkey',
+      description:
+        'Comprueba la conexión con Valkey. Requiere JWT de administrador.',
     }),
     healthResponse(200, 'El servidor Valkey está saludable', {
       valkey: {

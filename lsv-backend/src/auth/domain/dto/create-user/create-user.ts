@@ -5,6 +5,8 @@ import {
   IsBoolean,
   IsInt,
   Min,
+  MinLength,
+  ValidateIf,
 } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 
@@ -29,9 +31,11 @@ export class CreateUserDto {
     description: 'Contraseña del usuario (opcional si se usa Google OAuth)',
     example: 'hashedPassword',
     required: false,
+    minLength: 8,
   })
-  @IsOptional()
+  @ValidateIf((_, value) => value != null && value !== '')
   @IsNotEmpty()
+  @MinLength(8)
   password?: string;
 
   @ApiProperty({
