@@ -18,7 +18,7 @@ export default function PrivacyPolicy() {
           <img
             src="/logo.svg"
             className="mr-3 h-8 dark:invert sm:h-10"
-            alt="Plataforma Logo"
+            alt=""
           />
           <span className="self-center whitespace-nowrap text-xl font-semibold dark:text-white">
             Aprende lenguaje de señas
@@ -28,11 +28,14 @@ export default function PrivacyPolicy() {
           <Button color="blue" size="sm" as={Link} to="/">
             Volver al inicio
           </Button>
-          <DarkThemeToggle className="ml-2 hover:bg-gray-100 dark:hover:bg-gray-800" />
+          <DarkThemeToggle
+            className="ml-2 hover:bg-gray-100 dark:hover:bg-gray-800"
+            aria-label="Cambiar tema claro u oscuro"
+          />
         </div>
       </Navbar>
 
-      <main className="mx-auto max-w-4xl grow px-4 pb-16 pt-32 lg:px-6">
+      <main id="main-content" className="mx-auto max-w-4xl grow px-4 pb-16 pt-32 lg:px-6">
         <h1 className="mb-8 text-3xl font-extrabold text-gray-900 dark:text-white md:text-4xl">
           Política de Privacidad
         </h1>
@@ -52,6 +55,7 @@ export default function PrivacyPolicy() {
             <li><strong>Mediante Autenticación de Google:</strong> Correo electrónico, nombre, apellido e ID único de Google.</li>
             <li><strong>Mediante Registro Directo:</strong> Correo electrónico y una contraseña definida por ti.</li>
             <li><strong>Proporcionada por ti:</strong> Edad y preferencia de lateralidad (mano dominante).</li>
+            <li><strong>Cámara y movimiento:</strong> En lecciones y el estudio de señas usamos la cámara para estimar puntos de referencia (landmarks) de cara, pose y manos. Ese procesamiento ocurre en tu dispositivo; las grabaciones de entrenamiento se envían a nuestros servidores solo cuando tú grabas o envías una seña, con tu sesión autenticada.</li>
           </ul>
         </section>
 
@@ -67,6 +71,7 @@ export default function PrivacyPolicy() {
             <li>Personalizar tu perfil y mostrar tu información básica al iniciar sesión.</li>
             <li><strong>Protección de menores:</strong> Utilizamos el dato de la edad para filtrar el contenido de las lecciones, asegurando que las palabras mostradas sean apropiadas según tu grupo de edad.</li>
             <li>Mejorar tu experiencia de aprendizaje adaptando el contenido a tu mano dominante.</li>
+            <li>Evaluar tus señas en lecciones y, si grabas en el estudio, entrenar modelos de reconocimiento.</li>
           </ul>
         </section>
 
@@ -99,7 +104,7 @@ export default function PrivacyPolicy() {
             <li>Toda la comunicación entre tu navegador y nuestro servidor se realiza bajo el protocolo cifrado <strong>HTTPS (TLS)</strong>.</li>
             <li><strong>Seguridad de Contraseñas:</strong> No almacenamos contraseñas en texto claro. Si utilizas el registro directo, tu contraseña se cifra mediante un algoritmo de hash irreversible <strong>bcrypt</strong> antes de guardarse en nuestra base de datos.</li>
             <li>No almacenamos tus credenciales de Google; la autenticación se gestiona directamente con Google.</li>
-            <li>Usamos <strong>JSON Web Tokens (JWT)</strong> almacenados en el <strong>localStorage</strong> de tu navegador exclusivamente para mantener tu sesión activa de forma segura.</li>
+            <li>La sesión se mantiene con un <strong>JSON Web Token (JWT)</strong> en una cookie <strong>httpOnly</strong> (no accesible desde JavaScript). No guardamos el token de acceso en <strong>localStorage</strong>.</li>
           </ul>
         </section>
 
@@ -112,7 +117,7 @@ export default function PrivacyPolicy() {
           </p>
           <ul className="list-inside list-disc space-y-2 text-gray-600 dark:text-gray-400">
             <li><strong>Google Authentication:</strong> Lo utilizamos para gestionar tu inicio de sesión de forma segura y simplificada.</li>
-            <li><strong>Sentry:</strong> Herramienta de monitoreo técnico que nos ayuda a detectar y corregir errores en tiempo real (recopila metadatos técnicos y tu dirección IP).</li>
+            <li><strong>Sentry:</strong> Monitoreo técnico de errores. No enviamos datos personales por defecto (PII desactivada); puede incluir metadatos técnicos del fallo.</li>
           </ul>
           <p className="mt-4 text-gray-600 dark:text-gray-400">
             <strong>Nota sobre Transferencia Internacional:</strong> Al utilizar estos servicios, tus datos pueden ser procesados en servidores ubicados fuera de tu país de origen, principalmente en <strong>Estados Unidos</strong>, bajo estrictas medidas de seguridad y privacidad.
@@ -132,7 +137,7 @@ export default function PrivacyPolicy() {
         </section>
 
         <section className="mb-10 text-sm text-gray-500 dark:text-gray-500">
-          <p>Última actualización: 19 de marzo de 2026</p>
+          <p>Última actualización: 13 de agosto de 2026</p>
         </section>
       </main>
 
@@ -141,7 +146,7 @@ export default function PrivacyPolicy() {
           <div className="w-full justify-between sm:flex sm:items-center sm:justify-between">
             <FooterBrand
               src="/logo.svg"
-              alt="Logo"
+              alt="Aprende lenguaje de señas"
               className="dark:invert"
             />
             <div className="flex gap-4">

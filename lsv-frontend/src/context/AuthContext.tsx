@@ -6,7 +6,7 @@ export interface AuthContextType {
   token: string | null;
   isAuthenticated: boolean;
   isHydrating: boolean;
-  login: (userData: UserData, token: string) => void;
+  login: (userData: UserData, token?: string) => void;
   logout: () => void;
   updateUser: (userData: UserData) => void;
   /** Re-fetch /users/me and refresh client role/permissions. Authorization still enforced by API. */

@@ -32,8 +32,12 @@ export default function LanguageSwitcher({
 
       <ModalBody>
         {switcher.loading && (
-          <div className="flex items-center justify-center py-8">
-            <Spinner size="lg" />
+          <div
+            className="flex items-center justify-center py-8"
+            role="status"
+            aria-live="polite"
+          >
+            <Spinner size="lg" aria-hidden="true" />
             <span className="ml-2">Cargando…</span>
           </div>
         )}

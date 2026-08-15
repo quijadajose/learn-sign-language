@@ -71,7 +71,7 @@ export default function ContentSetupChecklist({
         <div className="text-sm font-medium text-blue-700 dark:text-blue-300">
           {loading ? (
             <span className="inline-flex items-center gap-2">
-              <Spinner size="sm" />
+              <Spinner size="sm" aria-label="Revisando configuración..." />
               Revisando…
             </span>
           ) : (

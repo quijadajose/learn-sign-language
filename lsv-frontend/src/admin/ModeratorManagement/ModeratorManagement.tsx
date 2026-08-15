@@ -52,7 +52,7 @@ export default function ModeratorManagement() {
   if (loading) {
     return (
       <div className="flex h-64 items-center justify-center">
-        <Spinner size="xl" />
+        <Spinner size="xl" aria-label="Cargando moderadores..." />
       </div>
     );
   }

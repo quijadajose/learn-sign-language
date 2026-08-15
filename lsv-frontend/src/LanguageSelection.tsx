@@ -43,8 +43,12 @@ export default function LanguageSelection({ onLanguageSelected }: Props) {
       </h1>
 
       {loading && (
-        <div className="flex items-center justify-center py-8">
-          <Spinner size="xl" />
+        <div
+          className="flex items-center justify-center py-8"
+          role="status"
+          aria-live="polite"
+        >
+          <Spinner size="xl" aria-label="Cargando..." />
         </div>
       )}
       {error && (

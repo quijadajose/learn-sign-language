@@ -119,7 +119,7 @@ export default function EditRegionModal({
           disabled={loading}
           className="bg-blue-600 hover:bg-blue-700"
         >
-          {loading ? <Spinner size="sm" className="mr-2" /> : null}
+          {loading ? <Spinner size="sm" className="mr-2" aria-hidden="true" /> : null}
           Actualizar Región
         </Button>
         <Button color="gray" onClick={onClose}>

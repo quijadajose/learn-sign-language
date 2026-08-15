@@ -11,6 +11,7 @@ import {
 } from "flowbite-react";
 import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
+import { MAIN_CONTENT_ID } from "./components/SkipLink";
 
 const scrollToSection = (id: string) => {
   const section = document.getElementById(id);
@@ -23,7 +24,7 @@ const scrollToSection = (id: string) => {
 };
 
 export default function LandingPageComponent() {
-  const { t } = useTranslation("landing");
+  const { t } = useTranslation(["landing", "common"]);
 
   return (
     <>
@@ -31,11 +32,11 @@ export default function LandingPageComponent() {
         fluid
         className="fixed left-0 top-0 z-50 w-full border-b border-gray-200 bg-white/90 shadow-sm backdrop-blur-md dark:border-gray-800 dark:bg-gray-900/90"
       >
-        <Link to="/" className="flex items-center">
+        <Link to="/" className="flex items-center" aria-label={t("common:a11y.home")}>
           <img
             src="/logo.svg"
             className="mr-3 h-8 dark:invert sm:h-10"
-            alt={t("footer.logoAlt")}
+            alt=""
           />
         </Link>
         <div className="flex items-center gap-2 md:order-2">
@@ -46,7 +47,10 @@ export default function LandingPageComponent() {
             {t("nav.register")}
           </Button>
           <div className="ml-2 flex items-center gap-1 border-l border-gray-200 pl-2 dark:border-gray-700">
-            <DarkThemeToggle className="hover:bg-gray-100 dark:hover:bg-gray-800" />
+            <DarkThemeToggle
+              className="hover:bg-gray-100 dark:hover:bg-gray-800"
+              aria-label={t("common:a11y.toggleTheme")}
+            />
             <NavbarToggle />
           </div>
         </div>
@@ -72,6 +76,7 @@ export default function LandingPageComponent() {
           </NavbarLink>
         </NavbarCollapse>
       </Navbar>
+      <main id={MAIN_CONTENT_ID}>
       <section id="about" className="bg-white pt-24 dark:bg-gray-900">
         <div className="mx-auto grid max-w-screen-xl px-4 py-8 lg:grid-cols-12 lg:gap-8 lg:py-16 xl:gap-0">
           <div className="mr-auto place-self-center lg:col-span-7">
@@ -235,6 +240,7 @@ export default function LandingPageComponent() {
           <FooterDivider />
         </div>
       </Footer>
+      </main>
     </>
   );
 }

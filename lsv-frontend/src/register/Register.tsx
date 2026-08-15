@@ -5,11 +5,9 @@ import { Toast, ToastToggle } from "flowbite-react";
 import { HiCheck, HiX } from "react-icons/hi";
 import { useNavigate, Link } from "react-router-dom";
 import { authApi } from "../services/api";
-
-import { useAuth } from "../context/AuthContext";
+import { MAIN_CONTENT_ID } from "../components/SkipLink";
 
 export default function Register() {
-  const { login } = useAuth();
   const [toastMessages, setToastMessages] = useState<
     { id: number; type: "success" | "error"; message: string }[]
   >([]);
@@ -29,11 +27,12 @@ export default function Register() {
       try {
         const response = await authApi.register(values);
 
-        if (response.success && response.data) {
-          const { user, token } = response.data;
-          login(user, token);
-          addToast("success", "Registro exitoso");
-          navigate("/dashboard");
+        if (response.success) {
+          addToast(
+            "success",
+            "Registro listo. Inicia sesión con tu correo y contraseña.",
+          );
+          navigate("/login");
         } else {
           addToast("error", response.message || "Error al registrar");
         }
@@ -41,12 +40,16 @@ export default function Register() {
         addToast("error", "Error al conectar con el servidor");
       }
     },
-    [login, navigate],
+    [navigate],
   );
 
   return (
     <>
-      <div className="fixed right-5 top-5 z-9999 flex flex-col gap-3">
+      <div
+        className="fixed right-5 top-5 z-9999 flex flex-col gap-3"
+        aria-live="polite"
+        aria-relevant="additions"
+      >
         {toastMessages.map((toast) => (
           <Toast key={toast.id}>
             <div
@@ -74,9 +77,9 @@ export default function Register() {
         ))}
       </div>
 
-      <div className="flex flex-col">
+      <main id={MAIN_CONTENT_ID} className="flex flex-col">
         <Formity<Schema> flow={flow} onReturn={onReturn} />
-      </div>
+      </main>
 
       <div className="mx-auto mb-8 mt-4 max-w-md px-6 text-center text-xs text-gray-500 dark:text-gray-400">
         Al registrarte, confirmas que aceptas nuestras{" "}

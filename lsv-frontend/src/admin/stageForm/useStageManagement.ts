@@ -10,7 +10,7 @@ import { CEFR_LEVELS } from "./cefrPresets";
 
 export function useStageManagement() {
   const { isAdmin, isModerator, user } = usePermissions();
-  const { token, isAuthenticated } = useAuth();
+  const { isAuthenticated } = useAuth();
   const navigate = useNavigate();
   const [selectedLanguageIdByHook, setSelectedLanguageIdByHook] =
     useLocalStorage<string | null>("selectedLanguageId", null);
@@ -111,7 +111,7 @@ export function useStageManagement() {
   const handlePageChange = useCallback(
     (newPage: number) => {
       setCurrentPage(newPage);
-      if (token && selectedLanguageIdByHook) {
+      if (isAuthenticated && selectedLanguageIdByHook) {
         fetchStages(
           selectedLanguageIdByHook,
           newPage,
@@ -127,7 +127,7 @@ export function useStageManagement() {
       sortOrder,
       fetchStages,
       selectedLanguageIdByHook,
-      token,
+      isAuthenticated,
     ],
   );
 
@@ -141,7 +141,7 @@ export function useStageManagement() {
       setSortOrder(newSortOrder);
       setCurrentPage(1);
 
-      if (token && selectedLanguageIdByHook) {
+      if (isAuthenticated && selectedLanguageIdByHook) {
         fetchStages(
           selectedLanguageIdByHook,
           1,
@@ -157,7 +157,7 @@ export function useStageManagement() {
       pageSize,
       fetchStages,
       selectedLanguageIdByHook,
-      token,
+      isAuthenticated,
     ],
   );
 

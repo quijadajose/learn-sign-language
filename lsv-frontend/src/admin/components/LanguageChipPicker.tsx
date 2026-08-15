@@ -22,7 +22,7 @@ export default function LanguageChipPicker({
   if (loading) {
     return (
       <div className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
-        <Spinner size="sm" />
+        <Spinner size="sm" aria-label="Cargando lenguajes..." />
         Cargando lenguajes…
       </div>
     );

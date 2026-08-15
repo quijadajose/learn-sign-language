@@ -128,12 +128,10 @@ export const INFERENCE_VOTE_WINDOW = 10;
 /** Cuántas inferencias en esa ventana deben superar el umbral (permite pausas en señas con movimiento) */
 export const INFERENCE_VOTE_REQUIRED = 6;
 
-const VISION_WASM =
-  "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@1.0.1/wasm";
-const POSE_MODEL =
-  "https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_heavy/float16/1/pose_landmarker_heavy.task";
-const HAND_MODEL =
-  "https://storage.googleapis.com/mediapipe-models/hand_landmarker/hand_landmarker/float16/1/hand_landmarker.task";
+/** Served from /public (Vite) / nginx; WASM is copied from node_modules at build. */
+export const VISION_WASM = "/mediapipe/wasm";
+export const POSE_MODEL = "/mediapipe/models/pose_landmarker_heavy.task";
+export const HAND_MODEL = "/mediapipe/models/hand_landmarker.task";
 
 type Landmark = { x: number; y: number; z: number; visibility?: number };
 
@@ -782,6 +780,29 @@ export function closeVisionLandmarkers(
   }
 }
 
+export function resolveTrustedModelUrl(
+  modelJsonUrl: string,
+  backendBaseUrl: string,
+  pageOrigin: string,
+): string {
+  if (!/^https?:\/\//i.test(modelJsonUrl)) {
+    const base = backendBaseUrl.endsWith("/")
+      ? backendBaseUrl.slice(0, -1)
+      : backendBaseUrl;
+    const path = modelJsonUrl.startsWith("/")
+      ? modelJsonUrl
+      : `/${modelJsonUrl}`;
+    return `${base}${path}`;
+  }
+  const modelOrigin = new URL(modelJsonUrl).origin;
+  const backendOrigin = new URL(backendBaseUrl, pageOrigin).origin;
+  const page = new URL(pageOrigin).origin;
+  if (modelOrigin !== backendOrigin && modelOrigin !== page) {
+    throw new Error("Untrusted model URL");
+  }
+  return modelJsonUrl;
+}
+
 export async function loadTfModelFromUrl(
   modelJsonUrl: string,
   backendBaseUrl: string,
@@ -791,17 +812,25 @@ export async function loadTfModelFromUrl(
   featuresCount: number;
   modelType: "static" | "dynamic";
 }> {
-  const modelUrl = modelJsonUrl.startsWith("http")
-    ? modelJsonUrl
-    : `${backendBaseUrl}${modelJsonUrl}`;
+  const pageOrigin =
+    typeof window !== "undefined" ? window.location.origin : backendBaseUrl;
+  const modelUrl = resolveTrustedModelUrl(
+    modelJsonUrl,
+    backendBaseUrl,
+    pageOrigin,
+  );
 
-  const token =
-    typeof localStorage !== "undefined" ? localStorage.getItem("auth") : null;
+  const { getMemoryAccessToken } = await import("../services/api");
+  const token = getMemoryAccessToken();
   const authHeaders: Record<string, string> = token
     ? { Authorization: `Bearer ${token}` }
     : {};
+  const requestInit: RequestInit = {
+    credentials: "include",
+    headers: authHeaders,
+  };
 
-  const response = await fetch(modelUrl, { headers: authHeaders });
+  const response = await fetch(modelUrl, requestInit);
   if (!response.ok) {
     throw new Error(
       `No se pudo cargar el modelo (${response.status}): ${modelUrl}`,
@@ -840,10 +869,10 @@ export async function loadTfModelFromUrl(
     /* usar valores por defecto */
   }
 
-  // browserHTTPRequest propagates Authorization to weight shard fetches.
+  // Only same-origin / backend URLs reach here; cookie + in-memory Bearer.
   const model = await tf.loadLayersModel(
     tf.io.browserHTTPRequest(modelUrl, {
-      requestInit: { headers: authHeaders },
+      requestInit,
     }),
   );
   return { model, sequenceLength, featuresCount, modelType };

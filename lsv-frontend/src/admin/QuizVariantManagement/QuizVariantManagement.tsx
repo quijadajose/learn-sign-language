@@ -38,7 +38,7 @@ export default function QuizVariantManagement() {
   if (loading) {
     return (
       <div className="flex h-64 items-center justify-center">
-        <Spinner size="xl" />
+        <Spinner size="xl" aria-label="Cargando variantes de quiz..." />
       </div>
     );
   }

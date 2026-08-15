@@ -2,12 +2,15 @@ import React from "react";
 import { Button } from "flowbite-react";
 import { HiArrowLeft } from "react-icons/hi";
 import { LazyMotion, domAnimation } from "motion/react";
+import { useTranslation } from "react-i18next";
+import { CMS_CONTENT_LANG } from "../i18n";
 import { useSignExam } from "./useSignExam";
 import SignExamErrorView from "./SignExamErrorView";
 import SignExamCameraView from "./SignExamCameraView";
 import SignExamSidebar from "./SignExamSidebar";
 
 const SignExam: React.FC = () => {
+  const { t } = useTranslation("learn");
   const {
     videoRef,
     canvasRef,
@@ -44,15 +47,18 @@ const SignExam: React.FC = () => {
       <div className="mx-auto min-h-screen max-w-7xl px-4 py-8">
         <div className="mb-8 flex flex-col items-stretch gap-4 sm:flex-row sm:items-center sm:justify-between">
           <Button color="gray" onClick={handleGoBack} className="w-fit">
-            <HiArrowLeft className="mr-2 size-5" />
-            Salir
+            <HiArrowLeft className="mr-2 size-5" aria-hidden />
+            {t("practice.exit")}
           </Button>
           <div className="min-w-0 text-center sm:flex-1">
-            <h1 className="truncate text-2xl font-black text-gray-900 dark:text-white sm:text-3xl">
+            <h1
+              lang={CMS_CONTENT_LANG}
+              className="truncate text-2xl font-black text-gray-900 dark:text-white sm:text-3xl"
+            >
               {lessonName}
             </h1>
             <p className="text-sm font-bold uppercase tracking-widest text-primary-600">
-              Práctica Interactiva
+              {t("practice.interactive")}
             </p>
           </div>
           <div className="hidden w-24 sm:block" />

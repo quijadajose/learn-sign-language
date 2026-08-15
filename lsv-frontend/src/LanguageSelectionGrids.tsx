@@ -83,7 +83,7 @@ export function LanguageGrid({
 
       <div className="mt-8 flex justify-center">
         <Button onClick={onNext} disabled={!selectedLanguageId || enrolling}>
-          {enrolling && <Spinner size="sm" className="mr-2" />}
+          {enrolling && <Spinner size="sm" className="mr-2" aria-hidden="true" />}
           {enrolling ? "Inscribiendo..." : "Siguiente"}
         </Button>
       </div>
@@ -148,7 +148,7 @@ export function RegionGrid({
           Atrás
         </Button>
         <Button onClick={onContinue} disabled={!selectedRegionId || enrolling}>
-          {enrolling && <Spinner size="sm" className="mr-2" />}
+          {enrolling && <Spinner size="sm" className="mr-2" aria-hidden="true" />}
           {enrolling ? "Inscribiendo..." : "Continuar"}
         </Button>
       </div>

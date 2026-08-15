@@ -264,7 +264,7 @@ export function ProfileFormActions({
             Cancelar
           </Button>
           <Button color="success" onClick={onSave} disabled={loading}>
-            {loading && <Spinner size="sm" className="mr-2" />}
+            {loading && <Spinner size="sm" className="mr-2" aria-hidden="true" />}
             {loading ? "Guardando..." : "Guardar Cambios"}
           </Button>
         </>
