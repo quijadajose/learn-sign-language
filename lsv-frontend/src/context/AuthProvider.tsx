@@ -9,6 +9,7 @@ import {
   markSessionActive,
 } from "../services/api";
 import { AuthContext } from "./AuthContext";
+import { clearAllStageSelections } from "../utils/learningStorage";
 
 const HYDRATE_MAX_ATTEMPTS = 3;
 
@@ -32,6 +33,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     markSessionActive(false);
     setSelectedRegionId(null);
     setSelectedLanguageId(null);
+    clearAllStageSelections();
     try {
       localStorage.removeItem("auth");
     } catch {

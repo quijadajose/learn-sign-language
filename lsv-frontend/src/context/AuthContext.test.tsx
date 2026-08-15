@@ -131,6 +131,12 @@ describe("AuthProvider", () => {
       expect(screen.getByTestId("user").textContent).toBe("a@test.com");
     });
 
+    localStorage.setItem("selectedLanguageId", "lang-1");
+    localStorage.setItem("selectedRegionId", "region-1");
+    localStorage.setItem("selectedStageId_lang-1", "stage-a");
+    localStorage.setItem("selectedStageExplicit_lang-1", "true");
+    localStorage.setItem("lsv.uiLocale", "es");
+
     screen.getByRole("button", { name: "sign-out" }).click();
 
     await waitFor(() => {
@@ -139,5 +145,10 @@ describe("AuthProvider", () => {
     });
     expect(authApi.logout).toHaveBeenCalled();
     expect(localStorage.getItem("auth")).toBeNull();
+    expect(localStorage.getItem("selectedLanguageId")).toBeNull();
+    expect(localStorage.getItem("selectedRegionId")).toBeNull();
+    expect(localStorage.getItem("selectedStageId_lang-1")).toBeNull();
+    expect(localStorage.getItem("selectedStageExplicit_lang-1")).toBeNull();
+    expect(localStorage.getItem("lsv.uiLocale")).toBe("es");
   });
 });
