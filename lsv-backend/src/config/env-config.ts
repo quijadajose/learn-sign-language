@@ -1,4 +1,11 @@
-import { IsString, IsNumber, IsBoolean, IsEmail, IsIn } from 'class-validator';
+import {
+  IsBoolean,
+  IsEmail,
+  IsIn,
+  IsNumber,
+  IsOptional,
+  IsString,
+} from 'class-validator';
 
 export class EnvConfig {
   @IsString()
@@ -37,6 +44,10 @@ export class EnvConfig {
 
   @IsString()
   JWT_SECRET: string;
+
+  @IsOptional()
+  @IsString()
+  TRAINER_JOB_SECRET?: string;
 
   @IsEmail()
   API_ADMIN_EMAIL: string;

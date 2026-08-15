@@ -16,5 +16,6 @@ files = [
   "validation.py",
   "tfjs_export.py",
   "trainer_logic.py",
+  "job_hmac.py",
   "main.py",
 ]

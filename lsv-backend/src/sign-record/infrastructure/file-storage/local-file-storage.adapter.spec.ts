@@ -49,4 +49,15 @@ describe('LocalFileStorageAdapter', () => {
     expect(files).toEqual([path.join(dir, 'a.json')]);
     await expect(adapter.ensureSharedDirWritable()).resolves.toBe(true);
   });
+
+  it('hashes a file with sha256File and returns null if missing', async () => {
+    const filePath = adapter.sharedPath('models', 'm1', 'model.json');
+    await adapter.makeDirectory(adapter.sharedPath('models', 'm1'));
+    await adapter.saveJson(filePath, { ok: true });
+    const digest = await adapter.sha256File(filePath);
+    expect(digest).toMatch(/^[a-f0-9]{64}$/);
+    await expect(
+      adapter.sha256File(adapter.sharedPath('missing.json')),
+    ).resolves.toBeNull();
+  });
 });

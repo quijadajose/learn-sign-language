@@ -13,6 +13,7 @@ services:
       - DB_HOST=lsv-db
       - SHARED_DATA_DIR=/src/app/shared
       - WORKER_SHARED_DATA_DIR=/shared
+      - TRAINER_JOB_SECRET=${TRAINER_JOB_SECRET:-${JWT_SECRET}}
     networks:
       - lsv_network
     volumes:
@@ -83,13 +84,14 @@ services:
     restart: unless-stopped
     depends_on:
       - lsv-valkey
-    # Solo necesita Valkey: no se le pasa el .env completo (DB, JWT, OAuth).
+    # Valkey + HMAC de jobs. TRAINER_JOB_SECRET cae a JWT_SECRET si no se define.
     environment:
       VALKEY_HOST: ${VALKEY_HOST:-lsv-valkey}
       VALKEY_PORT: ${VALKEY_PORT:-6379}
       VALKEY_PASSWORD: ${VALKEY_PASSWORD}
       DATA_BASE_DIR: /shared
       TRAINER_HEALTH_PORT: "8089"
+      TRAINER_JOB_SECRET: "${TRAINER_JOB_SECRET:-${JWT_SECRET}}"
     # El fit puede durar minutos; con los 10s por defecto Docker mata el job a
     # mitad y queda stalled en BullMQ.
     stop_grace_period: 60s

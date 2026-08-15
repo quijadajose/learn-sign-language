@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import logging
 import math
+import os
 from collections import Counter
 from pathlib import Path
 from typing import Any, Iterable, NamedTuple
@@ -16,6 +17,8 @@ logger = logging.getLogger(__name__)
 
 MIN_SAMPLES_TOTAL = 2
 MIN_CLASSES = 2
+MAX_SAMPLES = int(os.getenv("TRAINER_MAX_SAMPLES", "2000"))
+MAX_FRAMES_PER_SAMPLE = int(os.getenv("TRAINER_MAX_FRAMES", "600"))
 TEST_SPLIT_RATIO = 0.2
 MODEL_TYPES = ("static", "dynamic")
 
@@ -203,12 +206,23 @@ def validate_training_samples(
         frames = _as_landmark_frames(item.get("landmarks"), i)
         if len(frames) == 0:
             continue
+        if frames.shape[0] > MAX_FRAMES_PER_SAMPLE:
+            raise ValueError(
+                f"{label}[{i}] has {frames.shape[0]} frames; "
+                f"max is {MAX_FRAMES_PER_SAMPLE} (TRAINER_MAX_FRAMES)"
+            )
 
         cleaned.append({
             **item,
             "signName": sign_name,
             "landmarks": frames,
         })
+
+        if len(cleaned) > MAX_SAMPLES:
+            raise ValueError(
+                f"Training payload exceeds {MAX_SAMPLES} samples "
+                "(TRAINER_MAX_SAMPLES)"
+            )
 
     return cleaned
 

@@ -8,7 +8,7 @@ SHARED="${DATA_BASE_DIR:-/shared}"
 mkdir -p "$SHARED/training_data" "$SHARED/models"
 if [ "$(id -u)" = "0" ]; then
   chown "${TRAINER_UID:-10001}" "$SHARED/training_data" "$SHARED/models" 2>/dev/null || true
-  chmod 0777 "$SHARED/training_data" "$SHARED/models" 2>/dev/null || true
+  chmod 0775 "$SHARED/training_data" "$SHARED/models" 2>/dev/null || true
 fi
 
 if [ "$(id -u)" = "0" ]; then

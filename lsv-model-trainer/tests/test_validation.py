@@ -64,6 +64,17 @@ class SampleValidationTests(unittest.TestCase):
         self.assertEqual(cleaned[0]["signName"], "A")
         self.assertEqual(cleaned[0]["landmarks"].shape, (2, FEATURES_COUNT))
 
+    def test_rejects_too_many_frames(self):
+        with self.assertRaises(ValueError) as ctx:
+            validate_training_samples([_sample("A", frames=601)])
+        self.assertIn("TRAINER_MAX_FRAMES", str(ctx.exception))
+
+    def test_rejects_too_many_samples(self):
+        samples = [_sample("A" if i % 2 == 0 else "B", frames=1) for i in range(2001)]
+        with self.assertRaises(ValueError) as ctx:
+            validate_training_samples(samples)
+        self.assertIn("TRAINER_MAX_SAMPLES", str(ctx.exception))
+
     def test_rejects_wrong_feature_count(self):
         with self.assertRaises(ValueError) as ctx:
             validate_training_samples([_sample("A", features=10)])
