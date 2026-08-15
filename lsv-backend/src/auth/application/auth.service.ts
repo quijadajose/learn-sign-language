@@ -134,7 +134,7 @@ export class AuthService {
   async updateUserProfile(
     userId: string,
     updateUserDto: UpdateUserDto,
-  ): Promise<User> {
+  ): Promise<{ user: User; accessToken?: string }> {
     const user = await this.findUserUseCase.findById(userId);
     if (!user) {
       throw new BadRequestException('errors.user.notFound');
@@ -167,7 +167,8 @@ export class AuthService {
         isRightHanded: updateUserDto.isRightHanded,
         passwordHash,
       });
-      return this.sanitizePublicUser(updatedUser);
+      const accessToken = this.generateToken(updatedUser);
+      return { user: this.sanitizePublicUser(updatedUser), accessToken };
     }
 
     const updatedUser = await this.updateUserUseCase.execute(userId, {
@@ -177,7 +178,7 @@ export class AuthService {
       age: updateUserDto.age,
       isRightHanded: updateUserDto.isRightHanded,
     });
-    return this.sanitizePublicUser(updatedUser);
+    return { user: this.sanitizePublicUser(updatedUser) };
   }
 
   private sanitizePublicUser(user: User): User {

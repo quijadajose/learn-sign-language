@@ -20,13 +20,24 @@ export function readCookie(
   return null;
 }
 
+export function requestUsedBearerToken(req: {
+  headers?: { authorization?: string };
+}): boolean {
+  const header = req.headers?.authorization;
+  return (
+    typeof header === 'string' &&
+    header.startsWith('Bearer ') &&
+    header.slice(7).trim().length > 0
+  );
+}
+
 export function extractAccessToken(req: {
   headers?: { authorization?: string; cookie?: string };
   cookies?: Record<string, string>;
 }): string | null {
   const header = req.headers?.authorization;
-  if (typeof header === 'string' && header.startsWith('Bearer ')) {
-    const token = header.slice(7).trim();
+  if (requestUsedBearerToken(req)) {
+    const token = header?.slice(7).trim();
     if (token) {
       return token;
     }

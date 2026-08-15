@@ -25,7 +25,10 @@ import { Public } from './decorators/public.decorator';
 import { Request, Response } from 'express';
 import { ConfigService } from '@nestjs/config';
 import { OAuthCodeStore } from './oauth-code.store';
-import { attachAuthCookie, clearAuthCookie } from './auth-cookie';
+import {
+  attachAuthCookie,
+  clearAuthCookie,
+} from 'src/shared/infrastructure/auth-cookie';
 import { extractAccessToken } from 'src/shared/infrastructure/extract-access-token';
 import {
   DocAuth,

@@ -647,7 +647,7 @@ export const DocGetQuizzes = () => {
     ApiResponse({
       status: 401,
       description:
-        'No autorizado - Token JWT requerido. Incluir header: Authorization: Bearer {token}',
+        'No autorizado - Token JWT requerido (cookie `lsv_access` o header Authorization: Bearer)',
     }),
     ApiResponse({
       status: 404,

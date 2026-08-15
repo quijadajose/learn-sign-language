@@ -226,7 +226,7 @@
     },
     "/auth/login": {
       "post": {
-        "description": "Autentica un usuario y devuelve un token JWT\n\nRate limit: 5 solicitudes / 60 s por IP.",
+        "description": "Autentica al usuario, pone el JWT en una cookie httpOnly (`lsv_access`) y devuelve el perfil. El token no va en el JSON.\n\nRate limit: 5 solicitudes / 60 s por IP.",
         "operationId": "AuthController_login",
         "parameters": [],
         "requestBody": {
@@ -304,11 +304,6 @@
                               "example": "user"
                             }
                           }
-                        },
-                        "token": {
-                          "type": "string",
-                          "description": "Token JWT para autenticación",
-                          "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImVtYWlsQGdtYWlsLmNvbSIsInN1YiI6ImNiMDBmY2JhLWY1OTItNDQ1MS1hZGIwLTU1N2QzNGE0MjYyMyIsInJvbGUiOiJ1c2VyIiwiaWF0IjoxNzU3OTA0MTA4LCJleHAiOjE3NTc5NDczMDh9.QEoNxsC8Q9v0aLcQE0GC2vEgcPTOadlFOksbGiN7zrA"
                         }
                       }
                     }
@@ -659,7 +654,7 @@
     },
     "/auth/google/exchange": {
       "post": {
-        "description": "El frontend envía el `code` recibido en /auth/google/callback y obtiene el token JWT.\n\nRate limit: 10 solicitudes / 60 s por IP.",
+        "description": "El frontend envía el `code` del hash `/login#code=...`. La API pone el JWT en la cookie httpOnly; no lo devuelve en el JSON.\n\nRate limit: 10 solicitudes / 60 s por IP.",
         "operationId": "AuthController_exchangeGoogleCode",
         "parameters": [],
         "requestBody": {
@@ -684,7 +679,7 @@
         },
         "responses": {
           "201": {
-            "description": "Token JWT emitido",
+            "description": "Sesión establecida en cookie httpOnly",
             "content": {
               "application/json": {
                 "schema": {
@@ -693,15 +688,6 @@
                     "message": {
                       "type": "string",
                       "example": "User logged in successfully"
-                    },
-                    "data": {
-                      "type": "object",
-                      "properties": {
-                        "token": {
-                          "type": "string",
-                          "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9"
-                        }
-                      }
                     }
                   }
                 }
@@ -765,7 +751,7 @@
             }
           }
         },
-        "summary": "Intercambiar código OAuth de Google por JWT",
+        "summary": "Intercambiar código OAuth de Google por sesión",
         "tags": [
           "Authentication"
         ]
@@ -14487,7 +14473,7 @@
   },
   "info": {
     "title": "API LSV",
-    "description": "Contrato OpenAPI del backend LSV (lengua de señas).\n\nAutenticación JWT vía `Authorization: Bearer <token>` obtenido en `POST /auth/login` o `POST /auth/google/exchange`.\n\n## Rate limit\nLímite por dirección IP, ventana de 60 segundos (NestJS Throttler, almacenamiento Valkey). `setHeaders` está activo por defecto.\n\n- **Global:** 100 solicitudes / 60 s\n- **POST /auth/register, /auth/login, /auth/password/reset, /auth/password/reset/confirm:** 5 / 60 s\n- **POST /auth/google/exchange:** 10 / 60 s\n\nRespuestas 2xx incluyen `X-RateLimit-Limit`, `X-RateLimit-Remaining` y `X-RateLimit-Reset` (segundos hasta que se reinicia la ventana).\nSi se excede el cupo: **429** con cabecera `Retry-After` (segundos) y cuerpo `ApiErrorDto`.\nEn `NODE_ENV=test` el guard no aplica el límite (e2e comparte Valkey).",
+    "description": "Contrato OpenAPI del backend LSV (lengua de señas).\n\nEl SPA autentica con cookie httpOnly `lsv_access` (`credentials: include`).\nLogin y Google exchange no devuelven el JWT en JSON. Clientes de prueba o el trainer pueden mandar `Authorization: Bearer <jwt>`.\n\n## Rate limit\nLímite por dirección IP, ventana de 60 segundos (NestJS Throttler, almacenamiento Valkey). `setHeaders` está activo por defecto.\n\n- **Global:** 100 solicitudes / 60 s\n- **POST /auth/register, /auth/login, /auth/password/reset, /auth/password/reset/confirm:** 5 / 60 s\n- **POST /auth/google/exchange:** 10 / 60 s\n\nRespuestas 2xx incluyen `X-RateLimit-Limit`, `X-RateLimit-Remaining` y `X-RateLimit-Reset` (segundos hasta que se reinicia la ventana).\nSi se excede el cupo: **429** con cabecera `Retry-After` (segundos) y cuerpo `ApiErrorDto`.\nEn `NODE_ENV=test` el guard no aplica el límite (e2e comparte Valkey).",
     "version": "1.0",
     "contact": {}
   },
@@ -14504,7 +14490,7 @@
         "scheme": "bearer",
         "bearerFormat": "JWT",
         "type": "http",
-        "description": "JWT emitido por POST /auth/login o POST /auth/google/exchange. Enviar en el header Authorization.",
+        "description": "Opcional. JWT para clientes que no usan cookie (tests, trainer). El SPA usa la cookie httpOnly `lsv_access`.",
         "in": "header"
       }
     },
