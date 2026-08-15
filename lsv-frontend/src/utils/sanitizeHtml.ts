@@ -35,11 +35,11 @@ const LESSON_HTML_CONFIG: Config = {
     "src",
     "alt",
     "class",
-    "style",
     "width",
     "height",
   ],
   ALLOW_DATA_ATTR: false,
+  FORBID_ATTR: ["style"],
   ALLOWED_URI_REGEXP:
     /^(?:(?:https?|mailto):|[^a-z]|[a-z+.-]+(?:[^a-z+.\-:]|$))/i,
   ADD_ATTR: ["target"],

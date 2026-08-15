@@ -18,7 +18,14 @@ describe("sanitizeLessonHtml", () => {
     expect(clean.toLowerCase()).not.toContain("javascript:");
   });
 
-  it("keeps safe formatting tags", () => {
+  it("strips inline style attributes", () => {
+    const dirty = '<p style="color:red">Hola</p>';
+    const clean = sanitizeLessonHtml(dirty);
+    expect(clean).not.toContain("style");
+    expect(clean).toContain("Hola");
+  });
+
+  it("keeps formatting tags", () => {
     const dirty = "<p><strong>Bold</strong> and <em>italic</em></p>";
     expect(sanitizeLessonHtml(dirty)).toContain("<strong>Bold</strong>");
     expect(sanitizeLessonHtml(dirty)).toContain("<em>italic</em>");

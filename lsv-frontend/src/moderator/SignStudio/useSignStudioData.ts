@@ -253,6 +253,7 @@ export function useSignStudioData() {
     const socketUrl = BACKEND_BASE_URL.replace(/\/api\/?$/, "");
     const socket = io(socketUrl, {
       transports: ["websocket", "polling"],
+      withCredentials: true,
       auth: token ? { token } : undefined,
     });
 

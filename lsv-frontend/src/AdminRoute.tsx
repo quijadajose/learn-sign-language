@@ -1,7 +1,7 @@
 import type { ReactElement } from "react";
 import { useEffect, useRef } from "react";
 import { Navigate } from "react-router-dom";
-import { Spinner } from "flowbite-react";
+import { LoadingSpinner } from "./components/LoadingSpinner";
 import { useAuth } from "./context/AuthContext";
 
 type Props = {
@@ -13,30 +13,22 @@ type Props = {
  * Client role checks can be bypassed by tampering with localStorage.
  */
 export function AdminRoute({ children }: Props) {
-  const { user, token, isHydrating, refreshUser } = useAuth();
+  const { user, isAuthenticated, isHydrating, refreshUser } = useAuth();
   const refreshed = useRef(false);
 
   useEffect(() => {
-    if (refreshed.current || !token || token === "undefined" || isHydrating) {
+    if (refreshed.current || !isAuthenticated || isHydrating) {
       return;
     }
     refreshed.current = true;
     void refreshUser();
-  }, [token, isHydrating, refreshUser]);
-
-  if (!token || token === "undefined") {
-    return <Navigate to="/login" />;
-  }
+  }, [isAuthenticated, isHydrating, refreshUser]);
 
   if (isHydrating) {
-    return (
-      <div className="flex min-h-[40vh] items-center justify-center">
-        <Spinner size="xl" />
-      </div>
-    );
+    return <LoadingSpinner />;
   }
 
-  if (!user) {
+  if (!isAuthenticated || !user) {
     return <Navigate to="/login" />;
   }
 

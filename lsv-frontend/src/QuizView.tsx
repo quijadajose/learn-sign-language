@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate, useSearchParams } from "react-router-dom";
-import { Spinner, Button, Alert } from "flowbite-react";
+import { Button, Alert } from "flowbite-react";
+import { useTranslation } from "react-i18next";
 import { useAuth } from "./context/AuthContext";
 import { useToast } from "./components/ToastProvider";
 import { HiExclamationCircle, HiArrowLeft } from "react-icons/hi";
@@ -8,6 +9,7 @@ import confetti from "canvas-confetti";
 import { quizApi, unwrapApiList } from "./services/api";
 import { QuizSubmissionCard } from "./QuizSubmissionCard";
 import { QuizQuestionsForm } from "./QuizQuestionsForm";
+import { LoadingSpinner } from "./components/LoadingSpinner";
 
 interface QuizOption {
   id: string;
@@ -37,6 +39,7 @@ interface Answer {
 }
 
 export default function QuizView() {
+  const { t } = useTranslation(["learn", "common"]);
   const { lessonId } = useParams<{ lessonId: string }>();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
@@ -46,15 +49,15 @@ export default function QuizView() {
   const [error, setError] = useState<string | null>(null);
   const [answers, setAnswers] = useState<Answer[]>([]);
   const [submission, setSubmission] = useState<QuizSubmission | null>(null);
-  const { token } = useAuth();
+  const { isAuthenticated } = useAuth();
   const addToast = useToast();
 
   useEffect(() => {
     let cancelled = false;
 
     (async () => {
-      if (!token || !lessonId) {
-        setError("Faltan datos para cargar el quiz.");
+      if (!isAuthenticated || !lessonId) {
+        setError(t("quiz.missing"));
         setLoading(false);
         return;
       }
@@ -73,14 +76,14 @@ export default function QuizView() {
           const quizData = unwrapApiList<Quiz>(response.data);
 
           if (quizData.length === 0) {
-            setError("No hay quizzes disponibles para esta lección.");
+            setError(t("quiz.empty"));
             return;
           }
 
           setQuiz(quizData[0]);
         } else {
-          setError(response.message || "Error al cargar el quiz");
-          addToast("error", response.message || "Error al cargar el quiz");
+          setError(response.message || t("quiz.loadError"));
+          addToast("error", response.message || t("quiz.loadError"));
         }
       } finally {
         setLoading(false);
@@ -90,7 +93,7 @@ export default function QuizView() {
     return () => {
       cancelled = true;
     };
-  }, [lessonId, token, addToast, searchParams]);
+  }, [lessonId, isAuthenticated, addToast, searchParams, t]);
 
   const handleAnswerSelect = (questionId: string, optionId: string) => {
     setAnswers((prev) => {
@@ -105,13 +108,10 @@ export default function QuizView() {
   };
 
   const handleSubmitQuiz = async () => {
-    if (!quiz || !token) return;
+    if (!quiz || !isAuthenticated) return;
 
     if (answers.length !== quiz.questions.length) {
-      addToast(
-        "error",
-        "Por favor responde todas las preguntas antes de enviar.",
-      );
+      addToast("error", t("quiz.answerAll"));
       return;
     }
 
@@ -125,20 +125,17 @@ export default function QuizView() {
         setSubmission(submissionData);
 
         if (submissionData.score >= 80) {
-          addToast("success", "¡Felicitaciones! Has aprobado la lección");
+          addToast("success", t("quiz.passedToast"));
           confetti({
             particleCount: 100,
             spread: 70,
             origin: { y: 0.6 },
           });
         } else {
-          addToast(
-            "error",
-            "Repasa e inténtalo de nuevo. Tu puntuación fue menor al 80%",
-          );
+          addToast("error", t("quiz.failedToast"));
         }
       } else {
-        addToast("error", response.message || "Error al enviar el quiz");
+        addToast("error", response.message || t("quiz.submitError"));
       }
     } finally {
       setSubmitting(false);
@@ -152,12 +149,7 @@ export default function QuizView() {
   if (loading) {
     return (
       <div className="mx-auto w-full max-w-4xl p-6">
-        <div className="text-center">
-          <Spinner size="xl" />
-          <p className="mt-4 text-gray-600 dark:text-gray-400">
-            Cargando quiz...
-          </p>
-        </div>
+        <LoadingSpinner label={t("quiz.loading")} />
       </div>
     );
   }
@@ -171,7 +163,7 @@ export default function QuizView() {
         <div className="mt-4">
           <Button color="gray" onClick={handleGoBack}>
             <HiArrowLeft className="mr-2 size-4" />
-            Volver
+            {t("back", { ns: "common" })}
           </Button>
         </div>
       </div>
@@ -182,12 +174,12 @@ export default function QuizView() {
     return (
       <div className="mx-auto w-full max-w-4xl p-6">
         <Alert color="failure" icon={HiExclamationCircle}>
-          No se encontró el quiz solicitado.
+          {t("quiz.notFound")}
         </Alert>
         <div className="mt-4">
           <Button color="gray" onClick={handleGoBack}>
             <HiArrowLeft className="mr-2 size-4" />
-            Volver
+            {t("back", { ns: "common" })}
           </Button>
         </div>
       </div>
@@ -199,7 +191,7 @@ export default function QuizView() {
       <div className="mb-6">
         <Button color="gray" onClick={handleGoBack}>
           <HiArrowLeft className="mr-2 size-4" />
-          Volver
+          {t("back", { ns: "common" })}
         </Button>
       </div>
 

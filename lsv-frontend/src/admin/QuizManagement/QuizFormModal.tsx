@@ -133,7 +133,7 @@ export default function QuizFormModal({
                             <div className="flex items-center gap-3">
                               <img
                                 src={`${BACKEND_BASE_URL}${encodeURI(option.text)}`}
-                                alt="Opción"
+                                alt={`Opción ${optionIndex + 1}`}
                                 className="h-16 w-24 rounded border object-cover"
                                 onError={(e) => {
                                   const target = e.target as HTMLImageElement;
@@ -205,7 +205,7 @@ export default function QuizFormModal({
                                   className={`cursor-pointer ${isUploading ? "pointer-events-none opacity-50" : ""}`}
                                 >
                                   {isUploading ? (
-                                    <Spinner size="sm" />
+                                    <Spinner size="sm" aria-label="Cargando imagen..." />
                                   ) : (
                                     <HiPhotograph className="size-4" />
                                   )}
@@ -244,7 +244,7 @@ export default function QuizFormModal({
         <Button color="success" onClick={onSubmit} disabled={submitting}>
           {submitting ? (
             <>
-              <Spinner size="sm" className="mr-2" />
+              <Spinner size="sm" className="mr-2" aria-hidden="true" />
               {editingQuiz ? "Actualizando..." : "Creando..."}
             </>
           ) : editingQuiz ? (

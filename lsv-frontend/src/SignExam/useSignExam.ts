@@ -6,6 +6,7 @@ import confetti from "canvas-confetti";
 import { signRecordApi, lessonApi, unwrapApiData, unwrapApiList } from "../services/api";
 import { BACKEND_BASE_URL } from "../config";
 import { useGestureCaptureLoop } from "../hooks/useGestureCaptureLoop";
+import { useTranslation } from "react-i18next";
 import { useToast } from "../components/ToastProvider";
 import type { LessonModelsBundleDto } from "../types/signRecord";
 import {
@@ -24,6 +25,7 @@ import {
 } from "../utils/signDetection";
 
 export function useSignExam() {
+  const { t } = useTranslation("learn");
   const { lessonId } = useParams<{ lessonId: string }>();
   const navigate = useNavigate();
   const location = useLocation();
@@ -152,9 +154,9 @@ export function useSignExam() {
       }
     } catch (err) {
       console.error("Camera error:", err);
-      setError("No se pudo acceder a la cámara. Por favor, verifica los permisos.");
+      setError(t("practice.cameraError"));
     }
-  }, []);
+  }, [t]);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -168,7 +170,7 @@ export function useSignExam() {
 
         const lessonRes = await lessonApi.getUserLesson(lessonId!);
         if (!lessonRes.success) {
-          throw new Error("No se pudo cargar la información de la lección");
+          throw new Error(t("practice.lessonLoadError"));
         }
         if (controller.signal.aborted) return;
         const lessonInfo = unwrapApiData<{ name?: string }>(lessonRes.data);
@@ -176,7 +178,7 @@ export function useSignExam() {
 
         const signsRes = await signRecordApi.getLessonSigns(lessonId!, regionId);
         if (!signsRes.success) {
-          throw new Error("No se pudieron cargar las señas de la lección");
+          throw new Error(t("practice.signsLoadError"));
         }
 
         const signsData = unwrapApiList<{
@@ -185,7 +187,7 @@ export function useSignExam() {
           detectionType?: SignDetectionType;
         }>(signsRes.data);
         if (!signsData?.length) {
-          throw new Error("Esta lección no tiene señas configuradas para práctica");
+          throw new Error(t("practice.noSigns"));
         }
         if (controller.signal.aborted) return;
         setSigns(signsData);
@@ -202,22 +204,16 @@ export function useSignExam() {
 
         const modelRes = await signRecordApi.getLessonModel(lessonId!, regionId);
         if (!modelRes.success || !modelRes.data) {
-          throw new Error(
-            "No se encontró un modelo entrenado para esta lección. Por favor, asegúrate de que el modelo esté entrenado y listo.",
-          );
+          throw new Error(t("practice.noModel"));
         }
         if (controller.signal.aborted) return;
 
         const lessonModels = unwrapApiData<LessonModelsBundleDto>(modelRes.data);
         if (needsStatic && !lessonModels.static) {
-          throw new Error(
-            "Esta lección requiere un modelo estático que aún no está entrenado.",
-          );
+          throw new Error(t("practice.needStaticModel"));
         }
         if (needsDynamic && !lessonModels.dynamic) {
-          throw new Error(
-            "Esta lección requiere un modelo dinámico (LSTM) que aún no está entrenado.",
-          );
+          throw new Error(t("practice.needDynamicModel"));
         }
 
         const loadedModels = await loadLessonModelsFromApi(
@@ -266,7 +262,7 @@ export function useSignExam() {
           lessonModels.static?.name,
           lessonModels.dynamic?.name,
         ].filter(Boolean);
-        setLoadedModelName(modelNames.join(" + ") || "Modelo de lección");
+        setLoadedModelName(modelNames.join(" + ") || t("practice.defaultModelName"));
 
         const { pose, hands } = await createVisionLandmarkers();
         if (controller.signal.aborted) {
@@ -282,7 +278,7 @@ export function useSignExam() {
         if (!controller.signal.aborted) {
           console.error(err);
           const message =
-            err instanceof Error ? err.message : "Error al inicializar la práctica";
+            err instanceof Error ? err.message : t("practice.initError");
           // loadLessonModelsFromApi already returns Spanish schema/feature errors.
           setError(message);
         }
@@ -295,7 +291,7 @@ export function useSignExam() {
       controller.abort();
       disposeResources();
     };
-  }, [lessonId, regionId, disposeResources, resetDetectionState]);
+  }, [lessonId, regionId, disposeResources, resetDetectionState, t]);
 
   useEffect(() => {
     if (!isLoading && !isFinished && !error) {
@@ -347,19 +343,18 @@ export function useSignExam() {
         if (!res.success) {
           addToast(
             "error",
-            res.message ||
-              "No se pudo marcar la lección como completada. Intenta de nuevo más tarde.",
+            res.message || t("practice.completeError"),
           );
         }
       } catch (err) {
         console.error("Error al marcar lección como completada", err);
         addToast(
           "error",
-          "No se pudo marcar la lección como completada. Intenta de nuevo más tarde.",
+          t("practice.completeError"),
         );
       }
     }
-  }, [lessonId, addToast]);
+  }, [lessonId, addToast, t]);
 
   const handleCorrect = useCallback(() => {
     if (isRecognizingRef.current) return;

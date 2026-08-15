@@ -277,7 +277,7 @@ export default function AddLanguageModal({
               disabled={isAdding}
               className="bg-blue-600 text-white hover:bg-blue-700"
             >
-              {isAdding && <Spinner size="sm" className="mr-2" />}
+              {isAdding && <Spinner size="sm" className="mr-2" aria-hidden="true" />}
               {isAdding ? "Creando..." : "Crear Idioma"}
             </Button>
           </div>

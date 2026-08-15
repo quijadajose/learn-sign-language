@@ -35,7 +35,7 @@ export default function StageProgressView({ language }: Props) {
   );
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const { token } = useAuth();
+  const { isAuthenticated } = useAuth();
   const [, setSelectedLanguageId] = useLocalStorage<string | null>(
     "selectedLanguageId",
     null,
@@ -64,7 +64,7 @@ export default function StageProgressView({ language }: Props) {
     }
 
     (async () => {
-      if (!token) {
+      if (!isAuthenticated) {
         setError("No estás autenticado.");
         setLoading(false);
         return;
@@ -121,7 +121,7 @@ export default function StageProgressView({ language }: Props) {
     };
   }, [
     language,
-    token,
+    isAuthenticated,
     addToast,
     persistedStageId,
     explicitStageSelection,
@@ -152,7 +152,11 @@ export default function StageProgressView({ language }: Props) {
         </h1>
       </div>
 
-      {loading && <Spinner size="xl" />}
+      {loading && (
+        <div role="status" aria-live="polite">
+          <Spinner size="xl" aria-label="Cargando progreso..." />
+        </div>
+      )}
       {error && (
         <Alert color="failure" icon={HiExclamationCircle}>
           {error}

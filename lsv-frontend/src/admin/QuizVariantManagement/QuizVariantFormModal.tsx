@@ -102,7 +102,7 @@ export default function QuizVariantFormModal({
               </select>
               {loadingQuestions && (
                 <div className="absolute right-3 top-1/2 -translate-y-1/2">
-                  <Spinner size="sm" />
+                  <Spinner size="sm" aria-label="Cargando preguntas..." />
                 </div>
               )}
             </div>
@@ -180,7 +180,7 @@ export default function QuizVariantFormModal({
                             <div className="flex items-center gap-3">
                               <img
                                 src={`${BACKEND_BASE_URL}${encodeURI(option.text)}`}
-                                alt="Opción"
+                                alt={`Opción ${optionIndex + 1}`}
                                 className="h-16 w-24 rounded border object-cover"
                                 onError={(e) => {
                                   const target = e.target as HTMLImageElement;
@@ -252,7 +252,7 @@ export default function QuizVariantFormModal({
                                   className={`cursor-pointer ${isUploading ? "pointer-events-none opacity-50" : ""}`}
                                 >
                                   {isUploading ? (
-                                    <Spinner size="sm" />
+                                    <Spinner size="sm" aria-label="Cargando imagen..." />
                                   ) : (
                                     <HiPhotograph className="size-4" />
                                   )}
@@ -295,7 +295,7 @@ export default function QuizVariantFormModal({
             creating || !selectedLessonVariantId || questions.length === 0
           }
         >
-          {creating && <Spinner size="sm" className="mr-2" />}
+          {creating && <Spinner size="sm" className="mr-2" aria-hidden="true" />}
           {editingQuizVariantId ? "Actualizar Variante" : "Crear Variante"}
         </Button>
         <Button color="gray" onClick={onClose}>

@@ -43,7 +43,7 @@ export default function DeleteRegionModal({
       </ModalBody>
       <ModalFooter>
         <Button color="failure" onClick={onConfirm} disabled={loading}>
-          {loading ? <Spinner size="sm" className="mr-2" /> : null}
+          {loading ? <Spinner size="sm" className="mr-2" aria-hidden="true" /> : null}
           Sí, eliminar
         </Button>
         <Button color="gray" onClick={onClose}>

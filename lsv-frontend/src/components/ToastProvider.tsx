@@ -95,7 +95,12 @@ export const ToastProvider = ({ children }: { children: ReactNode }) => {
   return (
     <ToastContext.Provider value={contextValue}>
       {children}
-      <div className="fixed right-5 top-5 z-9999 flex flex-col gap-3">
+      <div
+        className="fixed right-5 top-5 z-9999 flex flex-col gap-3"
+        role="status"
+        aria-live="polite"
+        aria-relevant="additions"
+      >
         {toasts.map((toast) => (
           <ToastItem key={toast.id} toast={toast} onDismiss={dismissToast} />
         ))}

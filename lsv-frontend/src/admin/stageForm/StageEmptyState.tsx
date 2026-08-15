@@ -49,7 +49,7 @@ export default function StageEmptyState({
                 {CEFR_LEVELS.map((level) => level.code).join(" · ")}
               </p>
             </div>
-            {isApplyingCefr && <Spinner size="md" />}
+            {isApplyingCefr && <Spinner size="md" aria-label="Aplicando niveles MCER..." />}
           </div>
         </button>
 

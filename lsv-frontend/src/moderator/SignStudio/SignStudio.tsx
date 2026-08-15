@@ -123,8 +123,10 @@ const SignStudio: React.FC = () => {
   if (isLoading) {
     return (
       <div className="flex h-screen flex-col items-center justify-center">
-        <Spinner size="xl" />
-        <span className="mt-4 text-lg font-medium">Cargando Sign Studio...</span>
+        <Spinner size="xl" aria-label="Cargando Sign Studio..." />
+        <span aria-hidden="true" className="mt-4 text-lg font-medium">
+          Cargando Sign Studio...
+        </span>
       </div>
     );
   }

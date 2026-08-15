@@ -18,6 +18,7 @@ import LanguageSwitcher from "../components/LanguageSwitcher";
 import SignLanguageContextSwitcher from "../components/SignLanguageContextSwitcher";
 import { usePermissions } from "../hooks/usePermissions";
 import { useAuth } from "../context/AuthContext";
+import { MAIN_CONTENT_ID } from "../components/SkipLink";
 import type { LanguageSwitcherTab } from "../components/LanguageSwitcher/types";
 
 interface Props {
@@ -32,7 +33,7 @@ const DashboardLayout = ({ children }: Props) => {
   const { t } = useTranslation(["nav", "common"]);
   const navigate = useNavigate();
   const location = useLocation();
-  const { user, logout, token, isHydrating } = useAuth();
+  const { user, logout, isAuthenticated, isHydrating } = useAuth();
   const [avatarError, setAvatarError] = useState(false);
   const [avatarTimestamp, setAvatarTimestamp] = useState(Date.now());
   const [showLanguageSwitcher, setShowLanguageSwitcher] = useState(false);
@@ -51,14 +52,13 @@ const DashboardLayout = ({ children }: Props) => {
   }, [logout, navigate]);
 
   useEffect(() => {
-    if (!token || token === "undefined") {
-      handleLogout();
+    if (isHydrating) {
       return;
     }
-    if (!isHydrating && !user) {
-      handleLogout();
+    if (!isAuthenticated || !user) {
+      navigate("/login");
     }
-  }, [token, user, isHydrating, handleLogout]);
+  }, [isAuthenticated, user, isHydrating, navigate]);
 
   useEffect(() => {
     setAvatarTimestamp(Date.now());
@@ -77,11 +77,15 @@ const DashboardLayout = ({ children }: Props) => {
         rounded
         className="sticky top-0 z-60 bg-white/80 shadow-sm backdrop-blur-md dark:bg-gray-900/80"
       >
-        <Link to="/dashboard" className="flex items-center">
+        <Link
+          to="/dashboard"
+          className="flex items-center"
+          aria-label={t("common:a11y.home")}
+        >
           <img
             src="/logo.svg"
             className="mr-3 h-6 dark:invert sm:h-9"
-            alt={t("common:logoAlt")}
+            alt=""
           />
         </Link>
         <div className="flex items-center gap-2 md:order-2">
@@ -90,7 +94,7 @@ const DashboardLayout = ({ children }: Props) => {
             onManageRegions={() => openLanguageManager("regions")}
             onLanguageChanged={handleLanguageChanged}
           />
-          <DarkThemeToggle />
+          <DarkThemeToggle aria-label={t("common:a11y.toggleTheme")} />
 
           {user ? (
             <Dropdown
@@ -236,7 +240,9 @@ const DashboardLayout = ({ children }: Props) => {
         </NavbarCollapse>
       </Navbar>
       {user ? (
-        <main className="min-h-screen p-4 dark:bg-gray-800">{children}</main>
+        <main id={MAIN_CONTENT_ID} className="min-h-screen p-4 dark:bg-gray-800">
+          {children}
+        </main>
       ) : (
         <div className="flex min-h-screen items-center justify-center dark:bg-gray-800">
           <p className="text-gray-500 dark:text-gray-400">{t("common:loading")}</p>

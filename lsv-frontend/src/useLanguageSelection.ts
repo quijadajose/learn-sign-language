@@ -47,7 +47,7 @@ export function useLanguageSelection(onLanguageSelected: (lang: Language) => voi
     string | null
   >("selectedRegionId", null);
   const [enrolling, setEnrolling] = useState(false);
-  const { token } = useAuth();
+  const { isAuthenticated } = useAuth();
   const [title, setTitle] = useState("Quiero aprender:");
   const [showRegionSelection, setShowRegionSelection] = useState(false);
   const [selectedLanguage, setSelectedLanguage] = useState<Language | null>(
@@ -76,7 +76,7 @@ export function useLanguageSelection(onLanguageSelected: (lang: Language) => voi
     let active = true;
 
     const initialize = async () => {
-      if (!token) {
+      if (!isAuthenticated) {
         if (active) {
           setError("No estás autenticado.");
           setLoading(false);
@@ -242,7 +242,7 @@ export function useLanguageSelection(onLanguageSelected: (lang: Language) => voi
     return () => {
       active = false;
     };
-  }, [token, currentPage, addToast]);
+  }, [isAuthenticated, currentPage, addToast]);
 
   const handleSelect = (lang: Language) => {
     setSelectedLanguageId(lang.id);
@@ -350,7 +350,7 @@ export function useLanguageSelection(onLanguageSelected: (lang: Language) => voi
       return;
     }
 
-    if (!token) {
+    if (!isAuthenticated) {
       addToast("error", "No estás autenticado.");
       return;
     }

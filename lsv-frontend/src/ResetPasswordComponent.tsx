@@ -5,6 +5,7 @@ import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { authApi } from "./services/api";
 import { useToast } from "./components/ToastProvider";
+import { MAIN_CONTENT_ID } from "./components/SkipLink";
 
 /** Prefer hash (`#token=`) so the reset token is not sent in Referer / query logs. */
 function readResetToken(searchParams: URLSearchParams): string | null {
@@ -112,7 +113,10 @@ function ResetPassword() {
   };
 
   return (
-    <section className="relative flex min-h-screen flex-col items-center justify-center bg-gray-50 px-6 py-8 dark:bg-gray-900">
+    <main
+      id={MAIN_CONTENT_ID}
+      className="relative flex min-h-screen flex-col items-center justify-center bg-gray-50 px-6 py-8 dark:bg-gray-900"
+    >
       <Link
         to="/"
         className="mb-6 flex items-center text-2xl font-semibold text-gray-900 dark:text-white"
@@ -120,7 +124,7 @@ function ResetPassword() {
         <img
           className="mr-2 size-8 dark:invert"
           src="/logo.svg"
-          alt={t("common:logoAlt")}
+          alt=""
         />
         {t("common:appName")}
       </Link>
@@ -143,6 +147,8 @@ function ResetPassword() {
               <TextInput
                 id="newPassword"
                 type="password"
+                name="newPassword"
+                autoComplete="new-password"
                 placeholder="••••••••"
                 value={newPassword}
                 onChange={(e) => setNewPassword(e.target.value)}
@@ -159,6 +165,8 @@ function ResetPassword() {
               <TextInput
                 id="confirmPassword"
                 type="password"
+                name="confirmPassword"
+                autoComplete="new-password"
                 placeholder="••••••••"
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
@@ -166,7 +174,7 @@ function ResetPassword() {
               />
             </div>
             {passwordError && (
-              <p className="text-sm text-red-600 dark:text-red-500">
+              <p role="alert" className="text-sm text-red-600 dark:text-red-500">
                 {passwordError}
               </p>
             )}
@@ -192,7 +200,7 @@ function ResetPassword() {
           </form>
         </div>
       </div>
-    </section>
+    </main>
   );
 }
 

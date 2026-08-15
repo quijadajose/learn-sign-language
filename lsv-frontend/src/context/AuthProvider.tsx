@@ -1,14 +1,20 @@
 import { useState, useEffect, useCallback, useMemo, ReactNode } from "react";
 import { UserData } from "../types/user";
 import { useLocalStorage } from "../hooks/useLocalStorage";
-import { unwrapApiData, userApi } from "../services/api";
+import {
+  unwrapApiData,
+  userApi,
+  authApi,
+  setMemoryAccessToken,
+  markSessionActive,
+} from "../services/api";
 import { AuthContext } from "./AuthContext";
 
 const HYDRATE_MAX_ATTEMPTS = 3;
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useLocalStorage<UserData | null>("user", null);
-  const [token, setToken] = useLocalStorage<string | null>("auth", null);
+  const [token, setToken] = useState<string | null>(null);
   const [, setSelectedRegionId] = useLocalStorage<string | null>(
     "selectedRegionId",
     null,
@@ -17,28 +23,31 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     "selectedLanguageId",
     null,
   );
-  const [isHydrating, setIsHydrating] = useState<boolean>(
-    () => !!token && token !== "undefined" && !user,
-  );
+  const [isHydrating, setIsHydrating] = useState(true);
 
   const clearSession = useCallback(() => {
     setUser(null);
     setToken(null);
+    setMemoryAccessToken(null);
+    markSessionActive(false);
     setSelectedRegionId(null);
     setSelectedLanguageId(null);
-  }, [setUser, setToken, setSelectedRegionId, setSelectedLanguageId]);
+    try {
+      localStorage.removeItem("auth");
+    } catch {
+      /* ignore */
+    }
+  }, [setUser, setSelectedRegionId, setSelectedLanguageId]);
 
-  // Require both token and user so a failed hydrate cannot leave a half-session
-  // that PrivateRoute would treat as authenticated.
-  const isAuthenticated = !!token && token !== "undefined" && !!user;
+  const isAuthenticated = !!user;
 
   const refreshUser = useCallback(async (): Promise<UserData | null> => {
-    if (!token || token === "undefined") return null;
     try {
       const response = await userApi.getMe();
       if (response.success && response.data) {
         const next = unwrapApiData<UserData>(response.data);
         setUser(next);
+        markSessionActive(true);
         return next;
       }
       if (response.status === 401 || response.status === 403) {
@@ -49,21 +58,16 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       console.error("Error refreshing user session:", error);
       return null;
     }
-  }, [token, setUser, clearSession]);
+  }, [setUser, clearSession]);
 
   useEffect(() => {
-    if (!token || token === "undefined") {
-      setIsHydrating(false);
-      return;
-    }
-
-    if (user) {
-      setIsHydrating(false);
-      return;
-    }
-
     let cancelled = false;
     setIsHydrating(true);
+    try {
+      localStorage.removeItem("auth");
+    } catch {
+      /* ignore */
+    }
 
     const hydrate = async () => {
       let lastError: unknown;
@@ -75,6 +79,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
           if (response.success && response.data) {
             setUser(unwrapApiData<UserData>(response.data));
+            markSessionActive(true);
             setIsHydrating(false);
             return;
           }
@@ -97,7 +102,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
       if (cancelled) return;
       console.error("Error hydrating user session after retries:", lastError);
-      // Cannot verify session without a user profile — clear to avoid auth loops.
       clearSession();
       setIsHydrating(false);
     };
@@ -106,31 +110,37 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     return () => {
       cancelled = true;
     };
-  }, [token, user, setUser, clearSession]);
+  }, [setUser, clearSession]);
 
   const login = useCallback(
-    (userData: UserData, userToken: string) => {
+    (userData: UserData, userToken?: string) => {
       setUser(userData);
-      setToken(userToken);
+      if (userToken) {
+        setToken(userToken);
+        setMemoryAccessToken(userToken);
+      }
+      markSessionActive(true);
       setIsHydrating(false);
     },
-    [setUser, setToken],
+    [setUser],
   );
 
   const logout = useCallback(() => {
+    void authApi.logout();
     clearSession();
     setIsHydrating(false);
   }, [clearSession]);
 
   useEffect(() => {
     const onSessionExpired = () => {
-      logout();
+      clearSession();
+      setIsHydrating(false);
     };
     window.addEventListener("session-expired", onSessionExpired);
     return () => {
       window.removeEventListener("session-expired", onSessionExpired);
     };
-  }, [logout]);
+  }, [clearSession]);
 
   const updateUser = useCallback(
     (userData: UserData) => {

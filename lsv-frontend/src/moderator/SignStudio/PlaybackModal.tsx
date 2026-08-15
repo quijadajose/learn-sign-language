@@ -103,7 +103,7 @@ export function PlaybackModal(props: PlaybackModalProps) {
                   onClick={onTestRecordingWithModel}
                   disabled={sampleTestLoading || !sampleTestModelId}
                 >
-                  {sampleTestLoading ? <Spinner size="sm" className="mr-2" /> : null}
+                  {sampleTestLoading ? <Spinner size="sm" className="mr-2" aria-hidden="true" /> : null}
                   Probar muestra
                 </Button>
               </div>
