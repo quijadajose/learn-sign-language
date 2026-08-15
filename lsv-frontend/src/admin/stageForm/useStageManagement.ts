@@ -427,7 +427,7 @@ export function useStageManagement() {
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleAddSubmit = async (e: React.FormEvent) => {
+  const handleAddSubmit = async (e: React.SubmitEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (!languageId || !formData.name) {
       addToast("error", "El nombre de la etapa es obligatorio.");
@@ -529,7 +529,7 @@ export function useStageManagement() {
     }
   };
 
-  const handleEditSubmit = async (e: React.FormEvent) => {
+  const handleEditSubmit = async (e: React.SubmitEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (!currentStage || !languageId || !formData.name) {
       addToast("error", "Datos incompletos para editar la etapa.");

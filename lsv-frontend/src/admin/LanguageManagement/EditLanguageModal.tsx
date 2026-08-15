@@ -25,7 +25,7 @@ interface EditLanguageModalProps {
   imageTimestamp: number;
   isSubmitting: boolean;
   onClose: () => void;
-  onSubmit: (e: React.FormEvent) => void;
+  onSubmit: (e: React.SubmitEvent<HTMLFormElement>) => void;
   onFieldBlur: (field: "name" | "description") => void;
   onFileChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   onFileDrop: (e: React.DragEvent<HTMLLabelElement>) => void;

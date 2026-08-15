@@ -25,8 +25,8 @@ interface StageModalsProps {
   onInputChange: (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
   ) => void;
-  onAddSubmit: (e: React.FormEvent) => void;
-  onEditSubmit: (e: React.FormEvent) => void;
+  onAddSubmit: (e: React.SubmitEvent<HTMLFormElement>) => void;
+  onEditSubmit: (e: React.SubmitEvent<HTMLFormElement>) => void;
   onDelete: () => void;
 }
 

@@ -10,8 +10,6 @@ import {
 import { AuthContext } from "./AuthContext";
 import { clearAllStageSelections } from "../utils/learningStorage";
 
-const HYDRATE_MAX_ATTEMPTS = 3;
-
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useLocalStorage<UserData | null>("user", null);
   const [, setSelectedRegionId] = useLocalStorage<string | null>(
@@ -49,6 +47,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         return next;
       }
       if (response.status === 401 || response.status === 403) {
+        void authApi.logout();
         clearSession();
       }
       return null;
@@ -68,41 +67,26 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
 
     const hydrate = async () => {
-      let lastError: unknown;
-      for (let attempt = 1; attempt <= HYDRATE_MAX_ATTEMPTS; attempt++) {
+      try {
+        const response = await userApi.getMe();
         if (cancelled) return;
-        try {
-          const response = await userApi.getMe();
-          if (cancelled) return;
 
-          if (response.success && response.data) {
-            setUser(unwrapApiData<UserData>(response.data));
-            markSessionActive(true);
-            setIsHydrating(false);
-            return;
-          }
-
-          if (response.status === 401 || response.status === 403) {
-            void authApi.logout();
-            clearSession();
-            setIsHydrating(false);
-            return;
-          }
-
-          lastError = response.message || "hydrate failed";
-        } catch (error) {
-          lastError = error;
+        if (response.success && response.data) {
+          setUser(unwrapApiData<UserData>(response.data));
+          markSessionActive(true);
+          return;
         }
 
-        if (attempt < HYDRATE_MAX_ATTEMPTS) {
-          await new Promise((resolve) => setTimeout(resolve, 500 * attempt));
+        if (response.status === 401 || response.status === 403) {
+          void authApi.logout();
         }
+        clearSession();
+      } catch (error) {
+        console.error("Error hydrating user session:", error);
+        if (!cancelled) clearSession();
+      } finally {
+        if (!cancelled) setIsHydrating(false);
       }
-
-      if (cancelled) return;
-      console.error("Error hydrating user session after retries:", lastError);
-      clearSession();
-      setIsHydrating(false);
     };
 
     void hydrate();

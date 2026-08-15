@@ -367,7 +367,7 @@ export const authApi = {
 export const userApi = {
   getProfile: () => ApiService.get("/user/profile"),
 
-  getMe: () => ApiService.get("/users/me"),
+  getMe: () => ApiService.get("/users/me", { retries: 0 }),
 
   updateProfile: (userData: unknown) =>
     ApiService.put("/user/profile", userData),

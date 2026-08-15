@@ -7,7 +7,7 @@ services:
     volumes:
       - ./lsv-backend:/src/app
       - /src/app/node_modules
-    command: npm run start:debug
+    command: sh -c "if [ ! -f dist/main.js ]; then rm -f *.tsbuildinfo; npm run build; fi && exec npm run start:debug"
     ports:
       - "3000:3000"
       - "9229:9229"

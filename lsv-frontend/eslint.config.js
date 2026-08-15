@@ -21,6 +21,12 @@ export default tseslint.config(
   ...tseslint.configs.recommended,
   {
     files: ["**/*.{ts,tsx}"],
+    languageOptions: {
+      parserOptions: {
+        projectService: true,
+        tsconfigRootDir: import.meta.dirname,
+      },
+    },
     plugins: {
       "react-hooks": reactHooks,
       "react-refresh": reactRefresh,
@@ -29,6 +35,7 @@ export default tseslint.config(
       // Classic hooks rules only (React Compiler rules in v7 recommended are too noisy here).
       "react-hooks/rules-of-hooks": "error",
       "react-hooks/exhaustive-deps": "warn",
+      "@typescript-eslint/no-deprecated": "warn",
       "@typescript-eslint/no-unused-vars": [
         "error",
         {

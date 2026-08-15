@@ -1,8 +1,18 @@
 import { useState, useEffect, useCallback } from "react";
 
+function valuesEqual<T>(a: T, b: T): boolean {
+  if (Object.is(a, b)) return true;
+  if (typeof a === "object" && typeof b === "object") {
+    try {
+      return JSON.stringify(a) === JSON.stringify(b);
+    } catch {
+      return false;
+    }
+  }
+  return false;
+}
+
 export function useLocalStorage<T>(key: string, initialValue: T) {
-  // Get from local storage then
-  // parse stored json or return initialValue
   const readValue = useCallback((): T => {
     if (typeof window === "undefined") {
       return initialValue;
@@ -34,30 +44,37 @@ export function useLocalStorage<T>(key: string, initialValue: T) {
       }
 
       try {
-        const newValue = value instanceof Function ? value(storedValue) : value;
+        setStoredValue((prev) => {
+          const newValue = value instanceof Function ? value(prev) : value;
+          if (valuesEqual(prev, newValue)) {
+            return prev;
+          }
 
-        if (newValue === null || newValue === undefined) {
-          window.localStorage.removeItem(key);
-        } else if (typeof newValue === "string") {
-          window.localStorage.setItem(key, newValue);
-        } else {
-          window.localStorage.setItem(key, JSON.stringify(newValue));
-        }
+          if (newValue === null || newValue === undefined) {
+            window.localStorage.removeItem(key);
+          } else if (typeof newValue === "string") {
+            window.localStorage.setItem(key, newValue);
+          } else {
+            window.localStorage.setItem(key, JSON.stringify(newValue));
+          }
 
-        setStoredValue(newValue);
+          return newValue;
+        });
 
-        // We dispatch a custom event so every useLocalStorage hook are notified
         window.dispatchEvent(new Event("local-storage"));
       } catch (error) {
         console.warn(`Error setting localStorage key “${key}”:`, error);
       }
     },
-    [key, storedValue],
+    [key],
   );
 
   useEffect(() => {
     const handleStorageChange = () => {
-      setStoredValue(readValue());
+      setStoredValue((prev) => {
+        const next = readValue();
+        return valuesEqual(prev, next) ? prev : next;
+      });
     };
 
     window.addEventListener("storage", handleStorageChange);

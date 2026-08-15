@@ -69,6 +69,34 @@ describe("AuthProvider", () => {
     expect(localStorage.getItem("auth")).toBeNull();
   });
 
+  it("does not refetch /users/me when other localStorage keys change", async () => {
+    getMe.mockResolvedValue({
+      success: true,
+      data: {
+        id: "1",
+        email: "a@test.com",
+        firstName: "A",
+        lastName: "B",
+        role: "user",
+      },
+    });
+    render(
+      <AuthProvider>
+        <Probe />
+      </AuthProvider>,
+    );
+    await waitFor(() => {
+      expect(screen.getByTestId("user").textContent).toBe("a@test.com");
+    });
+    getMe.mockClear();
+
+    window.dispatchEvent(new Event("local-storage"));
+    await new Promise((resolve) => setTimeout(resolve, 50));
+
+    expect(getMe).not.toHaveBeenCalled();
+    expect(screen.getByTestId("user").textContent).toBe("a@test.com");
+  });
+
   it("stays unauthenticated when getMe returns 401", async () => {
     getMe.mockResolvedValue({
       success: false,
