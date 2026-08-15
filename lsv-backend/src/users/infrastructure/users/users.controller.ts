@@ -9,8 +9,10 @@ import {
   Put,
   Query,
   Req,
+  Res,
   UseGuards,
 } from '@nestjs/common';
+import { Response } from 'express';
 import { AuthGuard } from '@nestjs/passport';
 import { AuthService } from 'src/auth/application/auth.service';
 import { UpdateUserDto } from 'src/auth/domain/dto/update-user/update-user';
@@ -29,6 +31,7 @@ import {
   UsersService,
 } from 'src/users/application/users/users.service';
 import { StageProgressRow } from 'src/stage/domain/ports/stage.repository.interface/stage.repository.interface';
+import { attachAuthCookie } from 'src/shared/infrastructure/auth-cookie';
 import { EnrollUserInLanguageDto } from './enroll-user-in-language.dto';
 import { GetUserRegionsQueryDto } from './get-user-regions-query.dto';
 import {
@@ -67,11 +70,18 @@ export class UsersController {
   @Put('me')
   @UseGuards(AuthGuard('jwt'))
   @DocUpdateProfile()
-  async updateProfile(@Req() req, @Body() updateUserDto: UpdateUserDto) {
-    const user = await this.authService.updateUserProfile(
+  async updateProfile(
+    @Req() req,
+    @Res({ passthrough: true }) res: Response,
+    @Body() updateUserDto: UpdateUserDto,
+  ) {
+    const { user, accessToken } = await this.authService.updateUserProfile(
       req.user.sub,
       updateUserDto,
     );
+    if (accessToken) {
+      attachAuthCookie(res, accessToken);
+    }
     return user;
   }
 

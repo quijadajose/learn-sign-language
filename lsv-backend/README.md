@@ -52,6 +52,10 @@ JWT global (`JwtAuthGuard`). Rutas públicas llevan `@Public()`.
   el JSON; queda en la cookie httpOnly `lsv_access`.
 - **Logout:** `POST /auth/logout` borra la cookie e incrementa `tokenVersion`
   (invalida el JWT aunque alguien lo hubiera copiado).
+- **Cambio de contraseña:** `PUT /users/me` con `oldPassword`/`newPassword`
+  sube `tokenVersion` y pone un JWT nuevo en la cookie.
+- **Sliding:** si una request autenticada por cookie llega con menos de 6 h
+  de vida, el guard firma un JWT nuevo (12 h) y refresca `lsv_access`.
 - **Reset:** `POST /auth/password/reset` + `POST /auth/password/reset/confirm`
 - **Roles:** `admin` (acceso total), `moderator` (scopes de lengua/región vía
   `ResourceAccessGuard`), `user`

@@ -4,18 +4,27 @@ import { JwtAuthGuard } from './jwt-auth.guard';
 import { TokenService } from 'src/auth/domain/ports/token.service/token.service.interface';
 import { UserRepositoryInterface } from 'src/auth/domain/ports/user.repository.interface/user.repository.interface';
 
-function mockContext(headers: Record<string, string> = {}): ExecutionContext {
+function mockContext(
+  headers: Record<string, string> = {},
+): ExecutionContext & { cookie: jest.Mock } {
   const request = { headers, user: undefined as unknown };
+  const cookie = jest.fn();
+  const response = { cookie };
   return {
-    switchToHttp: () => ({ getRequest: () => request }),
+    cookie,
+    switchToHttp: () => ({
+      getRequest: () => request,
+      getResponse: () => response,
+    }),
     getHandler: () => ({}),
     getClass: () => ({}),
-  } as unknown as ExecutionContext;
+  } as unknown as ExecutionContext & { cookie: jest.Mock };
 }
 
 describe('JwtAuthGuard', () => {
   const tokenService = {
     verifyToken: jest.fn(),
+    generateToken: jest.fn().mockReturnValue('slid-jwt'),
   };
   const userRepository = {
     findAuthStateById: jest.fn(),
@@ -32,6 +41,7 @@ describe('JwtAuthGuard', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     reflector.getAllAndOverride.mockReturnValue(false);
+    tokenService.generateToken.mockReturnValue('slid-jwt');
   });
 
   it('allows public routes', async () => {
@@ -71,6 +81,7 @@ describe('JwtAuthGuard', () => {
       email: 'a@test.com',
       role: 'user',
       tokenVersion: 2,
+      exp: Math.floor(Date.now() / 1000) + 12 * 60 * 60,
     });
     userRepository.findAuthStateById.mockResolvedValue({
       id: 'u1',
@@ -84,5 +95,51 @@ describe('JwtAuthGuard', () => {
       email: 'a@test.com',
       role: 'admin',
     });
+    expect(tokenService.generateToken).not.toHaveBeenCalled();
+  });
+
+  it('slides the httpOnly cookie when remaining lifetime is under 6 hours', async () => {
+    tokenService.verifyToken.mockReturnValue({
+      sub: 'u1',
+      email: 'a@test.com',
+      role: 'user',
+      tokenVersion: 2,
+      exp: Math.floor(Date.now() / 1000) + 5 * 60 * 60,
+    });
+    userRepository.findAuthStateById.mockResolvedValue({
+      id: 'u1',
+      role: 'user',
+      tokenVersion: 2,
+    });
+    const ctx = mockContext({ cookie: 'lsv_access=old-jwt' });
+    await expect(guard.canActivate(ctx)).resolves.toBe(true);
+    expect(tokenService.generateToken).toHaveBeenCalledWith(
+      expect.objectContaining({
+        id: 'u1',
+        email: 'a@test.com',
+        role: 'user',
+        tokenVersion: 2,
+      }),
+    );
+    expect(ctx.cookie).toHaveBeenCalled();
+  });
+
+  it('does not slide Bearer clients even when the token is near expiry', async () => {
+    tokenService.verifyToken.mockReturnValue({
+      sub: 'u1',
+      email: 'a@test.com',
+      role: 'user',
+      tokenVersion: 2,
+      exp: Math.floor(Date.now() / 1000) + 5 * 60 * 60,
+    });
+    userRepository.findAuthStateById.mockResolvedValue({
+      id: 'u1',
+      role: 'user',
+      tokenVersion: 2,
+    });
+    const ctx = mockContext({ authorization: 'Bearer access-jwt' });
+    await expect(guard.canActivate(ctx)).resolves.toBe(true);
+    expect(tokenService.generateToken).not.toHaveBeenCalled();
+    expect(ctx.cookie).not.toHaveBeenCalled();
   });
 });

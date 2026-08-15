@@ -20,6 +20,7 @@ import { SendEmailUseCase } from './domain/use-cases/send-email/send-email';
 import { APP_GUARD } from '@nestjs/core';
 import { JwtAuthGuard } from './infrastructure/guards/jwt-auth/jwt-auth.guard';
 import { OAuthCodeStore } from './infrastructure/oauth-code.store';
+import { ACCESS_TOKEN_TTL } from 'src/shared/infrastructure/auth-cookie';
 
 @Module({
   imports: [
@@ -27,7 +28,7 @@ import { OAuthCodeStore } from './infrastructure/oauth-code.store';
     JwtModule.registerAsync({
       useFactory: async (configService: ConfigService) => ({
         secret: configService.get<string>('JWT_SECRET'),
-        signOptions: { expiresIn: '12h' },
+        signOptions: { expiresIn: ACCESS_TOKEN_TTL },
       }),
       inject: [ConfigService],
     }),

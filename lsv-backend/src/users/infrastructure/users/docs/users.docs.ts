@@ -67,7 +67,7 @@ export const DocUpdateProfile = () => {
     ApiOperation({
       summary: 'Actualizar perfil del usuario autenticado',
       description:
-        'Permite actualizar la información del perfil del usuario actualmente autenticado',
+        'Permite actualizar el perfil. Si cambia la contraseña, se invalida el JWT anterior y se emite uno nuevo en la cookie httpOnly.',
     }),
     ApiBody({
       type: UpdateUserDto,

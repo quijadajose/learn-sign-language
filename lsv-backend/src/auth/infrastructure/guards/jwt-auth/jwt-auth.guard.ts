@@ -6,9 +6,18 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
+import { Response } from 'express';
 import { TokenService } from 'src/auth/domain/ports/token.service/token.service.interface';
 import { UserRepositoryInterface } from 'src/auth/domain/ports/user.repository.interface/user.repository.interface';
-import { extractAccessToken } from 'src/shared/infrastructure/extract-access-token';
+import {
+  attachAuthCookie,
+  shouldSlideAccessToken,
+} from 'src/shared/infrastructure/auth-cookie';
+import { User } from 'src/shared/domain/entities/user';
+import {
+  extractAccessToken,
+  requestUsedBearerToken,
+} from 'src/shared/infrastructure/extract-access-token';
 
 @Injectable()
 export class JwtAuthGuard implements CanActivate {
@@ -53,6 +62,12 @@ export class JwtAuthGuard implements CanActivate {
         email: payload.email,
         role: authState.role,
       };
+      this.slideCookieIfNeeded(context, request, payload.exp, {
+        id: payload.sub,
+        email: payload.email,
+        role: authState.role,
+        tokenVersion: authState.tokenVersion,
+      } as User);
       return true;
     } catch (error) {
       if (error instanceof UnauthorizedException) {
@@ -60,5 +75,21 @@ export class JwtAuthGuard implements CanActivate {
       }
       throw new UnauthorizedException('errors.auth.invalidToken');
     }
+  }
+
+  private slideCookieIfNeeded(
+    context: ExecutionContext,
+    request: { headers?: { authorization?: string } },
+    exp: number | undefined,
+    user: User,
+  ): void {
+    if (requestUsedBearerToken(request) || !shouldSlideAccessToken(exp)) {
+      return;
+    }
+    const response = context.switchToHttp().getResponse<Response>();
+    if (typeof response?.cookie !== 'function') {
+      return;
+    }
+    attachAuthCookie(response, this.tokenService.generateToken(user));
   }
 }
