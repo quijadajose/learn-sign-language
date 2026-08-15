@@ -820,14 +820,8 @@ export async function loadTfModelFromUrl(
     pageOrigin,
   );
 
-  const { getMemoryAccessToken } = await import("../services/api");
-  const token = getMemoryAccessToken();
-  const authHeaders: Record<string, string> = token
-    ? { Authorization: `Bearer ${token}` }
-    : {};
   const requestInit: RequestInit = {
     credentials: "include",
-    headers: authHeaders,
   };
 
   const response = await fetch(modelUrl, requestInit);

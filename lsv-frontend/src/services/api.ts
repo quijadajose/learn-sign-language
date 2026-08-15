@@ -13,29 +13,10 @@ import type {
 import type { SignDetectionType } from "../utils/signDetection";
 
 let handlingTokenExpiration = false;
-let memoryAccessToken: string | null = null;
 let sessionActive = false;
-
-export function setMemoryAccessToken(token: string | null) {
-  memoryAccessToken = token;
-  if (token) {
-    try {
-      localStorage.removeItem("auth");
-    } catch {
-      /* ignore */
-    }
-  }
-}
-
-export function getMemoryAccessToken(): string | null {
-  return memoryAccessToken;
-}
 
 export function markSessionActive(active: boolean) {
   sessionActive = active;
-  if (!active) {
-    memoryAccessToken = null;
-  }
 }
 
 const handleTokenExpiration = () => {
@@ -126,12 +107,6 @@ export class ApiService {
   private static baseURL = BACKEND_BASE_URL;
   private static defaultTimeout = 10000;
   private static defaultRetries = 3;
-
-  private static getAuthHeaders(): Record<string, string> {
-    return memoryAccessToken
-      ? { Authorization: `Bearer ${memoryAccessToken}` }
-      : {};
-  }
 
   private static getLocaleHeaders(): Record<string, string> {
     return { "Accept-Language": getUiLocale() };
@@ -226,7 +201,6 @@ export class ApiService {
     const url = `${this.baseURL}${endpoint}`;
     const requestHeaders: Record<string, string> = {
       "Content-Type": "application/json",
-      ...this.getAuthHeaders(),
       ...this.getLocaleHeaders(),
       ...headers,
     };
@@ -374,13 +348,13 @@ export const authApi = {
     ApiService.post("/auth/password/reset/confirm", { newPassword, token }),
 
   login: (email: string, password: string) =>
-    ApiService.post<{ data: { user: import("../types/user").UserData; token: string } }>(
+    ApiService.post<{ data: { user: import("../types/user").UserData } }>(
       "/auth/login",
       { email, password },
     ),
 
   exchangeGoogleCode: (code: string) =>
-    ApiService.post<{ data: { token: string } }>("/auth/google/exchange", {
+    ApiService.post("/auth/google/exchange", {
       code,
     }),
 

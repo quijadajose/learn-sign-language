@@ -6,7 +6,6 @@ import "./i18n";
 
 const authState = {
   isAuthenticated: false,
-  token: null as string | null,
   user: null as { id: string; email: string } | null,
   isHydrating: false,
 };
@@ -37,7 +36,6 @@ describe("PrivateRoute", () => {
   beforeEach(() => {
     cleanup();
     authState.isAuthenticated = false;
-    authState.token = null;
     authState.user = null;
     authState.isHydrating = false;
   });
