@@ -58,4 +58,5 @@ export type UpdateUserPatch = Omit<
   'oldPassword' | 'newPassword'
 > & {
   passwordHash?: string;
+  revokeSessions?: boolean;
 };

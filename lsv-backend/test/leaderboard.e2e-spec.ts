@@ -3,7 +3,11 @@ import { INestApplication, ValidationPipe } from '@nestjs/common';
 import request from 'supertest';
 import { AppModule } from './../src/app.module';
 import { DataSource } from 'typeorm';
-import { cleanDatabase, getAdminToken } from './test-utils';
+import {
+  accessTokenFromAuthResponse,
+  cleanDatabase,
+  getAdminToken,
+} from './test-utils';
 
 describe('Leaderboard (e2e)', () => {
   let app: INestApplication;
@@ -38,7 +42,7 @@ describe('Leaderboard (e2e)', () => {
     const loginRes = await request(app.getHttpServer())
       .post('/auth/login')
       .send({ email: testUser.email, password: testUser.password });
-    userToken = loginRes.body.data.token;
+    userToken = accessTokenFromAuthResponse(loginRes);
 
     const langRes = await request(app.getHttpServer())
       .post('/languages')

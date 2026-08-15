@@ -4,6 +4,7 @@ import request from 'supertest';
 import { AppModule } from './../src/app.module';
 import { DataSource } from 'typeorm';
 import {
+  accessTokenFromAuthResponse,
   applySharedHttpGuards,
   cleanDatabase,
   cookieHeaderFrom,
@@ -65,7 +66,7 @@ describe('Critical student flows (e2e)', () => {
       .post('/auth/login')
       .send({ email: student.email, password: student.password })
       .expect(200);
-    userToken = login.body.data.token;
+    userToken = accessTokenFromAuthResponse(login);
     userId = login.body.data.user.id;
     userCookie = cookieHeaderFrom(login);
 

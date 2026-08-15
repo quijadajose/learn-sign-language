@@ -9,4 +9,5 @@ export const AuthServiceMock = {
   }),
   sendPasswordResetToken: jest.fn().mockResolvedValue(undefined),
   resetPassword: jest.fn().mockResolvedValue(undefined),
+  invalidateSession: jest.fn().mockResolvedValue(undefined),
 };

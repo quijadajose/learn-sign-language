@@ -34,6 +34,22 @@ export class AuthService {
   async registerUser(createUserDto: CreateUserDto): Promise<void> {
     await this.registerUserUseCase.register(createUserDto);
   }
+  async invalidateSession(accessToken: string | null): Promise<void> {
+    if (!accessToken) {
+      return;
+    }
+    try {
+      const payload = this.tokenService.verifyToken(accessToken, 'access');
+      if (payload.sub) {
+        await this.updateUserUseCase.execute(payload.sub, {
+          revokeSessions: true,
+        });
+      }
+    } catch {
+      // Expired or already invalid — still clear the cookie at the controller.
+    }
+  }
+
   async login(
     loginUserDto: LoginUserDto,
   ): Promise<{ user: User; token: string }> {

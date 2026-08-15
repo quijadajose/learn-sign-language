@@ -91,7 +91,8 @@ export const DocLogin = () => {
     HttpCode(200),
     ApiOperation({
       summary: 'Iniciar sesión',
-      description: 'Autentica un usuario y devuelve un token JWT',
+      description:
+        'Autentica al usuario, pone el JWT en una cookie httpOnly (`lsv_access`) y devuelve el perfil. El token no va en el JSON.',
     }),
     ApiBody({
       type: LoginUserDto,
@@ -160,12 +161,6 @@ export const DocLogin = () => {
                   },
                 },
               },
-              token: {
-                type: 'string',
-                description: 'Token JWT para autenticación',
-                example:
-                  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImVtYWlsQGdtYWlsLmNvbSIsInN1YiI6ImNiMDBmY2JhLWY1OTItNDQ1MS1hZGIwLTU1N2QzNGE0MjYyMyIsInJvbGUiOiJ1c2VyIiwiaWF0IjoxNzU3OTA0MTA4LCJleHAiOjE3NTc5NDczMDh9.QEoNxsC8Q9v0aLcQE0GC2vEgcPTOadlFOksbGiN7zrA',
-              },
             },
           },
         },
@@ -218,6 +213,26 @@ export const DocLogin = () => {
     }),
   );
 };
+
+export const DocLogout = () =>
+  applyDecorators(
+    HttpCode(200),
+    ApiOperation({
+      summary: 'Cerrar sesión',
+      description:
+        'Invalida el JWT actual (sube tokenVersion) y borra la cookie httpOnly.',
+    }),
+    ApiResponse({
+      status: 200,
+      description: 'Sesión cerrada',
+      schema: {
+        type: 'object',
+        properties: {
+          message: { type: 'string', example: 'Logged out' },
+        },
+      },
+    }),
+  );
 
 export const DocRequestPasswordReset = () => {
   return applyDecorators(
@@ -332,9 +347,9 @@ export const DocGoogleAuthRedirect = () => {
 export const DocExchangeGoogleCode = () =>
   applyDecorators(
     ApiOperation({
-      summary: 'Intercambiar código OAuth de Google por JWT',
+      summary: 'Intercambiar código OAuth de Google por sesión',
       description:
-        'El frontend envía el `code` recibido en /auth/google/callback y obtiene el token JWT.',
+        'El frontend envía el `code` del hash `/login#code=...`. La API pone el JWT en la cookie httpOnly; no lo devuelve en el JSON.',
     }),
     ApiBody({
       schema: {
@@ -351,20 +366,11 @@ export const DocExchangeGoogleCode = () =>
     }),
     ApiResponse({
       status: 201,
-      description: 'Token JWT emitido',
+      description: 'Sesión establecida en cookie httpOnly',
       schema: {
         type: 'object',
         properties: {
           message: { type: 'string', example: 'User logged in successfully' },
-          data: {
-            type: 'object',
-            properties: {
-              token: {
-                type: 'string',
-                example: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9',
-              },
-            },
-          },
         },
       },
     }),

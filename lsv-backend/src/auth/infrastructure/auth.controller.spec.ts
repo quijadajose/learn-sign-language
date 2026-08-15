@@ -64,19 +64,20 @@ describe('AuthController', () => {
   });
 
   describe('login', () => {
-    it('should log in a user and return a token', async () => {
+    it('should log in a user without returning the JWT', async () => {
       const dto: LoginUserDto = {
         email: 'test@example.com',
         password: 'password123',
       };
+      const res = mockRes();
 
-      const result = await authController.login(dto, mockRes() as never);
+      const result = await authController.login(dto, res as never);
 
+      expect(res.cookie).toHaveBeenCalled();
       expect(result).toEqual({
         message: 'success.auth.loggedIn',
         data: {
           user: { id: '123', email: 'test@example.com', username: 'testuser' },
-          token: 'fake-jwt-token',
         },
       });
     });
@@ -105,9 +106,13 @@ describe('AuthController', () => {
   });
 
   describe('logout', () => {
-    it('clears the access cookie', async () => {
+    it('clears the access cookie and invalidates the session', async () => {
       const res = mockRes();
-      const result = await authController.logout(res as never);
+      const result = await authController.logout(
+        { headers: { cookie: 'lsv_access=jwt' } } as never,
+        res as never,
+      );
+      expect(AuthServiceMock.invalidateSession).toHaveBeenCalled();
       expect(res.clearCookie).toHaveBeenCalled();
       expect(result).toEqual({ message: 'success.auth.loggedOut' });
     });
@@ -125,7 +130,6 @@ describe('AuthController', () => {
       );
       expect(result).toEqual({
         message: 'success.auth.loggedIn',
-        data: { token: 'access-token' },
       });
     });
 
