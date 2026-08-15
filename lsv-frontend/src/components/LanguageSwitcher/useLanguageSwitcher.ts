@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { useLocalStorage } from "../../hooks/useLocalStorage";
+import { clearStageSelectionForLanguage } from "../../utils/learningStorage";
 import { useToast } from "../ToastProvider";
 import { languageApi, regionApi } from "../../services/api";
 import type {
@@ -433,6 +434,7 @@ export function useLanguageSwitcher(
       if (response.success) {
         addToast("success", "Te has desinscrito del idioma exitosamente.");
         await loadEnrolledLanguages();
+        clearStageSelectionForLanguage(languageId);
         if (selectedLanguageId === languageId) {
           setSelectedLanguageId(null);
           setSelectedRegionId(null);

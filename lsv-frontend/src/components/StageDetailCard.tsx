@@ -1,5 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import { useLocalStorage } from "../hooks/useLocalStorage";
+import { stageSelectionStorageKeys } from "../utils/learningStorage";
 import { HiBookOpen, HiLightningBolt } from "react-icons/hi";
 
 interface StageProgress {
@@ -64,12 +65,13 @@ export default function StageDetailCard({ stage }: Props) {
     "selectedRegionId",
     null,
   );
+  const stageKeys = stageSelectionStorageKeys(selectedLanguageId ?? "");
   const [, setPersistedStageId] = useLocalStorage<string | null>(
-    `selectedStageId_${selectedLanguageId}`,
+    stageKeys.stageId,
     null,
   );
   const [, setExplicitStageSelection] = useLocalStorage(
-    `selectedStageExplicit_${selectedLanguageId}`,
+    stageKeys.explicit,
     false,
   );
 

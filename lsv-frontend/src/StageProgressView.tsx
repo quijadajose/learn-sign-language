@@ -2,6 +2,7 @@ import { Spinner, Alert } from "flowbite-react";
 import { useEffect, useState } from "react";
 import { HiExclamationCircle } from "react-icons/hi";
 import { useLocalStorage } from "./hooks/useLocalStorage";
+import { stageSelectionStorageKeys } from "./utils/learningStorage";
 import { useToast } from "./components/ToastProvider";
 import StageDetailCard from "./components/StageDetailCard";
 import StageSelector from "./components/StageSelector";
@@ -44,8 +45,8 @@ export default function StageProgressView({ language }: Props) {
     "selectedRegionId",
     null,
   );
-  const stageStorageKey = `selectedStageId_${language.id}`;
-  const explicitStorageKey = `selectedStageExplicit_${language.id}`;
+  const { stageId: stageStorageKey, explicit: explicitStorageKey } =
+    stageSelectionStorageKeys(language.id);
   const [persistedStageId, setPersistedStageId] = useLocalStorage<
     string | null
   >(stageStorageKey, null);
