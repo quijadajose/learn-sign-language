@@ -5,6 +5,7 @@ import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { authApi } from "./services/api";
 import { useToast } from "./components/ToastProvider";
+import { MAIN_CONTENT_ID } from "./components/SkipLink";
 
 function ForgoPassword() {
   const { t } = useTranslation(["auth", "common"]);
@@ -40,7 +41,10 @@ function ForgoPassword() {
   };
 
   return (
-    <section className="relative flex min-h-screen flex-col items-center justify-center bg-gray-50 px-6 py-8 dark:bg-gray-900">
+    <main
+      id={MAIN_CONTENT_ID}
+      className="relative flex min-h-screen flex-col items-center justify-center bg-gray-50 px-6 py-8 dark:bg-gray-900"
+    >
       <Link
         to="/"
         className="mb-6 flex items-center text-2xl font-semibold text-gray-900 dark:text-white"
@@ -48,7 +52,7 @@ function ForgoPassword() {
         <img
           className="mr-2 size-8 dark:invert"
           src="/logo.svg"
-          alt={t("common:logoAlt")}
+          alt=""
         />
         {t("common:appName")}
       </Link>
@@ -71,6 +75,8 @@ function ForgoPassword() {
               <TextInput
                 id="email"
                 type="email"
+                name="email"
+                autoComplete="email"
                 placeholder="name@company.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
@@ -98,7 +104,7 @@ function ForgoPassword() {
           </form>
         </div>
       </div>
-    </section>
+    </main>
   );
 }
 

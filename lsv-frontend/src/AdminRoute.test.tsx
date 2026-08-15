@@ -7,6 +7,7 @@ import type { UserData } from "./types/user";
 const authState = {
   user: null as UserData | null,
   token: null as string | null,
+  isAuthenticated: false,
   isHydrating: false,
   refreshUser: vi.fn().mockResolvedValue(null),
 };
@@ -38,12 +39,13 @@ describe("AdminRoute", () => {
   beforeEach(() => {
     authState.user = null;
     authState.token = null;
+    authState.isAuthenticated = false;
     authState.isHydrating = false;
     authState.refreshUser.mockClear();
   });
 
   it("redirects moderators away from admin-only routes", () => {
-    authState.token = "jwt";
+    authState.isAuthenticated = true;
     authState.user = {
       id: "1",
       email: "m@test.com",
@@ -56,7 +58,7 @@ describe("AdminRoute", () => {
   });
 
   it("allows admins", () => {
-    authState.token = "jwt";
+    authState.isAuthenticated = true;
     authState.user = {
       id: "1",
       email: "a@test.com",

@@ -7,6 +7,7 @@ import { authApi, unwrapApiData, userApi } from "./services/api";
 import type { UserData } from "./types/user";
 import { BACKEND_BASE_URL } from "./config";
 import { useAuth } from "./context/AuthContext";
+import { MAIN_CONTENT_ID } from "./components/SkipLink";
 import { useLocalStorage } from "./hooks/useLocalStorage";
 import { useToast } from "./components/ToastProvider";
 
@@ -14,12 +15,23 @@ function handleGoogleLogin() {
   window.location.href = `${BACKEND_BASE_URL}/auth/google`;
 }
 
+function readOauthCode(searchParams: URLSearchParams): string | null {
+  if (typeof window !== "undefined") {
+    const hash = window.location.hash.replace(/^#/, "");
+    if (hash) {
+      const fromHash = new URLSearchParams(hash).get("code");
+      if (fromHash) return fromHash;
+    }
+  }
+  return searchParams.get("code");
+}
+
 function Login() {
   const { t } = useTranslation(["auth", "common"]);
   const { login, isAuthenticated } = useAuth();
   const addToast = useToast();
   const [searchParams] = useSearchParams();
-  const oauthCode = searchParams.get("code");
+  const oauthCode = readOauthCode(searchParams);
   const [rememberedEmail, setRememberedEmail] = useLocalStorage<string | null>(
     "rememberedEmail",
     null,
@@ -44,7 +56,6 @@ function Login() {
           navigate("/login", { replace: true });
           return;
         }
-        localStorage.setItem("auth", token);
         const response = await userApi.getMe();
         if (response.success && response.data) {
           const userData = unwrapApiData<UserData>(response.data);
@@ -52,12 +63,10 @@ function Login() {
           addToast("success", t("login.googleSuccess"));
           navigate("/dashboard", { replace: true });
         } else {
-          localStorage.removeItem("auth");
           addToast("error", t("login.googleProfileError"));
           navigate("/login", { replace: true });
         }
       } catch {
-        localStorage.removeItem("auth");
         addToast("error", t("login.googleConnectionError"));
         navigate("/login", { replace: true });
       }
@@ -104,7 +113,10 @@ function Login() {
   };
 
   return (
-    <section className="relative flex min-h-screen flex-col items-center justify-center bg-gray-50 px-6 py-8 dark:bg-gray-900">
+    <main
+      id={MAIN_CONTENT_ID}
+      className="relative flex min-h-screen flex-col items-center justify-center bg-gray-50 px-6 py-8 dark:bg-gray-900"
+    >
       <Link
         to="/"
         className="mb-6 flex items-center text-2xl font-semibold text-gray-900 dark:text-white"
@@ -112,7 +124,7 @@ function Login() {
         <img
           className="mr-2 size-8 dark:invert"
           src="/logo.svg"
-          alt={t("common:logoAlt")}
+          alt=""
         />
         {t("common:appName")}
       </Link>
@@ -132,6 +144,8 @@ function Login() {
               <TextInput
                 id="email"
                 type="email"
+                name="email"
+                autoComplete="username"
                 placeholder="name@company.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
@@ -149,6 +163,8 @@ function Login() {
               <TextInput
                 id="password"
                 type="password"
+                name="password"
+                autoComplete="current-password"
                 placeholder="••••••••"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
@@ -222,7 +238,7 @@ function Login() {
           </div>
         </div>
       </div>
-    </section>
+    </main>
   );
 }
 

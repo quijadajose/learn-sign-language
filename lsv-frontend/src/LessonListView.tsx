@@ -18,7 +18,7 @@ export default function LessonListView() {
   const [lessons, setLessons] = useState<Lesson[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const { token } = useAuth();
+  const { isAuthenticated } = useAuth();
   const [selectedLanguageId] = useLocalStorage<string | null>(
     "selectedLanguageId",
     null,
@@ -47,7 +47,7 @@ export default function LessonListView() {
     const controller = new AbortController();
 
     const fetchLessons = async () => {
-      if (!token || !stageId) {
+      if (!isAuthenticated || !stageId) {
         setError("Faltan datos para cargar las lecciones.");
         setLoading(false);
         return;
@@ -86,7 +86,7 @@ export default function LessonListView() {
     };
 
     const fetchStageInfo = async () => {
-      if (!token || !stageId) {
+      if (!isAuthenticated || !stageId) {
         setLoadingStage(false);
         return;
       }
@@ -134,7 +134,7 @@ export default function LessonListView() {
     };
   }, [
     stageId,
-    token,
+    isAuthenticated,
     addToast,
     location.state,
     selectedLanguageId,
@@ -232,8 +232,12 @@ export default function LessonListView() {
 
       {/* Loading & Error */}
       {loading && (
-        <div className="flex flex-col items-center gap-3 py-20 text-gray-500">
-          <Spinner size="xl" />
+        <div
+          className="flex flex-col items-center gap-3 py-20 text-gray-500"
+          role="status"
+          aria-live="polite"
+        >
+          <Spinner size="xl" aria-hidden="true" />
           <p className="text-sm">Cargando lecciones…</p>
         </div>
       )}

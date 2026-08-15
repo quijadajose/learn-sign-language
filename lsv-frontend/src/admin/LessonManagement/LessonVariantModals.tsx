@@ -66,7 +66,7 @@ export function VariantListModal({
 
           {variantsLoading ? (
             <div className="flex h-32 items-center justify-center">
-              <Spinner size="lg" />
+              <Spinner size="lg" aria-label="Cargando variantes..." />
             </div>
           ) : (
             <div className="overflow-x-auto">
@@ -355,7 +355,7 @@ export function VariantFormModal({
           disabled={createLoading}
           className="bg-green-600 hover:bg-green-700"
         >
-          {createLoading ? <Spinner size="sm" className="mr-2" /> : null}
+          {createLoading ? <Spinner size="sm" className="mr-2" aria-hidden="true" /> : null}
           {editingVariantId ? "Actualizar Variante" : "Crear Variante"}
         </Button>
         <Button color="gray" onClick={onCancel}>

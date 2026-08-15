@@ -102,10 +102,14 @@ const LeaderboardView: React.FC = () => {
 
   if (loading && leaderboardData.length === 0) {
     return (
-      <div className="flex min-h-[60vh] flex-col items-center justify-center gap-4">
-        <Spinner size="xl" />
-        <p className="animate-pulse text-gray-400">Cargando clasificación...</p>
-      </div>
+        <div
+          className="flex min-h-[60vh] flex-col items-center justify-center gap-4"
+          role="status"
+          aria-live="polite"
+        >
+          <Spinner size="xl" aria-hidden="true" />
+          <p className="animate-pulse text-gray-400">Cargando clasificación...</p>
+        </div>
     );
   }
 

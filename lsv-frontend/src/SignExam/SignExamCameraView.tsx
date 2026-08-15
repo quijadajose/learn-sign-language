@@ -2,15 +2,15 @@ import React from "react";
 import { Button, Card, Progress, Spinner } from "flowbite-react";
 import { HiCheckCircle } from "react-icons/hi";
 import { m } from "motion/react";
+import { useTranslation } from "react-i18next";
 import {
   CONFIDENCE_THRESHOLD,
   REST_FRAMES_TO_START,
   STABLE_FRAMES_TO_START,
-  MAX_DYNAMIC_CAPTURE_FRAMES,
-  MAX_DYNAMIC_EXAM_ATTEMPTS,
   type SignDetectionType,
   type UiCapturePhase,
 } from "../utils/signDetection";
+import { examStatusMessage } from "./examStatusMessage";
 
 type SignExamCameraViewProps = {
   videoRef: React.RefObject<HTMLVideoElement | null>;
@@ -57,13 +57,38 @@ const SignExamCameraView: React.FC<SignExamCameraViewProps> = ({
   minCaptureFrames,
   onGoBack,
 }) => {
+  const { t } = useTranslation(["learn", "common"]);
+  const status = examStatusMessage(
+    {
+      signs,
+      currentIndex,
+      prediction,
+      modelGuess,
+      capturePhase,
+      bufferFill,
+      gestureRetryHint,
+      gestureTooLongHint,
+      dynamicAttempt,
+      minCaptureFrames,
+      isLoading,
+      isFinished,
+      allRecognized,
+      isMediaPipeReady,
+    },
+    t,
+  );
+  const signName = signs[currentIndex]?.name || t("practice.signFallback");
+
   return (
     <Card className="overflow-hidden border-none bg-white shadow-2xl dark:bg-gray-900">
+      <p className="sr-only" role="status" aria-live="polite" aria-atomic="true">
+        {status}
+      </p>
       {isLoading ? (
         <div className="flex h-120 flex-col items-center justify-center space-y-4">
-          <Spinner size="xl" color="info" />
-          <p className="animate-pulse font-medium text-gray-400">
-            Cargando inteligencia artificial...
+          <Spinner size="xl" color="info" aria-label={t("practice.loadingAi")} />
+          <p aria-hidden="true" className="animate-pulse font-medium text-gray-400">
+            {t("practice.loadingAi")}
           </p>
         </div>
       ) : isFinished ? (
@@ -73,20 +98,18 @@ const SignExamCameraView: React.FC<SignExamCameraViewProps> = ({
           className="flex h-120 flex-col items-center justify-center p-8 text-center text-white"
         >
           <div className="rounded-full bg-green-500 p-6 shadow-[0_0_50px_rgba(34,197,94,0.5)]">
-            <HiCheckCircle className="size-20" />
+            <HiCheckCircle className="size-20" aria-hidden />
           </div>
-          <h2 className="mt-8 text-5xl font-black">¡Práctica Completada!</h2>
+          <h2 className="mt-8 text-5xl font-black">{t("practice.done.title")}</h2>
           <p className="mt-4 text-xl text-gray-400">
-            {allRecognized
-              ? "Has dominado todas las señas de esta lección."
-              : "Has recorrido todas las señas. Repite la práctica para reconocerlas sin omitir."}
+            {allRecognized ? t("practice.done.all") : t("practice.done.partial")}
           </p>
           <div className="mt-10 flex space-x-4">
             <Button size="xl" color="info" onClick={onGoBack}>
-              Volver al Menú
+              {t("practice.done.back")}
             </Button>
             <Button size="xl" color="gray" onClick={() => window.location.reload()}>
-              Repetir Práctica
+              {t("practice.done.retry")}
             </Button>
           </div>
         </m.div>
@@ -97,20 +120,30 @@ const SignExamCameraView: React.FC<SignExamCameraViewProps> = ({
             autoPlay
             playsInline
             muted
+            tabIndex={0}
+            aria-label={t("a11y.camera", { ns: "common" })}
             className="mirror size-full object-cover"
           />
           <canvas
             ref={canvasRef}
             width={640}
             height={480}
+            aria-hidden="true"
             className="mirror pointer-events-none absolute inset-0 size-full object-cover"
           />
 
           {!isMediaPipeReady && (
             <div className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-gray-900/90 backdrop-blur-sm">
-              <Spinner size="xl" color="info" />
-              <p className="mt-4 animate-pulse text-sm font-medium uppercase tracking-widest text-white">
-                Iniciando Visión Artificial...
+              <Spinner
+                size="xl"
+                color="info"
+                aria-label={t("practice.startingVision")}
+              />
+              <p
+                aria-hidden="true"
+                className="mt-4 animate-pulse text-base font-medium uppercase tracking-widest text-white"
+              >
+                {t("practice.startingVision")}
               </p>
             </div>
           )}
@@ -128,17 +161,19 @@ const SignExamCameraView: React.FC<SignExamCameraViewProps> = ({
                 animate={{ scale: 1, rotate: 0, opacity: 1 }}
                 className="text-center text-white"
               >
-                <HiCheckCircle className="mx-auto size-32 drop-shadow-2xl" />
-                <h3 className="mt-4 text-5xl font-black tracking-tight">¡Excelente!</h3>
+                <HiCheckCircle className="mx-auto size-32 drop-shadow-2xl" aria-hidden />
+                <h3 className="mt-4 text-5xl font-black tracking-tight">
+                  {t("practice.success")}
+                </h3>
               </m.div>
             </m.div>
           ) : null}
 
-          <div className="absolute inset-x-6 bottom-6 space-y-2">
-            <div className="rounded-2xl border border-white/10 bg-black/60 p-4 backdrop-blur-xl">
-              <div className="mb-2 flex justify-between text-xs font-black uppercase tracking-widest text-white">
+          <div className="absolute inset-x-4 bottom-4 max-h-[55%] space-y-2 overflow-y-auto">
+            <div className="rounded-2xl border border-white/10 bg-black/70 p-4 backdrop-blur-xl">
+              <div className="mb-2 flex justify-between gap-3 text-sm font-black uppercase tracking-wide text-white">
                 <span>
-                  Confianza para {signs[currentIndex]?.name || "seña"}
+                  {t("practice.overlay.confidence", { signName })}
                 </span>
                 <span
                   className={
@@ -158,64 +193,14 @@ const SignExamCameraView: React.FC<SignExamCameraViewProps> = ({
                     : "yellow"
                 }
                 size="sm"
+                aria-label={t("practice.overlay.confidence", { signName })}
               />
-              {modelGuess ? (
-                <p className="mt-2 text-[10px] text-white/70">
-                  El modelo detecta:{" "}
-                  <span className="font-bold text-white">
-                    {modelGuess.label} ({(modelGuess.confidence * 100).toFixed(0)}%)
-                  </span>
-                  {modelGuess.label.toLowerCase() !==
-                    signs[currentIndex]?.name?.toLowerCase() && (
-                    <span className="block text-yellow-300/90">
-                      No coincide con la seña pedida — mantén la pose firme
-                    </span>
-                  )}
-                </p>
-              ) : gestureTooLongHint ? (
-                <p className="mt-2 text-[10px] text-red-300">
-                  Gesto demasiado largo (&gt;{MAX_DYNAMIC_CAPTURE_FRAMES} frames). Reposa e inténtalo otra vez.
-                </p>
-              ) : capturePhase === "arming" ? (
-                <p className="mt-2 text-[10px] text-amber-200">
-                  1/3 Reposo: mantén las manos quietas en el encuadre
-                </p>
-              ) : capturePhase === "stabilizing" ? (
-                <p className="mt-2 text-[10px] text-amber-200">
-                  Forma la seña y manténla quieta para empezar a analizar
-                </p>
-              ) : capturePhase === "collecting" ? (
-                <p className="mt-2 text-[10px] text-white/60">
-                  {(signs[currentIndex]?.detectionType ?? "static") === "dynamic"
-                    ? `2/3 Movimiento: ${bufferFill} frames — luego vuelve a reposo`
-                    : `Capturando seña: ${bufferFill}/${minCaptureFrames} frames`}
-                </p>
-              ) : capturePhase === "closing" ? (
-                <p className="mt-2 text-[10px] text-blue-200">
-                  3/3 Reposo final: quédate quieto para cerrar el gesto
-                </p>
-              ) : capturePhase === "analyzing" ? (
-                <p className="mt-2 text-[10px] text-green-200">
-                  Analizando el gesto completo...
-                </p>
-              ) : gestureRetryHint ? (
-                <p className="mt-2 text-[10px] text-red-300">
-                  {dynamicAttempt >= MAX_DYNAMIC_EXAM_ATTEMPTS
-                    ? "No reconocido tras 2 intentos — reposa y vuelve a intentar, u omite la seña"
-                    : `No reconocido (intento ${dynamicAttempt}/${MAX_DYNAMIC_EXAM_ATTEMPTS}) — 1/3 reposo → 2/3 seña → 3/3 reposo`}
-                </p>
-              ) : capturePhase === "waiting" ? (
-                <p className="mt-2 text-[10px] text-white/60">
-                  {(signs[currentIndex]?.detectionType ?? "static") === "dynamic"
-                    ? "Protocolo: reposo → movimiento → reposo"
-                    : "Levanta la mano frente a la cámara"}
-                </p>
-              ) : null}
+              <p className="mt-3 text-base leading-snug text-white">{status}</p>
             </div>
             {capturePhase === "arming" && (
-              <div className="rounded-2xl border border-amber-500/30 bg-black/60 p-3 backdrop-blur-xl">
-                <div className="mb-1 flex justify-between text-[10px] font-black uppercase tracking-widest text-amber-200">
-                  <span>Armar gesto</span>
+              <div className="rounded-2xl border border-amber-500/30 bg-black/70 p-3 backdrop-blur-xl">
+                <div className="mb-1 flex justify-between text-sm font-black uppercase tracking-wide text-amber-200">
+                  <span>{t("practice.overlay.armGesture")}</span>
                   <span>
                     {stableFramesCount}/{REST_FRAMES_TO_START}
                   </span>
@@ -227,13 +212,14 @@ const SignExamCameraView: React.FC<SignExamCameraViewProps> = ({
                   )}
                   color="warning"
                   size="sm"
+                  aria-label={t("practice.overlay.armGesture")}
                 />
               </div>
             )}
             {capturePhase === "stabilizing" && (
-              <div className="rounded-2xl border border-amber-500/30 bg-black/60 p-3 backdrop-blur-xl">
-                <div className="mb-1 flex justify-between text-[10px] font-black uppercase tracking-widest text-amber-200">
-                  <span>Mantén la pose</span>
+              <div className="rounded-2xl border border-amber-500/30 bg-black/70 p-3 backdrop-blur-xl">
+                <div className="mb-1 flex justify-between text-sm font-black uppercase tracking-wide text-amber-200">
+                  <span>{t("practice.overlay.holdPose")}</span>
                   <span>
                     {Math.min(
                       100,
@@ -251,29 +237,36 @@ const SignExamCameraView: React.FC<SignExamCameraViewProps> = ({
                   )}
                   color="warning"
                   size="sm"
+                  aria-label={t("practice.overlay.holdPose")}
                 />
               </div>
             )}
             {capturePhase === "collecting" && bufferFill < minCaptureFrames && (
-              <div className="rounded-2xl border border-blue-500/30 bg-black/60 p-3 backdrop-blur-xl">
-                <div className="mb-1 flex justify-between text-[10px] font-black uppercase tracking-widest text-blue-300">
-                  <span>Preparando análisis</span>
+              <div className="rounded-2xl border border-blue-500/30 bg-black/70 p-3 backdrop-blur-xl">
+                <div className="mb-1 flex justify-between text-sm font-black uppercase tracking-wide text-blue-300">
+                  <span>{t("practice.overlay.preparing")}</span>
                   <span>{Math.round((bufferFill / minCaptureFrames) * 100)}%</span>
                 </div>
                 <Progress
                   progress={(bufferFill / minCaptureFrames) * 100}
                   color="blue"
                   size="sm"
+                  aria-label={t("practice.overlay.preparing")}
                 />
               </div>
             )}
             {recognitionProgress > 0 && (
-              <div className="rounded-2xl border border-green-500/30 bg-black/60 p-3 backdrop-blur-xl">
-                <div className="mb-1 flex justify-between text-[10px] font-black uppercase tracking-widest text-green-300">
-                  <span>Reconociendo movimiento</span>
+              <div className="rounded-2xl border border-green-500/30 bg-black/70 p-3 backdrop-blur-xl">
+                <div className="mb-1 flex justify-between text-sm font-black uppercase tracking-wide text-green-300">
+                  <span>{t("practice.overlay.recognizing")}</span>
                   <span>{Math.round(recognitionProgress)}%</span>
                 </div>
-                <Progress progress={recognitionProgress} color="green" size="sm" />
+                <Progress
+                  progress={recognitionProgress}
+                  color="green"
+                  size="sm"
+                  aria-label={t("practice.overlay.recognizing")}
+                />
               </div>
             )}
           </div>

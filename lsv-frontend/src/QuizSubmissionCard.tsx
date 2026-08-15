@@ -1,5 +1,7 @@
 import { Card } from "flowbite-react";
 import { HiCheck, HiX } from "react-icons/hi";
+import { useTranslation } from "react-i18next";
+import { getUiLocale } from "./i18n";
 
 interface QuizSubmissionCardProps {
   score: number;
@@ -7,11 +9,15 @@ interface QuizSubmissionCardProps {
 }
 
 export function QuizSubmissionCard({ score, submittedAt }: QuizSubmissionCardProps) {
+  const { t } = useTranslation("learn");
   const passed = score >= 80;
+  const date = new Date(submittedAt).toLocaleString(
+    getUiLocale() === "en" ? "en-US" : "es-ES",
+  );
 
   return (
     <Card className="mb-6">
-      <div className="text-center">
+      <div className="text-center" role="status" aria-live="polite">
         <div
           className={`mb-4 inline-flex size-16 items-center justify-center rounded-full ${
             passed
@@ -19,7 +25,11 @@ export function QuizSubmissionCard({ score, submittedAt }: QuizSubmissionCardPro
               : "bg-red-100 text-red-600 dark:bg-red-800 dark:text-red-200"
           }`}
         >
-          {passed ? <HiCheck className="size-8" /> : <HiX className="size-8" />}
+        {passed ? (
+          <HiCheck className="size-8" aria-hidden />
+        ) : (
+          <HiX className="size-8" aria-hidden />
+        )}
         </div>
         <h2
           className={`mb-2 text-2xl font-bold ${
@@ -28,13 +38,13 @@ export function QuizSubmissionCard({ score, submittedAt }: QuizSubmissionCardPro
               : "text-red-600 dark:text-red-400"
           }`}
         >
-          {passed ? "¡Aprobado!" : "Repasa e inténtalo de nuevo"}
+          {passed ? t("quiz.passed") : t("quiz.retry")}
         </h2>
         <p className="mb-4 text-lg text-gray-600 dark:text-gray-400">
-          Has sacado <span className="font-semibold">{score.toFixed(2)}</span> de 100 puntos
+          {t("quiz.score", { score: score.toFixed(2) })}
         </p>
         <p className="text-sm text-gray-500 dark:text-gray-400">
-          Enviado el: {new Date(submittedAt).toLocaleString("es-ES")}
+          {t("quiz.submittedAt", { date })}
         </p>
       </div>
     </Card>

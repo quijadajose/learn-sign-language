@@ -18,7 +18,7 @@ export default function TermsOfService() {
           <img
             src="/logo.svg"
             className="mr-3 h-8 dark:invert sm:h-10"
-            alt="Plataforma Logo"
+            alt=""
           />
           <span className="self-center whitespace-nowrap text-xl font-semibold dark:text-white">
             Aprende lenguaje de señas
@@ -28,11 +28,14 @@ export default function TermsOfService() {
           <Button color="blue" size="sm" as={Link} to="/">
             Volver al inicio
           </Button>
-          <DarkThemeToggle className="ml-2 hover:bg-gray-100 dark:hover:bg-gray-800" />
+          <DarkThemeToggle
+            className="ml-2 hover:bg-gray-100 dark:hover:bg-gray-800"
+            aria-label="Cambiar tema claro u oscuro"
+          />
         </div>
       </Navbar>
 
-      <main className="mx-auto max-w-4xl grow px-4 pb-16 pt-32 lg:px-6">
+      <main id="main-content" className="mx-auto max-w-4xl grow px-4 pb-16 pt-32 lg:px-6">
         <h1 className="mb-8 text-3xl font-extrabold text-gray-900 dark:text-white md:text-4xl">
           Condiciones del Servicio
         </h1>
@@ -125,7 +128,7 @@ export default function TermsOfService() {
           <div className="w-full justify-between sm:flex sm:items-center sm:justify-between">
             <FooterBrand
               src="/logo.svg"
-              alt="Logo"
+              alt="Aprende lenguaje de señas"
               className="dark:invert"
             />
             <div className="flex gap-4">

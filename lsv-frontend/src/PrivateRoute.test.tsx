@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { render, screen, cleanup } from "@testing-library/react";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { PrivateRoute } from "./PrivateRoute";
+import "./i18n";
 
 const authState = {
   isAuthenticated: false,
@@ -45,13 +46,12 @@ describe("PrivateRoute", () => {
     cleanup();
   });
 
-  it("redirects to login when there is no token", () => {
+  it("redirects to login when unauthenticated", () => {
     renderWithRouter();
     expect(screen.getByText("login-page")).toBeTruthy();
   });
 
   it("shows a spinner while hydrating", () => {
-    authState.token = "jwt";
     authState.isHydrating = true;
     const { container } = renderWithRouter();
     expect(
@@ -60,8 +60,7 @@ describe("PrivateRoute", () => {
     expect(screen.queryByText("private-content")).toBeNull();
   });
 
-  it("redirects when token exists but user was not hydrated", () => {
-    authState.token = "jwt";
+  it("redirects when the session cookie did not hydrate a user", () => {
     authState.isAuthenticated = false;
     authState.user = null;
     authState.isHydrating = false;
@@ -70,7 +69,6 @@ describe("PrivateRoute", () => {
   });
 
   it("renders children when authenticated", () => {
-    authState.token = "jwt";
     authState.user = { id: "1", email: "a@test.com" };
     authState.isAuthenticated = true;
     authState.isHydrating = false;

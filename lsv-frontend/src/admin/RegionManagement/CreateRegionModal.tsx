@@ -176,7 +176,7 @@ export default function CreateRegionModal({
           disabled={loading}
           className="bg-blue-600 hover:bg-blue-700"
         >
-          {loading ? <Spinner size="sm" className="mr-2" /> : null}
+          {loading ? <Spinner size="sm" className="mr-2" aria-hidden="true" /> : null}
           Crear Región
         </Button>
         <Button color="gray" onClick={onClose}>

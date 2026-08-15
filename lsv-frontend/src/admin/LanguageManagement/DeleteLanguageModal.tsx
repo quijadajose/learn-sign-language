@@ -44,7 +44,7 @@ export default function DeleteLanguageModal({
               disabled={isDeleting}
               className="bg-red-600 text-white hover:bg-red-700"
             >
-              {isDeleting && <Spinner size="sm" className="mr-2" />}
+              {isDeleting && <Spinner size="sm" className="mr-2" aria-hidden="true" />}
               {isDeleting ? "Eliminando..." : "Sí, eliminar"}
             </Button>
           </div>

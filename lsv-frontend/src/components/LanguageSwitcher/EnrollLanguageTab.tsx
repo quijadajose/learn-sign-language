@@ -185,7 +185,7 @@ export default function EnrollLanguageTab({
               onClick={handleEnroll}
               disabled={!selectedRegionId || enrolling}
             >
-              {enrolling && <Spinner size="sm" className="mr-2" />}
+              {enrolling && <Spinner size="sm" className="mr-2" aria-hidden="true" />}
               {enrolling ? "Inscribiendo…" : "Inscribirse"}
             </Button>
           </div>
@@ -200,7 +200,7 @@ export default function EnrollLanguageTab({
               Atrás
             </Button>
             <Button onClick={handleEnroll} disabled={enrolling}>
-              {enrolling && <Spinner size="sm" className="mr-2" />}
+              {enrolling && <Spinner size="sm" className="mr-2" aria-hidden="true" />}
               {enrolling ? "Inscribiendo…" : "Continuar sin región"}
             </Button>
           </div>

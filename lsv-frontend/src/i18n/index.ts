@@ -6,16 +6,20 @@ import commonEs from "./locales/es/common.json";
 import authEs from "./locales/es/auth.json";
 import navEs from "./locales/es/nav.json";
 import landingEs from "./locales/es/landing.json";
+import learnEs from "./locales/es/learn.json";
 
 import commonEn from "./locales/en/common.json";
 import authEn from "./locales/en/auth.json";
 import navEn from "./locales/en/nav.json";
 import landingEn from "./locales/en/landing.json";
+import learnEn from "./locales/en/learn.json";
 
 export const SUPPORTED_LOCALES = ["es", "en"] as const;
 export type AppLocale = (typeof SUPPORTED_LOCALES)[number];
 export const DEFAULT_LOCALE: AppLocale = "es";
 export const LOCALE_STORAGE_KEY = "lsv.uiLocale";
+/** Spoken/written language of CMS lesson and quiz bodies. */
+export const CMS_CONTENT_LANG = "es";
 
 function syncDocumentLang(locale: string) {
   if (typeof document !== "undefined") {
@@ -33,18 +37,20 @@ void i18n
         auth: authEs,
         nav: navEs,
         landing: landingEs,
+        learn: learnEs,
       },
       en: {
         common: commonEn,
         auth: authEn,
         nav: navEn,
         landing: landingEn,
+        learn: learnEn,
       },
     },
     fallbackLng: DEFAULT_LOCALE,
     supportedLngs: [...SUPPORTED_LOCALES],
     defaultNS: "common",
-    ns: ["common", "auth", "nav", "landing"],
+    ns: ["common", "auth", "nav", "landing", "learn"],
     interpolation: {
       escapeValue: false,
     },

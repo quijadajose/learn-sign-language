@@ -26,7 +26,7 @@ const SignTesterModal: React.FC<SignTesterModalProps> = ({ show, onClose, model 
       <ModalBody>
         {isLoading ? (
           <div className="flex h-96 flex-col items-center justify-center space-y-4">
-            <Spinner size="xl" />
+            <Spinner size="xl" aria-label="Cargando modelos y preparando cámara..." />
             <p className="text-gray-500">
               Cargando modelos y preparando cámara...
             </p>
@@ -57,7 +57,7 @@ const SignTesterModal: React.FC<SignTesterModalProps> = ({ show, onClose, model 
               />
               {!isMediaPipeReady && (
                 <div className="absolute inset-0 flex items-center justify-center bg-black/50">
-                  <Spinner size="lg" />
+                  <Spinner size="lg" aria-label="Iniciando visión artificial..." />
                 </div>
               )}
             </div>

@@ -1,5 +1,7 @@
 import { Button, Card, Spinner } from "flowbite-react";
-import { QuizOptionDisplay } from "./QuizOptionDisplay";
+import { useTranslation } from "react-i18next";
+import { CMS_CONTENT_LANG } from "./i18n";
+import { optionLetter, QuizOptionDisplay } from "./QuizOptionDisplay";
 
 interface QuizOption {
   id: string;
@@ -32,51 +34,60 @@ export function QuizQuestionsForm({
   onAnswerSelect,
   onSubmit,
 }: QuizQuestionsFormProps) {
+  const { t } = useTranslation("learn");
+
   return (
     <Card>
       <div className="mb-6">
         <h1 className="mb-4 text-3xl font-bold text-gray-900 dark:text-white">
-          Quiz de la Lección
+          {t("quiz.title")}
         </h1>
         <p className="mb-6 text-lg text-gray-700 dark:text-gray-300">
-          Responde todas las preguntas y luego envía tu quiz.
+          {t("quiz.intro")}
         </p>
       </div>
 
       <div className="space-y-8">
         {questions.map((question, questionIndex) => (
-          <div
+          <fieldset
             key={question.id}
             className="rounded-lg border border-gray-200 p-6 dark:border-gray-700"
           >
-            <h3 className="mb-4 text-xl font-semibold text-gray-900 dark:text-white">
-              Pregunta {questionIndex + 1}: {question.text}
-            </h3>
+            <legend className="mb-4 text-xl font-semibold text-gray-900 dark:text-white">
+              {t("quiz.questionPrefix", { n: questionIndex + 1 })}{" "}
+              <span lang={CMS_CONTENT_LANG}>{question.text}</span>
+            </legend>
 
             <div className="space-y-3">
-              {question.options.map((option) => {
+              {question.options.map((option, optionIndex) => {
                 const isSelected = answers.some(
                   (a) => a.questionId === question.id && a.optionId === option.id,
                 );
+                const optionId = `quiz-${question.id}-${option.id}`;
+                const letter = optionLetter(optionIndex);
 
                 return (
                   <div key={option.id} className="flex items-center gap-3">
                     <input
+                      id={optionId}
                       type="radio"
                       name={`question-${question.id}`}
-                      aria-label={option.text}
                       checked={isSelected}
                       onChange={() => onAnswerSelect(question.id, option.id)}
                       className="size-4 text-blue-600"
                     />
-                    <div className="flex-1">
-                      <QuizOptionDisplay text={option.text} />
-                    </div>
+                    <label htmlFor={optionId} className="flex-1 cursor-pointer">
+                      <QuizOptionDisplay
+                        text={option.text}
+                        alt={t("quiz.signOptionAlt", { letter })}
+                        caption={t("quiz.optionCaption", { letter })}
+                      />
+                    </label>
                   </div>
                 );
               })}
             </div>
-          </div>
+          </fieldset>
         ))}
       </div>
 
@@ -89,18 +100,21 @@ export function QuizQuestionsForm({
         >
           {submitting ? (
             <>
-              <Spinner size="sm" className="mr-2" />
-              Enviando...
+              <Spinner size="sm" className="mr-2" aria-hidden="true" />
+              {t("quiz.submitting")}
             </>
           ) : (
-            "Enviar Quiz"
+            t("quiz.submit")
           )}
         </Button>
       </div>
 
-      <div className="mt-4 text-center">
+      <div className="mt-4 text-center" aria-live="polite">
         <p className="text-sm text-gray-600 dark:text-gray-400">
-          Respondidas: {answers.length} de {questions.length} preguntas
+          {t("quiz.answered", {
+            current: answers.length,
+            total: questions.length,
+          })}
         </p>
       </div>
     </Card>

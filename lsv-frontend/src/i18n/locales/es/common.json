@@ -32,5 +32,28 @@
     "unexpected": "Ha ocurrido un error inesperado",
     "requestFailed": "Ha ocurrido un error al procesar tu solicitud",
     "sessionExpired": "Tu sesión ha expirado. Por favor, inicia sesión nuevamente."
+  },
+  "a11y": {
+    "skipToContent": "Saltar al contenido principal",
+    "toggleTheme": "Cambiar tema claro u oscuro",
+    "home": "Ir al inicio",
+    "camera": "Cámara para reconocer señas",
+    "pages": {
+      "home": "Inicio",
+      "login": "Iniciar sesión",
+      "register": "Registro",
+      "forgotPassword": "Recuperar contraseña",
+      "resetPassword": "Restablecer contraseña",
+      "dashboard": "Dashboard",
+      "profile": "Perfil",
+      "leaderboard": "Ranking",
+      "lesson": "Lección",
+      "practice": "Práctica de señas",
+      "quiz": "Quiz",
+      "lessons": "Lecciones",
+      "management": "Gestión",
+      "privacy": "Privacidad",
+      "terms": "Términos"
+    }
   }
 }

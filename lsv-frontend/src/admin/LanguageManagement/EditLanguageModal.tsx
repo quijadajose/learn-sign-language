@@ -164,7 +164,7 @@ export default function EditLanguageModal({
               disabled={isSubmitting}
               className="bg-blue-600 text-white hover:bg-blue-700"
             >
-              {isSubmitting && <Spinner size="sm" className="mr-2" />}
+              {isSubmitting && <Spinner size="sm" className="mr-2" aria-hidden="true" />}
               {isSubmitting ? "Guardando..." : "Guardar Cambios"}
             </Button>
           </div>

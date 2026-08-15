@@ -1,10 +1,13 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate, useSearchParams } from "react-router-dom";
-import { Card, Spinner, Button, Alert } from "flowbite-react";
+import { Card, Button, Alert } from "flowbite-react";
+import { useTranslation } from "react-i18next";
 import { useAuth } from "./context/AuthContext";
 import { useToast } from "./components/ToastProvider";
 import { HiExclamationCircle, HiArrowLeft } from "react-icons/hi";
 import QuillEditor from "./components/QuillEditor";
+import { LoadingSpinner } from "./components/LoadingSpinner";
+import { CMS_CONTENT_LANG } from "./i18n";
 import {
   lessonApi,
   lessonVariantApi,
@@ -53,6 +56,7 @@ function hasReadyPracticeModel(bundle: LessonModelsBundleDto | null): boolean {
 }
 
 export default function LessonView() {
+  const { t } = useTranslation(["learn", "common"]);
   const { lessonId } = useParams<{ lessonId: string }>();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
@@ -63,15 +67,15 @@ export default function LessonView() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [canPractice, setCanPractice] = useState(false);
-  const { token } = useAuth();
+  const { isAuthenticated } = useAuth();
   const addToast = useToast();
 
   useEffect(() => {
     const controller = new AbortController();
 
     void (async () => {
-      if (!token || !lessonId) {
-        setError("Faltan datos para cargar la lección.");
+      if (!isAuthenticated || !lessonId) {
+        setError(t("lesson.missing"));
         setLoading(false);
         return;
       }
@@ -115,7 +119,7 @@ export default function LessonView() {
               setLessonVariant(null);
             } else {
               throw new Error(
-                lessonResponse.message || "Error al cargar la lección",
+                lessonResponse.message || t("lesson.loadError"),
               );
             }
           }
@@ -128,7 +132,7 @@ export default function LessonView() {
             setLessonVariant(null);
           } else {
             throw new Error(
-              lessonResponse.message || "Error al cargar la lección",
+              lessonResponse.message || t("lesson.loadError"),
             );
           }
         }
@@ -152,7 +156,7 @@ export default function LessonView() {
       } catch (err: unknown) {
         if (controller.signal.aborted) return;
         const errorMessage =
-          err instanceof Error ? err.message : "Error al cargar la lección";
+          err instanceof Error ? err.message : t("lesson.loadError");
         setError(errorMessage);
         addToast("error", errorMessage);
       } finally {
@@ -165,7 +169,7 @@ export default function LessonView() {
     return () => {
       controller.abort();
     };
-  }, [lessonId, token, addToast, searchParams]);
+  }, [lessonId, isAuthenticated, addToast, searchParams, t]);
 
   const handleGoBack = () => {
     navigate(-1);
@@ -174,15 +178,12 @@ export default function LessonView() {
   if (loading) {
     return (
       <div className="mx-auto w-full max-w-4xl p-6">
-        <div className="text-center">
-          <Spinner size="xl" />
-          <p className="mt-4 text-gray-600 dark:text-gray-400">
-            Cargando lección...
-          </p>
-        </div>
+        <LoadingSpinner label={t("lesson.loading")} />
       </div>
     );
   }
+
+  const backLabel = t("back", { ns: "common" });
 
   if (error) {
     return (
@@ -193,7 +194,7 @@ export default function LessonView() {
         <div className="mt-4">
           <Button color="gray" onClick={handleGoBack}>
             <HiArrowLeft className="mr-2 size-4" />
-            Volver
+            {backLabel}
           </Button>
         </div>
       </div>
@@ -204,12 +205,12 @@ export default function LessonView() {
     return (
       <div className="mx-auto w-full max-w-4xl p-6">
         <Alert color="failure" icon={HiExclamationCircle}>
-          No se encontró la lección solicitada.
+          {t("lesson.notFound")}
         </Alert>
         <div className="mt-4">
           <Button color="gray" onClick={handleGoBack}>
             <HiArrowLeft className="mr-2 size-4" />
-            Volver
+            {backLabel}
           </Button>
         </div>
       </div>
@@ -221,12 +222,12 @@ export default function LessonView() {
       <div className="mb-6">
         <Button color="gray" onClick={handleGoBack}>
           <HiArrowLeft className="mr-2 size-4" />
-          Volver
+          {backLabel}
         </Button>
       </div>
 
       <Card className="mb-6">
-        <div className="mb-6">
+        <div className="mb-6" lang={CMS_CONTENT_LANG}>
           <h1 className="mb-4 text-3xl font-bold text-gray-900 dark:text-white">
             {lesson?.name || lessonVariant?.name}
           </h1>
@@ -237,27 +238,28 @@ export default function LessonView() {
 
         <div className="mb-6">
           <h3 className="mb-4 text-xl font-semibold text-gray-900 dark:text-white">
-            Contenido de la lección
+            {t("lesson.contentHeading")}
           </h3>
-          <QuillEditor
-            value={lesson?.content || lessonVariant?.content || ""}
-            readOnly={true}
-            theme="snow"
-            modules={{
-              toolbar: false,
-            }}
-            className="quill-seamless"
-          />
+          <div lang={CMS_CONTENT_LANG}>
+            <QuillEditor
+              value={lesson?.content || lessonVariant?.content || ""}
+              readOnly={true}
+              theme="snow"
+              modules={{
+                toolbar: false,
+              }}
+              className="quill-seamless"
+            />
+          </div>
         </div>
 
         {canPractice && (
           <div className="mt-8 flex flex-col items-center space-y-4 pt-4">
             <h3 className="text-xl font-bold dark:text-white">
-              ¿Listo para el reto?
+              {t("lesson.practiceTitle")}
             </h3>
             <p className="max-w-md text-center text-gray-600 dark:text-gray-400">
-              Pon a prueba lo aprendido usando tu cámara para reconocer las
-              señas de esta lección con nuestra IA.
+              {t("lesson.practiceBody")}
             </p>
             <Button
               size="xl"
@@ -276,7 +278,7 @@ export default function LessonView() {
                 });
               }}
             >
-              ¡Practiquemos! 🎥
+              {t("lesson.practiceCta")}
             </Button>
           </div>
         )}

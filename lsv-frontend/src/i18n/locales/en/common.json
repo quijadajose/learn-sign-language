@@ -32,5 +32,28 @@
     "unexpected": "An unexpected error occurred",
     "requestFailed": "An error occurred while processing your request",
     "sessionExpired": "Your session has expired. Please sign in again."
+  },
+  "a11y": {
+    "skipToContent": "Skip to main content",
+    "toggleTheme": "Switch light or dark theme",
+    "home": "Go to home",
+    "camera": "Camera for sign recognition",
+    "pages": {
+      "home": "Home",
+      "login": "Sign in",
+      "register": "Register",
+      "forgotPassword": "Forgot password",
+      "resetPassword": "Reset password",
+      "dashboard": "Dashboard",
+      "profile": "Profile",
+      "leaderboard": "Leaderboard",
+      "lesson": "Lesson",
+      "practice": "Sign practice",
+      "quiz": "Quiz",
+      "lessons": "Lessons",
+      "management": "Management",
+      "privacy": "Privacy",
+      "terms": "Terms"
+    }
   }
 }

@@ -3,6 +3,8 @@ import { render, screen, waitFor, cleanup } from "@testing-library/react";
 import { AuthProvider } from "./AuthProvider";
 import { useAuth } from "./AuthContext";
 
+import { authApi } from "../services/api";
+
 const getMe = vi.fn();
 
 vi.mock("../services/api", () => ({
@@ -10,15 +12,23 @@ vi.mock("../services/api", () => ({
   userApi: {
     getMe: (...args: unknown[]) => getMe(...args),
   },
+  authApi: {
+    logout: vi.fn(),
+  },
+  setMemoryAccessToken: vi.fn(),
+  markSessionActive: vi.fn(),
 }));
 
 function Probe() {
-  const { isAuthenticated, isHydrating, user } = useAuth();
+  const { isAuthenticated, isHydrating, user, logout } = useAuth();
   return (
     <div>
       <span data-testid="hydrating">{String(isHydrating)}</span>
       <span data-testid="auth">{String(isAuthenticated)}</span>
       <span data-testid="user">{user?.email ?? "none"}</span>
+      <button type="button" onClick={() => logout()}>
+        sign-out
+      </button>
     </div>
   );
 }
@@ -28,6 +38,14 @@ describe("AuthProvider", () => {
     cleanup();
     localStorage.clear();
     getMe.mockReset();
+  });
+
+  afterEach(() => {
+    cleanup();
+    localStorage.clear();
+  });
+
+  it("hydrates from the session cookie via getMe", async () => {
     getMe.mockResolvedValue({
       success: true,
       data: {
@@ -38,29 +56,6 @@ describe("AuthProvider", () => {
         role: "user",
       },
     });
-  });
-
-  afterEach(() => {
-    cleanup();
-    localStorage.clear();
-  });
-
-  it("starts unauthenticated without token", async () => {
-    render(
-      <AuthProvider>
-        <Probe />
-      </AuthProvider>,
-    );
-    await waitFor(() => {
-      expect(screen.getByTestId("hydrating").textContent).toBe("false");
-    });
-    expect(screen.getByTestId("auth").textContent).toBe("false");
-    expect(screen.getByTestId("user").textContent).toBe("none");
-    expect(getMe).not.toHaveBeenCalled();
-  });
-
-  it("hydrates user when token exists without cached user", async () => {
-    localStorage.setItem("auth", "jwt-token");
     render(
       <AuthProvider>
         <Probe />
@@ -71,9 +66,29 @@ describe("AuthProvider", () => {
     });
     expect(screen.getByTestId("auth").textContent).toBe("true");
     expect(getMe).toHaveBeenCalled();
+    expect(localStorage.getItem("auth")).toBeNull();
   });
 
-  it("clears session after hydrate failures", async () => {
+  it("stays unauthenticated when getMe returns 401", async () => {
+    getMe.mockResolvedValue({
+      success: false,
+      message: "unauthorized",
+      status: 401,
+    });
+    render(
+      <AuthProvider>
+        <Probe />
+      </AuthProvider>,
+    );
+    await waitFor(() => {
+      expect(screen.getByTestId("hydrating").textContent).toBe("false");
+    });
+    expect(screen.getByTestId("auth").textContent).toBe("false");
+    expect(screen.getByTestId("user").textContent).toBe("none");
+    expect(getMe).toHaveBeenCalled();
+  });
+
+  it("clears leftover localStorage auth and session after hydrate failures", async () => {
     localStorage.setItem("auth", "jwt-token");
     getMe.mockResolvedValue({
       success: false,
@@ -93,6 +108,36 @@ describe("AuthProvider", () => {
       },
       { timeout: 5000 },
     );
+    expect(localStorage.getItem("auth")).toBeNull();
+  });
+
+  it("logout clears the session and does not keep a JWT in localStorage", async () => {
+    getMe.mockResolvedValue({
+      success: true,
+      data: {
+        id: "1",
+        email: "a@test.com",
+        firstName: "A",
+        lastName: "B",
+        role: "user",
+      },
+    });
+    render(
+      <AuthProvider>
+        <Probe />
+      </AuthProvider>,
+    );
+    await waitFor(() => {
+      expect(screen.getByTestId("user").textContent).toBe("a@test.com");
+    });
+
+    screen.getByRole("button", { name: "sign-out" }).click();
+
+    await waitFor(() => {
+      expect(screen.getByTestId("auth").textContent).toBe("false");
+      expect(screen.getByTestId("user").textContent).toBe("none");
+    });
+    expect(authApi.logout).toHaveBeenCalled();
     expect(localStorage.getItem("auth")).toBeNull();
   });
 });

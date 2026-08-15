@@ -13,6 +13,30 @@ import type {
 import type { SignDetectionType } from "../utils/signDetection";
 
 let handlingTokenExpiration = false;
+let memoryAccessToken: string | null = null;
+let sessionActive = false;
+
+export function setMemoryAccessToken(token: string | null) {
+  memoryAccessToken = token;
+  if (token) {
+    try {
+      localStorage.removeItem("auth");
+    } catch {
+      /* ignore */
+    }
+  }
+}
+
+export function getMemoryAccessToken(): string | null {
+  return memoryAccessToken;
+}
+
+export function markSessionActive(active: boolean) {
+  sessionActive = active;
+  if (!active) {
+    memoryAccessToken = null;
+  }
+}
 
 const handleTokenExpiration = () => {
   if (handlingTokenExpiration) return;
@@ -104,8 +128,9 @@ export class ApiService {
   private static defaultRetries = 3;
 
   private static getAuthHeaders(): Record<string, string> {
-    const token = localStorage.getItem("auth");
-    return token ? { Authorization: `Bearer ${token}` } : {};
+    return memoryAccessToken
+      ? { Authorization: `Bearer ${memoryAccessToken}` }
+      : {};
   }
 
   private static getLocaleHeaders(): Record<string, string> {
@@ -122,6 +147,7 @@ export class ApiService {
 
   private static async handleResponse<T>(
     response: Response,
+    endpoint: string,
   ): Promise<ApiResponse<T>> {
     try {
       const contentType = response.headers.get("content-type");
@@ -151,8 +177,8 @@ export class ApiService {
           status: response.status,
         };
       } else {
-        // Solo expirar sesión si había token; un 401 de login no debe forzar redirect.
-        if (response.status === 401 && localStorage.getItem("auth")) {
+        const isAuthPublic = endpoint.startsWith("/auth/");
+        if (response.status === 401 && sessionActive && !isAuthPublic) {
           handleTokenExpiration();
           return {
             message: i18n.t("api.sessionExpired"),
@@ -208,6 +234,7 @@ export class ApiService {
     const requestConfig: RequestInit = {
       method,
       headers: requestHeaders,
+      credentials: "include",
     };
 
     if (body && !(body instanceof FormData)) {
@@ -228,7 +255,7 @@ export class ApiService {
         });
 
         clearTimeout(timeoutId);
-        return await this.handleResponse<T>(response);
+        return await this.handleResponse<T>(response, endpoint);
       } catch (error) {
         if (attempt === maxRetries) {
           if (error instanceof Error && error.name === "AbortError") {
@@ -359,6 +386,8 @@ export const authApi = {
 
   register: (userData: Record<string, unknown>) =>
     ApiService.post("/auth/register", userData),
+
+  logout: () => ApiService.post("/auth/logout"),
 };
 
 export const userApi = {

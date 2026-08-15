@@ -52,8 +52,8 @@ export default function QuizManagement() {
     return (
       <div className="mx-auto w-full max-w-6xl p-6">
         <div className="text-center">
-          <Spinner size="xl" />
-          <p className="mt-4 text-gray-600 dark:text-gray-400">
+          <Spinner size="xl" aria-label="Cargando quizzes..." />
+          <p aria-hidden="true" className="mt-4 text-gray-600 dark:text-gray-400">
             Cargando quizzes...
           </p>
         </div>

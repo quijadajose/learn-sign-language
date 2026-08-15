@@ -1,6 +1,6 @@
 import { lazy, Suspense } from "react";
 import { Routes, Route } from "react-router-dom";
-import { ThemeProvider, Spinner } from "flowbite-react";
+import { ThemeProvider } from "flowbite-react";
 import { MotionConfig } from "motion/react";
 import { ThemeInit } from "../.flowbite-react/init";
 
@@ -15,6 +15,9 @@ import { ManagementRoute } from "./ManagementRoute";
 import { PrivateRoute } from "./PrivateRoute";
 import LanguageCards from "./LanguageCards";
 import { ToastProvider } from "./components/ToastProvider";
+import { SkipLink } from "./components/SkipLink";
+import { LoadingSpinner } from "./components/LoadingSpinner";
+import { DocumentTitle } from "./hooks/useDocumentTitle";
 import PrivacyPolicy from "./PrivacyPolicy";
 import TermsOfService from "./TermsOfService";
 import { AuthProvider } from "./context/AuthProvider";
@@ -37,11 +40,7 @@ const SignStudio = lazy(() => import("./moderator/SignStudio/SignStudio"));
 const SignExam = lazy(() => import("./SignExam"));
 
 function RouteFallback() {
-  return (
-    <div className="flex min-h-[40vh] items-center justify-center">
-      <Spinner size="xl" />
-    </div>
-  );
+  return <LoadingSpinner />;
 }
 
 function App() {
@@ -50,7 +49,9 @@ function App() {
       <ThemeInit />
       <ThemeProvider>
         <MotionConfig reducedMotion="user">
-          <main className="min-h-screen bg-gradient-to-br from-gray-50 to-primary-50 transition-colors duration-500 dark:from-gray-900 dark:to-gray-800">
+          <SkipLink />
+          <DocumentTitle />
+          <div className="min-h-screen bg-gradient-to-br from-gray-50 to-primary-50 transition-colors duration-500 dark:from-gray-900 dark:to-gray-800">
             <ToastProvider>
               <Suspense fallback={<RouteFallback />}>
                 <Routes>
@@ -216,7 +217,7 @@ function App() {
               </Routes>
             </Suspense>
           </ToastProvider>
-        </main>
+          </div>
         </MotionConfig>
       </ThemeProvider>
     </AuthProvider>

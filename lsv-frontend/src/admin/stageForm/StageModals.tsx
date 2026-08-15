@@ -69,7 +69,7 @@ export default function StageModals({
                 Cancelar
               </Button>
               <Button color="failure" onClick={onDelete} disabled={isDeleting}>
-                {isDeleting && <Spinner size="sm" className="mr-2" />}
+                {isDeleting && <Spinner size="sm" className="mr-2" aria-hidden="true" />}
                 {isDeleting ? "Eliminando..." : "Sí, eliminar"}
               </Button>
             </div>
@@ -113,7 +113,7 @@ export default function StageModals({
                 Cancelar
               </Button>
               <Button type="submit" color="blue" disabled={isSubmitting}>
-                {isSubmitting && <Spinner size="sm" className="mr-2" />}
+                {isSubmitting && <Spinner size="sm" className="mr-2" aria-hidden="true" />}
                 {isSubmitting ? "Creando..." : "Crear Etapa"}
               </Button>
             </div>
@@ -159,7 +159,7 @@ export default function StageModals({
                 Cancelar
               </Button>
               <Button type="submit" color="success" disabled={isSubmitting}>
-                {isSubmitting && <Spinner size="sm" className="mr-2" />}
+                {isSubmitting && <Spinner size="sm" className="mr-2" aria-hidden="true" />}
                 {isSubmitting ? "Guardando..." : "Guardar Cambios"}
               </Button>
             </div>

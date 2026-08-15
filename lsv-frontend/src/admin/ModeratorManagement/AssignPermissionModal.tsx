@@ -208,7 +208,7 @@ export default function AssignPermissionModal({
             isSubmitting || !selectedUser || !selectedScope || !selectedTargetId
           }
         >
-          {isSubmitting && <Spinner size="sm" className="mr-2" />}
+          {isSubmitting && <Spinner size="sm" className="mr-2" aria-hidden="true" />}
           Asignar
         </Button>
       </ModalFooter>

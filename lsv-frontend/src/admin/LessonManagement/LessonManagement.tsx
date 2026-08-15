@@ -257,7 +257,7 @@ export default function LessonManagement() {
 
         {hasLanguage && lessonsLoading && (
           <div className="flex h-32 items-center justify-center">
-            <Spinner size="lg" />
+            <Spinner size="lg" aria-label="Cargando lecciones..." />
             <span className="ml-3 text-gray-600 dark:text-gray-400">
               Cargando lecciones...
             </span>

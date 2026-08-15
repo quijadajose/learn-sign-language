@@ -14,7 +14,7 @@ import {
 } from "./ProfileFormFields";
 
 export const ResponsiveProfileForm = () => {
-  const { user, token, login } = useAuth();
+  const { user, isAuthenticated, updateUser } = useAuth();
   const addToast = useToast();
   const [profile, setProfile] = useState<ProfileFormData | null>(null);
   const [loading, setLoading] = useState(false);
@@ -25,8 +25,8 @@ export const ResponsiveProfileForm = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (!token) {
-      setError("Authentication token not found. Please log in again.");
+    if (!isAuthenticated) {
+      setError("No estás autenticado. Vuelve a iniciar sesión.");
       addToast("error", "No estás autenticado. Redirigiendo al login...");
       const redirectId = setTimeout(() => navigate("/login"), 3000);
       return () => clearTimeout(redirectId);
@@ -44,7 +44,7 @@ export const ResponsiveProfileForm = () => {
           if (cancelled) return;
           if (response.success) {
             setProfile(response.data);
-            login(response.data, token);
+            updateUser(response.data);
           } else {
             setError(`Failed to fetch profile: ${response.message}`);
             addToast("error", `Error al cargar el perfil: ${response.message}`);
@@ -59,7 +59,7 @@ export const ResponsiveProfileForm = () => {
     return () => {
       cancelled = true;
     };
-  }, [user, token, navigate, addToast, login]);
+  }, [user, isAuthenticated, navigate, addToast, updateUser]);
 
   useEffect(() => {
     if (!profile) return;
@@ -108,7 +108,7 @@ export const ResponsiveProfileForm = () => {
       return;
     }
 
-    if (!token || token === "undefined") {
+    if (!isAuthenticated) {
       addToast(
         "error",
         "No estás autenticado. Por favor, inicia sesión de nuevo.",
@@ -204,7 +204,7 @@ export const ResponsiveProfileForm = () => {
       };
       setProfile(finalProfileData);
 
-      login(finalProfileData as unknown as UserData, token!);
+      updateUser(finalProfileData as unknown as UserData);
 
       setIsEditing(false);
       setNewPhotoFile(null);

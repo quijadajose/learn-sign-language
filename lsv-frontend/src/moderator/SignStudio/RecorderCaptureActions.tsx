@@ -40,7 +40,7 @@ export function RecorderCaptureActions({
             disabled={isSaving || landmarksBufferLength === 0}
           >
             {isSaving ? (
-              <Spinner size="sm" className="mr-2" />
+              <Spinner size="sm" className="mr-2" aria-hidden="true" />
             ) : (
               <HiCheckCircle className="mr-2 size-6" />
             )}

@@ -10,17 +10,20 @@ import {
   FIXED_DYNAMIC_SEQUENCE_LENGTH,
   GesturePhaseDetector,
   HAND_FEATURE_START,
+  HAND_MODEL,
   HAND_MOTION_THRESHOLD,
   LEGACY_FEATURES_SCHEMA_DYNAMIC,
   LEGACY_FEATURES_SCHEMA_STATIC,
   MIN_GESTURE_FRAMES,
   MODEL_HAND_FEATURE_START,
   MODEL_POSE_LANDMARKS,
+  POSE_MODEL,
   REST_FRAMES_TO_END,
   REST_FRAMES_TO_START,
   STABLE_FRAMES_TO_START,
   STATIC_FEATURES_COUNT,
   VELOCITY_POSE_LANDMARKS,
+  VISION_WASM,
   appendVelocityToSequence,
   buildDynamicInferenceSequence,
   frameHasHandData,
@@ -31,6 +34,7 @@ import {
   minFramesBeforeInference,
   normalizeTrainingFrame,
   selectPoseLandmarks,
+  resolveTrustedModelUrl,
 } from "./signDetection";
 
 function makeFlat(handValue = 0.5): number[] {
@@ -420,5 +424,54 @@ describe("GesturePhaseDetector", () => {
     detector.tick(makeFlat(0.4), true);
     const result = detector.tick(null, false);
     expect(result.phase).toBe("waiting");
+  });
+});
+
+describe("MediaPipe asset URLs", () => {
+  it("loads WASM and landmark models from same-origin paths", () => {
+    expect(VISION_WASM).toBe("/mediapipe/wasm");
+    expect(POSE_MODEL.startsWith("/mediapipe/models/")).toBe(true);
+    expect(HAND_MODEL.startsWith("/mediapipe/models/")).toBe(true);
+  });
+});
+
+describe("resolveTrustedModelUrl", () => {
+  const backend = "https://api.lsv.test";
+  const page = "https://app.lsv.test";
+
+  it("resolves relative paths against the backend origin", () => {
+    expect(
+      resolveTrustedModelUrl("/shared/models/m/model.json", backend, page),
+    ).toBe("https://api.lsv.test/shared/models/m/model.json");
+  });
+
+  it("allows the backend origin", () => {
+    expect(
+      resolveTrustedModelUrl(
+        "https://api.lsv.test/shared/models/m/model.json",
+        backend,
+        page,
+      ),
+    ).toBe("https://api.lsv.test/shared/models/m/model.json");
+  });
+
+  it("allows the page origin", () => {
+    expect(
+      resolveTrustedModelUrl(
+        "https://app.lsv.test/models/m/model.json",
+        backend,
+        page,
+      ),
+    ).toBe("https://app.lsv.test/models/m/model.json");
+  });
+
+  it("rejects a third-party origin", () => {
+    expect(() =>
+      resolveTrustedModelUrl(
+        "https://evil.example/model.json",
+        backend,
+        page,
+      ),
+    ).toThrow("Untrusted model URL");
   });
 });

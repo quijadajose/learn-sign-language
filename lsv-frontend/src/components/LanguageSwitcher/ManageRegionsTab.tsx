@@ -130,7 +130,7 @@ export default function ManageRegionsTab({
                 onClick={handleEnrollRegion}
                 disabled={!selectedRegionId || enrollingRegion}
               >
-                {enrollingRegion && <Spinner size="sm" className="mr-2" />}
+                {enrollingRegion && <Spinner size="sm" className="mr-2" aria-hidden="true" />}
                 {enrollingRegion ? "Inscribiendo…" : "Inscribirse"}
               </Button>
             </div>

@@ -12,6 +12,9 @@ dist
 dist-ssr
 *.local
 
+# Copied from node_modules/@mediapipe/tasks-vision/wasm at Vite startup
+public/mediapipe/wasm
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

@@ -234,7 +234,7 @@ function LessonFormActions({
         disabled={loading}
         className="bg-blue-600 hover:bg-blue-700"
       >
-        {loading && <Spinner size="sm" className="mr-2" />}
+        {loading && <Spinner size="sm" className="mr-2" aria-hidden="true" />}
         {submitLabel}
       </Button>
     </div>
