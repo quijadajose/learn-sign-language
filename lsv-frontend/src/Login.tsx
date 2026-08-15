@@ -28,7 +28,7 @@ function readOauthCode(searchParams: URLSearchParams): string | null {
 
 function Login() {
   const { t } = useTranslation(["auth", "common"]);
-  const { login, isAuthenticated } = useAuth();
+  const { login, isAuthenticated, isHydrating } = useAuth();
   const addToast = useToast();
   const [searchParams] = useSearchParams();
   const oauthCode = readOauthCode(searchParams);
@@ -71,15 +71,19 @@ function Login() {
       }
     };
 
-    // Already signed in (e.g. visiting /login): redirect only — toast comes from handleLogin/OAuth.
+    // Wait for cookie hydrate so a leftover localStorage user does not bounce
+    // /login → /dashboard → /login while /users/me is still in flight.
+    if (isHydrating) {
+      return;
+    }
     if (isAuthenticated) {
       navigate("/dashboard");
     } else if (oauthCode) {
       void handleGoogleCode();
     }
-  }, [navigate, oauthCode, isAuthenticated, login, addToast, t]);
+  }, [navigate, oauthCode, isAuthenticated, isHydrating, login, addToast, t]);
 
-  const handleLogin = async (e: React.FormEvent) => {
+  const handleLogin = async (e: React.SubmitEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (isSubmitting) return;
 
