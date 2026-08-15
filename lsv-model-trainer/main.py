@@ -13,6 +13,7 @@ from typing import Any
 from bullmq import Worker
 from redis.asyncio import Redis
 
+from job_hmac import verify_training_job_hmac
 from trainer_logic import train_lstm_model
 from validation import (
     TrainingCancelledError,
@@ -28,11 +29,17 @@ logger = logging.getLogger(__name__)
 
 REDIS_HOST = os.getenv("VALKEY_HOST", "lsv-valkey")
 REDIS_PORT = int(os.getenv("VALKEY_PORT", "6379"))
-REDIS_PASSWORD = os.getenv("VALKEY_PASSWORD") or None
+REDIS_PASSWORD = os.getenv("VALKEY_PASSWORD")
+if not REDIS_PASSWORD:
+    raise SystemExit("VALKEY_PASSWORD is required")
+JOB_HMAC_SECRET = os.getenv("TRAINER_JOB_SECRET") or os.getenv("JWT_SECRET")
+if not JOB_HMAC_SECRET:
+    raise SystemExit("TRAINER_JOB_SECRET or JWT_SECRET is required")
 TRAINING_QUEUE_NAME = "training-queue"
 DATA_BASE_DIR = os.getenv("DATA_BASE_DIR", "/shared")
 HEALTH_PORT = int(os.getenv("TRAINER_HEALTH_PORT", "8089"))
-MAX_PAYLOAD_MB = float(os.getenv("TRAINER_MAX_PAYLOAD_MB", "512"))
+HEALTH_BIND = os.getenv("TRAINER_HEALTH_BIND", "127.0.0.1")
+MAX_PAYLOAD_MB = float(os.getenv("TRAINER_MAX_PAYLOAD_MB", "128"))
 SHUTDOWN_TIMEOUT_S = float(os.getenv("TRAINER_SHUTDOWN_TIMEOUT_S", "30"))
 REDIS_CONNECT_ATTEMPTS = int(os.getenv("TRAINER_REDIS_CONNECT_ATTEMPTS", "10"))
 REDIS_CONNECT_DELAY_S = float(os.getenv("TRAINER_REDIS_CONNECT_DELAY_S", "3"))
@@ -145,7 +152,7 @@ class _HealthHandler(BaseHTTPRequestHandler):
 
 
 def _start_health_server() -> ThreadingHTTPServer:
-    server = ThreadingHTTPServer(("0.0.0.0", HEALTH_PORT), _HealthHandler)
+    server = ThreadingHTTPServer((HEALTH_BIND, HEALTH_PORT), _HealthHandler)
     thread = threading.Thread(target=server.serve_forever, daemon=True)
     thread.start()
     logger.info("Health/metrics listening on :%s (/healthz, /metrics)", HEALTH_PORT)
@@ -216,6 +223,8 @@ def _load_training_payload(job_data: dict) -> tuple[Any, str]:
 async def process_job(job, token):
     logger.info("Procesando trabajo %s: %s", job.id, job.name)
     data = job.data or {}
+    if not verify_training_job_hmac(data, JOB_HMAC_SECRET):
+        raise ValueError("Invalid training job HMAC")
     started = time.monotonic()
 
     lesson_variant_id = data.get("lessonVariantId")

@@ -16,6 +16,6 @@ Security fixes are applied to the `main` branch. Deploy from `main` for producti
 ## Hardening Notes
 
 - Never commit `.env` files or real credentials.
-- Rotate `JWT_SECRET`, database, and Valkey passwords before any production deploy.
+- Rotate `JWT_SECRET`, `TRAINER_JOB_SECRET` (if set), database, and Valkey passwords before any production deploy.
 - Image uploads require authentication; only allowlisted folders are accepted.
 - Google OAuth uses a short-lived one-time code exchange (JWT is never placed in redirect query strings). Codes are stored in Valkey with TTL so they work across API replicas.
