@@ -81,7 +81,7 @@ export async function getAdminToken(
     .post('/auth/login')
     .send({ email: adminEmail, password: adminPassword });
 
-  if (!response.body || !response.body.data || !response.body.data.token) {
+  if (response.status >= 400) {
     console.error(
       'Login failed! Response:',
       response.status,
@@ -92,7 +92,7 @@ export async function getAdminToken(
     );
   }
 
-  return response.body.data.token;
+  return accessTokenFromAuthResponse(response);
 }
 
 /**
@@ -125,7 +125,7 @@ export async function getUserToken(
     .send({ email: userEmail, password: userPassword })
     .expect(200);
 
-  return response.body.data.token;
+  return accessTokenFromAuthResponse(response);
 }
 
 /**
@@ -183,7 +183,7 @@ export async function getModeratorToken(
     .send({ email: modEmail, password: modPassword })
     .expect(200);
 
-  return response.body.data.token;
+  return accessTokenFromAuthResponse(response);
 }
 
 /** Frames MediaPipe válidos (258 features) con mano activa para pasar validación. */
@@ -296,6 +296,26 @@ export function cookieHeaderFrom(response: {
   const raw = response.headers['set-cookie'];
   const parts = Array.isArray(raw) ? raw : raw ? [raw] : [];
   return parts.map((cookie) => String(cookie).split(';')[0]).join('; ');
+}
+
+export function accessTokenFromAuthResponse(response: {
+  headers: { [key: string]: unknown };
+  status?: number;
+  body?: unknown;
+}): string {
+  const header = cookieHeaderFrom(response);
+  for (const part of header.split(';')) {
+    const idx = part.indexOf('=');
+    if (idx === -1) {
+      continue;
+    }
+    if (part.slice(0, idx).trim() === 'lsv_access') {
+      return decodeURIComponent(part.slice(idx + 1).trim());
+    }
+  }
+  throw new Error(
+    `Login did not set lsv_access cookie (status ${response.status}): ${JSON.stringify(response.body)}`,
+  );
 }
 
 /** Same HTTP guards as `main.ts` for `/shared/training_data` and `/shared/models`. */

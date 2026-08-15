@@ -22,16 +22,18 @@ import { ResetPassword } from '../application/dto/reset-password/reset-password'
 import { ConfirmResetPasswordDto } from '../application/dto/confirm-reset-password/confirm-reset-password-dto';
 import { LoginUserDto } from '../application/dto/login-user/login-user';
 import { Public } from './decorators/public.decorator';
-import { Response } from 'express';
+import { Request, Response } from 'express';
 import { ConfigService } from '@nestjs/config';
 import { OAuthCodeStore } from './oauth-code.store';
 import { attachAuthCookie, clearAuthCookie } from './auth-cookie';
+import { extractAccessToken } from 'src/shared/infrastructure/extract-access-token';
 import {
   DocAuth,
   DocConfirmPasswordReset,
   DocGoogleAuth,
   DocGoogleAuthRedirect,
   DocLogin,
+  DocLogout,
   DocRegister,
   DocRequestPasswordReset,
   DocExchangeGoogleCode,
@@ -73,17 +75,19 @@ export class AuthController {
     @Body() user: LoginUserDto,
     @Res({ passthrough: true }) res: Response,
   ) {
-    const token = await this.authService.login(user);
-    attachAuthCookie(res, token.token);
+    const session = await this.authService.login(user);
+    attachAuthCookie(res, session.token);
     return {
       message: 'success.auth.loggedIn',
-      data: token,
+      data: { user: session.user },
     };
   }
 
   @Public()
   @Post('logout')
-  async logout(@Res({ passthrough: true }) res: Response) {
+  @DocLogout()
+  async logout(@Req() req: Request, @Res({ passthrough: true }) res: Response) {
+    await this.authService.invalidateSession(extractAccessToken(req));
     clearAuthCookie(res);
     return { message: 'success.auth.loggedOut' };
   }
@@ -154,9 +158,6 @@ export class AuthController {
     attachAuthCookie(res, result.accessToken);
     return {
       message: 'success.auth.loggedIn',
-      data: {
-        token: result.accessToken,
-      },
     };
   }
 }

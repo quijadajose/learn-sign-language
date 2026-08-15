@@ -47,14 +47,18 @@ JWT global (`JwtAuthGuard`). Rutas públicas llevan `@Public()`.
 
 - **Email/password:** `POST /auth/register`, `POST /auth/login`
 - **Google:** `GET /auth/google` → callback guarda un código de un solo uso en
-  Valkey y redirige a `{FRONTEND_URL}/login?code=...`. El front intercambia el
-  código en `POST /auth/google/exchange`. El JWT **no** va en el redirect.
+  Valkey y redirige a `{FRONTEND_URL}/login#code=...`. El front intercambia el
+  código en `POST /auth/google/exchange`. El JWT **no** va en el redirect ni en
+  el JSON; queda en la cookie httpOnly `lsv_access`.
+- **Logout:** `POST /auth/logout` borra la cookie e incrementa `tokenVersion`
+  (invalida el JWT aunque alguien lo hubiera copiado).
 - **Reset:** `POST /auth/password/reset` + `POST /auth/password/reset/confirm`
 - **Roles:** `admin` (acceso total), `moderator` (scopes de lengua/región vía
   `ResourceAccessGuard`), `user`
 - Throttling Redis (100 req/min por defecto; auth más estricto)
 
-Header de API: `Authorization: Bearer <jwt>`.
+El SPA autentica con la cookie (`credentials: include`). Clientes de prueba o
+el trainer pueden seguir mandando `Authorization: Bearer <jwt>`.
 
 ## Pipeline de señas
 

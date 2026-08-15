@@ -3,7 +3,11 @@ import { INestApplication, ValidationPipe } from '@nestjs/common';
 import request from 'supertest';
 import { AppModule } from './../src/app.module';
 import { DataSource } from 'typeorm';
-import { cleanDatabase } from './test-utils';
+import {
+  accessTokenFromAuthResponse,
+  cleanDatabase,
+  cookieHeaderFrom,
+} from './test-utils';
 import { OAuthCodeStore } from '../src/auth/infrastructure/oauth-code.store';
 
 describe('Authentication (e2e)', () => {
@@ -25,7 +29,7 @@ describe('Authentication (e2e)', () => {
       .post('/auth/login')
       .send({ email, password })
       .expect(200);
-    return response.body.data.token as string;
+    return accessTokenFromAuthResponse(response);
   }
 
   beforeAll(async () => {
@@ -115,7 +119,7 @@ describe('Authentication (e2e)', () => {
   });
 
   describe('/auth/login (POST)', () => {
-    it('Should login and return a JWT token', async () => {
+    it('Should login with an httpOnly cookie and no JWT in the body', async () => {
       // 1. Registro previo
       await request(app.getHttpServer()).post('/auth/register').send(testUser);
 
@@ -129,7 +133,9 @@ describe('Authentication (e2e)', () => {
         .expect(200);
 
       expect(response.body.message).toBe('Inicio de sesión exitoso');
-      expect(response.body.data).toHaveProperty('token');
+      expect(response.body.data?.token).toBeUndefined();
+      expect(response.body.data?.user?.email).toBe(testUser.email);
+      expect(cookieHeaderFrom(response)).toMatch(/lsv_access=/);
     });
 
     it('Should return English login message when Accept-Language is en', async () => {
@@ -342,7 +348,8 @@ describe('Authentication (e2e)', () => {
         .send({ code });
 
       expect([200, 201]).toContain(first.status);
-      expect(first.body.data.token).toBe('e2e-oauth-access-token');
+      expect(first.body.data?.token).toBeUndefined();
+      expect(accessTokenFromAuthResponse(first)).toBe('e2e-oauth-access-token');
 
       await request(app.getHttpServer())
         .post('/auth/google/exchange')
@@ -440,6 +447,29 @@ describe('Authentication (e2e)', () => {
       await request(app.getHttpServer())
         .get('/users/me')
         .set('Authorization', `Bearer ${resetJwt}`)
+        .expect(401);
+    });
+
+    it('Should reject the previous JWT after logout', async () => {
+      const email = 'logout-revoke@example.com';
+      await request(app.getHttpServer())
+        .post('/auth/register')
+        .send({ ...testUser, email })
+        .expect(201);
+      const login = await request(app.getHttpServer())
+        .post('/auth/login')
+        .send({ email, password: testUser.password })
+        .expect(200);
+      const oldToken = accessTokenFromAuthResponse(login);
+
+      await request(app.getHttpServer())
+        .post('/auth/logout')
+        .set('Cookie', cookieHeaderFrom(login))
+        .expect(200);
+
+      await request(app.getHttpServer())
+        .get('/users/me')
+        .set('Authorization', `Bearer ${oldToken}`)
         .expect(401);
     });
 
