@@ -1,4 +1,3 @@
-/* eslint-env browser */
 (function () {
   const theme = localStorage.getItem("flowbite-theme-mode");
   if (
