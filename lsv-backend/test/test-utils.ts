@@ -1,11 +1,16 @@
 import { INestApplication } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+import { JwtService } from '@nestjs/jwt';
 import { DataSource } from 'typeorm';
 import * as bcrypt from 'bcrypt';
 import request from 'supertest';
+import { Request, Response } from 'express';
 import {
   FEATURES_COUNT,
   HAND_FEATURE_START,
 } from 'src/sign-record/domain/utils/landmark-validation';
+import { createSharedModelsAuthMiddleware } from 'src/shared/infrastructure/middleware/shared-models-auth.middleware';
+import { resolveLocale, translate } from 'src/i18n';
 
 /**
  * Limpia todas las tablas de la base de datos de pruebas.
@@ -137,7 +142,7 @@ export async function getModeratorToken(
   const modPassword = 'password123';
 
   // 1. Registro
-  const regRes = await request(app.getHttpServer())
+  await request(app.getHttpServer())
     .post('/auth/register')
     .send({
       email: modEmail,
@@ -149,7 +154,7 @@ export async function getModeratorToken(
     })
     .expect(201);
 
-  const userId = regRes.body.data.user.id;
+  const userId = await findUserIdByEmail(dataSource, modEmail);
 
   // 2. Asignar permiso vía Admin API
   await request(app.getHttpServer())
@@ -273,4 +278,40 @@ export async function createLanguageCurriculum(
     lessonId: lessonRes.body.id,
     lessonVariantId: variantRes.body.id,
   };
+}
+
+export async function findUserIdByEmail(
+  dataSource: DataSource,
+  email: string,
+): Promise<string> {
+  const user = await dataSource
+    .getRepository('User')
+    .findOneByOrFail({ email });
+  return user['id'] as string;
+}
+
+export function cookieHeaderFrom(response: {
+  headers: { [key: string]: unknown };
+}): string {
+  const raw = response.headers['set-cookie'];
+  const parts = Array.isArray(raw) ? raw : raw ? [raw] : [];
+  return parts.map((cookie) => String(cookie).split(';')[0]).join('; ');
+}
+
+/** Same HTTP guards as `main.ts` for `/shared/training_data` and `/shared/models`. */
+export function applySharedHttpGuards(app: INestApplication): void {
+  const configService = app.get(ConfigService);
+  const jwtService = app.get(JwtService);
+
+  app.use('/shared/training_data', (req: Request, res: Response) => {
+    const locale = resolveLocale(req.headers['accept-language']);
+    res
+      .status(403)
+      .json({ message: translate('errors.common.forbidden', locale) });
+  });
+
+  app.use(
+    '/shared',
+    createSharedModelsAuthMiddleware(configService, jwtService),
+  );
 }

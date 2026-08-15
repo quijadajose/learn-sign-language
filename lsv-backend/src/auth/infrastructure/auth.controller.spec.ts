@@ -8,6 +8,10 @@ import { ConfigService } from '@nestjs/config';
 import { OAuthCodeStore } from './oauth-code.store';
 import { UnauthorizedException } from '@nestjs/common';
 
+function mockRes() {
+  return { cookie: jest.fn(), clearCookie: jest.fn() };
+}
+
 describe('AuthController', () => {
   let authController: AuthController;
   let oauthCodeStore: {
@@ -54,11 +58,7 @@ describe('AuthController', () => {
       const result = await authController.register(dto);
 
       expect(result).toEqual({
-        message: 'User registered successfully',
-        data: {
-          user: { id: '123', email: 'test@example.com', username: 'testuser' },
-          token: 'fake-jwt-token',
-        },
+        message: 'success.auth.registered',
       });
     });
   });
@@ -70,10 +70,10 @@ describe('AuthController', () => {
         password: 'password123',
       };
 
-      const result = await authController.login(dto);
+      const result = await authController.login(dto, mockRes() as never);
 
       expect(result).toEqual({
-        message: 'User logged in successfully',
+        message: 'success.auth.loggedIn',
         data: {
           user: { id: '123', email: 'test@example.com', username: 'testuser' },
           token: 'fake-jwt-token',
@@ -88,7 +88,7 @@ describe('AuthController', () => {
         email: 'test@example.com',
       });
       expect(result).toEqual({
-        message: 'If the email exists, a reset link has been sent.',
+        message: 'success.auth.resetLinkSent',
       });
     });
 
@@ -99,8 +99,17 @@ describe('AuthController', () => {
       });
 
       expect(result).toEqual({
-        message: 'Password has been successfully reset.',
+        message: 'success.auth.passwordReset',
       });
+    });
+  });
+
+  describe('logout', () => {
+    it('clears the access cookie', async () => {
+      const res = mockRes();
+      const result = await authController.logout(res as never);
+      expect(res.clearCookie).toHaveBeenCalled();
+      expect(result).toEqual({ message: 'success.auth.loggedOut' });
     });
   });
 
@@ -110,11 +119,12 @@ describe('AuthController', () => {
         accessToken: 'access-token',
         user: { id: 'u1' },
       });
-      const result = await authController.exchangeGoogleCode({
-        code: 'valid-code',
-      });
+      const result = await authController.exchangeGoogleCode(
+        { code: 'valid-code' },
+        mockRes() as never,
+      );
       expect(result).toEqual({
-        message: 'User logged in successfully',
+        message: 'success.auth.loggedIn',
         data: { token: 'access-token' },
       });
     });
@@ -122,7 +132,10 @@ describe('AuthController', () => {
     it('rejects invalid codes', async () => {
       oauthCodeStore.consume.mockResolvedValue(null);
       await expect(
-        authController.exchangeGoogleCode({ code: 'not-a-valid-code-here' }),
+        authController.exchangeGoogleCode(
+          { code: 'not-a-valid-code-here' },
+          mockRes() as never,
+        ),
       ).rejects.toBeInstanceOf(UnauthorizedException);
     });
   });

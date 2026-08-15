@@ -13,13 +13,16 @@ export class RegisterUserUseCase {
     private readonly hashService: HashService,
   ) {}
 
-  async register(createUserDto: CreateUserDto): Promise<User> {
+  async register(createUserDto: CreateUserDto): Promise<User | null> {
     const { email, firstName, lastName, age, password, isRightHanded, role } =
       createUserDto;
 
     const existingUser = await this.userRepository.findByEmail(email);
     if (existingUser) {
-      throw new ConflictException('errors.auth.emailInUse');
+      if (password) {
+        await this.hashService.hash(password);
+      }
+      return null;
     }
 
     const newUser = new User();

@@ -1,5 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { BadRequestException } from '@nestjs/common';
+import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { ImagesController } from './images.controller';
 import { UploadPictureUseCase } from 'src/shared/application/use-cases/upload-picture-use-case/upload-picture-use-case';
 
@@ -46,5 +46,11 @@ describe('ImagesController', () => {
       'user',
       file,
     );
+  });
+
+  it('rejects GET for folders outside the upload allowlist', () => {
+    expect(() =>
+      controller.getImage('etc', 'passwd', 'original', {} as never),
+    ).toThrow(NotFoundException);
   });
 });

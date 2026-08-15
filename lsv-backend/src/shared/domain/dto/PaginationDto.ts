@@ -1,5 +1,13 @@
 import { Type } from 'class-transformer';
-import { IsInt, Min, Max, IsOptional, IsString, IsEnum } from 'class-validator';
+import {
+  IsInt,
+  Min,
+  Max,
+  IsOptional,
+  IsString,
+  IsEnum,
+  Matches,
+} from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 export enum SortOrder {
@@ -40,6 +48,9 @@ export class PaginationDto {
   })
   @IsOptional()
   @IsString()
+  @Matches(/^[A-Za-z][A-Za-z0-9_]*$/, {
+    message: 'orderBy must be a safe column identifier',
+  })
   orderBy?: string;
 
   @ApiPropertyOptional({

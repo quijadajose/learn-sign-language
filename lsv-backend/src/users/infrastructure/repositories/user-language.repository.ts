@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { FindManyOptions, Repository } from 'typeorm';
+import { pickSafeOrderBy } from 'src/shared/infrastructure/safe-order-by';
 import { UserLanguage } from '../../../shared/domain/entities/userLanguage';
 import { UserLanguageRepositoryInterface } from '../../domain/ports/user-language.repository.interface';
 import {
@@ -50,9 +51,15 @@ export class UserLanguageRepository implements UserLanguageRepositoryInterface {
       take: limit,
     };
 
-    if (orderBy && sortOrder) {
+    const safeOrderBy = pickSafeOrderBy(orderBy, [
+      'userId',
+      'languageId',
+      'createdAt',
+      'updatedAt',
+    ]);
+    if (safeOrderBy && sortOrder) {
       findOptions.order = {
-        [orderBy]: sortOrder,
+        [safeOrderBy]: sortOrder,
       };
     }
 

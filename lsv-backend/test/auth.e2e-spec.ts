@@ -20,6 +20,14 @@ describe('Authentication (e2e)', () => {
     role: 'admin',
   };
 
+  async function loginToken(email: string, password = testUser.password) {
+    const response = await request(app.getHttpServer())
+      .post('/auth/login')
+      .send({ email, password })
+      .expect(200);
+    return response.body.data.token as string;
+  }
+
   beforeAll(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
       imports: [AppModule],
@@ -59,13 +67,20 @@ describe('Authentication (e2e)', () => {
         .expect(201);
 
       expect(response.body.message).toBe('Usuario registrado correctamente');
-      expect(response.body.data.user.email).toBe(testUser.email);
-      expect(response.body.data.user.role).toBe('user');
-      expect(response.body.data).toHaveProperty('token');
+      expect(response.body.data?.token).toBeUndefined();
+      expect(response.headers['set-cookie']).toBeUndefined();
+
+      const token = await loginToken(testUser.email);
+      const me = await request(app.getHttpServer())
+        .get('/users/me')
+        .set('Authorization', `Bearer ${token}`)
+        .expect(200);
+      expect(me.body.email).toBe(testUser.email);
+      expect(me.body.role).toBe('user');
     });
 
     it('Should ignore an attempted admin role on register', async () => {
-      const response = await request(app.getHttpServer())
+      await request(app.getHttpServer())
         .post('/auth/register')
         .send({
           ...testUser,
@@ -74,9 +89,7 @@ describe('Authentication (e2e)', () => {
         })
         .expect(201);
 
-      expect(response.body.data.user.role).toBe('user');
-
-      const token = response.body.data.token;
+      const token = await loginToken('cannot-be-admin@example.com');
       const me = await request(app.getHttpServer())
         .get('/users/me')
         .set('Authorization', `Bearer ${token}`)
@@ -85,15 +98,19 @@ describe('Authentication (e2e)', () => {
       expect(me.body.role).toBe('user');
     });
 
-    it('Should fail when registering an existing email', async () => {
-      // Primero registramos uno
-      await request(app.getHttpServer()).post('/auth/register').send(testUser);
-
-      // Intentamos registrar el mismo - Tu API devuelve 409 Conflict
-      await request(app.getHttpServer())
+    it('Should not reveal whether an email is already registered', async () => {
+      const first = await request(app.getHttpServer())
         .post('/auth/register')
         .send(testUser)
-        .expect(409);
+        .expect(201);
+      const second = await request(app.getHttpServer())
+        .post('/auth/register')
+        .send(testUser)
+        .expect(201);
+
+      expect(first.body.message).toBe(second.body.message);
+      expect(first.body.data?.token).toBeUndefined();
+      expect(second.body.data?.token).toBeUndefined();
     });
   });
 
@@ -171,16 +188,17 @@ describe('Authentication (e2e)', () => {
   describe('/users/me (GET)', () => {
     it('Should get user profile with a valid token', async () => {
       // 1. Registro
-      const regResponse = await request(app.getHttpServer())
+      const email = `profile-${Date.now()}@example.com`;
+      await request(app.getHttpServer())
         .post('/auth/register')
         .send({
           ...testUser,
           role: 'user',
-          email: `profile-${Date.now()}@example.com`,
+          email,
         })
         .expect(201);
 
-      const token = regResponse.body.data.token;
+      const token = await loginToken(email);
 
       // 2. Consulta de perfil usando el token
       const response = await request(app.getHttpServer())
@@ -204,25 +222,60 @@ describe('Authentication (e2e)', () => {
         .expect(401);
     });
 
-    it('Should not elevate role via PUT /users/me', async () => {
-      const regResponse = await request(app.getHttpServer())
+    it('Should reject role elevation via PUT /users/me', async () => {
+      const email = `no-elevate-${Date.now()}@example.com`;
+      await request(app.getHttpServer())
         .post('/auth/register')
         .send({
           ...testUser,
           role: 'admin',
-          email: `no-elevate-${Date.now()}@example.com`,
+          email,
         })
         .expect(201);
 
-      const token = regResponse.body.data.token;
+      const token = await loginToken(email);
 
-      const updated = await request(app.getHttpServer())
+      await request(app.getHttpServer())
         .put('/users/me')
         .set('Authorization', `Bearer ${token}`)
         .send({
           firstName: 'Jane',
           role: 'admin',
         })
+        .expect(400);
+    });
+
+    it('Should reject hashPassword on PUT /users/me', async () => {
+      const email = `no-hash-${Date.now()}@example.com`;
+      await request(app.getHttpServer())
+        .post('/auth/register')
+        .send({
+          ...testUser,
+          email,
+        })
+        .expect(201);
+
+      await request(app.getHttpServer())
+        .put('/users/me')
+        .set('Authorization', `Bearer ${await loginToken(email)}`)
+        .send({ hashPassword: 'not-a-hash' })
+        .expect(400);
+    });
+
+    it('Should update firstName without changing role', async () => {
+      const email = `rename-${Date.now()}@example.com`;
+      await request(app.getHttpServer())
+        .post('/auth/register')
+        .send({
+          ...testUser,
+          email,
+        })
+        .expect(201);
+
+      const updated = await request(app.getHttpServer())
+        .put('/users/me')
+        .set('Authorization', `Bearer ${await loginToken(email)}`)
+        .send({ firstName: 'Jane' })
         .expect(200);
 
       expect(updated.body.role).toBe('user');
@@ -294,6 +347,122 @@ describe('Authentication (e2e)', () => {
       await request(app.getHttpServer())
         .post('/auth/google/exchange')
         .send({ code })
+        .expect(401);
+    });
+  });
+
+  describe('JWT purpose and session invalidation', () => {
+    it('Should set an httpOnly access cookie on login', async () => {
+      await request(app.getHttpServer())
+        .post('/auth/register')
+        .send({
+          ...testUser,
+          email: 'cookie-login@example.com',
+        });
+
+      const response = await request(app.getHttpServer())
+        .post('/auth/login')
+        .send({
+          email: 'cookie-login@example.com',
+          password: testUser.password,
+        })
+        .expect(200);
+
+      const setCookie = response.headers['set-cookie'];
+      expect(setCookie).toBeDefined();
+      const header = Array.isArray(setCookie) ? setCookie.join(';') : setCookie;
+      expect(header).toMatch(/lsv_access=/);
+      expect(header.toLowerCase()).toMatch(/httponly/);
+    });
+
+    it('Should authenticate GET /users/me with the access cookie', async () => {
+      await request(app.getHttpServer())
+        .post('/auth/register')
+        .send({
+          ...testUser,
+          email: 'cookie-me@example.com',
+        });
+      const login = await request(app.getHttpServer())
+        .post('/auth/login')
+        .send({
+          email: 'cookie-me@example.com',
+          password: testUser.password,
+        })
+        .expect(200);
+
+      const raw = login.headers['set-cookie'];
+      const cookieHeader = (Array.isArray(raw) ? raw : [raw])
+        .map((c) => String(c).split(';')[0])
+        .join('; ');
+
+      await request(app.getHttpServer())
+        .get('/users/me')
+        .set('Cookie', cookieHeader)
+        .expect(200);
+    });
+
+    it('Should not accept a login JWT as a password-reset token', async () => {
+      await request(app.getHttpServer())
+        .post('/auth/register')
+        .send({
+          ...testUser,
+          email: 'purpose-login@example.com',
+        })
+        .expect(201);
+
+      const token = await loginToken('purpose-login@example.com');
+
+      await request(app.getHttpServer())
+        .post('/auth/password/reset/confirm')
+        .send({
+          token,
+          newPassword: 'brandNewPass1',
+        })
+        .expect(400);
+    });
+
+    it('Should not accept a reset JWT as a session token', async () => {
+      const email = 'purpose-reset@example.com';
+      await request(app.getHttpServer())
+        .post('/auth/register')
+        .send({ ...testUser, email })
+        .expect(201);
+
+      const user = await dataSource.getRepository('User').findOneByOrFail({
+        email,
+      });
+      const tokenService = app.get('TokenService');
+      const resetJwt = tokenService.generateToken(user, {
+        purpose: 'reset',
+        expiresIn: '15m',
+      });
+
+      await request(app.getHttpServer())
+        .get('/users/me')
+        .set('Authorization', `Bearer ${resetJwt}`)
+        .expect(401);
+    });
+
+    it('Should reject the previous JWT after a password change', async () => {
+      const email = 'rotate-token@example.com';
+      await request(app.getHttpServer())
+        .post('/auth/register')
+        .send({ ...testUser, email })
+        .expect(201);
+      const oldToken = await loginToken(email);
+
+      await request(app.getHttpServer())
+        .put('/users/me')
+        .set('Authorization', `Bearer ${oldToken}`)
+        .send({
+          oldPassword: testUser.password,
+          newPassword: 'rotatedPass1',
+        })
+        .expect(200);
+
+      await request(app.getHttpServer())
+        .get('/users/me')
+        .set('Authorization', `Bearer ${oldToken}`)
         .expect(401);
     });
   });

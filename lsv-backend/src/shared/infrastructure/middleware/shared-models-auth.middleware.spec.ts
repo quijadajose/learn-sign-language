@@ -74,6 +74,32 @@ describe('createSharedModelsAuthMiddleware', () => {
     expect(next).toHaveBeenCalled();
   });
 
+  it('accepts a valid access cookie', () => {
+    const next = jest.fn();
+    middleware(
+      mockReq({ headers: { cookie: 'lsv_access=jwt-token' } }),
+      mockRes(),
+      next,
+    );
+    expect(jwtService.verify).toHaveBeenCalledWith('jwt-token', {
+      secret: 'test-secret',
+    });
+    expect(next).toHaveBeenCalled();
+  });
+
+  it('rejects a reset-purpose JWT', () => {
+    const next = jest.fn();
+    const res = mockRes();
+    (jwtService.verify as jest.Mock).mockReturnValue({ purpose: 'reset' });
+    middleware(
+      mockReq({ headers: { authorization: 'Bearer jwt-token' } }),
+      res,
+      next,
+    );
+    expect(next).not.toHaveBeenCalled();
+    expect(res.statusCode).toBe(401);
+  });
+
   it('rejects ?access_token= even if the JWT is valid', () => {
     const next = jest.fn();
     const res = mockRes();

@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  ForbiddenException,
   Get,
   Param,
   ParseUUIDPipe,
@@ -31,9 +32,15 @@ export class UserLessonController {
   @Get('by-user/:id')
   @DocGetUserLessonByUser()
   getUserLessonByUserId(
+    @Req() req,
     @Param('id', ParseUUIDPipe) id: string,
     @Query() pagination: PaginationDto,
   ) {
+    const requesterId = req.user.sub;
+    const role = req.user.role;
+    if (id !== requesterId && role !== 'admin') {
+      throw new ForbiddenException('errors.common.forbidden');
+    }
     return this.userLessonService.getUserLessonByUserId(id, pagination);
   }
 

@@ -25,6 +25,7 @@ import { Public } from './decorators/public.decorator';
 import { Response } from 'express';
 import { ConfigService } from '@nestjs/config';
 import { OAuthCodeStore } from './oauth-code.store';
+import { attachAuthCookie, clearAuthCookie } from './auth-cookie';
 import {
   DocAuth,
   DocConfirmPasswordReset,
@@ -58,10 +59,9 @@ export class AuthController {
   @DocRegister()
   async register(@Body() createUserDto: CreateUserDto) {
     createUserDto.role = 'user';
-    const user = await this.authService.registerUser(createUserDto);
+    await this.authService.registerUser(createUserDto);
     return {
-      message: 'User registered successfully',
-      data: user,
+      message: 'success.auth.registered',
     };
   }
 
@@ -69,12 +69,23 @@ export class AuthController {
   @Throttle({ default: { limit: 5, ttl: 60000 } })
   @Post('login')
   @DocLogin()
-  async login(@Body() user: LoginUserDto) {
+  async login(
+    @Body() user: LoginUserDto,
+    @Res({ passthrough: true }) res: Response,
+  ) {
     const token = await this.authService.login(user);
+    attachAuthCookie(res, token.token);
     return {
-      message: 'User logged in successfully',
+      message: 'success.auth.loggedIn',
       data: token,
     };
+  }
+
+  @Public()
+  @Post('logout')
+  async logout(@Res({ passthrough: true }) res: Response) {
+    clearAuthCookie(res);
+    return { message: 'success.auth.loggedOut' };
   }
 
   @Public()
@@ -90,7 +101,7 @@ export class AuthController {
         error,
       );
     });
-    return { message: 'If the email exists, a reset link has been sent.' };
+    return { message: 'success.auth.resetLinkSent' };
   }
 
   @Public()
@@ -101,14 +112,8 @@ export class AuthController {
     @Body() confirmResetPasswordDto: ConfirmResetPasswordDto,
   ) {
     const { token, newPassword } = confirmResetPasswordDto;
-    try {
-      await this.authService.resetPassword(token, newPassword);
-      return { message: 'Password has been successfully reset.' };
-    } catch (error) {
-      const message =
-        error instanceof Error ? error.message : 'Password reset failed';
-      throw new HttpException(message, HttpStatus.BAD_REQUEST);
-    }
+    await this.authService.resetPassword(token, newPassword);
+    return { message: 'success.auth.passwordReset' };
   }
 
   @Public()
@@ -131,20 +136,24 @@ export class AuthController {
       id: payload.sub,
       email: payload.email,
     });
-    res.redirect(302, `${frontendUrl}/login?code=${code}`);
+    res.redirect(302, `${frontendUrl}/login#code=${encodeURIComponent(code)}`);
   }
 
   @Public()
   @Throttle({ default: { limit: 10, ttl: 60000 } })
   @Post('google/exchange')
   @DocExchangeGoogleCode()
-  async exchangeGoogleCode(@Body() body: ExchangeGoogleCodeDto) {
+  async exchangeGoogleCode(
+    @Body() body: ExchangeGoogleCodeDto,
+    @Res({ passthrough: true }) res: Response,
+  ) {
     const result = await this.oauthCodeStore.consume(body.code);
     if (!result) {
-      throw new UnauthorizedException('Invalid or expired OAuth code');
+      throw new UnauthorizedException('errors.auth.invalidOAuthCode');
     }
+    attachAuthCookie(res, result.accessToken);
     return {
-      message: 'User logged in successfully',
+      message: 'success.auth.loggedIn',
       data: {
         token: result.accessToken,
       },

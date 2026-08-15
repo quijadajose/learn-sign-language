@@ -6,6 +6,7 @@ import {
 import { UserLesson } from 'src/shared/domain/entities/userLesson';
 import { UserLessonRepositoryInterface } from 'src/user-lesson/domain/ports/user-lesson.repository.interface/user-lesson.repository.interface';
 import { Repository } from 'typeorm';
+import { pickSafeOrderBy } from 'src/shared/infrastructure/safe-order-by';
 
 export class UserLessonRepository implements UserLessonRepositoryInterface {
   constructor(
@@ -28,7 +29,15 @@ export class UserLessonRepository implements UserLessonRepositoryInterface {
       where: { user: { id: userId } },
       skip: skip,
       take: limit,
-      order: orderBy ? { [orderBy]: sortOrder } : undefined,
+      order: (() => {
+        const safeOrderBy = pickSafeOrderBy(orderBy, [
+          'id',
+          'isCompleted',
+          'completedAt',
+          'createdAt',
+        ]);
+        return safeOrderBy ? { [safeOrderBy]: sortOrder } : undefined;
+      })(),
     });
 
     return new PaginatedResponseDto(data, total, page, limit);

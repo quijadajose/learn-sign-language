@@ -49,6 +49,15 @@ describe('SignRecordGateway', () => {
     expect(client.disconnect).not.toHaveBeenCalled();
   });
 
+  it('accepts the lsv_access cookie', () => {
+    const client = mockSocket({
+      headers: { cookie: 'lsv_access=jwt-from-cookie' },
+    });
+    gateway.handleConnection(client);
+    expect(tokenService.verifyToken).toHaveBeenCalledWith('jwt-from-cookie');
+    expect(client.disconnect).not.toHaveBeenCalled();
+  });
+
   it('rejects handshake.query.token', () => {
     const client = mockSocket({ query: { token: 'jwt-from-query' } });
     gateway.handleConnection(client);

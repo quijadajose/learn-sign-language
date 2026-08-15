@@ -5,27 +5,17 @@ import {
   IsBoolean,
   IsInt,
   Min,
+  MinLength,
+  ValidateIf,
 } from 'class-validator';
 import { ApiPropertyOptional } from '@nestjs/swagger';
 
+/** Public profile update. Password hash, role and googleId are not client-assignable. */
 export class UpdateUserDto {
   @ApiPropertyOptional({ example: 'email@gmail.com', format: 'email' })
   @IsOptional()
   @IsEmail()
   email?: string;
-
-  @ApiPropertyOptional({ example: 'google123456789' })
-  @IsOptional()
-  @IsNotEmpty()
-  googleId?: string;
-
-  @ApiPropertyOptional({
-    description: 'Hash actual (interno)',
-    example: 'hashedPassword',
-  })
-  @IsOptional()
-  @IsNotEmpty()
-  hashPassword?: string;
 
   @ApiPropertyOptional({
     description: 'Contraseña actual para cambio de clave',
@@ -34,9 +24,11 @@ export class UpdateUserDto {
   @IsNotEmpty()
   oldPassword?: string;
 
-  @ApiPropertyOptional({ description: 'Nueva contraseña' })
+  @ApiPropertyOptional({ description: 'Nueva contraseña', minLength: 8 })
+  @ValidateIf((_, value) => value != null && value !== '')
   @IsOptional()
   @IsNotEmpty()
+  @MinLength(8)
   newPassword?: string;
 
   @ApiPropertyOptional({ example: 'John' })
@@ -59,8 +51,11 @@ export class UpdateUserDto {
   @IsOptional()
   @IsBoolean()
   isRightHanded?: boolean;
-
-  @ApiPropertyOptional({ example: 'user' })
-  @IsOptional()
-  role?: string;
 }
+
+export type UpdateUserPatch = Omit<
+  UpdateUserDto,
+  'oldPassword' | 'newPassword'
+> & {
+  passwordHash?: string;
+};

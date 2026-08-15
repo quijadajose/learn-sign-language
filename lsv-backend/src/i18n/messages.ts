@@ -91,6 +91,8 @@ export const messages: Record<AppLocale, MessageTree> = {
         noValidRecordingsForDual:
           'No hay grabaciones válidas para entrenar modelos estáticos o dinámicos',
         invalidTrainerPayload: 'Resultado del entrenador inválido: {details}',
+        hashMismatch: 'El hash SHA-256 de model.json no coincide',
+        untrustedModelUrl: 'URL de modelo no permitida',
       },
       landmarks: {
         empty:
@@ -158,6 +160,7 @@ export const messages: Record<AppLocale, MessageTree> = {
         resetLinkSent:
           'Si el correo existe, se ha enviado un enlace de restablecimiento.',
         passwordReset: 'La contraseña se restableció correctamente',
+        loggedOut: 'Sesión cerrada',
       },
       quizVariantDeleted: 'Variante de quiz eliminada correctamente',
       lessonVariantDeleted: 'Variante de lección eliminada correctamente',
@@ -252,6 +255,8 @@ export const messages: Record<AppLocale, MessageTree> = {
         noValidRecordingsForDual:
           'There are no valid recordings to train static or dynamic models',
         invalidTrainerPayload: 'Invalid trainer result payload: {details}',
+        hashMismatch: 'model.json SHA-256 does not match',
+        untrustedModelUrl: 'Untrusted model URL',
       },
       landmarks: {
         empty:
@@ -315,6 +320,7 @@ export const messages: Record<AppLocale, MessageTree> = {
         loggedIn: 'User logged in successfully',
         resetLinkSent: 'If the email exists, a reset link has been sent.',
         passwordReset: 'Password has been successfully reset.',
+        loggedOut: 'Logged out',
       },
       quizVariantDeleted: 'Quiz variant deleted successfully',
       lessonVariantDeleted: 'Lesson variant deleted successfully',

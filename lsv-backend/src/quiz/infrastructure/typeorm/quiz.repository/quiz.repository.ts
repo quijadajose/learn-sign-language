@@ -15,6 +15,7 @@ import { Quiz } from 'src/shared/domain/entities/quiz';
 import { QuizSubmission } from 'src/shared/domain/entities/quizSubmission';
 import { User } from 'src/shared/domain/entities/user';
 import { FindManyOptions, Repository } from 'typeorm';
+import { pickSafeOrderBy } from 'src/shared/infrastructure/safe-order-by';
 
 export class QuizRepository implements QuizRepositoryInterface {
   constructor(
@@ -47,9 +48,10 @@ export class QuizRepository implements QuizRepositoryInterface {
       take: limit,
     };
 
-    if (orderBy && sortOrder) {
+    const safeOrderBy = pickSafeOrderBy(orderBy, ['id']);
+    if (safeOrderBy && sortOrder) {
       findOptions.order = {
-        [orderBy]: sortOrder,
+        [safeOrderBy]: sortOrder,
       };
     }
     return this.quizRepository.find(findOptions);
@@ -195,9 +197,12 @@ export class QuizRepository implements QuizRepositoryInterface {
     };
 
     if (orderBy && sortOrder) {
-      findOptions.order = {
-        [orderBy]: sortOrder,
-      };
+      const safeOrderBy = pickSafeOrderBy(orderBy, ['id']);
+      if (safeOrderBy) {
+        findOptions.order = {
+          [safeOrderBy]: sortOrder,
+        };
+      }
     }
     return this.quizRepository.find(findOptions);
   }
@@ -326,9 +331,16 @@ export class QuizRepository implements QuizRepositoryInterface {
     };
 
     if (orderBy && sortOrder) {
-      findOptions.order = {
-        [orderBy]: sortOrder,
-      };
+      const safeOrderBy = pickSafeOrderBy(orderBy, [
+        'id',
+        'score',
+        'submittedAt',
+      ]);
+      if (safeOrderBy) {
+        findOptions.order = {
+          [safeOrderBy]: sortOrder,
+        };
+      }
     }
 
     return this.submissionRepository.find(findOptions);
@@ -344,6 +356,12 @@ export class QuizRepository implements QuizRepositoryInterface {
       sortOrder = 'DESC',
     } = pagination;
     const skip = (page - 1) * limit;
+    const safeOrderBy =
+      pickSafeOrderBy(
+        orderBy,
+        ['totalScore', 'firstName', 'lastName', 'userId'],
+        'totalScore',
+      ) ?? 'totalScore';
 
     const countQuery = this.submissionRepository
       .createQueryBuilder('qs')
@@ -379,7 +397,7 @@ export class QuizRepository implements QuizRepositoryInterface {
         'qs.userId = subquery.userId AND COALESCE(qs.quizId, qs.quizVariantId) = subquery.generalQuizId',
       )
       .groupBy('u.id')
-      .orderBy(orderBy, sortOrder === 'ASC' ? 'ASC' : 'DESC')
+      .orderBy(safeOrderBy, sortOrder === 'ASC' ? 'ASC' : 'DESC')
       .skip(skip)
       .take(limit);
 
@@ -406,6 +424,12 @@ export class QuizRepository implements QuizRepositoryInterface {
       sortOrder = 'DESC',
     } = pagination;
     const skip = (page - 1) * limit;
+    const safeOrderBy =
+      pickSafeOrderBy(
+        orderBy,
+        ['totalScore', 'firstName', 'lastName', 'userId'],
+        'totalScore',
+      ) ?? 'totalScore';
 
     const countQuery = this.submissionRepository
       .createQueryBuilder('qs')
@@ -457,7 +481,7 @@ export class QuizRepository implements QuizRepositoryInterface {
         'qs.userId = subquery.userId AND COALESCE(qs.quizId, qs.quizVariantId) = subquery.generalQuizId',
       )
       .groupBy('u.id')
-      .orderBy(orderBy, sortOrder === 'ASC' ? 'ASC' : 'DESC')
+      .orderBy(safeOrderBy, sortOrder === 'ASC' ? 'ASC' : 'DESC')
       .skip(skip)
       .take(limit);
 

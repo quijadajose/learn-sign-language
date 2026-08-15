@@ -31,15 +31,8 @@ export class AuthService {
     @Inject('HashService')
     private readonly hashService: HashService,
   ) {}
-  async registerUser(
-    createUserDto: CreateUserDto,
-  ): Promise<{ user: User; token: string }> {
-    const user = await this.registerUserUseCase.register(createUserDto);
-    user.hashPassword = undefined;
-    user.googleId = undefined;
-    user.updatedAt = undefined;
-    const token = this.generateToken(user);
-    return { user, token };
+  async registerUser(createUserDto: CreateUserDto): Promise<void> {
+    await this.registerUserUseCase.register(createUserDto);
   }
   async login(
     loginUserDto: LoginUserDto,
@@ -59,13 +52,14 @@ export class AuthService {
     }
 
     const token = this.generateToken(user);
-    user.hashPassword = undefined;
-    user.googleId = undefined;
-    user.updatedAt = undefined;
+    this.sanitizePublicUser(user);
     return { user, token };
   }
   generateToken(payload: User, expiresIn?: string): string {
-    return this.tokenService.generateToken(payload, expiresIn);
+    return this.tokenService.generateToken(payload, {
+      expiresIn,
+      purpose: 'access',
+    });
   }
   async sendPasswordResetToken(email: string): Promise<void> {
     const user = await this.findUserUseCase.findByEmail(email);
@@ -73,7 +67,10 @@ export class AuthService {
       return;
     }
 
-    const resetToken = this.generateToken(user, '15m');
+    const resetToken = this.tokenService.generateToken(user, {
+      expiresIn: '15m',
+      purpose: 'reset',
+    });
     const frontEndUrl = this.configService.get<string>('FRONTEND_URL');
     // Fragment keeps the token out of query logs / Referer.
     const resetUrl = `${frontEndUrl}/reset-password#token=${encodeURIComponent(resetToken)}`;
@@ -87,9 +84,10 @@ export class AuthService {
     await this.sendEmailUseCase.execute(emailParams);
   }
   async resetPassword(token: string, newPassword: string): Promise<void> {
-    const payload: JwtPayload = this.tokenService.verifyToken(token);
-
-    if (!payload) {
+    let payload: JwtPayload;
+    try {
+      payload = this.tokenService.verifyToken(token, 'reset');
+    } catch {
       throw new BadRequestException('errors.auth.invalidOrExpiredToken');
     }
 
@@ -100,9 +98,8 @@ export class AuthService {
       throw new BadRequestException('errors.user.notFound');
     }
 
-    user.hashPassword = await this.hashService.hash(newPassword);
-
-    await this.updateUserUseCase.execute(userId, user);
+    const passwordHash = await this.hashService.hash(newPassword);
+    await this.updateUserUseCase.execute(userId, { passwordHash });
 
     const emailParams: EmailParams = {
       to: user.email,
@@ -116,7 +113,7 @@ export class AuthService {
     if (!user) {
       throw new BadRequestException('errors.user.notFound');
     }
-    return user;
+    return this.sanitizePublicUser(user);
   }
   async updateUserProfile(
     userId: string,
@@ -143,19 +140,36 @@ export class AuthService {
         throw new BadRequestException('errors.auth.newPasswordSameAsOld');
       }
 
-      updateUserDto.hashPassword = await this.hashService.hash(
+      const passwordHash = await this.hashService.hash(
         updateUserDto.newPassword,
       );
-
-      delete updateUserDto.oldPassword;
-      delete updateUserDto.newPassword;
+      const updatedUser = await this.updateUserUseCase.execute(userId, {
+        email: updateUserDto.email,
+        firstName: updateUserDto.firstName,
+        lastName: updateUserDto.lastName,
+        age: updateUserDto.age,
+        isRightHanded: updateUserDto.isRightHanded,
+        passwordHash,
+      });
+      return this.sanitizePublicUser(updatedUser);
     }
 
-    const updatedUser = await this.updateUserUseCase.execute(
-      userId,
-      updateUserDto,
-    );
-    return updatedUser;
+    const updatedUser = await this.updateUserUseCase.execute(userId, {
+      email: updateUserDto.email,
+      firstName: updateUserDto.firstName,
+      lastName: updateUserDto.lastName,
+      age: updateUserDto.age,
+      isRightHanded: updateUserDto.isRightHanded,
+    });
+    return this.sanitizePublicUser(updatedUser);
+  }
+
+  private sanitizePublicUser(user: User): User {
+    user.hashPassword = undefined;
+    user.googleId = undefined;
+    user.updatedAt = undefined;
+    delete (user as { tokenVersion?: number }).tokenVersion;
+    return user;
   }
 
   private generatePasswordChangedEmailHTML(): string {
