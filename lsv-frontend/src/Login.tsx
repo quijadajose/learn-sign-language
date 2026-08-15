@@ -50,8 +50,7 @@ function Login() {
       oauthHandled.current = true;
       try {
         const exchange = await authApi.exchangeGoogleCode(oauthCode);
-        const token = unwrapApiData<{ token: string }>(exchange.data)?.token;
-        if (!exchange.success || !token) {
+        if (!exchange.success) {
           addToast("error", t("login.googleError"));
           navigate("/login", { replace: true });
           return;
@@ -59,7 +58,7 @@ function Login() {
         const response = await userApi.getMe();
         if (response.success && response.data) {
           const userData = unwrapApiData<UserData>(response.data);
-          login(userData, token);
+          login(userData);
           addToast("success", t("login.googleSuccess"));
           navigate("/dashboard", { replace: true });
         } else {
@@ -87,11 +86,9 @@ function Login() {
     setIsSubmitting(true);
     try {
       const response = await authApi.login(email, password);
-      const payload = unwrapApiData<{ user: UserData; token: string }>(
-        response.data,
-      );
-      if (response.success && payload?.user && payload?.token) {
-        login(payload.user, payload.token);
+      const payload = unwrapApiData<{ user: UserData }>(response.data);
+      if (response.success && payload?.user) {
+        login(payload.user);
 
         if (rememberMe) {
           setRememberedEmail(email);

@@ -15,7 +15,6 @@ vi.mock("../services/api", () => ({
   authApi: {
     logout: vi.fn(),
   },
-  setMemoryAccessToken: vi.fn(),
   markSessionActive: vi.fn(),
 }));
 

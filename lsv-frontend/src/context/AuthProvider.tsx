@@ -5,7 +5,6 @@ import {
   unwrapApiData,
   userApi,
   authApi,
-  setMemoryAccessToken,
   markSessionActive,
 } from "../services/api";
 import { AuthContext } from "./AuthContext";
@@ -15,7 +14,6 @@ const HYDRATE_MAX_ATTEMPTS = 3;
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useLocalStorage<UserData | null>("user", null);
-  const [token, setToken] = useState<string | null>(null);
   const [, setSelectedRegionId] = useLocalStorage<string | null>(
     "selectedRegionId",
     null,
@@ -28,8 +26,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const clearSession = useCallback(() => {
     setUser(null);
-    setToken(null);
-    setMemoryAccessToken(null);
     markSessionActive(false);
     setSelectedRegionId(null);
     setSelectedLanguageId(null);
@@ -115,12 +111,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }, [setUser, clearSession]);
 
   const login = useCallback(
-    (userData: UserData, userToken?: string) => {
+    (userData: UserData) => {
       setUser(userData);
-      if (userToken) {
-        setToken(userToken);
-        setMemoryAccessToken(userToken);
-      }
       markSessionActive(true);
       setIsHydrating(false);
     },
@@ -154,7 +146,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const value = useMemo(
     () => ({
       user,
-      token,
       isAuthenticated,
       isHydrating,
       login,
@@ -162,16 +153,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       updateUser,
       refreshUser,
     }),
-    [
-      user,
-      token,
-      isAuthenticated,
-      isHydrating,
-      login,
-      logout,
-      updateUser,
-      refreshUser,
-    ],
+    [user, isAuthenticated, isHydrating, login, logout, updateUser, refreshUser],
   );
 
   return (

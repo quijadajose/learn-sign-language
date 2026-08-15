@@ -76,7 +76,7 @@ describe("Login", () => {
     };
     authLogin.mockResolvedValue({
       success: true,
-      data: { user, token: "jwt-should-stay-in-memory" },
+      data: { user },
     });
 
     renderLogin();
@@ -91,7 +91,7 @@ describe("Login", () => {
 
     await waitFor(() => {
       expect(authLogin).toHaveBeenCalledWith("a@test.com", "secret-pass");
-      expect(login).toHaveBeenCalledWith(user, "jwt-should-stay-in-memory");
+      expect(login).toHaveBeenCalledWith(user);
     });
 
     expect(localStorage.getItem("auth")).toBeNull();
