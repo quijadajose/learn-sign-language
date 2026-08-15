@@ -9,7 +9,6 @@ import {
 } from "../../services/api";
 import { BACKEND_BASE_URL } from "../../config";
 import { usePermissions } from "../../hooks/usePermissions";
-import { useAuth } from "../../context/AuthContext";
 import type { SignDetectionType } from "../../utils/signDetection";
 import {
   toast,
@@ -35,7 +34,6 @@ interface StudioStage {
 
 export function useSignStudioData() {
   const { isAdmin, isModerator, user } = usePermissions();
-  const { token } = useAuth();
   const [searchParams, setSearchParams] = useSearchParams();
   const deepLinkLessonId = useRef<string | null>(
     searchParams.get("lessonId"),
@@ -254,7 +252,6 @@ export function useSignStudioData() {
     const socket = io(socketUrl, {
       transports: ["websocket", "polling"],
       withCredentials: true,
-      auth: token ? { token } : undefined,
     });
 
     socket.on('connect', () => {
@@ -310,7 +307,7 @@ export function useSignStudioData() {
       socket.off("admin:model-ready");
       socket.disconnect();
     };
-  }, [token]);
+  }, []);
 
   const fetchRegions = useCallback(async () => {
     try {

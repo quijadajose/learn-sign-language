@@ -6,7 +6,6 @@ import type { UserData } from "./types/user";
 
 const authState = {
   user: null as UserData | null,
-  token: null as string | null,
   isAuthenticated: false,
   isHydrating: false,
   refreshUser: vi.fn().mockResolvedValue(null),
@@ -38,7 +37,6 @@ function renderAdmin() {
 describe("AdminRoute", () => {
   beforeEach(() => {
     authState.user = null;
-    authState.token = null;
     authState.isAuthenticated = false;
     authState.isHydrating = false;
     authState.refreshUser.mockClear();
