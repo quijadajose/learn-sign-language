@@ -9,8 +9,15 @@ export class UpdateUserUseCase {
     private readonly userRepository: UserRepositoryInterface,
   ) {}
   async execute(userId: string, patch: UpdateUserPatch): Promise<User> {
-    const { email, firstName, lastName, age, passwordHash, isRightHanded } =
-      patch;
+    const {
+      email,
+      firstName,
+      lastName,
+      age,
+      passwordHash,
+      isRightHanded,
+      revokeSessions,
+    } = patch;
 
     const user = await this.userRepository.findById(userId);
     if (!user) {
@@ -31,6 +38,8 @@ export class UpdateUserUseCase {
     if (isRightHanded !== undefined) user.isRightHanded = isRightHanded;
     if (passwordHash) {
       user.hashPassword = passwordHash;
+      user.tokenVersion = (user.tokenVersion ?? 0) + 1;
+    } else if (revokeSessions) {
       user.tokenVersion = (user.tokenVersion ?? 0) + 1;
     }
 

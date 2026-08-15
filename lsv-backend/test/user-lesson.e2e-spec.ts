@@ -3,7 +3,11 @@ import { INestApplication, ValidationPipe } from '@nestjs/common';
 import request from 'supertest';
 import { AppModule } from './../src/app.module';
 import { DataSource } from 'typeorm';
-import { cleanDatabase, getAdminToken } from './test-utils';
+import {
+  accessTokenFromAuthResponse,
+  cleanDatabase,
+  getAdminToken,
+} from './test-utils';
 
 describe('User Lessons (e2e)', () => {
   let app: INestApplication;
@@ -61,7 +65,7 @@ describe('User Lessons (e2e)', () => {
     const loginRes = await request(app.getHttpServer())
       .post('/auth/login')
       .send({ email: testUser.email, password: testUser.password });
-    userToken = loginRes.body.data.token;
+    userToken = accessTokenFromAuthResponse(loginRes);
     userId = loginRes.body.data.user.id;
   }, 60000);
 
@@ -114,7 +118,7 @@ describe('User Lessons (e2e)', () => {
 
     await request(app.getHttpServer())
       .get(`/user-lesson/by-user/${userId}`)
-      .set('Authorization', `Bearer ${loginRes.body.data.token}`)
+      .set('Authorization', `Bearer ${accessTokenFromAuthResponse(loginRes)}`)
       .expect(403);
   });
 });
