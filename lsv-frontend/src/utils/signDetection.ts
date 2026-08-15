@@ -863,7 +863,7 @@ export async function loadTfModelFromUrl(
     /* usar valores por defecto */
   }
 
-  // Only same-origin / backend URLs reach here; cookie + in-memory Bearer.
+  // Only same-origin / backend URLs reach here; cookie via credentials.
   const model = await tf.loadLayersModel(
     tf.io.browserHTTPRequest(modelUrl, {
       requestInit,

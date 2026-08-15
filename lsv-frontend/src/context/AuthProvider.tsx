@@ -83,6 +83,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           }
 
           if (response.status === 401 || response.status === 403) {
+            void authApi.logout();
             clearSession();
             setIsHydrating(false);
             return;
@@ -127,6 +128,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   useEffect(() => {
     const onSessionExpired = () => {
+      void authApi.logout();
       clearSession();
       setIsHydrating(false);
     };
