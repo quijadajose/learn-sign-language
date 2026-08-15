@@ -37,6 +37,7 @@ describe("AuthProvider", () => {
     cleanup();
     localStorage.clear();
     getMe.mockReset();
+    vi.mocked(authApi.logout).mockClear();
   });
 
   afterEach(() => {
@@ -85,6 +86,7 @@ describe("AuthProvider", () => {
     expect(screen.getByTestId("auth").textContent).toBe("false");
     expect(screen.getByTestId("user").textContent).toBe("none");
     expect(getMe).toHaveBeenCalled();
+    expect(authApi.logout).toHaveBeenCalled();
   });
 
   it("clears leftover localStorage auth and session after hydrate failures", async () => {
@@ -149,5 +151,34 @@ describe("AuthProvider", () => {
     expect(localStorage.getItem("selectedStageId_lang-1")).toBeNull();
     expect(localStorage.getItem("selectedStageExplicit_lang-1")).toBeNull();
     expect(localStorage.getItem("lsv.uiLocale")).toBe("es");
+  });
+
+  it("clears the httpOnly cookie via logout when the session expires", async () => {
+    getMe.mockResolvedValue({
+      success: true,
+      data: {
+        id: "1",
+        email: "a@test.com",
+        firstName: "A",
+        lastName: "B",
+        role: "user",
+      },
+    });
+    render(
+      <AuthProvider>
+        <Probe />
+      </AuthProvider>,
+    );
+    await waitFor(() => {
+      expect(screen.getByTestId("user").textContent).toBe("a@test.com");
+    });
+    vi.mocked(authApi.logout).mockClear();
+
+    window.dispatchEvent(new Event("session-expired"));
+
+    await waitFor(() => {
+      expect(screen.getByTestId("auth").textContent).toBe("false");
+    });
+    expect(authApi.logout).toHaveBeenCalled();
   });
 });

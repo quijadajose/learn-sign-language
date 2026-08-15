@@ -374,9 +374,6 @@ export const userApi = {
 
   updateMe: (userData: unknown) => ApiService.put("/users/me", userData),
 
-  changePassword: (passwordData: unknown) =>
-    ApiService.put("/user/change-password", passwordData),
-
   uploadUserImage: (file: File, userId: string) =>
     ApiService.upload("/images/upload/user", file, {
       id: userId,

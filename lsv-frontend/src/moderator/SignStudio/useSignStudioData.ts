@@ -7,7 +7,7 @@ import {
   regionApi,
   unwrapApiList,
 } from "../../services/api";
-import { BACKEND_BASE_URL } from "../../config";
+import { getSocketIoClientOptions } from "../../config";
 import { usePermissions } from "../../hooks/usePermissions";
 import type { SignDetectionType } from "../../utils/signDetection";
 import {
@@ -248,8 +248,9 @@ export function useSignStudioData() {
       }
     })();
 
-    const socketUrl = BACKEND_BASE_URL.replace(/\/api\/?$/, "");
+    const { url: socketUrl, path: socketPath } = getSocketIoClientOptions();
     const socket = io(socketUrl, {
+      path: socketPath,
       transports: ["websocket", "polling"],
       withCredentials: true,
     });
