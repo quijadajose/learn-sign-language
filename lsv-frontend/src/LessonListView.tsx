@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { Spinner, Alert } from "flowbite-react";
 import { useLocalStorage } from "./hooks/useLocalStorage";
+import { stageSelectionStorageKeys } from "./utils/learningStorage";
 import { useToast } from "./components/ToastProvider";
 import { HiExclamationCircle, HiBookOpen } from "react-icons/hi";
 import { lessonApi } from "./services/api";
@@ -27,12 +28,13 @@ export default function LessonListView() {
     "selectedRegionId",
     null,
   );
+  const stageKeys = stageSelectionStorageKeys(selectedLanguageId ?? "");
   const [, setPersistedStageId] = useLocalStorage<string | null>(
-    `selectedStageId_${selectedLanguageId}`,
+    stageKeys.stageId,
     null,
   );
   const [, setExplicitStageSelection] = useLocalStorage(
-    `selectedStageExplicit_${selectedLanguageId}`,
+    stageKeys.explicit,
     false,
   );
   const addToast = useToast();
