@@ -19,7 +19,8 @@ const HTTP_METHODS = [
 const API_DESCRIPTION = [
   'Contrato OpenAPI del backend LSV (lengua de señas).',
   '',
-  'Autenticación JWT vía `Authorization: Bearer <token>` obtenido en `POST /auth/login` o `POST /auth/google/exchange`.',
+  'El SPA autentica con cookie httpOnly `lsv_access` (`credentials: include`).',
+  'Login y Google exchange no devuelven el JWT en JSON. Clientes de prueba o el trainer pueden mandar `Authorization: Bearer <jwt>`.',
   '',
   '## Rate limit',
   'Límite por dirección IP, ventana de 60 segundos (NestJS Throttler, almacenamiento Valkey). `setHeaders` está activo por defecto.',
@@ -70,7 +71,7 @@ export function createOpenApiConfig(serverUrl: string) {
         scheme: 'bearer',
         bearerFormat: 'JWT',
         description:
-          'JWT emitido por POST /auth/login o POST /auth/google/exchange. Enviar en el header Authorization.',
+          'Opcional. JWT para clientes que no usan cookie (tests, trainer). El SPA usa la cookie httpOnly `lsv_access`.',
         in: 'header',
       },
       'bearer',

@@ -479,21 +479,33 @@ describe('Authentication (e2e)', () => {
         .post('/auth/register')
         .send({ ...testUser, email })
         .expect(201);
-      const oldToken = await loginToken(email);
+      const login = await request(app.getHttpServer())
+        .post('/auth/login')
+        .send({ email, password: testUser.password })
+        .expect(200);
+      const oldToken = accessTokenFromAuthResponse(login);
 
-      await request(app.getHttpServer())
+      const changed = await request(app.getHttpServer())
         .put('/users/me')
-        .set('Authorization', `Bearer ${oldToken}`)
+        .set('Cookie', cookieHeaderFrom(login))
         .send({
           oldPassword: testUser.password,
           newPassword: 'rotatedPass1',
         })
         .expect(200);
 
+      expect(cookieHeaderFrom(changed)).toMatch(/lsv_access=/);
+      const rotated = accessTokenFromAuthResponse(changed);
+
       await request(app.getHttpServer())
         .get('/users/me')
         .set('Authorization', `Bearer ${oldToken}`)
         .expect(401);
+
+      await request(app.getHttpServer())
+        .get('/users/me')
+        .set('Authorization', `Bearer ${rotated}`)
+        .expect(200);
     });
   });
 });
