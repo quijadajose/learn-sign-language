@@ -38,7 +38,7 @@ interface AddLanguageModalProps {
   isAdding: boolean;
   isDark: boolean;
   onClose: () => void;
-  onSubmit: (e: React.FormEvent) => void;
+  onSubmit: (e: React.SubmitEvent<HTMLFormElement>) => void;
   onNameChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   onFieldBlur: (field: "countryCode" | "name" | "description") => void;
   onFileChange: (e: React.ChangeEvent<HTMLInputElement>) => void;

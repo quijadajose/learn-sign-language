@@ -215,7 +215,7 @@ export function useLanguageManagement() {
     setIsEditModalOpen(true);
   };
 
-  const handleEditSubmit = async (e: React.FormEvent) => {
+  const handleEditSubmit = async (e: React.SubmitEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (!editingLanguage) return;
 
@@ -423,7 +423,7 @@ export function useLanguageManagement() {
     }
   };
 
-  const handleAddSubmit = async (e: React.FormEvent) => {
+  const handleAddSubmit = async (e: React.SubmitEvent<HTMLFormElement>) => {
     e.preventDefault();
     setAddSubmitted(true);
     const errors = validateLanguageForm(addForm, true);
