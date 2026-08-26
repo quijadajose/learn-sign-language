@@ -3,8 +3,10 @@ import {
   buildTrainingModelName,
   filterAndSortSigns,
   getRecordCaptureCue,
+  pickReviewFrames,
+  resolveInitialStudioRegionId,
 } from "./signStudioUtils";
-import type { Sign } from "./types";
+import type { LandmarkFrame, Sign } from "./types";
 
 const signs: Sign[] = [
   { id: "1", name: "Zebra", isGlobal: false, createdAt: "2026-01-02" },
@@ -59,9 +61,40 @@ describe("buildTrainingModelName", () => {
   });
 });
 
+describe("resolveInitialStudioRegionId", () => {
+  const regions = [
+    { id: "ne", name: "Nueva Esparta", isDefault: false },
+    { id: "ccs", name: "Caracas", isDefault: true },
+  ];
+
+  it("elige la región isDefault al cargar el lenguaje por primera vez", () => {
+    expect(resolveInitialStudioRegionId(regions, "", false)).toBe("ccs");
+  });
+
+  it("usa la primera región si ninguna es isDefault", () => {
+    expect(
+      resolveInitialStudioRegionId(
+        [{ id: "ne", isDefault: false }],
+        "",
+        false,
+      ),
+    ).toBe("ne");
+  });
+
+  it("no pisa Global / Principal después de que el usuario ya eligió región", () => {
+    expect(resolveInitialStudioRegionId(regions, "", true)).toBeNull();
+  });
+
+  it("no cambia una región ya seleccionada", () => {
+    expect(resolveInitialStudioRegionId(regions, "ne", false)).toBeNull();
+  });
+});
+
 describe("getRecordCaptureCue", () => {
   it("ámbar sin mano", () => {
-    expect(getRecordCaptureCue("waiting", false).badge).toContain("red");
+    const cue = getRecordCaptureCue("waiting", false);
+    expect(cue.badge).toContain("red");
+    expect(cue.label).toBe("Buscando");
   });
 
   it("verde fuerte al capturar", () => {
@@ -70,5 +103,34 @@ describe("getRecordCaptureCue", () => {
 
   it("Listo cuando el reposo dinámico ya armó la captura", () => {
     expect(getRecordCaptureCue("arming", true, true).label).toBe("Listo");
+  });
+});
+
+describe("pickReviewFrames", () => {
+  const dynamicFrames: LandmarkFrame[] = [{ flat: [1, 2] }];
+  const staticFrames: LandmarkFrame[] = [{ flat: [3] }];
+
+  it("ignora un evento de click y usa el buffer dinámico", () => {
+    const clickEvent = { type: "click", isTrusted: true };
+    expect(pickReviewFrames(clickEvent, true, dynamicFrames, [])).toEqual(
+      dynamicFrames,
+    );
+  });
+
+  it("usa el override si es un array de frames", () => {
+    const override: LandmarkFrame[] = [{ flat: [9] }];
+    expect(pickReviewFrames(override, true, dynamicFrames, [])).toEqual(
+      override,
+    );
+  });
+
+  it("respeta un array vacío (gesto inválido)", () => {
+    expect(pickReviewFrames([], true, dynamicFrames, staticFrames)).toEqual([]);
+  });
+
+  it("cae al buffer estático si no hay override ni frames dinámicos", () => {
+    expect(pickReviewFrames(undefined, false, dynamicFrames, staticFrames)).toEqual(
+      staticFrames,
+    );
   });
 });
