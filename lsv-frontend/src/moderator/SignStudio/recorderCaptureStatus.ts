@@ -17,6 +17,12 @@ export function getCaptureStatusMessage(
   armedReady: boolean,
 ): string | null {
   if (!isRecording) return null;
+  if (!recordHandVisible && landmarksBufferLength === 0) {
+    return "Buscando mano… súbela a cámara";
+  }
+  if (!isDynamicSign && landmarksBufferLength > 0) {
+    return `Capturando: ${landmarksBufferLength}/${TARGET_CAPTURE_FRAMES}`;
+  }
   if (!recordHandVisible) return "Buscando mano… súbela a cámara";
   if (recordCapturePhase === "waiting") {
     return isDynamicSign
@@ -49,7 +55,11 @@ export function getCaptureProgress(
   recordStableCount: number,
   landmarksBufferLength: number,
 ): { current: number; total: number } | null {
-  if (!isRecording || !recordHandVisible) return null;
+  if (!isRecording) return null;
+  if (!isDynamicSign && landmarksBufferLength > 0) {
+    return { current: landmarksBufferLength, total: TARGET_CAPTURE_FRAMES };
+  }
+  if (!recordHandVisible) return null;
   if (recordCapturePhase === "arming") {
     return { current: recordStableCount, total: REST_FRAMES_TO_START };
   }

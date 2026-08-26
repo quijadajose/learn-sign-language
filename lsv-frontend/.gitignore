@@ -12,8 +12,9 @@ dist
 dist-ssr
 *.local
 
-# Copied from node_modules/@mediapipe/tasks-vision/wasm at Vite startup
+# Copied from node_modules / downloaded from GCS at Vite startup
 public/mediapipe/wasm
+public/mediapipe/models
 
 # Editor directories and files
 .vscode/*

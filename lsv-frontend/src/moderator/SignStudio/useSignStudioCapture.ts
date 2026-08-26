@@ -19,6 +19,7 @@ import {
   loadTfModelFromUrl,
   isSupportedSchemaVersion,
   UNSUPPORTED_SCHEMA_MESSAGE,
+  FEATURES_COUNT,
   DYNAMIC_FEATURES_COUNT,
   STATIC_FEATURES_COUNT,
   MIN_CAPTURE_FRAMES,
@@ -27,10 +28,11 @@ import {
   MAX_DYNAMIC_CAPTURE_FRAMES,
   nextMediaPipeTimestamp,
   pickHandLandmarks,
+  landmarksToFlatVector,
   type SignDetectionType,
   type UiCapturePhase,
 } from "../../utils/signDetection";
-import { toast } from "./signStudioUtils";
+import { pickReviewFrames, toast } from "./signStudioUtils";
 import type {
   LandmarkFrame,
   LandmarkPoint,
@@ -132,6 +134,7 @@ export function useSignStudioCapture({
   const handLandmarkerRef = useRef<HandLandmarker | null>(null);
   const resetCaptureRef = useRef<() => void>(() => {});
   const dynamicSegmentBufferRef = useRef<LandmarkFrame[]>([]);
+  const reviewCommitRef = useRef(false);
   const enterReviewModeRef = useRef<(framesOverride?: LandmarkFrame[]) => void>(
     () => {},
   );
@@ -351,6 +354,7 @@ export function useSignStudioCapture({
   const resetRecordingCapture = () => {
     resetCaptureRef.current();
     dynamicSegmentBufferRef.current = [];
+    reviewCommitRef.current = false;
     latestOverlayRef.current = null;
     setRecordStableCount(0);
     setRecordCaptureCount(0);
@@ -366,21 +370,24 @@ export function useSignStudioCapture({
       );
       const isDynamic = (selectedSign?.detectionType ?? "static") === "dynamic";
 
-      let frames = framesOverride;
-      if (!frames) {
-        if (isDynamic && dynamicSegmentBufferRef.current.length > 0) {
-          frames = [...dynamicSegmentBufferRef.current];
-          dynamicSegmentBufferRef.current = [];
-        } else {
-          frames = landmarksBuffer;
-        }
+      const frames = pickReviewFrames(
+        framesOverride,
+        isDynamic,
+        dynamicSegmentBufferRef.current,
+        landmarksBuffer,
+      );
+      if (isDynamic) {
+        dynamicSegmentBufferRef.current = [];
       }
 
+      // Cortar el loop en el mismo tick: isRecording state aún no re-renderizó.
+      isRecordingRef.current = false;
       setIsRecording(false);
       setRecordCaptureCount(0);
       setRecordCapturePhase("idle");
 
-      if (!frames || frames.length === 0) {
+      if (frames.length === 0) {
+        if (reviewCommitRef.current) return;
         setLandmarksBuffer([]);
         setIsReviewing(false);
         resetCaptureRef.current();
@@ -398,6 +405,7 @@ export function useSignStudioCapture({
         return;
       }
 
+      reviewCommitRef.current = true;
       setLandmarksBuffer(frames);
       setIsReviewing(true);
     },
@@ -416,17 +424,45 @@ export function useSignStudioCapture({
     detectionType: selectedSignDetectionType,
     handlers: {
       onRawLandmarks: (pose, leftHand, rightHand) => {
+        if (!isRecordingRef.current) return;
         latestOverlayRef.current = { pose, leftHand, rightHand };
+        if (selectedSignDetectionType !== "static") return;
+        if (!leftHand && !rightHand) return;
+        const flat = landmarksToFlatVector(pose, leftHand, rightHand);
+        if (flat.length !== FEATURES_COUNT) return;
+        const kp = {
+          pose,
+          leftHand,
+          rightHand,
+          flat,
+        };
+        setLandmarksBuffer((prev) => {
+          if (prev.length >= TARGET_CAPTURE_FRAMES) return prev;
+          return [...prev, kp];
+        });
+        setRecordHandVisible(true);
+        setRecordCapturePhase("collecting");
       },
       onStatus: ({ uiPhase, handVisible, restFrameCount, captureCount }) => {
-        setRecordCapturePhase(uiPhase);
+        if (!isRecordingRef.current) return;
         setRecordHandVisible(handVisible);
-        setRecordStableCount(restFrameCount);
         if (selectedSignDetectionType === "dynamic") {
+          setRecordCapturePhase(uiPhase);
+          setRecordStableCount(restFrameCount);
           setRecordCaptureCount(captureCount);
+          return;
+        }
+        if (!handVisible) {
+          setRecordCapturePhase(uiPhase);
+          setRecordStableCount(0);
         }
       },
       onFillAborted: () => {
+        if (!isRecordingRef.current) return;
+        if (selectedSignDetectionType === "static") {
+          setRecordHandVisible(false);
+          return;
+        }
         dynamicSegmentBufferRef.current = [];
         setRecordCapturePhase("waiting");
         setRecordStableCount(0);
@@ -435,6 +471,7 @@ export function useSignStudioCapture({
         setRecordCaptureCount(0);
       },
       onTooLong: () => {
+        if (!isRecordingRef.current) return;
         dynamicSegmentBufferRef.current = [];
         setRecordCaptureCount(0);
         setRecordCapturePhase("waiting");
@@ -442,19 +479,8 @@ export function useSignStudioCapture({
           `Gesto demasiado largo (>${MAX_DYNAMIC_CAPTURE_FRAMES} frames). Vuelve a reposo e inténtalo de nuevo.`,
         );
       },
-      onStaticFrame: (flat, raw) => {
-        const kp = {
-          pose: raw.pose,
-          leftHand: raw.leftHand,
-          rightHand: raw.rightHand,
-          flat,
-        };
-        setLandmarksBuffer((prev) => {
-          if (prev.length >= TARGET_CAPTURE_FRAMES) return prev;
-          return [...prev, kp];
-        });
-      },
       onDynamicFrame: (flat, raw) => {
+        if (!isRecordingRef.current) return;
         dynamicSegmentBufferRef.current.push({
           pose: raw.pose,
           leftHand: raw.leftHand,
@@ -462,9 +488,22 @@ export function useSignStudioCapture({
           flat,
         });
       },
-      onDynamicGesture: () => {
-        const segment = [...dynamicSegmentBufferRef.current];
+      onDynamicGesture: (gestureFlats, rawFrames) => {
+        if (!isRecordingRef.current) return;
+        const fromRef = dynamicSegmentBufferRef.current;
+        const segment =
+          fromRef.length > 0
+            ? [...fromRef]
+            : rawFrames.map((raw, index) => ({
+                pose: raw.pose,
+                leftHand: raw.leftHand,
+                rightHand: raw.rightHand,
+                flat: gestureFlats[index],
+              }));
         dynamicSegmentBufferRef.current = [];
+        if (segment.length === 0) return;
+        reviewCommitRef.current = true;
+        isRecordingRef.current = false;
         setRecordCaptureCount(0);
         queueMicrotask(() => enterReviewModeRef.current(segment));
       },

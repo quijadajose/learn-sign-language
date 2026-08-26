@@ -12,12 +12,14 @@ import {
   HAND_FEATURE_START,
   HAND_MODEL,
   HAND_MOTION_THRESHOLD,
+  HAND_SHAPE_STILL_THRESHOLD,
   LEGACY_FEATURES_SCHEMA_DYNAMIC,
   LEGACY_FEATURES_SCHEMA_STATIC,
   MIN_GESTURE_FRAMES,
   MODEL_HAND_FEATURE_START,
   MODEL_POSE_LANDMARKS,
   POSE_MODEL,
+  RAW_GESTURE_REST_THRESHOLD,
   REST_FRAMES_TO_END,
   REST_FRAMES_TO_START,
   STABLE_FRAMES_TO_START,
@@ -30,11 +32,15 @@ import {
   isSupportedDynamicSchema,
   isSupportedStaticSchema,
   isSupportedSchemaVersion,
+  isStillForCapture,
   measureHandMotion,
+  measureRawGestureMotion,
+  pickActiveRawHand,
   minFramesBeforeInference,
   normalizeTrainingFrame,
   selectPoseLandmarks,
   resolveTrustedModelUrl,
+  type RawHandFrame,
 } from "./signDetection";
 
 function makeFlat(handValue = 0.5): number[] {
@@ -45,11 +51,70 @@ function makeFlat(handValue = 0.5): number[] {
   return flat;
 }
 
-/** Cambia manos lo bastante para superar HAND_MOTION_THRESHOLD. */
+/** Cambia manos (solo xy) lo bastante para superar HAND_MOTION_THRESHOLD. */
 function makeMovingFlat(base: number, step: number): number[] {
-  const handDims = FEATURES_COUNT - HAND_FEATURE_START;
-  const perDim = (HAND_MOTION_THRESHOLD + 1) / handDims;
-  return makeFlat(base + step * perDim);
+  const xyCount = ((FEATURES_COUNT - HAND_FEATURE_START) / 3) * 2;
+  const perDim = (HAND_MOTION_THRESHOLD + 1) / xyCount;
+  const flat = makeFlat(base);
+  for (let i = HAND_FEATURE_START; i < FEATURES_COUNT; i += 3) {
+    flat[i] += step * perDim;
+    flat[i + 1] += step * perDim;
+  }
+  return flat;
+}
+
+function withShoulders(flat: number[], halfWidth = 0.15): number[] {
+  const out = [...flat];
+  out[11 * 4] = halfWidth;
+  out[12 * 4] = -halfWidth;
+  return out;
+}
+
+/** Jitter de cámara: xy pequeño + z grande (MediaPipe trepida más en profundidad). */
+function jitterFrame(base: number[], frame: number): number[] {
+  const out = [...base];
+  const xyMag = 0.01;
+  const zMag = 0.08;
+  for (let i = HAND_FEATURE_START; i < FEATURES_COUNT; i += 3) {
+    const phase = (i / 3 + frame) % 5;
+    out[i] += xyMag * (phase - 2);
+    out[i + 1] += xyMag * ((phase + 1) % 5 - 2);
+    out[i + 2] += zMag * (phase - 2);
+  }
+  for (const landmark of VELOCITY_POSE_LANDMARKS) {
+    out[landmark * 4] += 0.004 * ((frame % 3) - 1);
+    out[landmark * 4 + 1] += 0.004 * (((frame + 1) % 3) - 1);
+    out[landmark * 4 + 2] += 0.05 * ((frame % 3) - 1);
+  }
+  return out;
+}
+
+function makeRawHand(cx: number, cy: number, curl = 0) {
+  return Array.from({ length: 21 }, (_, i) => {
+    const t = i / 20;
+    return {
+      x: cx + t * 0.06,
+      y: cy - t * 0.1 + curl * (i % 5) * 0.01,
+      z: 0,
+    };
+  });
+}
+
+function makeRawFrame(
+  cx: number,
+  cy: number,
+  side: "left" | "right" = "right",
+  curl = 0,
+): RawHandFrame {
+  const hand = makeRawHand(cx, cy, curl);
+  const pose = Array.from({ length: 33 }, () => ({ x: 0.5, y: 0.5, z: 0 }));
+  pose[15] = { x: cx - 0.02, y: cy + 0.05, z: 0 };
+  pose[16] = { x: cx + 0.02, y: cy + 0.05, z: 0 };
+  return {
+    pose,
+    leftHand: side === "left" ? hand : null,
+    rightHand: side === "right" ? hand : null,
+  };
 }
 
 describe("resampleSequence", () => {
@@ -360,6 +425,53 @@ describe("measureHandMotion", () => {
     flat[12 * 4] = -0.25;
     expect(measureHandMotion(flat, flat)).toBe(0);
   });
+
+  it("ignora jitter en z, que es el eje más ruidoso de MediaPipe", () => {
+    const still = withShoulders(makeFlat(0.4));
+    const zJitter = [...still];
+    for (let i = HAND_FEATURE_START + 2; i < FEATURES_COUNT; i += 3) {
+      zJitter[i] += 0.5;
+    }
+    for (const landmark of VELOCITY_POSE_LANDMARKS) {
+      zJitter[landmark * 4 + 2] += 0.5;
+    }
+    expect(measureHandMotion(still, zJitter)).toBe(0);
+  });
+
+  it("sin brazo, una seña estática no ve movimiento del codo/muñeca", () => {
+    const still = withShoulders(makeFlat(0.4));
+    const armMoved = [...still];
+    for (const landmark of VELOCITY_POSE_LANDMARKS) {
+      armMoved[landmark * 4] += 0.2;
+    }
+    expect(measureHandMotion(still, armMoved, { includeArm: false })).toBe(0);
+    expect(measureHandMotion(still, armMoved)).toBeGreaterThan(
+      HAND_MOTION_THRESHOLD,
+    );
+  });
+});
+
+describe("isStillForCapture", () => {
+  it("estática: jitter de cámara cuenta como quieto", () => {
+    const a = withShoulders(makeFlat(0.4));
+    const b = jitterFrame(a, 1);
+    expect(isStillForCapture(a, b, "static")).toBe(true);
+    expect(
+      measureHandMotion(a, b, { includeArm: false }),
+    ).toBeLessThanOrEqual(HAND_SHAPE_STILL_THRESHOLD);
+  });
+
+  it("estática: cambiar la forma de la mano no es quieto", () => {
+    expect(
+      isStillForCapture(makeFlat(0.4), makeMovingFlat(0.4, 1), "static"),
+    ).toBe(false);
+  });
+
+  it("dinámica: jitter de cámara cuenta como reposo", () => {
+    const a = withShoulders(makeFlat(0.4));
+    const b = jitterFrame(a, 1);
+    expect(isStillForCapture(a, b, "dynamic")).toBe(true);
+  });
 });
 
 describe("minFramesBeforeInference", () => {
@@ -377,6 +489,60 @@ describe("GesturePhaseDetector", () => {
 
     for (let i = 0; i < STABLE_FRAMES_TO_START; i++) {
       result = detector.tick(makeFlat(0.4), true);
+    }
+    expect(result.phase).toBe("capturing");
+  });
+
+  it("estática: con la mano visible N frames pasa a capturing aunque se mueva", () => {
+    const detector = new GesturePhaseDetector("static");
+    let result = detector.tick(makeMovingFlat(0.4, 1), true);
+    expect(result.phase).toBe("stabilizing");
+    expect(detector.getRestFrameCount()).toBe(1);
+
+    for (let i = 2; i < STABLE_FRAMES_TO_START; i++) {
+      result = detector.tick(makeMovingFlat(0.4, i), true);
+      expect(result.phase).toBe("stabilizing");
+      expect(detector.getRestFrameCount()).toBe(i);
+    }
+
+    result = detector.tick(makeMovingFlat(0.4, STABLE_FRAMES_TO_START), true);
+    expect(result.phase).toBe("capturing");
+  });
+
+  it("estática: un frame inestable no borra la captura ya empezada", () => {
+    const detector = new GesturePhaseDetector("static");
+    for (let i = 0; i < STABLE_FRAMES_TO_START; i++) {
+      detector.tick(makeFlat(0.4), true);
+    }
+    expect(detector.getPhase()).toBe("capturing");
+
+    const moved = detector.tick(makeMovingFlat(0.4, 3), true);
+    expect(moved.phase).toBe("capturing");
+    expect(moved.captureCount).toBeGreaterThan(0);
+  });
+
+  it("estática: jitter de MediaPipe no deja el contador en 0", () => {
+    const detector = new GesturePhaseDetector("static");
+    const base = withShoulders(makeFlat(0.4));
+    detector.tick(base, true);
+    let result = detector.tick(jitterFrame(base, 0), true);
+    for (let i = 1; i < STABLE_FRAMES_TO_START; i++) {
+      result = detector.tick(jitterFrame(base, i), true);
+    }
+    expect(result.phase).toBe("capturing");
+  });
+
+  it("estática: mover el brazo con la mano fija no reinicia la estabilidad", () => {
+    const detector = new GesturePhaseDetector("static");
+    const base = withShoulders(makeFlat(0.4));
+    detector.tick(base, true);
+    let result = detector.tick(base, true);
+    for (let i = 0; i < STABLE_FRAMES_TO_START; i++) {
+      const armMoved = [...base];
+      for (const landmark of VELOCITY_POSE_LANDMARKS) {
+        armMoved[landmark * 4] += 0.05 * (i + 1);
+      }
+      result = detector.tick(armMoved, true);
     }
     expect(result.phase).toBe("capturing");
   });
@@ -417,6 +583,38 @@ describe("GesturePhaseDetector", () => {
 
     expect(completed).not.toBeNull();
     expect(completed!.length).toBeGreaterThanOrEqual(MIN_GESTURE_FRAMES);
+  });
+
+  it("dinámica: jitter de muñeca en crudo no impide armar; un barrido sí dispara", () => {
+    const detector = new GesturePhaseDetector("dynamic");
+    const rest = makeFlat(0.4);
+    const restRaw = makeRawFrame(0.6, 0.5);
+
+    for (let i = 0; i < REST_FRAMES_TO_START + 1; i++) {
+      const jittered = makeRawFrame(0.6 + 0.002 * (i % 3), 0.5);
+      detector.tick(rest, true, jittered);
+    }
+    expect(detector.isArmedForGesture()).toBe(true);
+    expect(detector.getPhase()).toBe("arming");
+
+    let result = detector.tick(rest, true, restRaw);
+    for (let i = 1; i <= MIN_GESTURE_FRAMES; i++) {
+      result = detector.tick(
+        rest,
+        true,
+        makeRawFrame(0.6 - i * 0.04, 0.5),
+      );
+    }
+    expect(result.phase).toBe("capturing");
+  });
+
+  it("dinámica: Left/Right parpadeando sobre la misma mano cuenta como reposo", () => {
+    const a = makeRawFrame(0.55, 0.48, "right");
+    const b = makeRawFrame(0.55, 0.48, "left");
+    expect(pickActiveRawHand(a)?.[0].x).toBeCloseTo(pickActiveRawHand(b)?.[0].x ?? 0);
+    expect(measureRawGestureMotion(a, b)).toBeLessThanOrEqual(
+      RAW_GESTURE_REST_THRESHOLD,
+    );
   });
 
   it("sin mano reinicia a waiting", () => {
