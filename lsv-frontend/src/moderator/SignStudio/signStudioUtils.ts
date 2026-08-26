@@ -1,5 +1,5 @@
 import type { UiCapturePhase } from "../../utils/signDetection";
-import type { Sign, TrainingMode } from "./types";
+import type { LandmarkFrame, Sign, TrainingMode } from "./types";
 
 export const toast = {
   success: (msg: string) => {
@@ -64,6 +64,32 @@ export function buildTrainingModelName(params: {
   return "Entrenamiento Personalizado";
 }
 
+export function resolveInitialStudioRegionId(
+  regions: Array<{ id: string; isDefault?: boolean }>,
+  selectedRegionId: string,
+  alreadyAutoSelectedForLanguage: boolean,
+): string | null {
+  if (alreadyAutoSelectedForLanguage || selectedRegionId || regions.length === 0) {
+    return null;
+  }
+  return regions.find((region) => region.isDefault)?.id ?? regions[0]?.id ?? null;
+}
+
+/**
+ * El onClick de Detener pasa un MouseEvent como primer argumento. Si se trata
+ * como lista de frames, la revisión queda con length 0 y el clip se pierde.
+ */
+export function pickReviewFrames(
+  override: unknown,
+  isDynamic: boolean,
+  dynamicFrames: LandmarkFrame[],
+  staticFrames: LandmarkFrame[],
+): LandmarkFrame[] {
+  if (Array.isArray(override)) return override as LandmarkFrame[];
+  if (isDynamic && dynamicFrames.length > 0) return [...dynamicFrames];
+  return staticFrames;
+}
+
 export function getRecordCaptureCue(
   phase: "idle" | UiCapturePhase,
   handVisible: boolean,
@@ -77,7 +103,7 @@ export function getRecordCaptureCue(
     return {
       panel: "bg-amber-600/90",
       badge: "bg-red-600 animate-pulse",
-      label: "Grabando",
+      label: "Buscando",
     };
   }
   if (phase === "collecting" || phase === "closing") {

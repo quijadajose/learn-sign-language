@@ -47,10 +47,24 @@ export const CONFIDENCE_THRESHOLD = 0.75;
 /** One-shot + 1 reintento explícito en examen dinámico */
 export const MAX_DYNAMIC_EXAM_ATTEMPTS = 2;
 /**
- * Movimiento entre frames por debajo del cual la pose se considera estable.
- * Suma la forma de la mano y la trayectoria del brazo: ver `measureHandMotion`.
+ * Forma de la mano (xy, sin brazo) por debajo de la cual una seña estática
+ * cuenta como quieta. El umbral anterior (1.5 sobre xyz+brazo) nunca se
+ * cumplía con jitter real de MediaPipe: Sign Studio se quedaba en
+ * «Mano OK — mantén la pose (0/N)» sin pasar a grabar.
  */
-export const HAND_MOTION_THRESHOLD = 1.5;
+export const HAND_SHAPE_STILL_THRESHOLD = 4;
+/**
+ * Reposo dinámico: forma de la mano + trayectoria del brazo.
+ * Más alto que el de estáticas porque el brazo va ponderado y el pose trepida.
+ */
+export const HAND_MOTION_THRESHOLD = 8;
+/**
+ * Reposo dinámico medido en landmarks crudos (muñeca en imagen + forma xy).
+ * El L1 del 258D no separa jitter de un gesto: o nunca arma, o nunca cierra.
+ */
+export const RAW_GESTURE_REST_THRESHOLD = 5;
+/** Peso de la muñeca en imagen dentro de `measureRawGestureMotion`. */
+export const RAW_WRIST_MOTION_WEIGHT = 80;
 /** Frames estables consecutivos antes de empezar a capturar señas estáticas */
 export const STABLE_FRAMES_TO_START = 6;
 /** Frames en reposo antes de iniciar captura dinámica (~300 ms @ 30 fps) */
@@ -128,7 +142,7 @@ export const INFERENCE_VOTE_WINDOW = 10;
 /** Cuántas inferencias en esa ventana deben superar el umbral (permite pausas en señas con movimiento) */
 export const INFERENCE_VOTE_REQUIRED = 6;
 
-/** Served from /public (Vite) / nginx; WASM is copied from node_modules at build. */
+/** Served from /public (Vite) / nginx. WASM is copied from node_modules; models are downloaded at Vite startup. */
 export const VISION_WASM = "/mediapipe/wasm";
 export const POSE_MODEL = "/mediapipe/models/pose_landmarker_heavy.task";
 export const HAND_MODEL = "/mediapipe/models/hand_landmarker.task";
@@ -247,6 +261,7 @@ export type GesturePhaseTickResult = {
 export class GesturePhaseDetector {
   private phase: GesturePhase = "waiting";
   private lastFlat: number[] | null = null;
+  private lastRaw: RawHandFrame | null = null;
   private restFrameCount = 0;
   private isArmed = false;
   private movementBuffer: number[][] = [];
@@ -278,6 +293,7 @@ export class GesturePhaseDetector {
   reset(): void {
     this.phase = "waiting";
     this.lastFlat = null;
+    this.lastRaw = null;
     this.restFrameCount = 0;
     this.isArmed = false;
     this.movementBuffer = [];
@@ -292,11 +308,16 @@ export class GesturePhaseDetector {
     return gesture;
   }
 
-  tick(flat: number[] | null, handVisible: boolean): GesturePhaseTickResult {
+  tick(
+    flat: number[] | null,
+    handVisible: boolean,
+    raw?: RawHandFrame | null,
+  ): GesturePhaseTickResult {
     this.pendingCompletion = null;
 
     if (!handVisible || !flat) {
       this.lastFlat = null;
+      this.lastRaw = null;
       this.restFrameCount = 0;
       this.isArmed = false;
       if (this.phase !== "waiting" && this.phase !== "complete") {
@@ -311,8 +332,9 @@ export class GesturePhaseDetector {
     }
 
     if (this.detectionType === "dynamic") {
-      return this.tickDynamic(flat);
+      return this.tickDynamic(flat, raw ?? null);
     }
+    this.lastRaw = raw ?? null;
     return this.tickStatic(flat);
   }
 
@@ -322,6 +344,7 @@ export class GesturePhaseDetector {
     this.restFrameCount = 0;
     this.isArmed = false;
     this.lastFlat = null;
+    this.lastRaw = null;
     return {
       phase: this.phase,
       completedGesture: null,
@@ -330,11 +353,21 @@ export class GesturePhaseDetector {
     };
   }
 
-  private tickDynamic(flat: number[]): GesturePhaseTickResult {
-    const prev = this.lastFlat;
+  private tickDynamic(
+    flat: number[],
+    raw: RawHandFrame | null,
+  ): GesturePhaseTickResult {
+    const prevFlat = this.lastFlat;
+    const prevRaw = this.lastRaw;
     this.lastFlat = flat;
-    const motion = prev ? measureHandMotion(prev, flat) : 0;
-    const isRest = motion <= HAND_MOTION_THRESHOLD;
+    this.lastRaw = raw;
+
+    const isRest =
+      prevRaw && raw
+        ? measureRawGestureMotion(prevRaw, raw) <= RAW_GESTURE_REST_THRESHOLD
+        : prevFlat
+          ? isStillForCapture(prevFlat, flat, "dynamic")
+          : true;
 
     switch (this.phase) {
       case "waiting":
@@ -411,42 +444,35 @@ export class GesturePhaseDetector {
     };
   }
 
+  /**
+   * Estática: basta con la mano a la vista N frames seguidos.
+   *
+   * El umbral de «quieto» sobre el vector 258D no sirve en cámara real: el
+   * jitter de MediaPipe (z, escala muñeca–nudillo y etiquetas Left/Right que
+   * parpadean) deja el contador en 0 y Sign Studio nunca graba. La consigna
+   * «mantén la pose» sigue en la UI; el gate técnico es visibilidad continua.
+   */
   private tickStatic(flat: number[]): GesturePhaseTickResult {
     const prev = this.lastFlat;
     this.lastFlat = flat;
 
-    if (!prev) {
-      this.phase = "stabilizing";
-      this.restFrameCount = 0;
-      return {
-        phase: this.phase,
-        completedGesture: null,
-        captureCount: this.movementBuffer.length,
-      };
-    }
-
-    const motion = measureHandMotion(prev, flat);
-    const isStable = motion <= HAND_MOTION_THRESHOLD;
-
-    if (this.phase === "waiting") {
+    if (this.phase === "waiting" || !prev) {
       this.phase = "stabilizing";
     }
 
-    if (!isStable) {
-      this.restFrameCount = 0;
-      this.movementBuffer = [];
-      this.phase = "stabilizing";
-    } else {
-      this.restFrameCount += 1;
-      if (this.restFrameCount >= STABLE_FRAMES_TO_START) {
-        this.phase = "capturing";
-        this.movementBuffer.push(flat);
-        if (this.movementBuffer.length > TARGET_CAPTURE_FRAMES) {
-          this.movementBuffer.shift();
-        }
-      } else {
-        this.phase = "stabilizing";
+    this.restFrameCount = prev ? this.restFrameCount + 1 : 1;
+
+    if (
+      this.phase === "capturing" ||
+      this.restFrameCount >= STABLE_FRAMES_TO_START
+    ) {
+      this.phase = "capturing";
+      this.movementBuffer.push(flat);
+      if (this.movementBuffer.length > TARGET_CAPTURE_FRAMES) {
+        this.movementBuffer.shift();
       }
+    } else {
+      this.phase = "stabilizing";
     }
 
     return {
@@ -997,8 +1023,16 @@ export function normalizeTrainingFrame(frame: unknown): number[] {
 }
 
 
+export type MeasureMotionOptions = {
+  /** Si false, solo forma de la mano (señas estáticas). Default true. */
+  includeArm?: boolean;
+};
+
 /**
  * Movimiento entre dos frames: forma de la mano más trayectoria del brazo.
+ *
+ * Solo xy: la z de MediaPipe trepida mucho más que el plano de imagen y, con
+ * 21 landmarks por mano, ese ruido solo ya superaba el umbral de «quieto».
  *
  * Los bloques de mano llegan relativos a la muñeca, así que una seña hecha
  * desplazando el brazo con la mano en forma fija no movía un solo valor y se
@@ -1009,22 +1043,117 @@ export function normalizeTrainingFrame(frame: unknown): number[] {
  * Solo afecta la segmentación, no la entrada del modelo, pero cambia qué se
  * captura: ver la nota de calibración en `ARM_MOTION_WEIGHT`.
  */
-export function measureHandMotion(prev: number[], next: number[]): number {
+export function measureHandMotion(
+  prev: number[],
+  next: number[],
+  options: MeasureMotionOptions = {},
+): number {
+  const includeArm = options.includeArm !== false;
   let handMotion = 0;
-  for (let i = HAND_FEATURE_START; i < FEATURES_COUNT; i++) {
+  for (let i = HAND_FEATURE_START; i < FEATURES_COUNT; i += 3) {
     handMotion += Math.abs(next[i] - prev[i]);
+    handMotion += Math.abs(next[i + 1] - prev[i + 1]);
   }
+
+  if (!includeArm) return handMotion;
 
   // Escala por frame en vez de normalizePoseScale: esto corre a 30 fps dentro
   // del loop de captura y no vale la pena copiar dos vectores de 258 por frame.
   const prevScale = poseScaleFactor(prev);
   const nextScale = poseScaleFactor(next);
   let armMotion = 0;
-  for (const index of VELOCITY_POSE_INDICES) {
-    armMotion += Math.abs(next[index] / nextScale - prev[index] / prevScale);
+  for (const landmark of VELOCITY_POSE_LANDMARKS) {
+    const base = landmark * POSE_VALUES_PER_LANDMARK;
+    for (const axis of [0, 1]) {
+      const index = base + axis;
+      armMotion += Math.abs(next[index] / nextScale - prev[index] / prevScale);
+    }
   }
 
   return handMotion + ARM_MOTION_WEIGHT * armMotion;
+}
+
+/** ¿Este par de frames cuenta como reposo para arrancar o cortar la captura? */
+export function isStillForCapture(
+  prev: number[],
+  next: number[],
+  detectionType: SignDetectionType,
+): boolean {
+  if (detectionType === "static") {
+    return (
+      measureHandMotion(prev, next, { includeArm: false }) <=
+      HAND_SHAPE_STILL_THRESHOLD
+    );
+  }
+  return measureHandMotion(prev, next) <= HAND_MOTION_THRESHOLD;
+}
+
+function handLandmarkEnergy(hand: RawLandmark[]): number {
+  let energy = 0;
+  for (const point of hand) {
+    energy += Math.abs(point.x) + Math.abs(point.y);
+  }
+  return energy;
+}
+
+/** Mano con más señal; ignora el parpadeo Left/Right de MediaPipe. */
+export function pickActiveRawHand(
+  frame: RawHandFrame,
+): RawLandmark[] | null {
+  const left = frame.leftHand;
+  const right = frame.rightHand;
+  if (left && right) {
+    return handLandmarkEnergy(left) >= handLandmarkEnergy(right) ? left : right;
+  }
+  return left || right;
+}
+
+/**
+ * Movimiento de un gesto dinámico en coords de imagen: forma xy con una sola
+ * escala + desplazamiento de la muñeca. Así el jitter no parece un gesto y un
+ * barrido de brazo sí.
+ */
+export function measureRawGestureMotion(
+  prev: RawHandFrame,
+  next: RawHandFrame,
+): number {
+  const prevHand = pickActiveRawHand(prev);
+  const nextHand = pickActiveRawHand(next);
+  let handMotion = 0;
+  if (prevHand && nextHand && prevHand.length >= 10 && nextHand.length >= 10) {
+    const scale =
+      Math.hypot(
+        prevHand[9].x - prevHand[0].x,
+        prevHand[9].y - prevHand[0].y,
+      ) || 1e-3;
+    const count = Math.min(prevHand.length, nextHand.length, 21);
+    for (let i = 0; i < count; i++) {
+      const px = (prevHand[i].x - prevHand[0].x) / scale;
+      const py = (prevHand[i].y - prevHand[0].y) / scale;
+      const nx = (nextHand[i].x - nextHand[0].x) / scale;
+      const ny = (nextHand[i].y - nextHand[0].y) / scale;
+      handMotion += Math.abs(nx - px) + Math.abs(ny - py);
+    }
+  }
+
+  let wristTravel = 0;
+  if (prevHand && nextHand) {
+    wristTravel += Math.hypot(
+      nextHand[0].x - prevHand[0].x,
+      nextHand[0].y - prevHand[0].y,
+    );
+  }
+  if (prev.pose && next.pose) {
+    for (const index of [15, 16]) {
+      const from = prev.pose[index];
+      const to = next.pose[index];
+      if (from && to) {
+        wristTravel += Math.hypot(to.x - from.x, to.y - from.y);
+      }
+    }
+  }
+
+  return handMotion + RAW_WRIST_MOTION_WEIGHT * wristTravel;
 }
 
 export function frameHasHandData(frame: unknown): boolean {
@@ -1098,10 +1227,10 @@ export function selectPoseLandmarks(frame: number[]): number[] {
 /**
  * Peso del bloque de brazo dentro de `measureHandMotion`.
  *
- * El bloque de mano suma 126 dimensiones y el de brazo 12, así que sin peso las
- * manos dominarían la métrica por un factor de diez. Con 126/12 las dos partes
- * contribuyen lo mismo por dimensión, lo que deja `HAND_MOTION_THRESHOLD` con
- * aproximadamente el significado que ya tenía para gestos de mano.
+ * El bloque de mano xy suma 84 dimensiones y el de brazo xy 8, así que sin peso
+ * las manos dominarían. 84/8 deja las dos partes iguales por dimensión. El
+ * valor numérico coincide con (126 xyz de mano) / (12 xyz de brazo) porque
+ * al recortar z se recorta el mismo factor en ambos.
  *
  * Es un valor empírico, igual que el umbral: la normalización por ancho de
  * hombros divide por ~0.3 y por tanto amplifica el jitter de MediaPipe, así que

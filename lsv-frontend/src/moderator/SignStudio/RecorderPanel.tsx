@@ -127,7 +127,7 @@ export function RecorderPanel({
             <p className="mt-1 max-w-sm text-sm">
               {signs.length + globalSigns.length === 0
                 ? "Cuando exista al menos una seña, aquí aparecerá la cámara."
-                : "Las muestras quedan asociadas a esa seña."}
+                : "Pulsa Grabar en la letra (A, B, C…). La casilla de la tarjeta es solo para entrenar el modelo."}
             </p>
           </div>
         ) : (

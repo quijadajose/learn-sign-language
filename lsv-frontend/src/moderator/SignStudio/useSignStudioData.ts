@@ -14,6 +14,7 @@ import {
   toast,
   filterAndSortSigns,
   buildTrainingModelName,
+  resolveInitialStudioRegionId,
 } from "./signStudioUtils";
 import type { BulkSignDraft } from "./signCatalogPresets";
 import type { Language, Region } from "../../types/user";
@@ -207,14 +208,28 @@ export function useSignStudioData() {
     }
   }, [lessons, setSearchParams]);
 
+  const autoSelectedRegionForLanguageRef = useRef("");
+
   useEffect(() => {
-    if (!selectedLanguageId || selectedRegionId || regions.length === 0) {
+    if (!selectedLanguageId) {
+      autoSelectedRegionForLanguageRef.current = "";
       return;
     }
-    const preferred =
-      regions.find((region) => region.isDefault) ?? regions[0];
-    if (preferred) {
-      setSelectedRegionId(preferred.id);
+
+    const alreadyAutoSelected =
+      autoSelectedRegionForLanguageRef.current === selectedLanguageId;
+    const nextRegionId = resolveInitialStudioRegionId(
+      regions,
+      selectedRegionId,
+      alreadyAutoSelected,
+    );
+
+    if (regions.length > 0) {
+      autoSelectedRegionForLanguageRef.current = selectedLanguageId;
+    }
+
+    if (nextRegionId) {
+      setSelectedRegionId(nextRegionId);
     }
   }, [regions, selectedLanguageId, selectedRegionId]);
 
@@ -335,6 +350,8 @@ export function useSignStudioData() {
   // Load Regions and Stages when Language changes
   useEffect(() => {
     if (selectedLanguageId) {
+      setRegions([]);
+      setStages([]);
       void fetchRegions();
       void fetchStages();
     } else {

@@ -59,7 +59,10 @@ export function SignChipsBar({
             {signs.length} seña{signs.length === 1 ? "" : "s"}
           </span>
           {signs.length > 0 && (
-            <span className="ml-2">· Clic = grabar · casilla = entrenamiento</span>
+            <span className="ml-2">
+              · Pulsa <span className="font-semibold">Grabar</span> en la seña ·
+              casilla = entrenamiento
+            </span>
           )}
           {selected && (
             <span className="ml-2 text-blue-600 dark:text-blue-300">
@@ -140,23 +143,29 @@ export function SignChipsBar({
                 />
                 <button
                   type="button"
-                  className="min-w-0 text-left"
+                  className="flex min-w-0 items-center gap-1.5 text-left"
                   onClick={() => onSelectSign(sign.id)}
                   aria-pressed={isSelected}
                   aria-label={`Grabar seña ${sign.name}`}
                 >
-                  <span className="block truncate text-sm font-semibold text-gray-900 dark:text-white">
-                    {sign.name}
-                    {isSelected && (
-                      <span className="ml-1 text-[10px] font-bold text-blue-600 dark:text-blue-300">
-                        GRABAR
-                      </span>
-                    )}
+                  <span className="block min-w-0">
+                    <span className="block truncate text-sm font-semibold text-gray-900 dark:text-white">
+                      {sign.name}
+                    </span>
+                    <span className="block text-[10px] text-gray-500 dark:text-gray-400">
+                      {sign.recordingsCount || 0} muestras ·{" "}
+                      {isDynamic ? "DIN" : "EST"}
+                      {sign.isGlobal ? " · GLOBAL" : ""}
+                    </span>
                   </span>
-                  <span className="block text-[10px] text-gray-500 dark:text-gray-400">
-                    {sign.recordingsCount || 0} muestras ·{" "}
-                    {isDynamic ? "DIN" : "EST"}
-                    {sign.isGlobal ? " · GLOBAL" : ""}
+                  <span
+                    className={`shrink-0 rounded px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide ${
+                      isSelected
+                        ? "bg-blue-600 text-white"
+                        : "bg-blue-100 text-blue-700 dark:bg-blue-900/60 dark:text-blue-200"
+                    }`}
+                  >
+                    Grabar
                   </span>
                 </button>
               </div>

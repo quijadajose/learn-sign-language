@@ -27,7 +27,7 @@ export function RecorderCaptureActions({
   return (
     <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
       {isRecording ? (
-        <Button color="dark" size="xl" onClick={onEnterReviewMode}>
+        <Button color="dark" size="xl" onClick={() => onEnterReviewMode()}>
           <HiStop className="mr-2 size-6" />
           Detener Captura
         </Button>

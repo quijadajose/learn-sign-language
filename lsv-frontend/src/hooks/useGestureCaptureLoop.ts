@@ -100,7 +100,7 @@ export function useGestureCaptureLoop({
   const resetCapture = useCallback(() => {
     timestampRef.current = 0;
     forwardFillRef.current = createForwardFillState();
-    detectorRef.current.reset();
+    detectorRef.current = new GesturePhaseDetector(detectionTypeRef.current);
     rawCaptureRef.current = [];
   }, []);
 
@@ -112,8 +112,9 @@ export function useGestureCaptureLoop({
     }
 
     let busy = false;
+    let cancelled = false;
     const interval = setInterval(async () => {
-      if (busy || pausedRef.current) return;
+      if (cancelled || busy || pausedRef.current) return;
       const poseLandmarker = poseLandmarkerRef.current;
       const handLandmarker = handLandmarkerRef.current;
       if (!poseLandmarker || !handLandmarker) return;
@@ -132,7 +133,7 @@ export function useGestureCaptureLoop({
           canvas: canvasRef?.current,
         });
 
-        if (!frame) return;
+        if (cancelled || !frame) return;
 
         if (!visionReadyRef.current) {
           visionReadyRef.current = true;
@@ -164,6 +165,7 @@ export function useGestureCaptureLoop({
         const phaseResult = detector.tick(
           frame.handVisible ? frame.flat : null,
           frame.handVisible,
+          frame.raw,
         );
 
         const uiPhase = mapGesturePhaseToUi(phaseResult.phase);
@@ -215,7 +217,7 @@ export function useGestureCaptureLoop({
           return;
         }
 
-        if (phaseResult.phase === "capturing" && frame.raw) {
+        if (phaseResult.phase === "capturing" && frame.raw && frame.flat) {
           handlersRef.current.onStaticFrame?.(frame.flat, frame.raw);
         }
       } finally {
@@ -224,6 +226,7 @@ export function useGestureCaptureLoop({
     }, DETECTION_INTERVAL_MS);
 
     return () => {
+      cancelled = true;
       clearInterval(interval);
     };
   }, [

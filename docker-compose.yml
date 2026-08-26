@@ -33,6 +33,11 @@ services:
       - /app/node_modules
     env_file:
       - ./.env
+    # Host Cloudflare WARP uses 127.0.2.2; Docker cannot forward that, so GCS
+    # lookups fail with EAI_AGAIN and Vite used to 502 the MediaPipe models.
+    dns:
+      - 1.1.1.1
+      - 8.8.8.8
     environment:
       # Root .env may set NODE_ENV=production; keep Vite in development mode.
       - NODE_ENV=development
