@@ -9,6 +9,10 @@ from typing import Any
 
 
 def _canonicalize(value: Any) -> Any:
+    # TR-06: JSON.stringify(1.0) === "1" en JS, pero json.dumps(1.0) === "1.0" en Python.
+    # Los flotantes enteros se emiten como enteros para que la firma coincida con el backend.
+    if isinstance(value, float) and value.is_integer():
+        return int(value)
     if isinstance(value, list):
         return [_canonicalize(item) for item in value]
     if isinstance(value, dict):
