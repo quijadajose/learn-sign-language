@@ -1,3 +1,4 @@
+import i18next from "i18next";
 import { useCallback, useEffect, useState } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { SingleValue } from "react-select";
@@ -114,7 +115,7 @@ export function useLanguageWorkspace() {
         setPermissions([]);
       }
     } catch {
-      setError("Error al cargar el panel del lenguaje");
+      setError(i18next.t("common:feedback.languagePanelLoadError"));
     } finally {
       setLoading(false);
     }
@@ -123,7 +124,7 @@ export function useLanguageWorkspace() {
   useEffect(() => {
     if (!canAccess) {
       setLoading(false);
-      setError("No tienes permiso para este lenguaje");
+      setError(i18next.t("common:feedback.languageNoPermission"));
       return;
     }
     void load();

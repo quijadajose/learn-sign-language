@@ -310,7 +310,7 @@ export class ApiService {
     config: UploadConfig = {},
   ): Promise<ApiResponse<T>> {
     if (file.size > MAX_UPLOAD_BYTES) {
-      throw new Error("El archivo supera el tamaño máximo de 5 MB");
+      throw new Error(i18next.t("common:feedback.fileTooLarge"));
     }
     const formData = new FormData();
     formData.append("file", file);

@@ -1,3 +1,4 @@
+import i18next from "i18next";
 import { useState, useEffect, useCallback } from "react";
 import { z } from "zod";
 import { useNavigate } from "react-router-dom";
@@ -272,8 +273,8 @@ export function useStageManagement() {
 
   useEffect(() => {
     if (!isAuthenticated) {
-      setError("No estás autenticado. Redirigiendo al login...");
-      addToast("error", "No estás autenticado. Redirigiendo al login...");
+      setError(i18next.t("common:feedback.notAuthenticatedRedirect"));
+      addToast("error", i18next.t("common:feedback.notAuthenticatedRedirect"));
       setLoading(false);
       const timer = setTimeout(() => navigate("/login"), 3000);
       return () => clearTimeout(timer);

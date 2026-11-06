@@ -389,7 +389,7 @@ export function useLessonManagement() {
       !editForm.languageId ||
       !editForm.stageId
     ) {
-      setError("Completa los campos requeridos");
+      setError(i18next.t("common:feedback.fieldsRequired"));
       return;
     }
     try {
@@ -537,7 +537,7 @@ export function useLessonManagement() {
       !createForm.languageId ||
       !createForm.stageId
     ) {
-      setError("Completa los campos requeridos");
+      setError(i18next.t("common:feedback.fieldsRequired"));
       return;
     }
     try {
