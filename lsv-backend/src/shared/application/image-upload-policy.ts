@@ -24,7 +24,7 @@ export async function assertImageUploadAllowed(
   ports: UploadPolicyPorts,
 ): Promise<void> {
   if (!isUUID(id)) {
-    throw new BadRequestException('Invalid image id');
+    throw new BadRequestException('errors.common.invalidId');
   }
   if (actor.role === 'admin') {
     return;
