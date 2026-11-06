@@ -1,5 +1,4 @@
 import { useState, useEffect, useRef, useCallback } from "react";
-import { z } from "zod";
 import { useNavigate } from "react-router-dom";
 import { usePermissions } from "../../hooks/usePermissions";
 import { useLocalStorage } from "../../hooks/useLocalStorage";
@@ -24,6 +23,10 @@ import {
 } from "./types";
 import { useQuillConfig } from "./useQuillConfig";
 import i18next from "i18next";
+import {
+  isVariantFormComplete,
+  pickInitialLanguageId,
+} from "./lessonManagementUtils";
 
 export function useLessonManagement() {
   const navigate = useNavigate();
@@ -442,22 +445,14 @@ export function useLessonManagement() {
       isInitialized.current = true;
 
       const fetchedLangs = await fetchLanguages();
-      let langId = selectedLanguageId;
+      const langId = selectedLanguageId;
 
-      const isUuid = (val: string | null): boolean =>
-        !!val && z.string().uuid().safeParse(val).success;
-
-      if (
-        (!langId || !isUuid(langId)) &&
-        fetchedLangs &&
-        fetchedLangs.length > 0
-      ) {
-        langId = fetchedLangs[0].id;
-        setSelectedLanguageId(langId);
-      }
-
-      if (langId && isUuid(langId)) {
-        setSelectedLanguageId(langId);
+      const nextLanguageId = pickInitialLanguageId(
+        langId,
+        (fetchedLangs ?? []).map((lang) => lang.id),
+      );
+      if (nextLanguageId) {
+        setSelectedLanguageId(nextLanguageId);
       }
     };
 
@@ -598,13 +593,7 @@ export function useLessonManagement() {
   };
 
   const handleCreateVariant = async () => {
-    if (
-      !selectedLessonIdRef.current ||
-      !variantForm.name.trim() ||
-      !variantForm.description.trim() ||
-      !variantForm.content.trim() ||
-      !variantForm.regionId
-    ) {
+    if (!selectedLessonIdRef.current || !isVariantFormComplete(variantForm)) {
       addToast("error", "Todos los campos son obligatorios");
       return;
     }
