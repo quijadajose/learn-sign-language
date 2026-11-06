@@ -1,3 +1,4 @@
+import i18next from "i18next";
 import { useState, useEffect, useCallback, useRef } from "react";
 import { SingleValue } from "react-select";
 import {
@@ -368,7 +369,7 @@ export function useRegionManagement() {
 
       setRegions(allRegions);
     } catch (err) {
-      const errorMessage = "Error de conexión al cargar las regiones";
+      const errorMessage = i18next.t("common:network.loadRegions");
       setError(errorMessage);
       addToast("error", errorMessage);
     } finally {

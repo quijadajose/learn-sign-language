@@ -73,6 +73,15 @@
     "regionalVariantUpdated": "Regional variant updated successfully",
     "regionalVariantCreated": "Regional variant created successfully",
     "variantDeleted": "Variant deleted successfully",
-    "permissionAssigned": "Permission assigned successfully"
+    "permissionAssigned": "Permission assigned successfully",
+    "lessonsMissingData": "Missing data to load the lessons.",
+    "lessonsNoLanguage": "No language was provided to load the lessons.",
+    "notAuthenticatedRedirect": "You are not signed in. Redirecting to login...",
+    "notAuthenticated": "You are not signed in.",
+    "notAuthenticatedRelogin": "You are not signed in. Please sign in again.",
+    "fieldsRequired": "Please fill in the required fields.",
+    "languagePanelLoadError": "Failed to load the language panel.",
+    "languageNoPermission": "You do not have permission for this language.",
+    "fileTooLarge": "The file exceeds the 5 MB size limit."
   }
 }

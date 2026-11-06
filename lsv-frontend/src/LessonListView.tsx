@@ -1,3 +1,4 @@
+import i18next from "i18next";
 import { useEffect, useState } from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { Spinner, Alert } from "flowbite-react";
@@ -50,7 +51,7 @@ export default function LessonListView() {
 
     const fetchLessons = async () => {
       if (!isAuthenticated || !stageId) {
-        setError("Faltan datos para cargar las lecciones.");
+        setError(i18next.t("common:feedback.lessonsMissingData"));
         setLoading(false);
         return;
       }
@@ -58,7 +59,7 @@ export default function LessonListView() {
       const { languageId, regionId: regionIdFromState } = location.state || {};
       const regionId = regionIdFromState || selectedRegionId;
       if (!languageId) {
-        setError("No se ha proporcionado un idioma para cargar las lecciones.");
+        setError(i18next.t("common:feedback.lessonsNoLanguage"));
         setLoading(false);
         addToast("error", "Error de navegación: Falta el ID del idioma.");
         return;

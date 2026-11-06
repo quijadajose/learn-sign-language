@@ -1,3 +1,4 @@
+import i18next from "i18next";
 import { useState, useEffect, useRef } from "react";
 import { useLocalStorage } from "./hooks/useLocalStorage";
 import { useToast } from "./components/ToastProvider";
@@ -78,7 +79,7 @@ export function useLanguageSelection(onLanguageSelected: (lang: Language) => voi
     const initialize = async () => {
       if (!isAuthenticated) {
         if (active) {
-          setError("No estás autenticado.");
+          setError(i18next.t("common:feedback.notAuthenticated"));
           setLoading(false);
         }
         return;
@@ -351,7 +352,7 @@ export function useLanguageSelection(onLanguageSelected: (lang: Language) => voi
     }
 
     if (!isAuthenticated) {
-      addToast("error", "No estás autenticado.");
+      addToast("error", i18next.t("common:feedback.notAuthenticated"));
       return;
     }
 
