@@ -3,7 +3,13 @@
 import math
 import unittest
 
-from validation import TEST_SPLIT_RATIO, compute_class_weights, resolve_split_plan
+from validation import (
+    MIN_TRAIN_PER_CLASS_FOR_VALIDATION,
+    TEST_SPLIT_RATIO,
+    compute_class_weights,
+    resolve_split_plan,
+    resolve_validation_plan,
+)
 
 
 def _labels(counts_per_class: list[int]) -> list[int]:
@@ -67,6 +73,34 @@ class ClassWeightTests(unittest.TestCase):
     def test_absent_class_does_not_divide_by_zero(self):
         weights = compute_class_weights([0, 0], 2)
         self.assertEqual(weights[1], 1.0)
+
+
+class ResolveValidationPlanTests(unittest.TestCase):
+    def test_too_few_recordings_falls_back_to_test(self):
+        """Con 2 tomas de train por seña, apartar validación dejaría una sola."""
+        self.assertIsNone(resolve_validation_plan(_labels([2, 2, 2])))
+        self.assertIsNone(resolve_validation_plan(_labels([5, 2])))
+        self.assertIsNone(resolve_validation_plan([]))
+
+    def test_every_class_keeps_two_train_recordings(self):
+        for counts in ([3, 3], [3, 3, 3, 3, 3, 3, 3, 3], [10, 4, 3], [20, 20]):
+            plan = resolve_validation_plan(_labels(counts))
+            self.assertIsNotNone(plan, counts)
+            self.assertTrue(plan.stratify)
+            n = sum(counts)
+            self.assertGreaterEqual(plan.test_count, len(counts))
+            self.assertLessEqual(plan.test_count, n - len(counts))
+            # Estratificado: a lo sumo ceil(test/n * count) por clase sale de train.
+            for count in counts:
+                taken = math.ceil(plan.test_count * count / n)
+                self.assertGreaterEqual(count - taken, MIN_TRAIN_PER_CLASS_FOR_VALIDATION - 1)
+
+    def test_four_recordings_per_sign_get_separate_validation(self):
+        """Lo que promete el warning: con 4 por seña test y validación se separan."""
+        labels = _labels([4] * 6)
+        test = resolve_split_plan(labels).test_count
+        train_counts = [4 - test // 6] * 6
+        self.assertIsNotNone(resolve_validation_plan(_labels(train_counts)))
 
 
 if __name__ == "__main__":

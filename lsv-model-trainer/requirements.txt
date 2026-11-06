@@ -4,3 +4,9 @@ scikit-learn==1.5.2
 bullmq==3.0.4
 redis==7.4.1
 tensorflowjs==4.22.0
+# Dependencias transitivas de tensorflowjs (vía tensorflow-decision-forests) que
+# no vienen fijadas: ydf>=0.14 está compilado contra protobuf 6 y con TF 2.18
+# (protobuf 5) hace fallar `import tensorflowjs` al arrancar el worker.
+ydf==0.13.0
+# tensorflowjs todavía importa pkg_resources.
+setuptools<80

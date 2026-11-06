@@ -20,6 +20,10 @@ MIN_CLASSES = 2
 MAX_SAMPLES = int(os.getenv("TRAINER_MAX_SAMPLES", "2000"))
 MAX_FRAMES_PER_SAMPLE = int(os.getenv("TRAINER_MAX_FRAMES", "600"))
 TEST_SPLIT_RATIO = 0.2
+VALIDATION_SPLIT_RATIO = 0.2
+# Grabaciones de train por clase necesarias para apartar validación sin dejar a
+# ninguna seña con una sola toma para aprender.
+MIN_TRAIN_PER_CLASS_FOR_VALIDATION = 3
 MODEL_TYPES = ("static", "dynamic")
 
 
@@ -107,6 +111,32 @@ def resolve_split_plan(
         test_count=min(max(desired, n_classes), n_samples - n_classes),
         stratify=True,
     )
+
+
+def resolve_validation_plan(
+    train_label_indices: Iterable[int],
+    ratio: float = VALIDATION_SPLIT_RATIO,
+) -> SplitPlan | None:
+    """Decide si se puede apartar un set de validación del de train.
+
+    La validación sirve para el early stopping y para bajar el learning rate;
+    el test queda solo para reportar. Si se usa el mismo set para las dos cosas
+    el accuracy reportado es optimista: se eligieron justo los pesos que mejor
+    le van a ese set.
+
+    Devuelve ``None`` cuando el dataset es demasiado chico: cada seña necesita
+    al menos ``MIN_TRAIN_PER_CLASS_FOR_VALIDATION`` grabaciones en train para
+    que, tras apartar una, le queden al menos dos para aprender. En ese caso el
+    caller usa el test como validación y lo advierte.
+    """
+    labels = np.asarray(list(train_label_indices))
+    if labels.shape[0] == 0:
+        return None
+    _, counts = np.unique(labels, return_counts=True)
+    if counts.min() < MIN_TRAIN_PER_CLASS_FOR_VALIDATION:
+        return None
+    plan = resolve_split_plan(labels, ratio=ratio)
+    return plan if plan.stratify and plan.test_count > 0 else None
 
 
 def compute_class_weights(
@@ -203,6 +233,10 @@ def validate_training_samples(
         if not sign_name or not isinstance(sign_name, str):
             raise ValueError(f"{label}[{i}] missing or invalid signName")
 
+        allow_mirror = item.get("allowMirror", True)
+        if not isinstance(allow_mirror, bool):
+            raise ValueError(f"{label}[{i}].allowMirror must be a boolean")
+
         frames = _as_landmark_frames(item.get("landmarks"), i)
         if len(frames) == 0:
             continue
@@ -216,6 +250,7 @@ def validate_training_samples(
             **item,
             "signName": sign_name,
             "landmarks": frames,
+            "allowMirror": allow_mirror,
         })
 
         if len(cleaned) > MAX_SAMPLES:

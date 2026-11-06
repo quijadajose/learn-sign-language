@@ -1,3 +1,5 @@
+import os
+
 import numpy as np
 
 from ml_feature_contract_generated import (
@@ -35,6 +37,7 @@ __all__ = [
     "STATIC_FEATURES_COUNT",
     "VELOCITY_POSE_LANDMARKS",
     "augmentable_mask",
+    "build_dynamic_sequence",
     "frame_dropout_sequence",
     "frame_to_dynamic",
     "mirror_frame_258",
@@ -85,7 +88,7 @@ _SELECT_INDICES = np.array(
     + list(range(HAND_FEATURE_START, FEATURES_COUNT))
 )
 
-# Índices xyz de los landmarks cuya velocidad se añade en dynamic-v3: codos y
+# Índices xyz de los landmarks cuya velocidad se añade desde dynamic-v3: codos y
 # muñecas. La trayectoria del brazo vive en el bloque de pose, así que es el
 # único lugar del vector donde el desplazamiento de la mano es observable.
 # Se expresan sobre el layout recortado, que es donde se derivan los deltas.
@@ -209,30 +212,25 @@ def normalize_pose_scale(values: np.ndarray) -> np.ndarray:
 
 def resample_sequence(sequence: np.ndarray, target_length: int) -> np.ndarray:
     """Interpolación lineal temporal: N frames → target_length frames uniformes."""
-    source_length = len(sequence)
+    array = np.asarray(sequence, dtype=np.float64)
+    source_length = len(array)
     if source_length == 0:
-        return np.empty((0, sequence.shape[1] if sequence.ndim > 1 else FEATURES_COUNT))
+        return np.empty((0, array.shape[1] if array.ndim > 1 else FEATURES_COUNT))
     if source_length == 1:
-        return np.tile(sequence[0], (target_length, 1))
+        return np.tile(array[0], (target_length, 1))
     if source_length == target_length:
-        return sequence
+        return array
+    positions = np.arange(target_length) * (source_length - 1) / (target_length - 1)
+    return _sample_at(array, positions)
 
-    resampled = []
-    for i in range(target_length):
-        raw_index = (i * (source_length - 1)) / (target_length - 1)
-        low_index = int(np.floor(raw_index))
-        high_index = int(np.ceil(raw_index))
-        weight = raw_index - low_index
 
-        if low_index == high_index:
-            resampled.append(sequence[low_index])
-        else:
-            interpolated = sequence[low_index] + weight * (
-                sequence[high_index] - sequence[low_index]
-            )
-            resampled.append(interpolated)
-
-    return np.array(resampled)
+def _sample_at(sequence: np.ndarray, positions: np.ndarray) -> np.ndarray:
+    """Interpola linealmente la secuencia en posiciones fraccionarias de frame."""
+    positions = np.clip(positions, 0, len(sequence) - 1)
+    low = np.floor(positions).astype(int)
+    high = np.ceil(positions).astype(int)
+    weight = (positions - low)[:, np.newaxis]
+    return sequence[low] + weight * (sequence[high] - sequence[low])
 
 
 def frame_to_dynamic(frame_static: np.ndarray, prev_static=None) -> np.ndarray:
@@ -258,33 +256,63 @@ def frame_to_dynamic(frame_static: np.ndarray, prev_static=None) -> np.ndarray:
 
 
 def sequence_to_dynamic(sequence_static: np.ndarray) -> np.ndarray:
-    """Convierte una secuencia recortada (202D) a 340D frame a frame."""
-    dynamic = []
-    for i, frame in enumerate(sequence_static):
-        prev = sequence_static[i - 1] if i > 0 else None
-        dynamic.append(frame_to_dynamic(frame, prev))
-    return np.array(dynamic)
+    """Convierte una secuencia recortada (202D) a 340D frame a frame.
+
+    Equivale a aplicar ``frame_to_dynamic`` a cada frame con el anterior, pero
+    vectorizado: el primer frame lleva deltas en cero.
+    """
+    frames = np.asarray(sequence_static, dtype=np.float64)
+    if len(frames) == 0:
+        return np.empty((0, DYNAMIC_FEATURES_COUNT))
+    deltas = np.zeros_like(frames)
+    deltas[1:] = frames[1:] - frames[:-1]
+    hand_deltas = deltas[:, MODEL_HAND_FEATURE_START:]
+    pose_deltas = deltas[:, _VELOCITY_POSE_INDICES]
+    return np.concatenate([frames, hand_deltas, pose_deltas], axis=1)
+
+
+def build_dynamic_sequence(sequence_static: np.ndarray, sequence_length: int) -> np.ndarray:
+    """202D recortado → secuencia 340D de ``sequence_length`` frames (dynamic-v4).
+
+    Primero se remuestrea y después se derivan los deltas. Así las velocidades
+    quedan medidas en "fracción del gesto" y no en "frames de cámara": una
+    grabación a 15 fps y otra a 30 fps del mismo gesto producen los mismos
+    deltas, cosa que no pasaba en dynamic-v3 (deltas sobre frames crudos).
+    Tiene que coincidir con ``buildDynamicInferenceSequence`` del frontend.
+    """
+    frames = np.asarray(sequence_static, dtype=np.float64)
+    if len(frames) == 0:
+        return np.empty((0, DYNAMIC_FEATURES_COUNT))
+    return sequence_to_dynamic(resample_sequence(frames, sequence_length))
 
 
 def time_warp_sequence(
     seq: np.ndarray,
-    speed_range: tuple = (0.85, 1.15),
+    speed_range: tuple = (0.7, 1.3),
+    segments: int = 4,
     target_length: int | None = None,
 ) -> np.ndarray:
-    """Variación de velocidad mediante remuestreo temporal.
+    """Variación de ritmo no uniforme dentro del gesto.
 
-    Estira/comprime la secuencia y luego la re-muestrea a ``target_length``
-    (por defecto la longitud original) para que el batch siga siendo rectangular.
+    Divide el tiempo de salida en ``segments`` tramos y a cada uno le asigna una
+    velocidad aleatoria: un tramo se ejecuta más lento y otro más rápido, como
+    cuando alguien sostiene la configuración de la mano y después acelera el
+    movimiento. La curva es monótona y fija los extremos, así que el gesto
+    empieza y termina igual.
+
+    Un estiramiento uniforme no aporta nada desde dynamic-v4: el resample a
+    longitud fija lo deshace por completo.
     """
-    if len(seq) < 2:
-        return seq
-    output_len = target_length if target_length is not None else len(seq)
-    speed = np.random.uniform(*speed_range)
-    warped_len = max(2, int(round(len(seq) * speed)))
-    warped = resample_sequence(seq, warped_len)
-    if warped_len == output_len:
-        return warped
-    return resample_sequence(warped, output_len)
+    array = np.asarray(seq, dtype=np.float64)
+    if len(array) < 2:
+        return array
+    output_len = target_length if target_length is not None else len(array)
+    speeds = np.random.uniform(speed_range[0], speed_range[1], size=segments)
+    knots_out = np.linspace(0.0, 1.0, segments + 1)
+    knots_src = np.concatenate([[0.0], np.cumsum(speeds) / np.sum(speeds)])
+    times = np.linspace(0.0, 1.0, output_len)
+    positions = np.interp(times, knots_out, knots_src) * (len(array) - 1)
+    return _sample_at(array, positions)
 
 
 def mirror_frame_258(frame: np.ndarray) -> np.ndarray:
@@ -360,8 +388,10 @@ def augmentable_mask(values: np.ndarray) -> np.ndarray:
 def frame_dropout_sequence(seq: np.ndarray, drop_prob: float = 0.08) -> np.ndarray:
     """Simula pérdida de tracking: congela el frame anterior con cierta probabilidad.
 
-    Acepta 202D o 340D. En el primer frame dropeado, pone a 0 desde
-    ``MODEL_HAND_FEATURE_START`` (manos; en 340D también los deltas).
+    Se aplica sobre la secuencia recortada (202D), antes de derivar deltas: un
+    frame congelado produce delta cero, igual que en inferencia. Si el que se
+    pierde es el primero, se ponen en cero los bloques de mano, que es como el
+    frontend codifica una mano no detectada.
     """
     if len(seq) == 0:
         return seq
@@ -373,3 +403,16 @@ def frame_dropout_sequence(seq: np.ndarray, drop_prob: float = 0.08) -> np.ndarr
             else:
                 out[i, MODEL_HAND_FEATURE_START:] = 0.0
     return out
+
+
+def public_model_json_path(model_json_path: str) -> str:
+    """TR-05: devuelve la ruta de model.json relativa a DATA_BASE_DIR.
+
+    El backend es quien decide la URL pública (/shared/...). Así el trainer no
+    asume dónde está montado el volumen y no filtra rutas absolutas del worker.
+    """
+    base = os.path.abspath(os.getenv('DATA_BASE_DIR', '/shared'))
+    rel = os.path.relpath(os.path.abspath(model_json_path), base)
+    if rel.startswith('..') or os.path.isabs(rel):
+        raise RuntimeError(f'model.json fuera de DATA_BASE_DIR: {model_json_path}')
+    return rel.replace(os.sep, '/')

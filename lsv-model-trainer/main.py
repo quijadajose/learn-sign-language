@@ -1,20 +1,22 @@
 import asyncio
+import gc
 import json
 import logging
 import os
 import resource
 import signal
+import sys
 import threading
 import time
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from typing import Any
 
-from bullmq import Worker
+from bullmq import UnrecoverableError, Worker
 from redis.asyncio import Redis
 
 from job_hmac import verify_training_job_hmac
-from trainer_logic import train_lstm_model
+from trainer_logic import train_model
 from validation import (
     TrainingCancelledError,
     assert_safe_job_paths,
@@ -32,14 +34,20 @@ REDIS_PORT = int(os.getenv("VALKEY_PORT", "6379"))
 REDIS_PASSWORD = os.getenv("VALKEY_PASSWORD")
 if not REDIS_PASSWORD:
     raise SystemExit("VALKEY_PASSWORD is required")
-JOB_HMAC_SECRET = os.getenv("TRAINER_JOB_SECRET") or os.getenv("JWT_SECRET")
+# Secreto propio y obligatorio: reusar JWT_SECRET haría que filtrar uno de los
+# dos comprometa también el otro (firmar jobs o emitir tokens de sesión).
+JOB_HMAC_SECRET = os.getenv("TRAINER_JOB_SECRET")
 if not JOB_HMAC_SECRET:
-    raise SystemExit("TRAINER_JOB_SECRET or JWT_SECRET is required")
+    raise SystemExit("TRAINER_JOB_SECRET is required")
 TRAINING_QUEUE_NAME = "training-queue"
 DATA_BASE_DIR = os.getenv("DATA_BASE_DIR", "/shared")
 HEALTH_PORT = int(os.getenv("TRAINER_HEALTH_PORT", "8089"))
+# TR-09: /metrics y /healthz no tienen autenticación. Mantener en 127.0.0.1 o en una red
+# interna; nunca 0.0.0.0 expuesto al exterior.
 HEALTH_BIND = os.getenv("TRAINER_HEALTH_BIND", "127.0.0.1")
 MAX_PAYLOAD_MB = float(os.getenv("TRAINER_MAX_PAYLOAD_MB", "128"))
+# TR-03: tiempo máximo por job; al superarlo se activa el stop_event (entrenamiento cancelado).
+MAX_JOB_SECONDS = float(os.getenv("TRAINER_MAX_JOB_SECONDS", "5400"))
 SHUTDOWN_TIMEOUT_S = float(os.getenv("TRAINER_SHUTDOWN_TIMEOUT_S", "30"))
 REDIS_CONNECT_ATTEMPTS = int(os.getenv("TRAINER_REDIS_CONNECT_ATTEMPTS", "10"))
 REDIS_CONNECT_DELAY_S = float(os.getenv("TRAINER_REDIS_CONNECT_DELAY_S", "3"))
@@ -51,14 +59,18 @@ _METRICS = {
     "jobs_completed": 0,
     "jobs_failed": 0,
     "jobs_cancelled": 0,
+    "jobs_rejected": 0,
+    "jobs_lock_lost": 0,
     "last_job_duration_seconds": 0.0,
     "last_job_rss_mb": 0.0,
 }
 _METRICS_LOCK = threading.Lock()
 _WORKER_READY = threading.Event()
 
-# Stop events de los jobs en vuelo, para poder abortar el fit en el shutdown.
-_ACTIVE_STOP_EVENTS: set[threading.Event] = set()
+# Stop events de los jobs en vuelo, por job id: el shutdown los aborta todos y
+# la pérdida de lock solo el afectado.
+_ACTIVE_STOP_EVENTS: dict[str, threading.Event] = {}
+_LOCK_LOST_JOBS: set[str] = set()
 _ACTIVE_STOP_LOCK = threading.Lock()
 
 _PAGE_SIZE = os.sysconf("SC_PAGE_SIZE")
@@ -97,6 +109,12 @@ def _format_prom() -> str:
             "# HELP trainer_jobs_cancelled_total Training jobs cancelled",
             "# TYPE trainer_jobs_cancelled_total counter",
             f"trainer_jobs_cancelled_total {_METRICS['jobs_cancelled']}",
+            "# HELP trainer_jobs_rejected_total Training jobs rejected (invalid HMAC)",
+            "# TYPE trainer_jobs_rejected_total counter",
+            f"trainer_jobs_rejected_total {_METRICS['jobs_rejected']}",
+            "# HELP trainer_jobs_lock_lost_total Training jobs aborted after losing the BullMQ lock",
+            "# TYPE trainer_jobs_lock_lost_total counter",
+            f"trainer_jobs_lock_lost_total {_METRICS['jobs_lock_lost']}",
             "# HELP trainer_last_job_duration_seconds Last completed/failed job duration",
             "# TYPE trainer_last_job_duration_seconds gauge",
             f"trainer_last_job_duration_seconds {_METRICS['last_job_duration_seconds']}",
@@ -161,7 +179,7 @@ def _start_health_server() -> ThreadingHTTPServer:
 
 def _cancel_active_jobs() -> None:
     with _ACTIVE_STOP_LOCK:
-        pending = list(_ACTIVE_STOP_EVENTS)
+        pending = list(_ACTIVE_STOP_EVENTS.values())
     for stop_event in pending:
         stop_event.set()
     if pending:
@@ -183,6 +201,24 @@ async def _drain_active_jobs(timeout_s: float) -> None:
                 return
         await asyncio.sleep(0.5)
     logger.warning("Quedaron jobs activos tras %ss de espera", timeout_s)
+
+
+def _on_lock_renewal_failed(job_ids) -> None:
+    """BullMQ no pudo renovar el lock: otro worker puede tomar el job.
+
+    Seguir entrenando solo produciría un resultado que BullMQ ya no acepta y,
+    peor, dos procesos escribiendo el mismo ``outputPath``. Se corta el fit en
+    la próxima época.
+    """
+    with _ACTIVE_STOP_LOCK:
+        for job_id in job_ids or []:
+            key = str(job_id)
+            stop_event = _ACTIVE_STOP_EVENTS.get(key)
+            if stop_event is None:
+                continue
+            _LOCK_LOST_JOBS.add(key)
+            stop_event.set()
+            logger.error("Se perdió el lock del trabajo %s; abortando entrenamiento", key)
 
 
 def _classify_error(exc: BaseException) -> str:
@@ -224,23 +260,44 @@ async def process_job(job, token):
     logger.info("Procesando trabajo %s: %s", job.id, job.name)
     data = job.data or {}
     if not verify_training_job_hmac(data, JOB_HMAC_SECRET):
-        raise ValueError("Invalid training job HMAC")
+        with _METRICS_LOCK:
+            _METRICS["jobs_rejected"] += 1
+        logger.error("Trabajo %s rechazado: HMAC inválido", job.id)
+        # Reintentar no puede arreglar una firma: que BullMQ no lo reencole.
+        raise UnrecoverableError("Invalid training job HMAC")
     started = time.monotonic()
 
     lesson_variant_id = data.get("lessonVariantId")
     model_id = data.get("modelId")
+    job_key = str(job.id)
     stop_event = threading.Event()
+
+    def _on_job_timeout() -> None:
+        logger.error(
+            "Trabajo %s superó TRAINER_MAX_JOB_SECONDS=%.0fs; se cancela", job.id, MAX_JOB_SECONDS
+        )
+        stop_event.set()
+
+    watchdog = threading.Timer(MAX_JOB_SECONDS, _on_job_timeout)
+    watchdog.daemon = True
 
     with _METRICS_LOCK:
         _METRICS["jobs_started"] += 1
     with _ACTIVE_STOP_LOCK:
-        _ACTIVE_STOP_EVENTS.add(stop_event)
+        _ACTIVE_STOP_EVENTS[job_key] = stop_event
+    watchdog.start()
 
+    succeeded = False
     try:
-        raw_data, output_path = _load_training_payload(data)
-        model_type, samples, noise = normalize_training_payload(
-            raw_data, fallback_model_type=data.get("modelType")
+        # Leer y validar cientos de MB en el event loop congelaría a BullMQ
+        # (renovación de lock incluida) mientras dura.
+        raw_data, output_path = await asyncio.to_thread(_load_training_payload, data)
+        model_type, samples, noise = await asyncio.to_thread(
+            normalize_training_payload,
+            raw_data,
+            data.get("modelType"),
         )
+        del raw_data
 
         if not isinstance(samples, list):
             raise ValueError("Training payload 'samples' must be a list")
@@ -284,15 +341,17 @@ async def process_job(job, token):
                 )
 
         model_results = await asyncio.to_thread(
-            train_lstm_model,
-            raw_data,
+            train_model,
+            model_type,
+            samples,
+            noise,
             output_path,
             on_progress_sync,
             stop_event,
-            model_type,
         )
 
         duration = time.monotonic() - started
+        succeeded = True
         with _METRICS_LOCK:
             _METRICS["jobs_completed"] += 1
             _METRICS["last_job_duration_seconds"] = duration
@@ -312,10 +371,17 @@ async def process_job(job, token):
         }
 
     except TrainingCancelledError:
+        with _ACTIVE_STOP_LOCK:
+            lock_lost = job_key in _LOCK_LOST_JOBS
         with _METRICS_LOCK:
-            _METRICS["jobs_cancelled"] += 1
+            _METRICS["jobs_lock_lost" if lock_lost else "jobs_cancelled"] += 1
             _METRICS["last_job_duration_seconds"] = time.monotonic() - started
             _METRICS["last_job_rss_mb"] = round(_rss_mb(), 2)
+        if lock_lost:
+            logger.error("Entrenamiento abortado por pérdida de lock para modelo %s", model_id)
+            raise TrainingCancelledError(
+                "Se perdió el lock del trabajo en BullMQ; entrenamiento abortado"
+            )
         logger.warning("Entrenamiento cancelado para modelo %s", model_id)
         raise
     except Exception as e:
@@ -329,8 +395,32 @@ async def process_job(job, token):
             raise RuntimeError(classified) from e
         raise
     finally:
+        watchdog.cancel()
         with _ACTIVE_STOP_LOCK:
-            _ACTIVE_STOP_EVENTS.discard(stop_event)
+            _ACTIVE_STOP_EVENTS.pop(job_key, None)
+            _LOCK_LOST_JOBS.discard(job_key)
+        # TR-01: el worker es de larga vida; liberar grafos y tensores de TF entre jobs.
+        tf_module = sys.modules.get("tensorflow")
+        if tf_module is not None:
+            try:
+                tf_module.keras.backend.clear_session()
+            except Exception:  # pragma: no cover - limpieza best-effort
+                logger.debug("clear_session falló", exc_info=True)
+        gc.collect()
+        # TR-04: los landmarks son biométricos; se borran al terminar con éxito.
+        if succeeded:
+            _discard_training_payload(data)
+
+
+def _discard_training_payload(job_data: dict) -> None:
+    """TR-04: borra el dataset del job (no espera al barrido del backend)."""
+    try:
+        data_path, _ = assert_safe_job_paths(
+            DATA_BASE_DIR, job_data.get("dataPath"), job_data.get("outputPath")
+        )
+        Path(data_path).unlink(missing_ok=True)
+    except Exception:
+        logger.warning("No se pudo borrar el dataset de entrenamiento", exc_info=True)
 
 
 async def _wait_for_redis() -> None:
@@ -412,6 +502,7 @@ async def main():
             "autorun": False,
         },
     )
+    worker.on("lockRenewalFailed", _on_lock_renewal_failed)
     worker_task = asyncio.create_task(worker.run(), name="bullmq-worker")
     _WORKER_READY.set()
 

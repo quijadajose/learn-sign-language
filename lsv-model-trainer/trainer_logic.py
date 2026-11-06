@@ -1,18 +1,25 @@
 import logging
-import hashlib
 import os
+import shutil
+import tempfile
+from typing import NamedTuple
 
 import numpy as np
 import tensorflowjs as tfjs
 from sklearn.metrics import classification_report, confusion_matrix
 from sklearn.model_selection import train_test_split
-from tensorflow.keras.callbacks import Callback, EarlyStopping
+from tensorflow.keras.callbacks import Callback, EarlyStopping, ReduceLROnPlateau
 from tensorflow.keras.layers import LSTM, Dense, Dropout, Input
 from tensorflow.keras.models import Sequential
 from tensorflow.keras.optimizers import Adam
 from tensorflow.keras.utils import set_random_seed, to_categorical
 
-from tfjs_export import patch_model_json
+from tfjs_export import (
+    patch_model_json,
+    replace_directory,
+    sha256_file,
+    weight_shard_paths,
+)
 from utils import (
     DYNAMIC_FEATURES_COUNT,
     FEATURES_SCHEMA_DYNAMIC,
@@ -20,11 +27,12 @@ from utils import (
     FIXED_SEQUENCE_LENGTH,
     STATIC_FEATURES_COUNT,
     augmentable_mask,
+    build_dynamic_sequence,
     frame_dropout_sequence,
     mirror_sequence_258,
+    public_model_json_path,
     resample_sequence,
     select_pose_landmarks,
-    sequence_to_dynamic,
     time_warp_sequence,
 )
 from validation import (
@@ -33,16 +41,22 @@ from validation import (
     compute_class_weights,
     normalize_training_payload,
     resolve_split_plan,
+    resolve_validation_plan,
     validate_training_samples,
 )
 
 logger = logging.getLogger(__name__)
 
-EPOCHS = 80
-LEARNING_RATE = 0.0001
-EARLY_STOP_PATIENCE = 10
+EPOCHS = 120
+LEARNING_RATE = 1e-3
+MIN_LEARNING_RATE = 1e-5
+EARLY_STOP_PATIENCE = 15
+# Antes de cortar se baja el learning rate un par de veces: con datasets chicos
+# la val_loss se estanca en mesetas que un paso más fino todavía mejora.
+LR_PLATEAU_PATIENCE = 5
+LR_PLATEAU_FACTOR = 0.5
 RANDOM_STATE = 42
-# Por debajo de esto el accuracy de validación es ruido, no una medida.
+# Por debajo de esto el accuracy de test es ruido, no una medida.
 MIN_RELIABLE_TEST_SAMPLES = 10
 # Frames que se toman de cada grabación estática para entrenar.
 STATIC_FRAMES_PER_RECORDING = 5
@@ -88,18 +102,46 @@ class ProgressCallback(Callback):
             raise TrainingCancelledError("Entrenamiento cancelado por el sistema")
 
 
-def stratified_train_test_split(X, y):
-    """train_test_split con seed fija y un test_count compatible con stratify."""
-    y_labels = np.argmax(y, axis=1) if getattr(y, 'ndim', 1) > 1 else np.asarray(y)
-    plan = resolve_split_plan(y_labels)
+class RecordingSplit(NamedTuple):
+    train: np.ndarray
+    val: np.ndarray
+    test: np.ndarray
+    # True cuando el dataset no alcanzó para apartar validación: el early
+    # stopping mira el mismo set que después se reporta.
+    val_is_test: bool
 
-    return train_test_split(
-        X,
-        y,
+
+def split_recordings(y_indices) -> RecordingSplit:
+    """Split por grabación en train / validación / test.
+
+    El test se aparta primero y solo se usa para reportar. La validación sale
+    de lo que queda y es la que mira el early stopping. Si el dataset es
+    demasiado chico para tres partes, la validación cae al test (y el caller
+    lo advierte), en vez de quitarle a alguna seña su única toma de train.
+    """
+    labels = np.asarray(y_indices)
+    indices = np.arange(len(labels))
+    plan = resolve_split_plan(labels)
+    idx_train, idx_test = train_test_split(
+        indices,
         test_size=plan.test_count,
         random_state=RANDOM_STATE,
-        stratify=y_labels if plan.stratify else None,
+        stratify=labels if plan.stratify else None,
     )
+    if len(idx_train) == 0 or len(idx_test) == 0:
+        raise ValueError(f"Split inválido: train={len(idx_train)}, test={len(idx_test)}")
+
+    val_plan = resolve_validation_plan(labels[idx_train])
+    if val_plan is None:
+        return RecordingSplit(idx_train, idx_test, idx_test, True)
+
+    idx_fit, idx_val = train_test_split(
+        idx_train,
+        test_size=val_plan.test_count,
+        random_state=RANDOM_STATE,
+        stratify=labels[idx_train],
+    )
+    return RecordingSplit(idx_fit, idx_val, idx_test, False)
 
 
 def build_early_stopping():
@@ -107,6 +149,16 @@ def build_early_stopping():
         monitor='val_loss',
         patience=EARLY_STOP_PATIENCE,
         restore_best_weights=True,
+    )
+
+
+def build_lr_schedule():
+    return ReduceLROnPlateau(
+        monitor='val_loss',
+        factor=LR_PLATEAU_FACTOR,
+        patience=LR_PLATEAU_PATIENCE,
+        min_lr=MIN_LEARNING_RATE,
+        verbose=0,
     )
 
 
@@ -125,7 +177,66 @@ def augment_frame(frame: np.ndarray, noise_std: float = 0.005, scale_range: tupl
 
 
 def augment_sequence(seq: np.ndarray, noise_std: float = 0.005, scale_range: tuple = (0.92, 1.08)) -> np.ndarray:
+    """Espera la secuencia recortada (202D), antes de derivar deltas."""
     return _jitter(seq, noise_std, scale_range)
+
+
+def _fit(model, X_train, y_train, X_val, y_val, class_weight, on_progress_fn, stop_event):
+    prog_cb = ProgressCallback(on_progress_fn=on_progress_fn, stop_event=stop_event)
+    history = model.fit(
+        X_train, y_train,
+        epochs=EPOCHS,
+        batch_size=32,
+        validation_data=(X_val, y_val),
+        callbacks=[prog_cb, build_early_stopping(), build_lr_schedule()],
+        class_weight=class_weight,
+        verbose=FIT_VERBOSITY,
+    )
+    prog_cb.raise_if_cancelled()
+    return history
+
+
+def _history_to_json(history) -> dict:
+    """Keras puede dejar np.float32 en el history (p. ej. learning_rate)."""
+    return {
+        key: [float(value) for value in values]
+        for key, values in history.history.items()
+    }
+
+
+def build_training_info(history_json: dict, split: RecordingSplit) -> dict:
+    epochs_run = len(history_json.get('loss', []))
+    val_losses = history_json.get('val_loss', [])
+    best_epoch = int(np.argmin(val_losses)) + 1 if val_losses else epochs_run
+    learning_rates = history_json.get('learning_rate') or [LEARNING_RATE]
+    return {
+        'epochsRun': epochs_run,
+        'maxEpochs': EPOCHS,
+        'bestEpoch': best_epoch,
+        'stoppedEarly': epochs_run < EPOCHS,
+        'finalLearningRate': float(learning_rates[-1]),
+        'trainRecordings': int(len(split.train)),
+        'validationRecordings': int(len(split.val)),
+        'testRecordings': int(len(split.test)),
+        'validationIsTestSet': bool(split.val_is_test),
+    }
+
+
+def training_warnings(training_info: dict) -> list[str]:
+    warnings = []
+    if training_info['validationIsTestSet']:
+        warnings.append(
+            "Dataset chico: no alcanzó para separar validación y test, así que "
+            "el early stopping usó el mismo set que se reporta y el accuracy es "
+            "optimista. Con 4 o más grabaciones por seña se separan."
+        )
+    if not training_info['stoppedEarly']:
+        warnings.append(
+            f"El entrenamiento llegó al máximo de {training_info['maxEpochs']} "
+            "épocas sin que la validación dejara de mejorar: el modelo puede "
+            "estar sub-entrenado."
+        )
+    return warnings
 
 
 def build_evaluation_metrics(model, X_test, y_test, actions):
@@ -161,13 +272,13 @@ def build_evaluation_metrics(model, X_test, y_test, actions):
         }
         if support > 0 and recall <= 0:
             warnings.append(
-                f"Clase '{action}' con recall 0 en validación — revisar grabaciones."
+                f"Clase '{action}' con recall 0 en test — revisar grabaciones."
             )
 
     test_sample_count = int(len(y_true))
     if test_sample_count < MIN_RELIABLE_TEST_SAMPLES:
         warnings.append(
-            f"Solo {test_sample_count} muestras de validación: el accuracy "
+            f"Solo {test_sample_count} muestras de test: el accuracy "
             f"({accuracy:.0%}) no es una medida confiable. Agrega más "
             f"grabaciones por seña."
         )
@@ -182,6 +293,35 @@ def build_evaluation_metrics(model, X_test, y_test, actions):
     }
 
 
+def export_tfjs_atomically(model, output_dir, input_shape):
+    """Exporta a una carpeta temporal hermana y la cambia por ``output_dir``.
+
+    Si el export falla o se reentrena sobre el mismo ``outputPath``, la carpeta
+    final nunca queda a medias ni con shards ``.bin`` de un modelo anterior.
+    Devuelve los shards declarados en el ``weightsManifest``.
+    """
+    output_dir = os.path.abspath(output_dir)
+    parent = os.path.dirname(output_dir)
+    os.makedirs(parent, exist_ok=True)
+    staging = tempfile.mkdtemp(prefix=f'.{os.path.basename(output_dir)}.tmp-', dir=parent)
+    try:
+        # mkdtemp crea 0700; el backend y quien sirva /shared/models leen con
+        # otro uid, igual que con el makedirs de antes.
+        os.chmod(staging, 0o755)
+        tfjs.converters.save_keras_model(model, staging)
+        model_json_path = os.path.join(staging, 'model.json')
+        patch_model_json(model_json_path, input_shape)
+        bin_files = weight_shard_paths(model_json_path)
+        for name in bin_files:
+            if not os.path.isfile(os.path.join(staging, name)):
+                raise RuntimeError(f'TFJS export declared {name} but did not write it')
+        replace_directory(staging, output_dir)
+    except BaseException:
+        shutil.rmtree(staging, ignore_errors=True)
+        raise
+    return bin_files
+
+
 def export_results(
     model,
     output_dir,
@@ -190,44 +330,66 @@ def export_results(
     sequence_length,
     actions,
     history,
+    split,
     X_test,
     y_test,
     features_schema_version,
 ):
-    tfjs.converters.save_keras_model(model, output_dir)
-    model_json_path = os.path.join(output_dir, 'model.json')
-    patch_model_json(model_json_path, input_shape)
-
     eval_metrics = build_evaluation_metrics(model, X_test, y_test, actions)
-    bin_files = sorted(f for f in os.listdir(output_dir) if f.endswith('.bin'))
-    if not bin_files:
-        raise RuntimeError(f'TFJS export produced no .bin shards in {output_dir}')
+    history_json = _history_to_json(history)
+    training_info = build_training_info(history_json, split)
+    warnings = eval_metrics['warnings'] + training_warnings(training_info)
 
-    logs = dict(history.history)
+    bin_files = export_tfjs_atomically(model, output_dir, input_shape)
+    model_json_path = os.path.join(os.path.abspath(output_dir), 'model.json')
+    model_json_sha256 = sha256_file(model_json_path)
+    bin_sha256 = {
+        name: sha256_file(os.path.join(os.path.abspath(output_dir), name))
+        for name in bin_files
+    }
+
+    logs = dict(history_json)
     logs['confusionMatrix'] = eval_metrics['confusionMatrix']
     logs['classMetrics'] = eval_metrics['classMetrics']
-    logs['warnings'] = eval_metrics['warnings']
+    logs['warnings'] = warnings
     logs['testSampleCount'] = eval_metrics['testSampleCount']
+    logs['trainingInfo'] = training_info
 
-    features_count = input_shape[-1]
-    with open(model_json_path, 'rb') as model_json_file:
-        model_json_sha256 = hashlib.sha256(model_json_file.read()).hexdigest()
+    logger.info(
+        "Entrenamiento: %s/%s épocas (mejor %s, lr final %.0e), val=%s grabaciones%s",
+        training_info['epochsRun'],
+        training_info['maxEpochs'],
+        training_info['bestEpoch'],
+        training_info['finalLearningRate'],
+        training_info['validationRecordings'],
+        " (= test)" if training_info['validationIsTestSet'] else "",
+    )
 
     return {
         'accuracy': eval_metrics['accuracy'],
         'labels': actions,
         'logs': logs,
-        'modelJsonUrl': model_json_path,
+        'modelJsonUrl': public_model_json_path(model_json_path),
         'binUrls': bin_files,
         'modelJsonSha256': model_json_sha256,
+        'binSha256': bin_sha256,
         'sequenceLength': sequence_length,
-        'featuresCount': features_count,
+        'featuresCount': input_shape[-1],
         'modelType': model_type,
         'featuresSchemaVersion': features_schema_version,
-        'warnings': eval_metrics['warnings'],
+        'warnings': warnings,
         'classMetrics': eval_metrics['classMetrics'],
         'confusionMatrix': eval_metrics['confusionMatrix'],
+        'trainingInfo': training_info,
     }
+
+
+def _labels(sample_names):
+    actions = sorted(set(sample_names))
+    label_map = {label: num for num, label in enumerate(actions)}
+    y_indices = np.array([label_map[name] for name in sample_names])
+    y = to_categorical(y_indices, num_classes=len(actions)).astype(np.float32)
+    return actions, y_indices, y
 
 
 def _central_frame(recording):
@@ -258,105 +420,79 @@ def _static_frames_from_recording(recording):
     return [recording[index] for index in picks]
 
 
-def _expand_static_train(recordings, indices, y_rows):
-    frames, labels = [], []
-    for position, recording_index in enumerate(indices):
-        for frame in _static_frames_from_recording(recordings[recording_index]):
-            frames.append(frame)
-            labels.append(y_rows[position])
-    return np.array(frames, dtype=np.float64), np.array(labels, dtype=np.float32)
-
-
-def _augment_static_train_set(X_train, y_train):
-    """Augmentación solo sobre train (no contaminar test)."""
+def _build_static_train_set(recordings, allow_mirror, indices, y):
+    """Frames de train con augmentación (nunca toca validación ni test)."""
     aug_x, aug_y = [], []
-    for frame, label_oh in zip(X_train, y_train):
-        aug_x.append(frame)
-        aug_y.append(label_oh)
-        for _ in range(3):
-            aug_x.append(augment_frame(frame))
-            aug_y.append(label_oh)
-        mirrored = mirror_sequence_258(np.array([frame]))[0]
-        aug_x.append(mirrored)
-        aug_y.append(label_oh)
-        aug_x.append(augment_frame(mirrored))
-        aug_y.append(label_oh)
+    for recording_index in indices:
+        label_oh = y[recording_index]
+        for frame in _static_frames_from_recording(recordings[recording_index]):
+            bases = [frame]
+            if allow_mirror[recording_index]:
+                bases.append(mirror_sequence_258(np.array([frame]))[0])
+            for base_index, base in enumerate(bases):
+                aug_x.append(base)
+                aug_y.append(label_oh)
+                # El original recibe más variantes que el espejo, igual que antes.
+                for _ in range(3 if base_index == 0 else 1):
+                    aug_x.append(augment_frame(base))
+                    aug_y.append(label_oh)
     return np.array(aug_x, dtype=np.float64), np.array(aug_y, dtype=np.float32)
 
 
-def train_static_model(training_data, output_dir, on_progress_fn, stop_event=None):
-    os.makedirs(output_dir, exist_ok=True)
-    set_random_seed(RANDOM_STATE)
+def _static_eval_set(recordings, indices, y):
+    # Un frame por grabación: si contara los cinco, testSampleCount y
+    # MIN_RELIABLE_TEST_SAMPLES medirían frames correlacionados en vez de
+    # observaciones independientes.
+    frames = np.array([_central_frame(recordings[i]) for i in indices], dtype=np.float64)
+    return select_pose_landmarks(frames).astype(np.float32), y[indices]
 
-    validated = validate_training_samples(training_data, label="samples")
-    recordings, sample_names = [], []
-    for item in validated:
-        recordings.append(np.asarray(item["landmarks"], dtype=np.float64))
-        sample_names.append(item["signName"])
 
-    if len(recordings) == 0:
-        raise ValueError("No se pudieron generar muestras estáticas de entrenamiento.")
-
-    assert_dataset_ready(sample_names, context="static")
-
-    actions = sorted(set(sample_names))
-    label_map = {label: num for num, label in enumerate(actions)}
-    y_indices = [label_map[name] for name in sample_names]
-    y = to_categorical(y_indices, num_classes=len(actions)).astype(np.float32)
-
-    # El split va por grabación, no por frame: dos frames de la misma toma en
-    # lados distintos harían que el test mida memorización, no generalización.
-    recording_indices = np.arange(len(recordings))
-    idx_train, idx_test, y_train_rec, y_test_rec = stratified_train_test_split(
-        recording_indices, y
-    )
-    if len(idx_train) == 0 or len(idx_test) == 0:
-        raise ValueError(
-            f"Split estático inválido: train={len(idx_train)}, test={len(idx_test)}"
-        )
-
-    X_train_full, y_train = _expand_static_train(recordings, idx_train, y_train_rec)
-    X_train_full, y_train = _augment_static_train_set(X_train_full, y_train)
-    # El test se queda con un frame por grabación: si contara los cinco,
-    # testSampleCount y MIN_RELIABLE_TEST_SAMPLES estarían midiendo frames
-    # correlacionados en vez de observaciones independientes.
-    X_test_full = np.array(
-        [_central_frame(recordings[index]) for index in idx_test], dtype=np.float64
-    )
-    y_test = y_test_rec
-
-    class_weight = compute_class_weights(np.argmax(y_train, axis=1), len(actions))
-    X_train = select_pose_landmarks(X_train_full).astype(np.float32)
-    X_test = select_pose_landmarks(X_test_full).astype(np.float32)
-    logger.info(
-        "Dataset estático: %s grabaciones → train=%s frames (con aug), test=%s",
-        len(recordings), len(X_train), len(X_test),
-    )
-
-    model = Sequential([
+def build_static_model(num_classes):
+    return Sequential([
         Input(shape=(STATIC_FEATURES_COUNT,)),
         Dense(128, activation='relu'),
         Dropout(0.3),
         Dense(64, activation='relu'),
         Dropout(0.2),
-        Dense(len(actions), activation='softmax'),
+        Dense(num_classes, activation='softmax'),
     ])
 
-    optimizer = Adam(learning_rate=LEARNING_RATE)
-    model.compile(optimizer=optimizer, loss='categorical_crossentropy', metrics=['categorical_accuracy'])
 
-    prog_cb = ProgressCallback(on_progress_fn=on_progress_fn, stop_event=stop_event)
+def train_static_model(training_data, output_dir, on_progress_fn, stop_event=None):
+    set_random_seed(RANDOM_STATE)
 
-    history = model.fit(
-        X_train, y_train,
-        epochs=EPOCHS,
-        batch_size=32,
-        validation_data=(X_test, y_test),
-        callbacks=[prog_cb, build_early_stopping()],
-        class_weight=class_weight,
-        verbose=FIT_VERBOSITY,
+    validated = validate_training_samples(training_data, label="samples")
+    recordings = [np.asarray(item["landmarks"], dtype=np.float64) for item in validated]
+    sample_names = [item["signName"] for item in validated]
+    allow_mirror = [item["allowMirror"] for item in validated]
+
+    if len(recordings) == 0:
+        raise ValueError("No se pudieron generar muestras estáticas de entrenamiento.")
+
+    assert_dataset_ready(sample_names, context="static")
+    actions, y_indices, y = _labels(sample_names)
+
+    # El split va por grabación, no por frame: dos frames de la misma toma en
+    # lados distintos harían que el test mida memorización, no generalización.
+    split = split_recordings(y_indices)
+
+    X_train_full, y_train = _build_static_train_set(recordings, allow_mirror, split.train, y)
+    X_train = select_pose_landmarks(X_train_full).astype(np.float32)
+    X_val, y_val = _static_eval_set(recordings, split.val, y)
+    X_test, y_test = _static_eval_set(recordings, split.test, y)
+    class_weight = compute_class_weights(np.argmax(y_train, axis=1), len(actions))
+    logger.info(
+        "Dataset estático: %s grabaciones → train=%s frames (con aug), val=%s, test=%s",
+        len(recordings), len(X_train), len(X_val), len(X_test),
     )
-    prog_cb.raise_if_cancelled()
+
+    model = build_static_model(len(actions))
+    model.compile(
+        optimizer=Adam(learning_rate=LEARNING_RATE),
+        loss='categorical_crossentropy',
+        metrics=['categorical_accuracy'],
+    )
+    history = _fit(model, X_train, y_train, X_val, y_val, class_weight, on_progress_fn, stop_event)
 
     return export_results(
         model,
@@ -366,6 +502,7 @@ def train_static_model(training_data, output_dir, on_progress_fn, stop_event=Non
         1,
         actions,
         history,
+        split,
         X_test,
         y_test,
         FEATURES_SCHEMA_STATIC,
@@ -382,33 +519,65 @@ def _finalize_dynamic_sequence(landmarks_258, sequence_length):
     res_258 = np.asarray(landmarks_258, dtype=np.float64)
     if len(res_258) == 0:
         return None
-    trimmed = select_pose_landmarks(res_258)
-    return resample_sequence(sequence_to_dynamic(trimmed), sequence_length)
+    return build_dynamic_sequence(select_pose_landmarks(res_258), sequence_length)
 
 
-def _augment_dynamic_train_from_258(raw_258_train, y_train, sequence_length):
-    """Convierte 258→340 y augments solo en train (incluye espejo sin fugar al test)."""
+def _dynamic_variants(trimmed):
+    """Variantes de augmentación sobre la secuencia recortada (202D).
+
+    Todo se perturba antes de derivar los deltas: así las velocidades siguen
+    siendo la diferencia entre posiciones consecutivas, igual que en inferencia.
+    """
+    return [
+        trimmed,
+        augment_sequence(trimmed),
+        augment_sequence(trimmed),
+        time_warp_sequence(trimmed),
+        frame_dropout_sequence(trimmed),
+    ]
+
+
+def _augment_dynamic_train_from_258(raw_258_train, y_train, allow_mirror, sequence_length):
+    """258D → variantes 202D → 340D, solo en train (el espejo no fuga al test)."""
     aug_x, aug_y = [], []
-    for raw_258, label_oh in zip(raw_258_train, y_train):
-        bases_258 = [raw_258, mirror_sequence_258(raw_258)]
+    for raw_258, label_oh, mirror_ok in zip(raw_258_train, y_train, allow_mirror):
+        raw = np.asarray(raw_258, dtype=np.float64)
+        if len(raw) == 0:
+            continue
+        bases_258 = [raw, mirror_sequence_258(raw)] if mirror_ok else [raw]
         for base_258 in bases_258:
-            seq = _finalize_dynamic_sequence(base_258, sequence_length)
-            if seq is None:
-                continue
-            aug_x.append(seq)
-            aug_y.append(label_oh)
-            for _ in range(2):
-                aug_x.append(augment_sequence(seq))
+            for variant in _dynamic_variants(select_pose_landmarks(base_258)):
+                aug_x.append(build_dynamic_sequence(variant, sequence_length))
                 aug_y.append(label_oh)
-            aug_x.append(time_warp_sequence(seq, target_length=sequence_length))
-            aug_y.append(label_oh)
-            aug_x.append(frame_dropout_sequence(seq))
-            aug_y.append(label_oh)
     return np.array(aug_x, dtype=np.float32), np.array(aug_y, dtype=np.float32)
 
 
+def _dynamic_eval_set(raw_258_list, indices, y, sequence_length):
+    xs, ys = [], []
+    for i in indices:
+        seq = _finalize_dynamic_sequence(raw_258_list[i], sequence_length)
+        if seq is None:
+            continue
+        xs.append(seq)
+        ys.append(y[i])
+    return np.array(xs, dtype=np.float32), np.array(ys, dtype=np.float32)
+
+
+def build_dynamic_model(sequence_length, num_classes):
+    # Dos LSTM de 64 en vez de 64/128/64: con decenas de grabaciones por
+    # lección el stack grande sobreajusta antes de que el early stopping corte.
+    return Sequential([
+        Input(shape=(sequence_length, DYNAMIC_FEATURES_COUNT)),
+        LSTM(64, return_sequences=True, activation='tanh'),
+        Dropout(0.3),
+        LSTM(64, return_sequences=False, activation='tanh'),
+        Dropout(0.3),
+        Dense(32, activation='relu'),
+        Dense(num_classes, activation='softmax'),
+    ])
+
+
 def train_dynamic_model(training_data, output_dir, on_progress_fn, stop_event=None, global_static_noise=None):
-    os.makedirs(output_dir, exist_ok=True)
     set_random_seed(RANDOM_STATE)
     global_static_noise = global_static_noise or []
     sequence_length = FIXED_SEQUENCE_LENGTH
@@ -421,11 +590,12 @@ def train_dynamic_model(training_data, output_dir, on_progress_fn, stop_event=No
     )
 
     # Guardamos 258D crudos para poder espejar solo en train tras el split
-    raw_258_list, sample_names = [], []
+    raw_258_list, sample_names, allow_mirror = [], [], []
 
     for item in validated:
         raw_258_list.append(item["landmarks"])
         sample_names.append(item["signName"])
+        allow_mirror.append(item["allowMirror"])
 
     for item in noise_validated:
         # Se remuestrea la grabación real en vez de repetir su frame central:
@@ -438,82 +608,45 @@ def train_dynamic_model(training_data, output_dir, on_progress_fn, stop_event=No
             )
         )
         sample_names.append(item["signName"])
+        allow_mirror.append(item["allowMirror"])
 
     if len(raw_258_list) == 0:
         raise ValueError("No se pudieron generar secuencias de entrenamiento dinámico.")
 
     assert_dataset_ready(sample_names, context="dynamic")
-
-    actions = sorted(set(sample_names))
-    label_map = {label: num for num, label in enumerate(actions)}
-    y_indices = [label_map[name] for name in sample_names]
-    y = to_categorical(y_indices, num_classes=len(actions)).astype(np.float32)
+    actions, y_indices, y = _labels(sample_names)
 
     # Split por índice sobre muestras originales (sin aug)
-    indices = np.arange(len(raw_258_list))
-    plan = resolve_split_plan(y_indices)
-    idx_train, idx_test = train_test_split(
-        indices,
-        test_size=plan.test_count,
-        random_state=RANDOM_STATE,
-        stratify=y_indices if plan.stratify else None,
+    split = split_recordings(y_indices)
+
+    X_val, y_val = _dynamic_eval_set(raw_258_list, split.val, y, sequence_length)
+    X_test, y_test = _dynamic_eval_set(raw_258_list, split.test, y, sequence_length)
+    if len(X_test) == 0 or len(X_val) == 0:
+        raise ValueError("No quedaron muestras de validación/test tras preparar secuencias dinámicas.")
+
+    X_train, y_train = _augment_dynamic_train_from_258(
+        [raw_258_list[i] for i in split.train],
+        y[split.train],
+        [allow_mirror[i] for i in split.train],
+        sequence_length,
     )
-
-    if len(idx_train) == 0 or len(idx_test) == 0:
-        raise ValueError(
-            f"Split dinámico inválido: train={len(idx_train)}, test={len(idx_test)}"
-        )
-
-    raw_train = [raw_258_list[i] for i in idx_train]
-    y_train = y[idx_train]
-
-    X_test_list, y_test_list = [], []
-    for i in idx_test:
-        seq = _finalize_dynamic_sequence(raw_258_list[i], sequence_length)
-        if seq is None:
-            continue
-        X_test_list.append(seq)
-        y_test_list.append(y[i])
-
-    if len(X_test_list) == 0:
-        raise ValueError("No quedaron muestras de test tras preparar secuencias dinámicas.")
-
-    X_test = np.array(X_test_list, dtype=np.float32)
-    y_test = np.array(y_test_list, dtype=np.float32)
-
-    class_weight = compute_class_weights(np.argmax(y_train, axis=1), len(actions))
-    X_train, y_train = _augment_dynamic_train_from_258(raw_train, y_train, sequence_length)
     if len(X_train) == 0:
         raise ValueError("No quedaron muestras de train tras augmentación dinámica.")
-    logger.info("Dataset dinámico: train=%s (con aug), test=%s", len(X_train), len(X_test))
-
-    model = Sequential([
-        Input(shape=(sequence_length, DYNAMIC_FEATURES_COUNT)),
-        LSTM(64, return_sequences=True, activation='tanh'),
-        Dropout(0.2),
-        LSTM(128, return_sequences=True, activation='tanh'),
-        Dropout(0.2),
-        LSTM(64, return_sequences=False, activation='tanh'),
-        Dense(64, activation='relu'),
-        Dense(32, activation='relu'),
-        Dense(len(actions), activation='softmax'),
-    ])
-
-    optimizer = Adam(learning_rate=LEARNING_RATE)
-    model.compile(optimizer=optimizer, loss='categorical_crossentropy', metrics=['categorical_accuracy'])
-
-    prog_cb = ProgressCallback(on_progress_fn=on_progress_fn, stop_event=stop_event)
-
-    history = model.fit(
-        X_train, y_train,
-        epochs=EPOCHS,
-        batch_size=32,
-        validation_data=(X_test, y_test),
-        callbacks=[prog_cb, build_early_stopping()],
-        class_weight=class_weight,
-        verbose=FIT_VERBOSITY,
+    # Después de augmentar: con allowMirror=false una seña recibe la mitad de
+    # variantes y los pesos tienen que verlo.
+    class_weight = compute_class_weights(np.argmax(y_train, axis=1), len(actions))
+    logger.info(
+        "Dataset dinámico: train=%s (con aug), val=%s, test=%s",
+        len(X_train), len(X_val), len(X_test),
     )
-    prog_cb.raise_if_cancelled()
+
+    model = build_dynamic_model(sequence_length, len(actions))
+    model.compile(
+        optimizer=Adam(learning_rate=LEARNING_RATE),
+        loss='categorical_crossentropy',
+        metrics=['categorical_accuracy'],
+    )
+    history = _fit(model, X_train, y_train, X_val, y_val, class_weight, on_progress_fn, stop_event)
 
     return export_results(
         model,
@@ -523,18 +656,25 @@ def train_dynamic_model(training_data, output_dir, on_progress_fn, stop_event=No
         sequence_length,
         actions,
         history,
+        split,
         X_test,
         y_test,
         FEATURES_SCHEMA_DYNAMIC,
     )
 
 
+def train_model(model_type, samples, global_static_noise, output_dir, on_progress_fn, stop_event=None):
+    """Entrena a partir de un payload ya normalizado por ``normalize_training_payload``."""
+    if model_type == "static":
+        return train_static_model(samples, output_dir, on_progress_fn, stop_event)
+    if model_type == "dynamic":
+        return train_dynamic_model(samples, output_dir, on_progress_fn, stop_event, global_static_noise)
+    raise ValueError(f"Unsupported modelType: {model_type!r}")
+
+
 def train_lstm_model(training_data, output_dir, on_progress_fn, stop_event=None, model_type=None):
-    """Dispatcher: la precedencia de modelType vive en normalize_training_payload."""
+    """Compat: normaliza el payload crudo y despacha a ``train_model``."""
     resolved_type, samples, noise = normalize_training_payload(
         training_data, fallback_model_type=model_type
     )
-
-    if resolved_type == "static":
-        return train_static_model(samples, output_dir, on_progress_fn, stop_event)
-    return train_dynamic_model(samples, output_dir, on_progress_fn, stop_event, noise)
+    return train_model(resolved_type, samples, noise, output_dir, on_progress_fn, stop_event)

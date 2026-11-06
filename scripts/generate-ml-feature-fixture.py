@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
-"""Genera schemas/fixtures/dynamic-v3-golden.json.
+"""Genera schemas/fixtures/dynamic-v4-golden.json.
 
-El fixture es la especificación ejecutable del contrato dynamic-v3: las suites
+El fixture es la especificación ejecutable del contrato dynamic-v4: las suites
 de Python y de frontend lo cargan y comprueban que su propia implementación
-reproduce la salida esperada, en las tres etapas de la cadena (escala de pose,
-recorte de landmarks y deltas). Sin esto, `normalize_pose_scale` en el trainer y
+reproduce la salida esperada, en las etapas de la cadena (escala de pose,
+recorte de landmarks, resample y deltas). dynamic-v4 deriva los deltas después
+del resample, y el caso remuestreado del fixture es lo que fija ese orden. Sin esto, `normalize_pose_scale` en el trainer y
 `normalizePoseScale` en el frontend pueden divergir sin que ningún test lo note,
 que es exactamente la clase de bug que motivó el bump.
 
@@ -20,7 +21,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 CONTRACT_PATH = ROOT / "schemas" / "ml-feature-contract.json"
-OUTPUT_PATH = ROOT / "schemas" / "fixtures" / "dynamic-v3-golden.json"
+OUTPUT_PATH = ROOT / "schemas" / "fixtures" / "dynamic-v4-golden.json"
 
 POSE_LANDMARKS = 33
 POSE_VALUES_PER_LANDMARK = 4  # x, y, z, visibility
@@ -36,6 +37,8 @@ RIGHT_SHOULDER = 12
 # 0.25): así el fixture se puede verificar a mano y el tercer frame demuestra que
 # la normalización es por frame, no por secuencia.
 SHOULDER_HALF_WIDTHS = [0.25, 0.25, 0.125]
+# 3 → 5 frames cae en posiciones 0, 0.5, 1, 1.5, 2: pesos exactos en binario.
+RESAMPLE_LENGTH = 5
 VISIBILITY = 0.9
 
 
@@ -100,6 +103,25 @@ def select(frame: list[float], model_landmarks: list[int]) -> list[float]:
     return pose + frame[HAND_FEATURE_START:]
 
 
+def resample(frames: list[list[float]], target: int) -> list[list[float]]:
+    """Interpolación lineal temporal, escrita aparte de utils.resample_sequence."""
+    source = len(frames)
+    if source == target:
+        return [list(frame) for frame in frames]
+    if source == 1:
+        return [list(frames[0]) for _ in range(target)]
+    output = []
+    for i in range(target):
+        position = i * (source - 1) / (target - 1)
+        low = int(position)
+        high = min(low + 1, source - 1)
+        weight = position - low
+        output.append(
+            [a + weight * (b - a) for a, b in zip(frames[low], frames[high])]
+        )
+    return output
+
+
 def velocity_indices(landmarks: list[int], model_landmarks: list[int]) -> list[int]:
     """Índices xyz de codos y muñecas, ya sobre el layout recortado."""
     slot = {landmark: position for position, landmark in enumerate(model_landmarks)}
@@ -154,12 +176,11 @@ def main() -> None:
                 f"esperaba {static_features_count}"
             )
 
-    dynamic = to_dynamic(
-        selected,
-        velocity_indices(velocity_landmarks, model_landmarks),
-        model_hand_start,
-    )
-    for t, frame in enumerate(dynamic):
+    vel_idx = velocity_indices(velocity_landmarks, model_landmarks)
+    dynamic = to_dynamic(selected, vel_idx, model_hand_start)
+    resampled_static = resample(selected, RESAMPLE_LENGTH)
+    dynamic_resampled = to_dynamic(resampled_static, vel_idx, model_hand_start)
+    for t, frame in enumerate(dynamic + dynamic_resampled):
         if len(frame) != dynamic_features_count:
             raise AssertionError(
                 f"frame dinámico {t}: {len(frame)} features, "
@@ -185,6 +206,9 @@ def main() -> None:
         "expectedNormalized258": normalized,
         "expectedStatic": selected,
         "expectedDynamic": dynamic,
+        "resampleLength": RESAMPLE_LENGTH,
+        "expectedResampledStatic": resampled_static,
+        "expectedDynamicResampled": dynamic_resampled,
     }
 
     OUTPUT_PATH.parent.mkdir(parents=True, exist_ok=True)

@@ -19,8 +19,10 @@ from utils import (
     FEATURES_SCHEMA_STATIC,
     MODEL_POSE_LANDMARKS,
     STATIC_FEATURES_COUNT,
+    build_dynamic_sequence,
     normalize_pose_scale,
     pose_scale_factor,
+    resample_sequence,
     select_pose_landmarks,
     sequence_to_dynamic,
 )
@@ -30,7 +32,7 @@ TOLERANCE = 1e-12
 
 def load_fixture() -> dict:
     root = Path(__file__).resolve().parents[2]
-    path = root / "schemas" / "fixtures" / "dynamic-v3-golden.json"
+    path = root / "schemas" / "fixtures" / "dynamic-v4-golden.json"
     with path.open(encoding="utf-8") as f:
         return json.load(f)
 
@@ -75,6 +77,24 @@ class GoldenFixtureTest(unittest.TestCase):
     def test_dynamic_sequence_matches_fixture(self):
         expected = np.array(self.fixture["expectedDynamic"])
         got = sequence_to_dynamic(select_pose_landmarks(normalize_pose_scale(self.inputs)))
+        self.assertEqual(got.shape, expected.shape)
+        np.testing.assert_allclose(got, expected, rtol=0, atol=TOLERANCE)
+
+    def test_resample_matches_fixture(self):
+        selected = select_pose_landmarks(normalize_pose_scale(self.inputs))
+        got = resample_sequence(selected, self.fixture["resampleLength"])
+        np.testing.assert_allclose(
+            got,
+            np.array(self.fixture["expectedResampledStatic"]),
+            rtol=0,
+            atol=TOLERANCE,
+        )
+
+    def test_dynamic_v4_resamples_before_deltas(self):
+        """Los deltas se derivan sobre la secuencia ya remuestreada."""
+        selected = select_pose_landmarks(normalize_pose_scale(self.inputs))
+        got = build_dynamic_sequence(selected, self.fixture["resampleLength"])
+        expected = np.array(self.fixture["expectedDynamicResampled"])
         self.assertEqual(got.shape, expected.shape)
         np.testing.assert_allclose(got, expected, rtol=0, atol=TOLERANCE)
 
