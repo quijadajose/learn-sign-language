@@ -20,20 +20,19 @@ import flowbiteReact from "flowbite-react/plugin/vite";
 const frontendRoot = dirname(fileURLToPath(import.meta.url));
 
 /**
- * INF-14: sha256 esperado de cada modelo. Rellénalo con el hash del archivo descargado
- * desde una fuente de confianza (`sha256sum public/mediapipe/models/*.task`).
- * Mientras esté vacío se avisa en consola y no se verifica.
+ * INF-14: sha256 esperado de cada modelo (verificado con `sha256sum public/mediapipe/models/*.task`).
+ * Si Google publica una versión nueva del modelo, actualiza el hash junto con la URL.
  */
 const MEDIAPIPE_MODELS: ReadonlyArray<{ file: string; url: string; sha256: string }> = [
   {
     file: "pose_landmarker_heavy.task",
     url: "https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_heavy/float16/1/pose_landmarker_heavy.task",
-    sha256: "",
+    sha256: "64437af838a65d18e5ba7a0d39b465540069bc8aae8308de3e318aad31fcbc7b",
   },
   {
     file: "hand_landmarker.task",
     url: "https://storage.googleapis.com/mediapipe-models/hand_landmarker/hand_landmarker/float16/1/hand_landmarker.task",
-    sha256: "",
+    sha256: "fbc2a30080c3c557093b5ddfc334698132eb341044ccee322ccf8bcf3607cde1",
   },
 ];
 
