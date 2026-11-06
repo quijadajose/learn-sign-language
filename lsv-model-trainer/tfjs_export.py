@@ -2,8 +2,11 @@
 
 from __future__ import annotations
 
+import hashlib
 import json
 import os
+import shutil
+import uuid
 from typing import Any
 
 
@@ -99,3 +102,58 @@ def patch_model_json(model_json_path: str, input_shape: list) -> None:
     with open(tmp_path, 'w', encoding='utf-8') as f:
         json.dump(model_data, f)
     os.replace(tmp_path, model_json_path)
+
+
+def weight_shard_paths(model_json_path: str) -> list[str]:
+    """Shards ``.bin`` que declara el ``weightsManifest``, en orden.
+
+    Se leen del manifest en vez de listar la carpeta: listar levantaría shards
+    de un export anterior que siguen en disco, y el backend los publicaría.
+    Solo se aceptan nombres planos porque el backend los resuelve junto al
+    ``model.json``.
+    """
+    with open(model_json_path, 'r', encoding='utf-8') as f:
+        model_data = json.load(f)
+    paths: list[str] = []
+    for manifest in model_data.get('weightsManifest', []):
+        for name in manifest.get('paths', []):
+            if (
+                not isinstance(name, str)
+                or not name
+                or name != os.path.basename(name)
+                or name in ('.', '..')
+            ):
+                raise ValueError(f'Invalid weight shard path in model.json: {name!r}')
+            if name not in paths:
+                paths.append(name)
+    if not paths:
+        raise RuntimeError(f'TFJS export declared no .bin shards in {model_json_path}')
+    return paths
+
+
+def sha256_file(path: str) -> str:
+    digest = hashlib.sha256()
+    with open(path, 'rb') as f:
+        for chunk in iter(lambda: f.read(1024 * 1024), b''):
+            digest.update(chunk)
+    return digest.hexdigest()
+
+
+def replace_directory(source: str, target: str) -> None:
+    """Pone ``source`` en lugar de ``target`` sin dejar nunca una carpeta mezclada.
+
+    ``os.replace`` no puede pisar un directorio con contenido, así que el viejo
+    se aparta primero y se borra solo cuando el nuevo ya está en su lugar. Si
+    el segundo rename falla, el viejo vuelve.
+    """
+    if not os.path.exists(target):
+        os.rename(source, target)
+        return
+    backup = f'{target}.old-{uuid.uuid4().hex}'
+    os.rename(target, backup)
+    try:
+        os.rename(source, target)
+    except BaseException:
+        os.rename(backup, target)
+        raise
+    shutil.rmtree(backup, ignore_errors=True)

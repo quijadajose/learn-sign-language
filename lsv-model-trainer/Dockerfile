@@ -5,15 +5,15 @@ WORKDIR /app
 RUN apt-get update \
     && apt-get install -y --no-install-recommends gosu \
     && rm -rf /var/lib/apt/lists/* \
-    && useradd --create-home --uid 10001 --shell /usr/sbin/nologin trainer \
-    && pip install --upgrade pip
+    && useradd --create-home --uid 10001 --shell /usr/sbin/nologin trainer
 
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-COPY . .
+# --chown en el COPY: un `chown -R` posterior duplicaría todo /app en otra capa.
+COPY --chown=trainer:trainer . .
 RUN chmod +x /app/docker-entrypoint.sh \
-    && chown -R trainer:trainer /app
+    && chown trainer:trainer /app
 
 ENV PYTHONUNBUFFERED=1
 ENV PYTHONDONTWRITEBYTECODE=1
