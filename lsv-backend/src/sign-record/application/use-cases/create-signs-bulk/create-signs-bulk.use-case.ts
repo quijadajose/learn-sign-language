@@ -2,6 +2,7 @@ import { Inject, Injectable, BadRequestException } from '@nestjs/common';
 import { SignRepositoryInterface } from '../../../domain/ports/sign.repository.interface.js';
 import { CreateSignsBulkDto } from '../../../domain/dto/sign-record.dto.js';
 import { Sign } from '../../../../shared/domain/entities/sign.js';
+import { LessonRepositoryInterface } from '../../../domain/ports/lesson.repository.interface.js';
 
 export type BulkCreateSkipped = {
   name: string;
@@ -18,6 +19,8 @@ export class CreateSignsBulkUseCase {
   constructor(
     @Inject('SignRepositoryInterface')
     private readonly signRepository: SignRepositoryInterface,
+    @Inject('LessonRepositoryInterface')
+    private readonly lessonRepository: LessonRepositoryInterface,
   ) {}
 
   async execute(data: CreateSignsBulkDto): Promise<BulkCreateResult> {
@@ -26,6 +29,14 @@ export class CreateSignsBulkUseCase {
     }
     if (!data.lessonId) {
       throw new BadRequestException('errors.lesson.idRequired');
+    }
+    // BE-06: la lección debe ser del mismo idioma que las señas.
+    const lesson = await this.lessonRepository.findById(data.lessonId);
+    if (!lesson) {
+      throw new BadRequestException('errors.lesson.notFound');
+    }
+    if (lesson.language?.id !== data.languageId) {
+      throw new BadRequestException('errors.sign.lessonLanguageMismatch');
     }
     if (!Array.isArray(data.signs) || data.signs.length === 0) {
       throw new BadRequestException('errors.sign.signsEmpty');

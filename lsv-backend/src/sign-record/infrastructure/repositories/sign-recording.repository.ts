@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { isUUID } from 'class-validator';
 import { InjectRepository } from '@nestjs/typeorm';
 import {
@@ -162,6 +162,24 @@ export class TypeOrmSignRecordingRepository implements SignRecordingRepositoryIn
     await queryRunner.startTransaction();
 
     try {
+      // BE-06: la región debe ser del mismo idioma que la seña.
+      if (regionId) {
+        const sign = await queryRunner.manager.findOne(Sign, {
+          where: { id: recording.sign.id },
+          relations: { language: true },
+        });
+        const region = await queryRunner.manager.findOne(Region, {
+          where: { id: regionId },
+          relations: { language: true },
+        });
+        if (!region) {
+          throw new BadRequestException('errors.region.notFound');
+        }
+        if (region.language?.id !== sign?.language?.id) {
+          throw new BadRequestException('errors.sign.regionLanguageMismatch');
+        }
+      }
+
       const savedRecording = await queryRunner.manager.save(
         SignRecording,
         recording,
