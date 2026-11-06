@@ -1,4 +1,5 @@
 import {
+  createReadStream,
   createWriteStream,
   cpSync,
   existsSync,
@@ -6,6 +7,7 @@ import {
   renameSync,
   unlinkSync,
 } from "node:fs";
+import { createHash } from "node:crypto";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { pipeline } from "node:stream/promises";
@@ -17,16 +19,33 @@ import flowbiteReact from "flowbite-react/plugin/vite";
 
 const frontendRoot = dirname(fileURLToPath(import.meta.url));
 
-const MEDIAPIPE_MODELS: ReadonlyArray<{ file: string; url: string }> = [
+/**
+ * INF-14: sha256 esperado de cada modelo. Rellénalo con el hash del archivo descargado
+ * desde una fuente de confianza (`sha256sum public/mediapipe/models/*.task`).
+ * Mientras esté vacío se avisa en consola y no se verifica.
+ */
+const MEDIAPIPE_MODELS: ReadonlyArray<{ file: string; url: string; sha256: string }> = [
   {
     file: "pose_landmarker_heavy.task",
     url: "https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_heavy/float16/1/pose_landmarker_heavy.task",
+    sha256: "",
   },
   {
     file: "hand_landmarker.task",
     url: "https://storage.googleapis.com/mediapipe-models/hand_landmarker/hand_landmarker/float16/1/hand_landmarker.task",
+    sha256: "",
   },
 ];
+
+function sha256OfFile(path: string): Promise<string> {
+  return new Promise((resolveHash, rejectHash) => {
+    const hash = createHash("sha256");
+    createReadStream(path)
+      .on("data", (chunk) => hash.update(chunk))
+      .on("end", () => resolveHash(hash.digest("hex")))
+      .on("error", rejectHash);
+  });
+}
 
 function copyMediapipeWasm(): void {
   const src = resolve(
@@ -82,13 +101,26 @@ async function ensureMediapipeModels(): Promise<void> {
   const destDir = resolve(frontendRoot, "public/mediapipe/models");
   mkdirSync(destDir, { recursive: true });
   await Promise.all(
-    MEDIAPIPE_MODELS.map(async ({ file, url }) => {
+    MEDIAPIPE_MODELS.map(async ({ file, url, sha256 }) => {
       const dest = resolve(destDir, file);
+      const verify = async () => {
+        if (!sha256) {
+          console.warn(`[mediapipe] ${file}: sin sha256 fijado en vite.config.ts (INF-14)`);
+          return;
+        }
+        const actual = await sha256OfFile(dest);
+        if (actual !== sha256.toLowerCase()) {
+          unlinkSync(dest);
+          throw new Error(`sha256 inesperado para ${file}: ${actual}`);
+        }
+      };
       if (existsSync(dest)) {
+        await verify();
         return;
       }
       try {
         await downloadHttps(url, dest);
+        await verify();
       } catch (error) {
         throw new Error(
           `Failed to download ${file} from Google Storage. ` +
@@ -124,10 +156,10 @@ const dockerWs = hmrClientPort
   : undefined;
 
 // https://vitejs.dev/config/
-export default defineConfig(({ command }) => ({
+export default defineConfig(() => ({
   plugins: [mediapipeAssetsPlugin(), react(), tailwindcss(), flowbiteReact()],
-  // Relative base is for the nginx production build; in dev it breaks HMR URLs.
-  base: command === "build" ? "./" : "/",
+  // FE-01: base absoluta. Con "./" las rutas anidadas (/lesson/:id) piden assets relativos.
+  base: "/",
   resolve: {
     dedupe: ["react", "react-dom"],
   },
