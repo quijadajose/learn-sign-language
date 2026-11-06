@@ -31,6 +31,8 @@ export const DocStartLesson = () =>
 export const DocSetLessonCompletion = () =>
   DocOp({
     summary: 'Marcar lección como completada o no',
+    description:
+      'La finalización la declara el cliente: el servidor no tiene prueba de que la lección se haya completado. No usar para ranking, certificados ni nada con valor sin validación adicional (BE-23).',
     body: SetLessonCompletionDto,
     status: 201,
     okType: UserLessonResponseDto,
