@@ -16,7 +16,13 @@ function readResetToken(searchParams: URLSearchParams): string | null {
       const fromHashParams = new URLSearchParams(hash).get("token");
       if (fromHashParams) return fromHashParams;
       if (hash.startsWith("token=")) {
-        return decodeURIComponent(hash.slice("token=".length));
+        const raw = hash.slice("token=".length);
+        try {
+          return decodeURIComponent(raw);
+        } catch {
+          // Escape malformado (p. ej. "%" suelto): usar el valor tal cual.
+          return raw;
+        }
       }
     }
   }
