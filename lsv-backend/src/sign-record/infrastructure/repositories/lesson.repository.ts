@@ -12,6 +12,10 @@ export class TypeOrmLessonRepository implements LessonRepositoryInterface {
   ) {}
 
   async findById(id: string): Promise<Lesson | null> {
-    return this.repository.findOne({ where: { id } });
+    // BE-06: se carga el idioma para validar que la seña y la lección son del mismo idioma.
+    return this.repository.findOne({
+      where: { id },
+      relations: { language: true },
+    });
   }
 }

@@ -1,4 +1,4 @@
-import { NotFoundException } from '@nestjs/common';
+import { NotFoundException, BadRequestException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { LeaderboardDto } from '../../../../leaderboard/domain/dto/leaderboard/leaderboard.js';
 import { QuizDto } from '../../../domain/dto/quiz/quiz-dto.js';
@@ -73,6 +73,7 @@ export class QuizRepository implements QuizRepositoryInterface {
   ): Promise<Quiz> {
     const lesson = await this.lessonRepository.findOne({
       where: { id: quizDto.lessonId },
+      relations: { language: true },
     });
 
     if (!lesson) {
@@ -82,6 +83,7 @@ export class QuizRepository implements QuizRepositoryInterface {
     const existingQuiz = await this.quizRepository.findOne({
       where: { id },
       relations: {
+        lesson: { language: true },
         questions: {
           options: true,
         },
@@ -90,6 +92,11 @@ export class QuizRepository implements QuizRepositoryInterface {
 
     if (!existingQuiz) {
       throw new NotFoundException('errors.quiz.notFound');
+    }
+
+    // BE-06: el quiz no puede pasarse a una lección de otro idioma en un PUT.
+    if (existingQuiz.lesson?.language?.id !== lesson.language?.id) {
+      throw new BadRequestException('errors.quiz.languageImmutable');
     }
 
     // BE-20: borrar y recrear preguntas/opciones en una sola transacción.

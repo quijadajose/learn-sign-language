@@ -103,6 +103,14 @@ export class RegionService {
       throw new NotFoundException('errors.region.notFound');
     }
 
+    // BE-06: la región no cambia de idioma en un PUT.
+    if (
+      updateRegionDto.languageId &&
+      updateRegionDto.languageId !== existingRegion.languageId
+    ) {
+      throw new BadRequestException('errors.region.languageImmutable');
+    }
+
     if (updateRegionDto.code !== existingRegion.code) {
       const regionWithSameCode = await this.regionRepository.findByCode(
         updateRegionDto.code,

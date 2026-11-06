@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   NotFoundException,
   ConflictException,
   Inject,
@@ -187,6 +188,7 @@ export class LessonRepository implements LessonRepositoryInterface {
     });
     const stage = await this.stageRepository.findOne({
       where: { id: lesson.stageId },
+      relations: { language: true },
     });
 
     if (!language) {
@@ -199,9 +201,19 @@ export class LessonRepository implements LessonRepositoryInterface {
 
     const existingLesson = await this.lessonRepository.findOne({
       where: { id },
+      relations: { language: true },
     });
     if (!existingLesson) {
       throw new NotFoundException('errors.lesson.notFound');
+    }
+
+    // BE-06: el idioma de una lección no cambia en un PUT (evita mover recursos
+    // a un idioma sobre el que el moderador no tiene permiso) y la etapa debe ser del mismo idioma.
+    if (existingLesson.language?.id !== language.id) {
+      throw new BadRequestException('errors.lesson.languageImmutable');
+    }
+    if (stage.language?.id !== language.id) {
+      throw new BadRequestException('errors.lesson.stageLanguageMismatch');
     }
 
     existingLesson.language = language;
