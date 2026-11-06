@@ -241,7 +241,7 @@ export function AddSignModal(props: AddSignModalProps) {
                     const isDynamic = draft.detectionType === "dynamic";
                     return (
                       <div
-                        key={`${draft.name}-${index}`}
+                        key={draft.name.toLocaleLowerCase("es")}
                         className="relative inline-flex"
                       >
                         <button

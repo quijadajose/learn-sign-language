@@ -191,7 +191,7 @@ export function SignsSidebar({
                       key={sign.id}
                       tabIndex={0}
                       role="button"
-                      aria-selected={isSelected}
+                      aria-pressed={isSelected}
                       aria-label={`Grabar seña ${sign.name}`}
                       className={`
                         ${isSelected ? "bg-blue-50 ring-1 ring-inset ring-blue-400 dark:bg-blue-900/20 dark:ring-blue-500" : "bg-white dark:bg-gray-800"}
