@@ -181,16 +181,26 @@ export class QuizVariantRepository {
       correctAnswersMap.set(option.questionVariant.id, option.id);
     });
 
+    // BE-02: cada pregunta puntúa una sola vez; se ignoran respuestas repetidas
+    // o de preguntas que no pertenecen a esta variante.
+    const answeredQuestionIds = new Set<string>();
     let correctCount = 0;
     for (const answer of submission.answers) {
+      if (answeredQuestionIds.has(answer.questionId)) {
+        continue;
+      }
+      answeredQuestionIds.add(answer.questionId);
       if (correctAnswersMap.get(answer.questionId) === answer.optionId) {
         correctCount++;
       }
     }
 
-    const totalQuestions = correctOptions.length;
+    // Total = número de preguntas con respuesta correcta, no de opciones.
+    const totalQuestions = correctAnswersMap.size;
     const score =
-      totalQuestions > 0 ? (correctCount / totalQuestions) * 100 : 0;
+      totalQuestions > 0
+        ? Math.min(100, (correctCount / totalQuestions) * 100)
+        : 0;
     const quizSubmission = this.submissionRepository.create({
       user: user,
       quizVariant: quizVariant,
