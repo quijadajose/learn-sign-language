@@ -261,9 +261,10 @@ describe('Authentication (e2e)', () => {
         })
         .expect(201);
 
+      const token = await loginToken(email);
       await request(app.getHttpServer())
         .put('/users/me')
-        .set('Authorization', `Bearer ${await loginToken(email)}`)
+        .set('Authorization', `Bearer ${token}`)
         .send({ hashPassword: 'not-a-hash' })
         .expect(400);
     });
@@ -278,9 +279,10 @@ describe('Authentication (e2e)', () => {
         })
         .expect(201);
 
+      const token = await loginToken(email);
       const updated = await request(app.getHttpServer())
         .put('/users/me')
-        .set('Authorization', `Bearer ${await loginToken(email)}`)
+        .set('Authorization', `Bearer ${token}`)
         .send({ firstName: 'Jane' })
         .expect(200);
 
