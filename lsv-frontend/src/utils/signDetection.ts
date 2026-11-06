@@ -20,6 +20,12 @@ import {
   VELOCITY_POSE_LANDMARKS,
 } from "./ml-feature-contract.generated";
 
+// Contrato de esquema y carga de modelos viven en módulos propios (FE-10);
+// se reexportan para no cambiar los imports existentes.
+export * from "./signDetectionSchema";
+export * from "./signDetectionModels";
+
+import type { VisionWorkerClient } from "./visionWorkerClient";
 export type SignDetectionType = "static" | "dynamic";
 
 export {
@@ -81,58 +87,6 @@ export const MIN_CAPTURE_FRAMES = 10;
 export const TARGET_CAPTURE_FRAMES = 12;
 /** Tope de frames de movimiento en dinámicas; si se excede, se aborta el intento */
 export const MAX_DYNAMIC_CAPTURE_FRAMES = 90;
-/**
- * Contrato de features soportado:
- * - static-v2: MLP 202D (1 frame) con pose escalado por ancho de hombros
- * - dynamic-v3: LSTM 340D con deltas de manos y de brazos → resample
- *
- * Se sigue capturando y guardando el frame completo de 258D; los 202D salen de
- * `selectPoseLandmarks`, que descarta los landmarks de pierna y los puntos de
- * mano gruesos del pose.
- *
- * Las versiones previas se rechazan en la carga: el escalado del pose cambia la
- * distribución de entrada de los dos modelos, así que un `static-v1` o un
- * `dynamic-v2` predeciría sobre features que nunca vio. No hay fallback por
- * `featuresCount`, porque un modelo sin versión explícita es anterior a este
- * bump por definición.
- */
-export const UNSUPPORTED_SCHEMA_MESSAGE =
-  "Este modelo usa un esquema de features anterior (el pose ahora se escala por " +
-  "ancho de hombros). Reentrena el modelo para poder usarlo.";
-
-export function isSupportedStaticSchema(
-  featuresSchemaVersion?: string | null,
-  featuresCount?: number | null,
-): boolean {
-  return (
-    featuresSchemaVersion === FEATURES_SCHEMA_STATIC &&
-    (featuresCount == null || featuresCount === STATIC_FEATURES_COUNT)
-  );
-}
-
-export function isSupportedDynamicSchema(
-  featuresSchemaVersion?: string | null,
-  featuresCount?: number | null,
-): boolean {
-  return (
-    featuresSchemaVersion === FEATURES_SCHEMA_DYNAMIC &&
-    (featuresCount == null || featuresCount === DYNAMIC_FEATURES_COUNT)
-  );
-}
-
-/**
- * Para los flujos que prueban un modelo sin saber de antemano si es estático o
- * dinámico: basta con que la versión sea una de las dos vigentes.
- */
-export function isSupportedSchemaVersion(
-  featuresSchemaVersion?: string | null,
-): boolean {
-  return (
-    featuresSchemaVersion === FEATURES_SCHEMA_STATIC ||
-    featuresSchemaVersion === FEATURES_SCHEMA_DYNAMIC
-  );
-}
-
 /** Cuántos frames reales capturar antes de inferir (alineado con muestras cortas + padding). */
 export function minFramesBeforeInference(sequenceLength: number): number {
   return Math.min(14, Math.max(MIN_CAPTURE_FRAMES, Math.floor(sequenceLength * 0.5)));
@@ -700,6 +654,34 @@ export type VisionDetectFrameResult = {
  * Un frame de MediaPipe + forward-fill. Compartido por Exam, Studio y Tester.
  * Si `canvas` se pasa, dibuja el overlay de esqueleto.
  */
+type FrameDetections = {
+  poseResults: { landmarks?: NormalizedLandmark[][] };
+  handResults: HandLandmarkResults;
+};
+
+async function detectOnMainThread(
+  poseLandmarker: PoseLandmarker,
+  handLandmarker: HandLandmarker,
+  video: HTMLVideoElement,
+  startTimeMs: number,
+): Promise<FrameDetections> {
+  const [poseResults, handResults] = await Promise.all([
+    poseLandmarker.detectForVideo(video, startTimeMs),
+    handLandmarker.detectForVideo(video, startTimeMs),
+  ]);
+  return { poseResults, handResults };
+}
+
+/** FE-07: la inferencia corre en el worker; el bitmap se transfiere, no se copia. */
+async function detectOnWorker(
+  visionWorker: VisionWorkerClient,
+  video: HTMLVideoElement,
+  startTimeMs: number,
+): Promise<FrameDetections> {
+  const bitmap = await createImageBitmap(video);
+  return visionWorker.detect(bitmap, startTimeMs);
+}
+
 export async function detectVisionFrame(options: {
   video: HTMLVideoElement;
   poseLandmarker: PoseLandmarker;
@@ -707,6 +689,8 @@ export async function detectVisionFrame(options: {
   timestampRef: TimestampRef;
   forwardFillState: ForwardFillState;
   canvas?: HTMLCanvasElement | null;
+  /** Si viene, la inferencia corre en el worker (ver visionWorkerClient). */
+  visionWorker?: VisionWorkerClient | null;
 }): Promise<VisionDetectFrameResult | null> {
   const {
     video,
@@ -715,15 +699,15 @@ export async function detectVisionFrame(options: {
     timestampRef,
     forwardFillState,
     canvas,
+    visionWorker,
   } = options;
 
   if (video.readyState < 2 || video.videoWidth === 0) return null;
 
   const startTimeMs = nextMediaPipeTimestamp(timestampRef);
-  const [poseResults, handResults] = await Promise.all([
-    poseLandmarker.detectForVideo(video, startTimeMs),
-    handLandmarker.detectForVideo(video, startTimeMs),
-  ]);
+  const { poseResults, handResults } = visionWorker
+    ? await detectOnWorker(visionWorker, video, startTimeMs)
+    : await detectOnMainThread(poseLandmarker, handLandmarker, video, startTimeMs);
 
   const poseRaw = poseResults.landmarks?.[0] || null;
   const { leftHandRaw, rightHandRaw } = pickHandLandmarks(handResults);
@@ -803,210 +787,6 @@ export function closeVisionLandmarkers(
     hands?.close();
   } catch {
     /* already closed */
-  }
-}
-
-export function resolveTrustedModelUrl(
-  modelJsonUrl: string,
-  backendBaseUrl: string,
-  pageOrigin: string,
-): string {
-  if (!/^https?:\/\//i.test(modelJsonUrl)) {
-    const base = backendBaseUrl.endsWith("/")
-      ? backendBaseUrl.slice(0, -1)
-      : backendBaseUrl;
-    const path = modelJsonUrl.startsWith("/")
-      ? modelJsonUrl
-      : `/${modelJsonUrl}`;
-    return `${base}${path}`;
-  }
-  const modelOrigin = new URL(modelJsonUrl).origin;
-  const backendOrigin = new URL(backendBaseUrl, pageOrigin).origin;
-  const page = new URL(pageOrigin).origin;
-  if (modelOrigin !== backendOrigin && modelOrigin !== page) {
-    throw new Error("Untrusted model URL");
-  }
-  return modelJsonUrl;
-}
-
-export async function loadTfModelFromUrl(
-  modelJsonUrl: string,
-  backendBaseUrl: string,
-): Promise<{
-  model: tf.LayersModel;
-  sequenceLength: number;
-  featuresCount: number;
-  modelType: "static" | "dynamic";
-}> {
-  const pageOrigin =
-    typeof window !== "undefined" ? window.location.origin : backendBaseUrl;
-  const modelUrl = resolveTrustedModelUrl(
-    modelJsonUrl,
-    backendBaseUrl,
-    pageOrigin,
-  );
-
-  const requestInit: RequestInit = {
-    credentials: "include",
-  };
-
-  const response = await fetch(modelUrl, requestInit);
-  if (!response.ok) {
-    throw new Error(
-      `No se pudo cargar el modelo (${response.status}): ${modelUrl}`,
-    );
-  }
-  const modelJson = await response.json();
-
-  let sequenceLength = 30;
-  let featuresCount = FEATURES_COUNT;
-  let modelType: "static" | "dynamic" = "dynamic";
-
-  try {
-    const layers =
-      modelJson.modelTopology?.model_config?.config?.layers ||
-      modelJson.modelTopology?.config?.layers;
-    if (layers?.length > 0) {
-      const shape =
-        layers[0].config?.batch_input_shape ||
-        layers[0].config?.batchInputShape ||
-        layers[0].config?.shape;
-      if (shape?.length === 2 && shape[1] !== null) {
-        modelType = "static";
-        sequenceLength = 1;
-        featuresCount = shape[1];
-      } else if (shape?.length >= 3) {
-        modelType = "dynamic";
-        if (shape[shape.length - 2] !== null) {
-          sequenceLength = shape[shape.length - 2];
-        }
-        if (shape[shape.length - 1] !== null) {
-          featuresCount = shape[shape.length - 1];
-        }
-      }
-    }
-  } catch {
-    /* usar valores por defecto */
-  }
-
-  // Only same-origin / backend URLs reach here; cookie via credentials.
-  const model = await tf.loadLayersModel(
-    tf.io.browserHTTPRequest(modelUrl, {
-      requestInit,
-    }),
-  );
-  return { model, sequenceLength, featuresCount, modelType };
-}
-
-export type LessonModelPayload = {
-  id: string;
-  name?: string;
-  modelJsonUrl: string;
-  labels?: string[];
-  modelType?: "static" | "dynamic";
-  featuresCount?: number;
-  featuresSchemaVersion?: string | null;
-};
-
-export type LessonModelsBundle = {
-  static: LessonModelPayload | null;
-  dynamic: LessonModelPayload | null;
-};
-
-export type LoadedLessonModels = {
-  static: {
-    model: tf.LayersModel;
-    labels: string[];
-    featuresCount: number;
-  } | null;
-  dynamic: {
-    model: tf.LayersModel;
-    labels: string[];
-    sequenceLength: number;
-    featuresCount: number;
-  } | null;
-};
-
-async function loadStaticLessonModel(
-  payload: LessonModelPayload,
-  backendBaseUrl: string,
-): Promise<NonNullable<LoadedLessonModels["static"]>> {
-  if (
-    !isSupportedStaticSchema(payload.featuresSchemaVersion, payload.featuresCount)
-  ) {
-    throw new Error(UNSUPPORTED_SCHEMA_MESSAGE);
-  }
-  const loaded = await loadTfModelFromUrl(payload.modelJsonUrl, backendBaseUrl);
-  const featuresCount = payload.featuresCount ?? loaded.featuresCount;
-  if (featuresCount !== STATIC_FEATURES_COUNT) {
-    loaded.model.dispose();
-    throw new Error(
-      `Modelo estático incompatible: se esperaban ${STATIC_FEATURES_COUNT} features, hay ${featuresCount}.`,
-    );
-  }
-  return {
-    model: loaded.model,
-    labels: payload.labels || [],
-    featuresCount,
-  };
-}
-
-async function loadDynamicLessonModel(
-  payload: LessonModelPayload,
-  backendBaseUrl: string,
-): Promise<NonNullable<LoadedLessonModels["dynamic"]>> {
-  if (
-    !isSupportedDynamicSchema(payload.featuresSchemaVersion, payload.featuresCount)
-  ) {
-    throw new Error(UNSUPPORTED_SCHEMA_MESSAGE);
-  }
-
-  const loaded = await loadTfModelFromUrl(payload.modelJsonUrl, backendBaseUrl);
-  const featuresCount = payload.featuresCount ?? loaded.featuresCount;
-  if (featuresCount !== DYNAMIC_FEATURES_COUNT) {
-    loaded.model.dispose();
-    throw new Error(
-      `Modelo dinámico incompatible: se esperaban ${DYNAMIC_FEATURES_COUNT} features, hay ${featuresCount}.`,
-    );
-  }
-  return {
-    model: loaded.model,
-    labels: payload.labels || [],
-    sequenceLength: loaded.sequenceLength,
-    featuresCount,
-  };
-}
-
-export async function loadLessonModelsFromApi(
-  payload: LessonModelsBundle,
-  backendBaseUrl: string,
-): Promise<LoadedLessonModels> {
-  const result: LoadedLessonModels = { static: null, dynamic: null };
-
-  const disposeLoaded = () => {
-    result.static?.model.dispose();
-    result.static = null;
-    result.dynamic?.model.dispose();
-    result.dynamic = null;
-  };
-
-  try {
-    if (payload.static?.modelJsonUrl) {
-      result.static = await loadStaticLessonModel(
-        payload.static,
-        backendBaseUrl,
-      );
-    }
-    if (payload.dynamic?.modelJsonUrl) {
-      result.dynamic = await loadDynamicLessonModel(
-        payload.dynamic,
-        backendBaseUrl,
-      );
-    }
-    return result;
-  } catch (error) {
-    disposeLoaded();
-    throw error;
   }
 }
 
@@ -1171,7 +951,7 @@ export function recordingHandFrameRatio(frames: unknown[]): number {
 }
 
 /**
- * Índices xyz de los landmarks de pose cuya velocidad se añade en dynamic-v3,
+ * Índices xyz de los landmarks de pose cuya velocidad se añade desde dynamic-v3,
  * sobre el frame capturado de 258D. Los usa `measureHandMotion`, que corre
  * antes del recorte.
  */
@@ -1315,10 +1095,14 @@ export function appendVelocityToSequence(frames: number[][]): number[][] {
 }
 
 /**
- * Prepara secuencia para el LSTM (solo dynamic-v3 / 340D):
- * escala de pose → recorte de landmarks → deltas sobre frames reales →
- * resample a T (alineado con `normalize_pose_scale` + `select_pose_landmarks` +
- * `sequence_to_dynamic` + `resample_sequence` del trainer).
+ * Prepara secuencia para el LSTM (dynamic-v4 / 340D):
+ * escala de pose → recorte de landmarks → resample a T → deltas (alineado con
+ * `normalize_pose_scale` + `select_pose_landmarks` + `build_dynamic_sequence`
+ * del trainer).
+ *
+ * Los deltas van después del resample para medir la velocidad en fracción del
+ * gesto y no por frame de cámara: así la misma seña capturada a 15 o a 30 fps
+ * produce el mismo vector.
  */
 export function buildDynamicInferenceSequence(
   frames: unknown[],
@@ -1333,9 +1117,11 @@ export function buildDynamicInferenceSequence(
   }
   if (flats.length === 0) return null;
 
-  const withVelocity = appendVelocityToSequence(flats);
-  if (withVelocity.length === sequenceLength) return withVelocity;
-  return resampleSequence(withVelocity, sequenceLength);
+  const resampled =
+    flats.length === sequenceLength
+      ? flats
+      : resampleSequence(flats, sequenceLength);
+  return appendVelocityToSequence(resampled);
 }
 
 export type ModelPrediction = {
