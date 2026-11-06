@@ -18,6 +18,7 @@
   },
   "moduleNameMapper": {
     "^@nestjs/throttler$": "<rootDir>/test/__mocks__/nestjs-throttler.mjs",
+    "^@nest-lab/throttler-storage-redis$": "<rootDir>/test/__mocks__/throttler-storage-redis.mjs",
     "^(\\.{1,2}/.*)\\.js$": "$1",
     "^file-type$": "<rootDir>/test/__mocks__/file-type.mjs"
   },
