@@ -21,6 +21,7 @@ import {
   ToastMessage,
 } from "./types";
 import {
+  filterRegionsByLanguage,
   groupRegionsByCountryAndLanguage,
   hasBaseRegionForLanguage,
   toggleSetItem,
@@ -541,14 +542,10 @@ export function useRegionManagement() {
     try {
       setEditLoading(true);
       const languageId = selectedRegion.language?.id;
-      const hasOtherBase = Boolean(
-        languageId &&
-          regions.some(
-            (region) =>
-              region.language?.id === languageId &&
-              region.isDefault &&
-              region.id !== selectedRegion.id,
-          ),
+      const hasOtherBase = hasBaseRegionForLanguage(
+        regions,
+        languageId,
+        selectedRegion.id,
       );
       const regionData = {
         ...editForm,
@@ -713,9 +710,7 @@ export function useRegionManagement() {
     allLanguages[0] ??
     null;
 
-  const focusedRegions = selectedLanguageId
-    ? regions.filter((region) => region.language?.id === selectedLanguageId)
-    : regions;
+  const focusedRegions = filterRegionsByLanguage(regions, selectedLanguageId);
 
   const focusedGroupedRegions = groupRegionsByCountryAndLanguage(
     focusedRegions,
@@ -755,15 +750,10 @@ export function useRegionManagement() {
   const createLanguageHasBaseRegion = languageHasBaseRegion(createLanguageId);
 
   const editLanguageId = selectedRegion?.language?.id ?? null;
-  const editLanguageHasOtherBase = Boolean(
-    editLanguageId &&
-      selectedRegion &&
-      regions.some(
-        (region) =>
-          region.language?.id === editLanguageId &&
-          region.isDefault &&
-          region.id !== selectedRegion.id,
-      ),
+  const editLanguageHasOtherBase = hasBaseRegionForLanguage(
+    regions,
+    editLanguageId,
+    selectedRegion?.id,
   );
 
   return {
