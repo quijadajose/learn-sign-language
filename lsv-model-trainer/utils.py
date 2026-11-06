@@ -1,4 +1,5 @@
 import os
+from typing import Any
 
 import numpy as np
 
@@ -156,7 +157,7 @@ _POSE_XYZ_INDICES = np.array(
 )
 
 
-def select_pose_landmarks(values: np.ndarray) -> np.ndarray:
+def select_pose_landmarks(values: np.ndarray[Any, Any]) -> np.ndarray[Any, Any]:
     """Proyecta 258D almacenado al subconjunto de pose que ven los modelos.
 
     MediaPipe emite siempre los 33 landmarks, aunque el encuadre sea de cintura
@@ -175,7 +176,7 @@ def select_pose_landmarks(values: np.ndarray) -> np.ndarray:
     return array[..., _SELECT_INDICES]
 
 
-def pose_scale_factor(values: np.ndarray) -> np.ndarray:
+def pose_scale_factor(values: np.ndarray[Any, Any]) -> np.ndarray[Any, Any]:
     """Ancho de hombros proyectado, por frame.
 
     Se mide solo en el plano de imagen (x, y) porque es el tamaño aparente de la
@@ -195,7 +196,7 @@ def pose_scale_factor(values: np.ndarray) -> np.ndarray:
     return np.where(distance > POSE_SCALE_EPSILON, distance, 1.0)
 
 
-def normalize_pose_scale(values: np.ndarray) -> np.ndarray:
+def normalize_pose_scale(values: np.ndarray[Any, Any]) -> np.ndarray[Any, Any]:
     """Divide el xyz del pose por el ancho de hombros, dejando visibility intacto.
 
     Vuelve el bloque de pose —y por tanto las velocidades que se derivan de él—
@@ -210,7 +211,7 @@ def normalize_pose_scale(values: np.ndarray) -> np.ndarray:
     return array
 
 
-def resample_sequence(sequence: np.ndarray, target_length: int) -> np.ndarray:
+def resample_sequence(sequence: np.ndarray[Any, Any], target_length: int) -> np.ndarray[Any, Any]:
     """Interpolación lineal temporal: N frames → target_length frames uniformes."""
     array = np.asarray(sequence, dtype=np.float64)
     source_length = len(array)
@@ -224,16 +225,16 @@ def resample_sequence(sequence: np.ndarray, target_length: int) -> np.ndarray:
     return _sample_at(array, positions)
 
 
-def _sample_at(sequence: np.ndarray, positions: np.ndarray) -> np.ndarray:
+def _sample_at(sequence: np.ndarray[Any, Any], positions: np.ndarray[Any, Any]) -> np.ndarray[Any, Any]:
     """Interpola linealmente la secuencia en posiciones fraccionarias de frame."""
     positions = np.clip(positions, 0, len(sequence) - 1)
     low = np.floor(positions).astype(int)
     high = np.ceil(positions).astype(int)
     weight = (positions - low)[:, np.newaxis]
-    return sequence[low] + weight * (sequence[high] - sequence[low])
+    return np.asarray(sequence[low] + weight * (sequence[high] - sequence[low]))
 
 
-def frame_to_dynamic(frame_static: np.ndarray, prev_static=None) -> np.ndarray:
+def frame_to_dynamic(frame_static: np.ndarray[Any, Any], prev_static: np.ndarray[Any, Any] | None = None) -> np.ndarray[Any, Any]:
     """Convierte un frame recortado (202D) a 340D: velocidad de manos y brazos.
 
     Los deltas de codos y muñecas se sacan del bloque de pose porque ahí es
@@ -255,7 +256,7 @@ def frame_to_dynamic(frame_static: np.ndarray, prev_static=None) -> np.ndarray:
     return np.concatenate([pose, hands, hand_deltas, pose_deltas])
 
 
-def sequence_to_dynamic(sequence_static: np.ndarray) -> np.ndarray:
+def sequence_to_dynamic(sequence_static: np.ndarray[Any, Any]) -> np.ndarray[Any, Any]:
     """Convierte una secuencia recortada (202D) a 340D frame a frame.
 
     Equivale a aplicar ``frame_to_dynamic`` a cada frame con el anterior, pero
@@ -271,7 +272,7 @@ def sequence_to_dynamic(sequence_static: np.ndarray) -> np.ndarray:
     return np.concatenate([frames, hand_deltas, pose_deltas], axis=1)
 
 
-def build_dynamic_sequence(sequence_static: np.ndarray, sequence_length: int) -> np.ndarray:
+def build_dynamic_sequence(sequence_static: np.ndarray[Any, Any], sequence_length: int) -> np.ndarray[Any, Any]:
     """202D recortado → secuencia 340D de ``sequence_length`` frames (dynamic-v4).
 
     Primero se remuestrea y después se derivan los deltas. Así las velocidades
@@ -287,11 +288,11 @@ def build_dynamic_sequence(sequence_static: np.ndarray, sequence_length: int) ->
 
 
 def time_warp_sequence(
-    seq: np.ndarray,
-    speed_range: tuple = (0.7, 1.3),
+    seq: np.ndarray[Any, Any],
+    speed_range: tuple[float, float] = (0.7, 1.3),
     segments: int = 4,
     target_length: int | None = None,
-) -> np.ndarray:
+) -> np.ndarray[Any, Any]:
     """Variación de ritmo no uniforme dentro del gesto.
 
     Divide el tiempo de salida en ``segments`` tramos y a cada uno le asigna una
@@ -315,7 +316,7 @@ def time_warp_sequence(
     return _sample_at(array, positions)
 
 
-def mirror_frame_258(frame: np.ndarray) -> np.ndarray:
+def mirror_frame_258(frame: np.ndarray[Any, Any]) -> np.ndarray[Any, Any]:
     """Espejo horizontal completo de un frame 258D.
 
     Niega la X de pose y manos, intercambia los bloques de mano izq/der y
@@ -341,7 +342,7 @@ def mirror_frame_258(frame: np.ndarray) -> np.ndarray:
     return out
 
 
-def mirror_sequence_258(sequence_258: np.ndarray) -> np.ndarray:
+def mirror_sequence_258(sequence_258: np.ndarray[Any, Any]) -> np.ndarray[Any, Any]:
     return np.array([mirror_frame_258(frame) for frame in sequence_258])
 
 
@@ -364,7 +365,7 @@ def _zero_sensitive_blocks(n_features: int) -> tuple[int, ...]:
     return ()
 
 
-def augmentable_mask(values: np.ndarray) -> np.ndarray:
+def augmentable_mask(values: np.ndarray[Any, Any]) -> np.ndarray[Any, Any]:
     """Máscara booleana de los valores que se pueden perturbar con ruido.
 
     Excluye la columna ``visibility`` del pose (una confianza en [0, 1] que el
@@ -385,7 +386,7 @@ def augmentable_mask(values: np.ndarray) -> np.ndarray:
     return mask
 
 
-def frame_dropout_sequence(seq: np.ndarray, drop_prob: float = 0.08) -> np.ndarray:
+def frame_dropout_sequence(seq: np.ndarray[Any, Any], drop_prob: float = 0.08) -> np.ndarray[Any, Any]:
     """Simula pérdida de tracking: congela el frame anterior con cierta probabilidad.
 
     Se aplica sobre la secuencia recortada (202D), antes de derivar deltas: un
