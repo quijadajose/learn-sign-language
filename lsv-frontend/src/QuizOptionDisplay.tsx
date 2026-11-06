@@ -3,10 +3,6 @@ import { BACKEND_BASE_URL } from "./config";
 import { CMS_CONTENT_LANG } from "./i18n";
 import { isImageUrl } from "./utils/isImageUrl";
 
-export function optionLetter(index: number): string {
-  return String.fromCharCode(65 + (index % 26));
-}
-
 interface QuizOptionDisplayProps {
   text: string;
   alt?: string;
