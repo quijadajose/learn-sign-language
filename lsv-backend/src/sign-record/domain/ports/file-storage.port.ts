@@ -1,5 +1,19 @@
+import { TrainingSample } from '../utils/training-data.js';
+
+/** Dataset de entrenamiento que se escribe por partes (BE-11). */
+export interface TrainingDatasetSource {
+  modelType: 'static' | 'dynamic';
+  samples: AsyncIterable<TrainingSample>;
+  globalStaticNoise?: AsyncIterable<TrainingSample>;
+}
+
 export interface FileStoragePort {
   saveJson(filePath: string, data: unknown): Promise<void>;
+  /** Escribe el dataset sin materializarlo en memoria; deja el archivo completo o no lo deja. */
+  saveTrainingDataset(
+    filePath: string,
+    dataset: TrainingDatasetSource,
+  ): Promise<void>;
   makeDirectory(dirPath: string): Promise<void>;
   /** Absolute shared root as seen by the API process. */
   getSharedDir(): string;

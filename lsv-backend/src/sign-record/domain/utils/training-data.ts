@@ -18,15 +18,24 @@ export function serializeRecordingLandmarks(landmarks: unknown[]): number[][] {
   });
 }
 
-export function recordingsToTrainingSamples(
-  recordings: SignRecording[],
-): TrainingSample[] {
-  return recordings.map((rec) => ({
+export function recordingToTrainingSample(rec: SignRecording): TrainingSample {
+  return {
     signName: rec.sign.name,
     detectionType: rec.sign.detectionType ?? 'static',
     isGlobal: rec.sign.isGlobal,
     landmarks: serializeRecordingLandmarks(rec.landmarks),
-  }));
+  };
+}
+
+export function recordingsToTrainingSamples(
+  recordings: SignRecording[],
+): TrainingSample[] {
+  return recordings.map(recordingToTrainingSample);
+}
+
+/** BE-11: clasifica una grabación sin necesitar el resto del dataset (para streaming). */
+export function isDynamicRecording(rec: SignRecording): boolean {
+  return (rec.sign.detectionType ?? 'static') === 'dynamic';
 }
 
 export function splitRecordingsForDualTraining(recordings: SignRecording[]): {
