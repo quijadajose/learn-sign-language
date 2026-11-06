@@ -8,14 +8,17 @@ services:
       - ./lsv-backend:/src/app
       - /src/app/node_modules
     command: sh -c "if [ ! -f dist/main.js ]; then rm -f *.tsbuildinfo; npm run build; fi && exec npm run start:debug"
+    # INF-10: solo en localhost. Nunca 0.0.0.0 en un servidor.
     ports:
-      - "3000:3000"
-      - "9229:9229"
+      - "127.0.0.1:3000:3000"
+      - "127.0.0.1:9229:9229"
 
   lsv-frontend:
     build:
       context: ./lsv-frontend
       dockerfile: Dockerfile
+    ports:
+      - "127.0.0.1:8080:5173"
 
   lsv-model-trainer:
     volumes:
@@ -23,11 +26,11 @@ services:
 
   lsv-valkey:
     ports:
-      - "6379:6379"
+      - "127.0.0.1:6379:6379"
 
   lsv-db:
     ports:
-      - "5432:5432"
+      - "127.0.0.1:5432:5432"
 
   lsv-pgadmin:
     image: dpage/pgadmin4
@@ -37,9 +40,9 @@ services:
       PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_PASSWORD}
       PGADMIN_CONFIG_SERVER_MODE: 'False'
     ports:
-      - "5050:80"
+      - "127.0.0.1:5050:80"
     networks:
-      - lsv_network
+      - lsv_internal
     depends_on:
       - lsv-db
 
@@ -49,8 +52,8 @@ services:
     environment:
       - REDIS_HOSTS=local:lsv-valkey:6379:0:${VALKEY_PASSWORD}
     ports:
-      - "8081:8081"
+      - "127.0.0.1:8081:8081"
     networks:
-      - lsv_network
+      - lsv_internal
     depends_on:
       - lsv-valkey
