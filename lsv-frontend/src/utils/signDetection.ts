@@ -24,6 +24,15 @@ import {
 // se reexportan para no cambiar los imports existentes.
 export * from "./signDetectionSchema";
 export * from "./signDetectionModels";
+export * from "./signDetectionForwardFill";
+import {
+  forwardFillHandLandmarks,
+  nextMediaPipeTimestamp,
+  type ForwardFillState,
+  type RawHandFrame,
+  type RawLandmark,
+  type TimestampRef,
+} from "./signDetectionForwardFill";
 
 import type { VisionWorkerClient } from "./visionWorkerClient";
 export type SignDetectionType = "static" | "dynamic";
@@ -77,8 +86,6 @@ export const STABLE_FRAMES_TO_START = 6;
 export const REST_FRAMES_TO_START = 10;
 /** Frames en reposo para cerrar captura dinámica (~500 ms @ 30 fps) */
 export const REST_FRAMES_TO_END = 15;
-/** Máximo de frames sin detección de mano antes de abortar (forward fill) */
-export const MAX_FORWARD_FILL_FRAMES = 5;
 /** Mínimo de frames de movimiento tras segmentación para considerar el gesto válido */
 export const MIN_GESTURE_FRAMES = 10;
 /** Mínimo de frames reales antes de inferir (las muestras de entrenamiento suelen tener 10–16) */
@@ -102,94 +109,6 @@ export const POSE_MODEL = "/mediapipe/models/pose_landmarker_heavy.task";
 export const HAND_MODEL = "/mediapipe/models/hand_landmarker.task";
 
 type Landmark = { x: number; y: number; z: number; visibility?: number };
-
-export type RawLandmark = { x: number; y: number; z: number };
-
-export type RawHandFrame = {
-  pose: RawLandmark[] | null;
-  leftHand: RawLandmark[] | null;
-  rightHand: RawLandmark[] | null;
-};
-
-export type TimestampRef = { current: number };
-
-/** Timestamp monótono para MediaPipe detectForVideo (unificado en todo el frontend). */
-export function nextMediaPipeTimestamp(ref: TimestampRef): number {
-  let ts = performance.now();
-  if (ts <= ref.current) {
-    ts = ref.current + 1;
-  }
-  ref.current = ts;
-  return ts;
-}
-
-export type ForwardFillState = {
-  lastValid: RawHandFrame | null;
-  consecutiveMisses: number;
-};
-
-export function createForwardFillState(): ForwardFillState {
-  return { lastValid: null, consecutiveMisses: 0 };
-}
-
-function cloneRawHandFrame(frame: RawHandFrame): RawHandFrame {
-  return {
-    pose: frame.pose?.map((p) => ({ ...p })) ?? null,
-    leftHand: frame.leftHand?.map((p) => ({ ...p })) ?? null,
-    rightHand: frame.rightHand?.map((p) => ({ ...p })) ?? null,
-  };
-}
-
-/**
- * Repite la última pose válida cuando MediaPipe pierde la mano brevemente.
- * Si el gap supera MAX_FORWARD_FILL_FRAMES, aborted=true y el gesto debe reiniciarse.
- */
-export function forwardFillHandLandmarks(
-  state: ForwardFillState,
-  detected: RawHandFrame | null,
-  handVisible: boolean,
-): {
-  frame: RawHandFrame | null;
-  state: ForwardFillState;
-  aborted: boolean;
-  filled: boolean;
-} {
-  if (handVisible && detected) {
-    const frame = cloneRawHandFrame(detected);
-    return {
-      frame,
-      state: { lastValid: frame, consecutiveMisses: 0 },
-      aborted: false,
-      filled: false,
-    };
-  }
-
-  if (!state.lastValid) {
-    return {
-      frame: null,
-      state: { ...state, consecutiveMisses: state.consecutiveMisses + 1 },
-      aborted: false,
-      filled: false,
-    };
-  }
-
-  const nextMisses = state.consecutiveMisses + 1;
-  if (nextMisses > MAX_FORWARD_FILL_FRAMES) {
-    return {
-      frame: null,
-      state: createForwardFillState(),
-      aborted: true,
-      filled: false,
-    };
-  }
-
-  return {
-    frame: cloneRawHandFrame(state.lastValid),
-    state: { ...state, consecutiveMisses: nextMisses },
-    aborted: false,
-    filled: true,
-  };
-}
 
 export type GesturePhase =
   | "waiting"
