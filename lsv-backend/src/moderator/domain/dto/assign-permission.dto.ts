@@ -1,5 +1,5 @@
 import { IsUUID, IsEnum, IsNotEmpty } from 'class-validator';
-import { PermissionScope } from 'src/shared/domain/entities/moderatorPermission';
+import { PermissionScope } from '../../../shared/domain/entities/moderatorPermission.js';
 import { ApiProperty } from '@nestjs/swagger';
 
 export class AssignPermissionDto {

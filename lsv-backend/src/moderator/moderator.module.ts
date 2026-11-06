@@ -1,13 +1,13 @@
 import { Module } from '@nestjs/common';
-import { ModeratorPermissionService } from './application/services/moderator-permission/moderator-permission.service';
-import { AssignPermissionUseCase } from './application/use-cases/assign-permission-use-case/assign-permission-use-case';
-import { RevokePermissionUseCase } from './application/use-cases/revoke-permission-use-case/revoke-permission-use-case';
-import { ListModeratorsUseCase } from './application/use-cases/list-moderators-use-case/list-moderators-use-case';
-import { ModeratorController } from './infrastructure/controllers/moderator/moderator.controller';
-import { LanguageModule } from 'src/language/language.module';
-import { RegionModule } from 'src/region/region.module';
-import { AuthModule } from 'src/auth/auth.module';
-import { PermissionsModule } from 'src/permissions/permissions.module';
+import { ModeratorPermissionService } from './application/services/moderator-permission/moderator-permission.service.js';
+import { AssignPermissionUseCase } from './application/use-cases/assign-permission-use-case/assign-permission-use-case.js';
+import { RevokePermissionUseCase } from './application/use-cases/revoke-permission-use-case/revoke-permission-use-case.js';
+import { ListModeratorsUseCase } from './application/use-cases/list-moderators-use-case/list-moderators-use-case.js';
+import { ModeratorController } from './infrastructure/controllers/moderator/moderator.controller.js';
+import { LanguageModule } from '../language/language.module.js';
+import { RegionModule } from '../region/region.module.js';
+import { AuthModule } from '../auth/auth.module.js';
+import { PermissionsModule } from '../permissions/permissions.module.js';
 
 @Module({
   imports: [PermissionsModule, LanguageModule, RegionModule, AuthModule],

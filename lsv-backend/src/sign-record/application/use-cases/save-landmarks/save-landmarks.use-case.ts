@@ -4,18 +4,18 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { Sign } from 'src/shared/domain/entities/sign';
-import { Region } from 'src/shared/domain/entities/region';
-import { SignRecordingRepositoryInterface } from 'src/sign-record/domain/ports/sign-recording.repository.interface';
-import { SignRepositoryInterface } from 'src/sign-record/domain/ports/sign.repository.interface';
-import { SaveLandmarksDto } from 'src/sign-record/domain/dto/sign-record.dto';
+import { Sign } from '../../../../shared/domain/entities/sign.js';
+import { Region } from '../../../../shared/domain/entities/region.js';
+import { SignRecordingRepositoryInterface } from '../../../domain/ports/sign-recording.repository.interface.js';
+import { SignRepositoryInterface } from '../../../domain/ports/sign.repository.interface.js';
+import { SaveLandmarksDto } from '../../../domain/dto/sign-record.dto.js';
 import {
   assertValidLandmarkFrames,
   computeHandConfidence,
   isRecordingValidated,
   LandmarkValidationError,
-} from 'src/sign-record/domain/utils/landmark-validation';
-import { withI18nParams } from 'src/i18n';
+} from '../../../domain/utils/landmark-validation.js';
+import { withI18nParams } from '../../../../i18n/index.js';
 
 @Injectable()
 export class SaveLandmarksUseCase {
@@ -29,7 +29,7 @@ export class SaveLandmarksUseCase {
   async execute(data: SaveLandmarksDto) {
     const sign = await this.signRepository.findById(data.signId);
     if (!sign) {
-      throw new NotFoundException('Seña no encontrada');
+      throw new NotFoundException('errors.sign.notFound');
     }
 
     try {

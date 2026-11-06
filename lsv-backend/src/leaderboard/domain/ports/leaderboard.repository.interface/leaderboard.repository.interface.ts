@@ -1,8 +1,8 @@
-import { LeaderboardDto } from 'src/leaderboard/domain/dto/leaderboard/leaderboard';
+import { LeaderboardDto } from '../../dto/leaderboard/leaderboard.js';
 import {
   PaginationDto,
   PaginatedResponseDto,
-} from 'src/shared/domain/dto/PaginationDto';
+} from '../../../../shared/domain/dto/PaginationDto.js';
 
 export interface LeaderboardRepositoryInterface {
   getGlobalLeaderboard(

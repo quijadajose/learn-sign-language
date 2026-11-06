@@ -1,10 +1,10 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, DeepPartial, In } from 'typeorm';
-import { LessonModel } from '../../../shared/domain/entities/lessonModel';
-import { LessonModelRepositoryInterface } from '../../domain/ports/lesson-model.repository.interface';
-import { PaginationDto } from 'src/shared/domain/dto/PaginationDto';
-import { resolveSupersedeScope } from '../../domain/utils/model-scope';
+import { LessonModel } from '../../../shared/domain/entities/lessonModel.js';
+import { LessonModelRepositoryInterface } from '../../domain/ports/lesson-model.repository.interface.js';
+import { PaginationDto } from '../../../shared/domain/dto/PaginationDto.js';
+import { resolveSupersedeScope } from '../../domain/utils/model-scope.js';
 
 function escapeLikePattern(value: string): string {
   return value.replace(/[\\%_]/g, '\\$&');
@@ -17,7 +17,10 @@ export class TypeOrmLessonModelRepository implements LessonModelRepositoryInterf
     private readonly repository: Repository<LessonModel>,
   ) {}
 
-  async findAll(pagination: PaginationDto): Promise<LessonModel[]> {
+  async findAll(
+    pagination: PaginationDto,
+    languageIds?: string[],
+  ): Promise<LessonModel[]> {
     const {
       page,
       limit,
@@ -38,9 +41,26 @@ export class TypeOrmLessonModelRepository implements LessonModelRepositoryInterf
       orderBy && allowedOrderBy.has(orderBy) ? orderBy : 'createdAt';
     const safeSortOrder = sortOrder === 'ASC' ? 'ASC' : 'DESC';
 
+    if (languageIds && languageIds.length === 0) return [];
+
+    // Modelos de lección o de variante cuyo idioma base esté permitido.
+    // Los modelos personalizados sin lección ni variante no tienen idioma:
+    // solo los ve un admin (languageIds undefined).
+    const where = languageIds
+      ? [
+          { lesson: { language: { id: In(languageIds) } } },
+          {
+            lessonVariant: {
+              baseLesson: { language: { id: In(languageIds) } },
+            },
+          },
+        ]
+      : undefined;
+
     return this.repository.find({
       skip,
       take: limit,
+      where,
       relations: {
         lesson: true,
       },

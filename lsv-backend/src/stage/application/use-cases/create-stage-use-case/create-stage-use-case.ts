@@ -1,8 +1,8 @@
 import { BadRequestException, Inject } from '@nestjs/common';
-import { LanguageRepositoryInterface } from 'src/language/domain/ports/language.repository.interface/language.repository.interface';
-import { StageRepositoryInterface } from 'src/stage/domain/ports/stage.repository.interface/stage.repository.interface';
-import { StageDto } from '../../../../shared/domain/dto/create-stage/create-stage-dto';
-import { Stages } from 'src/shared/domain/entities/stage';
+import { LanguageRepositoryInterface } from '../../../../language/domain/ports/language.repository.interface/language.repository.interface.js';
+import { StageRepositoryInterface } from '../../../domain/ports/stage.repository.interface/stage.repository.interface.js';
+import { StageDto } from '../../../../shared/domain/dto/create-stage/create-stage-dto.js';
+import { Stages } from '../../../../shared/domain/entities/stage.js';
 
 export class CreateStageUseCase {
   constructor(
@@ -21,7 +21,7 @@ export class CreateStageUseCase {
       createstageDto.languageId,
     );
     if (existingStage) {
-      throw new BadRequestException('Stage already in use');
+      throw new BadRequestException('errors.stage.alreadyInUse');
     }
     const stage = new Stages();
     stage.name = createstageDto.name;

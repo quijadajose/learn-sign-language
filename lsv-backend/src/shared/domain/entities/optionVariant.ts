@@ -1,5 +1,11 @@
-import { Column, Entity, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
-import { QuestionVariant } from './questionVariant';
+import {
+  Column,
+  Entity,
+  ManyToOne,
+  PrimaryGeneratedColumn,
+  Relation,
+} from 'typeorm';
+import { QuestionVariant } from './questionVariant.js';
 
 @Entity()
 export class OptionVariant {
@@ -19,5 +25,5 @@ export class OptionVariant {
       onDelete: 'CASCADE',
     },
   )
-  questionVariant: QuestionVariant;
+  questionVariant: Relation<QuestionVariant>;
 }

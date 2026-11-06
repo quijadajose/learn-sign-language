@@ -21,7 +21,7 @@ src/<feature>/
   infrastructure/  # controllers, TypeORM, adapters (BullMQ, disco, mail)
 ```
 
-Las reglas las aplica `dependency-cruiser` (`.dependency-cruiser.js`):
+Las reglas las aplica `dependency-cruiser` (`.dependency-cruiser.cjs`):
 
 - `domain` no importa `application` ni `infrastructure`
 - `application` solo habla con puertos de `domain`, no con adapters
@@ -104,6 +104,7 @@ Validadas al arrancar (`src/config/env-config.ts`). Copia
 | `API_PORT` | Puerto declarado (Compose publica `3000:3000`) |
 | `FRONTEND_URL` | CORS + redirect de OAuth |
 | `JWT_SECRET` | Firma JWT (obligatorio y distinto en cada entorno) |
+| `TRAINER_JOB_SECRET` | HMAC de los jobs de entrenamiento (obligatorio, distinto de `JWT_SECRET`) |
 | `DB_*` | Postgres (`lsv-db` en Compose, `127.0.0.1` en host) |
 | `VALKEY_*` | Cola BullMQ, OAuth codes, throttling |
 | `GOOGLE_*` | OAuth (`GOOGLE_CALLBACK_URL` debe coincidir con la consola) |

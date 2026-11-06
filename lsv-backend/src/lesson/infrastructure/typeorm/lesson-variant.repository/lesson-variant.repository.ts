@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { LessonVariant } from 'src/shared/domain/entities/lessonVariant';
+import { LessonVariant } from '../../../../shared/domain/entities/lessonVariant.js';
 
 @Injectable()
 export class LessonVariantRepository {

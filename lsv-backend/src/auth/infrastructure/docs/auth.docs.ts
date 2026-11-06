@@ -6,10 +6,10 @@ import {
   ApiTags,
   ApiExcludeEndpoint,
 } from '@nestjs/swagger';
-import { CreateUserDto } from '../../domain/dto/create-user/create-user';
-import { LoginUserDto } from '../../../auth/application/dto/login-user/login-user';
-import { ResetPassword } from '../../../auth/application/dto/reset-password/reset-password';
-import { ConfirmResetPasswordDto } from '../../../auth/application/dto/confirm-reset-password/confirm-reset-password-dto';
+import { CreateUserDto } from '../../domain/dto/create-user/create-user.js';
+import { LoginUserDto } from '../../../auth/application/dto/login-user/login-user.js';
+import { ResetPassword } from '../../../auth/application/dto/reset-password/reset-password.js';
+import { ConfirmResetPasswordDto } from '../../../auth/application/dto/confirm-reset-password/confirm-reset-password-dto.js';
 
 export const DocAuth = () => applyDecorators(ApiTags('Authentication'));
 

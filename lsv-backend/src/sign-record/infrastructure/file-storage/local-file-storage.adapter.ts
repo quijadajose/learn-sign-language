@@ -3,7 +3,7 @@ import { ConfigService } from '@nestjs/config';
 import { createHash } from 'crypto';
 import * as fs from 'fs/promises';
 import * as path from 'path';
-import { FileStoragePort } from '../../domain/ports/file-storage.port';
+import { FileStoragePort } from '../../domain/ports/file-storage.port.js';
 
 @Injectable()
 export class LocalFileStorageAdapter implements FileStoragePort {

@@ -1,11 +1,13 @@
-import { getCorsOrigins } from './cors.config';
+import { jest, describe, it, expect, beforeEach } from '@jest/globals';
+import type { Request, Response } from 'express';
 
-jest.mock('./cors.config', () => ({
-  getCorsOrigins: jest.fn(() => ['https://app.lsv.test']),
+// En ESM los imports estáticos se evalúan antes que el mock: se mockea y luego se importa.
+jest.unstable_mockModule('./cors.config.js', () => ({
+  getCorsOrigins: jest.fn<any>(() => ['https://app.lsv.test']),
 }));
 
-import { requireTrustedOrigin } from './trusted-origin';
-import { Request, Response } from 'express';
+const { getCorsOrigins } = await import('./cors.config.js');
+const { requireTrustedOrigin } = await import('./trusted-origin.js');
 
 function mockRes(): Response & { statusCode: number; body: unknown } {
   const res = {
@@ -29,7 +31,7 @@ describe('requireTrustedOrigin', () => {
   });
 
   it('allows GET without Origin', () => {
-    const next = jest.fn();
+    const next = jest.fn<any>();
     requireTrustedOrigin(
       { method: 'GET', headers: {} } as Request,
       mockRes(),
@@ -39,7 +41,7 @@ describe('requireTrustedOrigin', () => {
   });
 
   it('allows Bearer mutations from any Origin', () => {
-    const next = jest.fn();
+    const next = jest.fn<any>();
     requireTrustedOrigin(
       {
         method: 'POST',
@@ -52,7 +54,7 @@ describe('requireTrustedOrigin', () => {
   });
 
   it('rejects cookie mutations from a foreign Origin', () => {
-    const next = jest.fn();
+    const next = jest.fn<any>();
     const res = mockRes();
     requireTrustedOrigin(
       {
@@ -70,7 +72,7 @@ describe('requireTrustedOrigin', () => {
   });
 
   it('rejects cookie mutations without Origin', () => {
-    const next = jest.fn();
+    const next = jest.fn<any>();
     const res = mockRes();
     requireTrustedOrigin(
       {
@@ -85,7 +87,7 @@ describe('requireTrustedOrigin', () => {
   });
 
   it('allows cookie mutations from the frontend Origin', () => {
-    const next = jest.fn();
+    const next = jest.fn<any>();
     requireTrustedOrigin(
       {
         method: 'PUT',

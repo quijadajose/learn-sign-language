@@ -10,19 +10,19 @@ import {
   ParseUUIDPipe,
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
-import { RequireResourcePermission } from 'src/permissions/infrastructure/decorators/require-resource-permission.decorator';
-import { PermissionScope } from 'src/shared/domain/entities/moderatorPermission';
-import { ResourceAccessGuard } from 'src/permissions/infrastructure/guards/resource-access/resource-access.guard';
-import { QuizVariantService } from 'src/quiz/application/services/quiz-variant.service';
-import { CreateQuizVariantDto } from 'src/quiz/domain/dto/create-quiz-variant-dto';
-import { QuizVariant } from 'src/shared/domain/entities/quizVariant';
+import { RequireResourcePermission } from '../../../permissions/infrastructure/decorators/require-resource-permission.decorator.js';
+import { PermissionScope } from '../../../shared/domain/entities/moderatorPermission.js';
+import { ResourceAccessGuard } from '../../../permissions/infrastructure/guards/resource-access/resource-access.guard.js';
+import { QuizVariantService } from '../../application/services/quiz-variant.service.js';
+import { CreateQuizVariantDto } from '../../domain/dto/create-quiz-variant-dto.js';
+import { QuizVariant } from '../../../shared/domain/entities/quizVariant.js';
 import {
   DocCreateQuizVariant,
   DocDeleteQuizVariant,
   DocGetQuizVariants,
   DocQuizVariant,
   DocUpdateQuizVariant,
-} from './quiz-variant.docs';
+} from './quiz-variant.docs.js';
 
 @DocQuizVariant()
 @Controller('quiz-variants')

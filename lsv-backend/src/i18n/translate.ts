@@ -4,7 +4,7 @@ import {
   messages,
   type AppLocale,
   type MessageTree,
-} from './messages';
+} from './messages.js';
 
 export const I18N_KEY_PATTERN = /^(errors|success)(\.[a-zA-Z0-9_]+)+$/;
 

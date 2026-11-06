@@ -1,6 +1,6 @@
-import { CreateLanguageDto } from 'src/language/domain/dto/create-language/create-language';
-import { PaginationDto } from 'src/shared/domain/dto/PaginationDto';
-import { Language } from 'src/shared/domain/entities/language';
+import { CreateLanguageDto } from '../../dto/create-language/create-language.js';
+import { PaginationDto } from '../../../../shared/domain/dto/PaginationDto.js';
+import { Language } from '../../../../shared/domain/entities/language.js';
 
 export interface LanguageRepositoryInterface {
   findById(id: string): Promise<Language | null>;

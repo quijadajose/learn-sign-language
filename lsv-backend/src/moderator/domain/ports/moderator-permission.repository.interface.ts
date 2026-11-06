@@ -1,7 +1,7 @@
 import {
   ModeratorPermission,
   PermissionScope,
-} from 'src/shared/domain/entities/moderatorPermission';
+} from '../../../shared/domain/entities/moderatorPermission.js';
 
 export interface ModeratorPermissionRepositoryInterface {
   findByUserId(userId: string): Promise<ModeratorPermission[]>;
@@ -26,6 +26,7 @@ export interface ModeratorPermissionRepositoryInterface {
   findById(id: string): Promise<ModeratorPermission | null>;
   save(permission: ModeratorPermission): Promise<ModeratorPermission>;
   deleteById(id: string): Promise<void>;
+  findAccessibleLanguageIds(userId: string): Promise<string[]>;
   findWithFilters(
     pagination: { page: number; limit: number },
     languageId?: string,

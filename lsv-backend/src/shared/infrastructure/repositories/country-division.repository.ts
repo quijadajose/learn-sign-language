@@ -1,12 +1,12 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, In, ILike } from 'typeorm';
-import { Country } from '../../domain/entities/iso-3166-2/countries';
-import { Division } from '../../domain/entities/iso-3166-2/divisions';
-import { CountryDivisionRepositoryInterface } from '../../domain/ports/country-division.repository.interface';
-import { SearchDivisionsDto } from '../../domain/dto/search-divisions.dto';
-import { PaginatedResponseDto } from '../../domain/dto/paginated-response.dto';
-import { CountryWithDivisionsDto } from '../../domain/dto/country-with-divisions.dto';
+import { Country } from '../../domain/entities/iso-3166-2/countries.js';
+import { Division } from '../../domain/entities/iso-3166-2/divisions.js';
+import { CountryDivisionRepositoryInterface } from '../../domain/ports/country-division.repository.interface.js';
+import { SearchDivisionsDto } from '../../domain/dto/search-divisions.dto.js';
+import { PaginatedResponseDto } from '../../domain/dto/paginated-response.dto.js';
+import { CountryWithDivisionsDto } from '../../domain/dto/country-with-divisions.dto.js';
 
 @Injectable()
 export class CountryDivisionRepository implements CountryDivisionRepositoryInterface {

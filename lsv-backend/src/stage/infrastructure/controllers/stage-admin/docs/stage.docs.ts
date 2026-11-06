@@ -1,11 +1,11 @@
 import { applyDecorators } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
-import { StageDto } from 'src/shared/domain/dto/create-stage/create-stage-dto';
-import { DocOp } from 'src/shared/infrastructure/openapi/doc-op';
+import { StageDto } from '../../../../../shared/domain/dto/create-stage/create-stage-dto.js';
+import { DocOp } from '../../../../../shared/infrastructure/openapi/doc-op.js';
 import {
   PaginatedStageResponseDto,
   StageResponseDto,
-} from 'src/shared/infrastructure/openapi/resource-responses';
+} from '../../../../../shared/infrastructure/openapi/resource-responses.js';
 
 export const DocStage = () => applyDecorators(ApiTags('Stage'));
 

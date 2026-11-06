@@ -1,7 +1,7 @@
 import { BadRequestException } from '@nestjs/common';
-import { CreateSignsBulkUseCase } from './create-signs-bulk.use-case';
-import type { SignRepositoryInterface } from 'src/sign-record/domain/ports/sign.repository.interface';
-import type { Sign } from 'src/shared/domain/entities/sign';
+import { CreateSignsBulkUseCase } from './create-signs-bulk.use-case.js';
+import type { SignRepositoryInterface } from '../../../domain/ports/sign.repository.interface.js';
+import type { Sign } from '../../../../shared/domain/entities/sign.js';
 
 describe('CreateSignsBulkUseCase', () => {
   const languageId = '11111111-1111-1111-1111-111111111111';

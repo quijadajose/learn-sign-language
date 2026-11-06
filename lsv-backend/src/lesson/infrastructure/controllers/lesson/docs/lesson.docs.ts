@@ -1,8 +1,8 @@
 import { applyDecorators } from '@nestjs/common';
 import { ApiConsumes, ApiQuery, ApiTags } from '@nestjs/swagger';
-import { CreateLessonDto } from 'src/lesson/domain/dto/create-lesson/create-lesson-dto';
-import { CreateLessonVariantDto } from 'src/lesson/domain/dto/create-lesson-variant/create-lesson-variant-dto';
-import { DocOp } from 'src/shared/infrastructure/openapi/doc-op';
+import { CreateLessonDto } from '../../../../domain/dto/create-lesson/create-lesson-dto.js';
+import { CreateLessonVariantDto } from '../../../../domain/dto/create-lesson-variant/create-lesson-variant-dto.js';
+import { DocOp } from '../../../../../shared/infrastructure/openapi/doc-op.js';
 import {
   LessonImageResponseDto,
   LessonResponseDto,
@@ -10,7 +10,7 @@ import {
   MessageResponseDto,
   PaginatedLessonResponseDto,
   QuizPublicDto,
-} from 'src/shared/infrastructure/openapi/resource-responses';
+} from '../../../../../shared/infrastructure/openapi/resource-responses.js';
 
 export const DocLesson = () => applyDecorators(ApiTags('Lesson'));
 

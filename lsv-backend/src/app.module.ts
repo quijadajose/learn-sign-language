@@ -4,52 +4,55 @@ import { APP_FILTER, APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
 import { join } from 'path';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { validate } from './config/env.validation';
-import { AuthModule } from './auth/auth.module';
-import { User } from './shared/domain/entities/user';
-import { UsersModule } from './users/users.module';
-import { UserLesson } from './shared/domain/entities/userLesson';
-import { Lesson } from './shared/domain/entities/lesson';
-import { Stages } from './shared/domain/entities/stage';
-import { Language } from './shared/domain/entities/language';
-import { ImagesController } from './shared/infrastructure/controllers/images/images.controller';
-import { LessonModule } from './lesson/lesson.module';
-import { StageModule } from './stage/stage.module';
-import { UserLessonModule } from './user-lesson/user-lesson.module';
-import { Quiz } from './shared/domain/entities/quiz';
-import { QuizSubmission } from './shared/domain/entities/quizSubmission';
-import { Question } from './shared/domain/entities/question';
-import { Option } from './shared/domain/entities/option';
-import { QuizModule } from './quiz/quiz.module';
-import { LeaderboardModule } from './leaderboard/leaderboard.module';
-import { UploadPictureUseCase } from './shared/application/use-cases/upload-picture-use-case/upload-picture-use-case';
-import { LanguageModule } from './language/language.module';
-import { RegionModule } from './region/region.module';
-import { CountryDivisionModule } from './shared/country-division.module';
-import { UserLanguage } from './shared/domain/entities/userLanguage';
-import { UserRegion } from './shared/domain/entities/userRegion';
-import { Region } from './shared/domain/entities/region';
-import { LessonVariant } from './shared/domain/entities/lessonVariant';
-import { QuizVariant } from './shared/domain/entities/quizVariant';
-import { QuestionVariant } from './shared/domain/entities/questionVariant';
-import { OptionVariant } from './shared/domain/entities/optionVariant';
-import { Country } from './shared/domain/entities/iso-3166-2/countries';
-import { Division } from './shared/domain/entities/iso-3166-2/divisions';
-import { SeederService } from './seeder/seeder.service';
-import { Sign } from './shared/domain/entities/sign';
-import { SignVariant } from './shared/domain/entities/signVariant';
-import { LessonModel } from './shared/domain/entities/lessonModel';
-import { SignRecording } from './shared/domain/entities/signRecording';
-import { ModeratorPermission } from './shared/domain/entities/moderatorPermission';
-import { ModeratorModule } from './moderator/moderator.module';
-import { PermissionsModule } from './permissions/permissions.module';
+import { validate } from './config/env.validation.js';
+import { AuthModule } from './auth/auth.module.js';
+import { User } from './shared/domain/entities/user.js';
+import { UsersModule } from './users/users.module.js';
+import { UserLesson } from './shared/domain/entities/userLesson.js';
+import { Lesson } from './shared/domain/entities/lesson.js';
+import { Stages } from './shared/domain/entities/stage.js';
+import { Language } from './shared/domain/entities/language.js';
+import { ImagesController } from './shared/infrastructure/controllers/images/images.controller.js';
+import { LessonModule } from './lesson/lesson.module.js';
+import { StageModule } from './stage/stage.module.js';
+import { UserLessonModule } from './user-lesson/user-lesson.module.js';
+import { Quiz } from './shared/domain/entities/quiz.js';
+import { QuizSubmission } from './shared/domain/entities/quizSubmission.js';
+import { Question } from './shared/domain/entities/question.js';
+import { Option } from './shared/domain/entities/option.js';
+import { QuizModule } from './quiz/quiz.module.js';
+import { LeaderboardModule } from './leaderboard/leaderboard.module.js';
+import { UploadPictureUseCase } from './shared/application/use-cases/upload-picture-use-case/upload-picture-use-case.js';
+import { LanguageModule } from './language/language.module.js';
+import { RegionModule } from './region/region.module.js';
+import { CountryDivisionModule } from './shared/country-division.module.js';
+import { UserLanguage } from './shared/domain/entities/userLanguage.js';
+import { UserRegion } from './shared/domain/entities/userRegion.js';
+import { Region } from './shared/domain/entities/region.js';
+import { LessonVariant } from './shared/domain/entities/lessonVariant.js';
+import { QuizVariant } from './shared/domain/entities/quizVariant.js';
+import { QuestionVariant } from './shared/domain/entities/questionVariant.js';
+import { OptionVariant } from './shared/domain/entities/optionVariant.js';
+import { Country } from './shared/domain/entities/iso-3166-2/countries.js';
+import { Division } from './shared/domain/entities/iso-3166-2/divisions.js';
+import { SeederService } from './seeder/seeder.service.js';
+import { Sign } from './shared/domain/entities/sign.js';
+import { SignVariant } from './shared/domain/entities/signVariant.js';
+import { LessonModel } from './shared/domain/entities/lessonModel.js';
+import { SignRecording } from './shared/domain/entities/signRecording.js';
+import { ModeratorPermission } from './shared/domain/entities/moderatorPermission.js';
+import { ModeratorModule } from './moderator/moderator.module.js';
+import { PermissionsModule } from './permissions/permissions.module.js';
 import { SentryGlobalFilter, SentryModule } from '@sentry/nestjs/setup';
 import { ThrottlerModule } from '@nestjs/throttler';
 import { ThrottlerStorageRedisService } from '@nest-lab/throttler-storage-redis';
-import { HealthModule } from './health/health.module';
-import { SignRecordModule } from './sign-record/sign-record.module';
-import { AppThrottlerGuard } from './auth/infrastructure/guards/app-throttler.guard';
-import { I18nHttpExceptionFilter, I18nResponseInterceptor } from './i18n';
+import { HealthModule } from './health/health.module.js';
+import { SignRecordModule } from './sign-record/sign-record.module.js';
+import { AppThrottlerGuard } from './auth/infrastructure/guards/app-throttler.guard.js';
+import {
+  I18nHttpExceptionFilter,
+  I18nResponseInterceptor,
+} from './i18n/index.js';
 
 @Module({
   imports: [
@@ -103,7 +106,7 @@ import { I18nHttpExceptionFilter, I18nResponseInterceptor } from './i18n';
           LessonModel,
         ],
         synchronize: false,
-        migrations: [join(__dirname, '/db/migrations/*.{ts,js}')],
+        migrations: [join(import.meta.dirname, '/db/migrations/*.{ts,js}')],
         // Default true for single-instance deploys. Set RUN_MIGRATIONS=false
         // when running migrations as a separate job (multi-replica).
         migrationsRun: configService.get<string>('RUN_MIGRATIONS') !== 'false',

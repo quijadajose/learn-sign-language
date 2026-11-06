@@ -1,3 +1,4 @@
+import { OptionalUUIDPipe } from '../../../shared/infrastructure/pipes/optional-uuid.pipe.js';
 import {
   Controller,
   Post,
@@ -9,15 +10,16 @@ import {
   Delete,
   UseGuards,
   Query,
+  Req,
 } from '@nestjs/common';
-import { PaginationDto } from 'src/shared/domain/dto/PaginationDto';
-import { SignRecordService } from '../../application/sign-record/sign-record.service';
+import { PaginationDto } from '../../../shared/domain/dto/PaginationDto.js';
+import { SignRecordService } from '../../application/sign-record/sign-record.service.js';
 import { AuthGuard } from '@nestjs/passport';
-import { RolesGuard } from 'src/auth/infrastructure/guards/roles/roles.guard';
-import { Roles } from 'src/auth/infrastructure/decorators/roles.decorator';
-import { ResourceAccessGuard } from 'src/permissions/infrastructure/guards/resource-access/resource-access.guard';
-import { RequireResourcePermission } from 'src/permissions/infrastructure/decorators/require-resource-permission.decorator';
-import { PermissionScope } from 'src/shared/domain/entities/moderatorPermission';
+import { RolesGuard } from '../../../auth/infrastructure/guards/roles/roles.guard.js';
+import { Roles } from '../../../auth/infrastructure/decorators/roles.decorator.js';
+import { ResourceAccessGuard } from '../../../permissions/infrastructure/guards/resource-access/resource-access.guard.js';
+import { RequireResourcePermission } from '../../../permissions/infrastructure/decorators/require-resource-permission.decorator.js';
+import { PermissionScope } from '../../../shared/domain/entities/moderatorPermission.js';
 import {
   DocCreateSign,
   DocCreateSignsBulk,
@@ -34,14 +36,14 @@ import {
   DocTriggerCustomTraining,
   DocTriggerTraining,
   DocUpdateSign,
-} from './docs/sign-record.docs';
+} from './docs/sign-record.docs.js';
 import {
   CreateSignDto,
   CreateSignsBulkDto,
   SaveLandmarksDto,
   TriggerCustomTrainingDto,
   UpdateSignDto,
-} from '../../domain/dto/sign-record.dto';
+} from '../../domain/dto/sign-record.dto.js';
 
 @DocSignRecord()
 @Controller('sign-record')
@@ -55,7 +57,7 @@ export class SignRecordController {
   @RequireResourcePermission(
     PermissionScope.LANGUAGE,
     { body: 'signId', resolve: 'sign.languageId' },
-    { allowRegionModerators: true, allowUnscopedModerator: true },
+    { allowRegionModerators: true },
   )
   @DocSaveLandmarks()
   async saveLandmarks(@Body() data: SaveLandmarksDto) {
@@ -68,12 +70,12 @@ export class SignRecordController {
   @RequireResourcePermission(
     PermissionScope.LANGUAGE,
     { param: 'signId', resolve: 'sign.languageId' },
-    { allowRegionModerators: true, allowUnscopedModerator: true },
+    { allowRegionModerators: true },
   )
   @DocGetSignRecordings()
   async getSignRecordings(
     @Param('signId', new ParseUUIDPipe()) signId: string,
-    @Query('regionId') regionId?: string,
+    @Query('regionId', OptionalUUIDPipe) regionId?: string,
   ) {
     return this.signRecordService.getSignRecordings(signId, regionId);
   }
@@ -108,15 +110,21 @@ export class SignRecordController {
   @Get('global')
   @Roles('admin', 'moderator')
   @DocGetGlobalSigns()
-  async getGlobalSigns(@Query('regionId') regionId?: string) {
-    return this.signRecordService.getGlobalSigns(regionId);
+  async getGlobalSigns(
+    @Req() req: { user: { sub: string; role: string } },
+    @Query('regionId', OptionalUUIDPipe) regionId?: string,
+  ) {
+    return this.signRecordService.getGlobalSigns(
+      { sub: req.user.sub, role: req.user.role },
+      regionId,
+    );
   }
 
   @Get('lesson/:lessonId/signs')
   @DocGetLessonSigns()
   async getLessonSigns(
     @Param('lessonId', new ParseUUIDPipe()) lessonId: string,
-    @Query('regionId') regionId?: string,
+    @Query('regionId', OptionalUUIDPipe) regionId?: string,
   ) {
     return this.signRecordService.getSignsForLesson(lessonId, regionId);
   }
@@ -125,7 +133,7 @@ export class SignRecordController {
   @DocGetLessonModel()
   async getLessonModel(
     @Param('lessonId', new ParseUUIDPipe()) lessonId: string,
-    @Query('regionId') regionId?: string,
+    @Query('regionId', OptionalUUIDPipe) regionId?: string,
   ) {
     return this.signRecordService.getLessonModel(lessonId, regionId);
   }
@@ -133,8 +141,14 @@ export class SignRecordController {
   @Get('models')
   @Roles('admin', 'moderator')
   @DocGetModels()
-  async getModels(@Query() pagination: PaginationDto) {
-    return this.signRecordService.getModels(pagination);
+  async getModels(
+    @Req() req: { user: { sub: string; role: string } },
+    @Query() pagination: PaginationDto,
+  ) {
+    return this.signRecordService.getModels(
+      { sub: req.user.sub, role: req.user.role },
+      pagination,
+    );
   }
 
   @Delete('model/:id')
@@ -143,7 +157,7 @@ export class SignRecordController {
   @RequireResourcePermission(
     PermissionScope.LANGUAGE,
     { param: 'id', resolve: 'lessonModel.languageId' },
-    { allowRegionModerators: true, allowUnscopedModerator: true },
+    { allowRegionModerators: true },
   )
   @DocDeleteModel()
   async deleteModel(@Param('id', new ParseUUIDPipe()) id: string) {
@@ -156,7 +170,7 @@ export class SignRecordController {
   @RequireResourcePermission(
     PermissionScope.LANGUAGE,
     { param: 'id', resolve: 'signRecording.languageId' },
-    { allowRegionModerators: true, allowUnscopedModerator: true },
+    { allowRegionModerators: true },
   )
   @DocDeleteRecording()
   async deleteRecording(@Param('id', new ParseUUIDPipe()) id: string) {
@@ -195,7 +209,7 @@ export class SignRecordController {
   @RequireResourcePermission(
     PermissionScope.LANGUAGE,
     { param: 'id', resolve: 'sign.languageId' },
-    { allowRegionModerators: true, allowUnscopedModerator: true },
+    { allowRegionModerators: true },
   )
   @DocUpdateSign()
   async updateSign(
@@ -211,7 +225,7 @@ export class SignRecordController {
   @RequireResourcePermission(
     PermissionScope.LANGUAGE,
     { param: 'id', resolve: 'sign.languageId' },
-    { allowRegionModerators: true, allowUnscopedModerator: true },
+    { allowRegionModerators: true },
   )
   @DocDeleteSign()
   async deleteSign(@Param('id', new ParseUUIDPipe()) id: string) {

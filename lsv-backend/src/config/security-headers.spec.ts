@@ -1,4 +1,4 @@
-import { securityHeaders } from './security-headers';
+import { securityHeaders } from './security-headers.js';
 import { Request, Response } from 'express';
 
 describe('securityHeaders', () => {

@@ -6,9 +6,10 @@ import {
   ManyToOne,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
+  Relation,
 } from 'typeorm';
-import { Sign } from './sign';
-import { Region } from './region';
+import { Sign } from './sign.js';
+import { Region } from './region.js';
 
 @Entity()
 @Index('IDX_sign_variant_signId_regionId', ['sign', 'region'])
@@ -25,12 +26,12 @@ export class SignVariant {
   @ManyToOne(() => Sign, (sign) => sign.variants, {
     onDelete: 'CASCADE',
   })
-  sign: Sign;
+  sign: Relation<Sign>;
 
   @ManyToOne(() => Region, {
     onDelete: 'CASCADE',
   })
-  region: Region;
+  region: Relation<Region>;
 
   @CreateDateColumn()
   createdAt: Date;

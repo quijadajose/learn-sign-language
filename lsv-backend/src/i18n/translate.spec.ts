@@ -1,5 +1,5 @@
-import { resolveLocale, translate } from './translate';
-import { legacyMessageToKey, messages, type MessageTree } from './messages';
+import { resolveLocale, translate } from './translate.js';
+import { legacyMessageToKey, messages, type MessageTree } from './messages.js';
 
 function collectKeys(tree: MessageTree, prefix = ''): string[] {
   return Object.entries(tree).flatMap(([part, value]) => {

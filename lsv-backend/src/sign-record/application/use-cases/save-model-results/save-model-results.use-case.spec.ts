@@ -1,11 +1,12 @@
 import { BadRequestException, NotFoundException } from '@nestjs/common';
-import { LessonModelRepositoryInterface } from 'src/sign-record/domain/ports/lesson-model.repository.interface';
-import { SignRecordNotificationPort } from 'src/sign-record/domain/ports/sign-record.notification.port';
-import { FileStoragePort } from 'src/sign-record/domain/ports/file-storage.port';
+import { LessonModelRepositoryInterface } from '../../../domain/ports/lesson-model.repository.interface.js';
+import { SignRecordNotificationPort } from '../../../domain/ports/sign-record.notification.port.js';
+import { FileStoragePort } from '../../../domain/ports/file-storage.port.js';
 import {
+  normalizeModelJsonUrl,
   resolveSharedModelJsonPath,
   SaveModelResultsUseCase,
-} from './save-model-results.use-case';
+} from './save-model-results.use-case.js';
 
 describe('SaveModelResultsUseCase', () => {
   const repo = {
@@ -50,7 +51,22 @@ describe('SaveModelResultsUseCase', () => {
     featuresCount: 202,
     featuresSchemaVersion: 'static-v2',
     modelJsonSha256: 'a'.repeat(64),
+    binSha256: { 'group1-shard1of1.bin': 'c'.repeat(64) },
   };
+
+  const existingModel = {
+    id: 'model-1',
+    modelType: 'static',
+    lessonId: 'lesson-1',
+    lesson: { id: 'lesson-1' },
+    lessonVariant: { id: 'variant-1' },
+  };
+
+  /** Hash según el archivo: model.json → 'a', el shard → 'c'. */
+  const hashesByFile = (bin = 'c'.repeat(64)) =>
+    fileStorage.sha256File.mockImplementation((file: string) =>
+      Promise.resolve(file.endsWith('model.json') ? 'a'.repeat(64) : bin),
+    );
 
   it('rejects invalid trainer payloads', async () => {
     await expect(
@@ -81,6 +97,48 @@ describe('SaveModelResultsUseCase', () => {
     expect(repo.update).not.toHaveBeenCalled();
   });
 
+  it('rejects a weight shard whose hash does not match', async () => {
+    repo.findById.mockResolvedValue(existingModel);
+    hashesByFile('d'.repeat(64));
+    await expect(
+      useCase.execute('model-1', validPayload),
+    ).rejects.toBeInstanceOf(BadRequestException);
+    expect(fileStorage.sha256File).toHaveBeenCalledWith(
+      '/data/shared/models/m1/group1-shard1of1.bin',
+    );
+    expect(repo.update).not.toHaveBeenCalled();
+  });
+
+  it('rejects shards without a declared hash', async () => {
+    repo.findById.mockResolvedValue(existingModel);
+    hashesByFile();
+    await expect(
+      useCase.execute('model-1', {
+        ...validPayload,
+        binUrls: ['group1-shard1of1.bin', 'group1-shard2of2.bin'],
+      }),
+    ).rejects.toBeInstanceOf(BadRequestException);
+    await expect(
+      useCase.execute('model-1', { ...validPayload, binSha256: undefined }),
+    ).rejects.toBeInstanceOf(BadRequestException);
+    expect(repo.update).not.toHaveBeenCalled();
+  });
+
+  it('rejects shard names that escape the model directory', async () => {
+    repo.findById.mockResolvedValue(existingModel);
+    hashesByFile();
+    await expect(
+      useCase.execute('model-1', {
+        ...validPayload,
+        binUrls: ['../other/model.bin'],
+        binSha256: { '../other/model.bin': 'c'.repeat(64) },
+      }),
+    ).rejects.toBeInstanceOf(BadRequestException);
+    expect(fileStorage.sha256File).not.toHaveBeenCalledWith(
+      expect.stringContaining('other'),
+    );
+  });
+
   it('persists results and notifies on success', async () => {
     repo.findById.mockResolvedValue({
       id: 'model-1',
@@ -89,7 +147,7 @@ describe('SaveModelResultsUseCase', () => {
       lesson: { id: 'lesson-1' },
       lessonVariant: { id: 'variant-1' },
     });
-    fileStorage.sha256File.mockResolvedValue('a'.repeat(64));
+    hashesByFile();
 
     await expect(useCase.execute('model-1', validPayload)).resolves.toEqual({
       success: true,
@@ -128,5 +186,43 @@ describe('resolveSharedModelJsonPath', () => {
     expect(
       resolveSharedModelJsonPath('/shared/models/../etc/model.json', storage),
     ).toBeNull();
+  });
+
+  it('accepts the relative form reported by the trainer (TR-05)', () => {
+    expect(resolveSharedModelJsonPath('models/m1/model.json', storage)).toBe(
+      '/data/shared/models/m1/model.json',
+    );
+  });
+
+  it('rejects relative traversal', () => {
+    expect(
+      resolveSharedModelJsonPath('models/../etc/model.json', storage),
+    ).toBeNull();
+  });
+});
+
+describe('normalizeModelJsonUrl', () => {
+  it('canonicalizes the relative trainer path to /shared/models', () => {
+    expect(normalizeModelJsonUrl('models/m1/model.json')).toBe(
+      '/shared/models/m1/model.json',
+    );
+  });
+
+  it('keeps the absolute /shared form unchanged', () => {
+    expect(normalizeModelJsonUrl('/shared/models/m1/model.json')).toBe(
+      '/shared/models/m1/model.json',
+    );
+  });
+
+  it('extracts the pathname from an http(s) URL', () => {
+    expect(
+      normalizeModelJsonUrl('http://backend:3000/shared/models/m1/model.json'),
+    ).toBe('/shared/models/m1/model.json');
+  });
+
+  it('rejects paths outside models/ and backslashes', () => {
+    expect(normalizeModelJsonUrl('/etc/model.json')).toBeNull();
+    expect(normalizeModelJsonUrl('models\\m1\\model.json')).toBeNull();
+    expect(normalizeModelJsonUrl('models/m1/weights.bin')).toBeNull();
   });
 });

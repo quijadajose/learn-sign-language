@@ -1,15 +1,15 @@
 import { Injectable, NotFoundException, Inject } from '@nestjs/common';
-import { GetUserLessonByUserIdUseCase } from '../../use-cases/get-user-lesson-by-user-id-use-case/get-user-lesson-by-user-id-use-case';
+import { GetUserLessonByUserIdUseCase } from '../../use-cases/get-user-lesson-by-user-id-use-case/get-user-lesson-by-user-id-use-case.js';
 import {
   PaginatedResponseDto,
   PaginationDto,
-} from 'src/shared/domain/dto/PaginationDto';
-import { UserLesson } from 'src/shared/domain/entities/userLesson';
-import { StartLessonUseCase } from '../../use-cases/start-lesson-use-case/start-lesson-use-case';
-import { SetLessonCompletionUseCase } from '../../use-cases/set-lesson-completion-use-case/set-lesson-completion-use-case';
-import { FindUserUseCase } from 'src/auth/domain/use-cases/find-user/find-user';
-import { GetLessonByIdUseCase } from 'src/lesson/application/use-cases/get-lesson-by-id-use-case/get-lesson-by-id-use-case';
-import { GetRegionalLessonUseCase } from 'src/lesson/application/use-cases/get-regional-lesson-use-case/get-regional-lesson-use-case';
+} from '../../../../shared/domain/dto/PaginationDto.js';
+import { UserLesson } from '../../../../shared/domain/entities/userLesson.js';
+import { StartLessonUseCase } from '../../use-cases/start-lesson-use-case/start-lesson-use-case.js';
+import { SetLessonCompletionUseCase } from '../../use-cases/set-lesson-completion-use-case/set-lesson-completion-use-case.js';
+import { FindUserUseCase } from '../../../../auth/domain/use-cases/find-user/find-user.js';
+import { GetLessonByIdUseCase } from '../../../../lesson/application/use-cases/get-lesson-by-id-use-case/get-lesson-by-id-use-case.js';
+import { GetRegionalLessonUseCase } from '../../../../lesson/application/use-cases/get-regional-lesson-use-case/get-regional-lesson-use-case.js';
 
 @Injectable()
 export class UserLessonService {

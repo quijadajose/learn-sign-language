@@ -1,10 +1,10 @@
 import { Inject } from '@nestjs/common';
-import { QuizRepositoryInterface } from 'src/quiz/domain/ports/quiz.repository.interface/quiz.repository.interface';
+import { QuizRepositoryInterface } from '../../../../quiz/domain/ports/quiz.repository.interface/quiz.repository.interface.js';
 import {
   PaginationDto,
   PaginatedResponseDto,
-} from 'src/shared/domain/dto/PaginationDto';
-import { LeaderboardDto } from 'src/leaderboard/domain/dto/leaderboard/leaderboard';
+} from '../../../../shared/domain/dto/PaginationDto.js';
+import { LeaderboardDto } from '../../../domain/dto/leaderboard/leaderboard.js';
 
 export class GetLeaderboardByLanguageUseCase {
   constructor(

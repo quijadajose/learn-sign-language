@@ -1,9 +1,9 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { DeepPartial, Repository, SelectQueryBuilder } from 'typeorm';
-import { Sign } from '../../../shared/domain/entities/sign';
-import { SignRecording } from '../../../shared/domain/entities/signRecording';
-import { SignRepositoryInterface } from '../../domain/ports/sign.repository.interface';
+import { Sign } from '../../../shared/domain/entities/sign.js';
+import { SignRecording } from '../../../shared/domain/entities/signRecording.js';
+import { SignRepositoryInterface } from '../../domain/ports/sign.repository.interface.js';
 
 @Injectable()
 export class TypeOrmSignRepository implements SignRepositoryInterface {
@@ -28,11 +28,22 @@ export class TypeOrmSignRepository implements SignRepositoryInterface {
     return this.repository.remove(sign);
   }
 
-  async findGlobalWithRecordingsCount(regionId?: string): Promise<Sign[]> {
+  async findGlobalWithRecordingsCount(
+    regionId?: string,
+    languageIds?: string[],
+  ): Promise<Sign[]> {
     const qb = this.repository
       .createQueryBuilder('sign')
       .leftJoinAndSelect('sign.variants', 'variants')
       .where('sign.isGlobal = :isGlobal', { isGlobal: true });
+
+    if (languageIds) {
+      if (languageIds.length === 0) return [];
+      qb.innerJoin('sign.language', 'language').andWhere(
+        'language.id IN (:...languageIds)',
+        { languageIds },
+      );
+    }
 
     return this.withRecordingsCount(qb, regionId);
   }

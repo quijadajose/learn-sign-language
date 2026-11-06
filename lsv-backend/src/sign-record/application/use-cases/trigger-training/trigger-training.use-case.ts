@@ -1,18 +1,19 @@
 import { Inject, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { randomUUID } from 'crypto';
-import { LessonVariantRepositoryInterface } from 'src/sign-record/domain/ports/lesson-variant.repository.interface';
-import { LessonModelRepositoryInterface } from 'src/sign-record/domain/ports/lesson-model.repository.interface';
-import { SignRepositoryInterface } from 'src/sign-record/domain/ports/sign.repository.interface';
-import { SignRecordingRepositoryInterface } from 'src/sign-record/domain/ports/sign-recording.repository.interface';
-import { FileStoragePort } from 'src/sign-record/domain/ports/file-storage.port';
-import { TrainingQueuePort } from 'src/sign-record/domain/ports/training-queue.port';
-import { SignRecording } from 'src/shared/domain/entities/signRecording';
+import { LessonVariantRepositoryInterface } from '../../../domain/ports/lesson-variant.repository.interface.js';
+import { LessonModelRepositoryInterface } from '../../../domain/ports/lesson-model.repository.interface.js';
+import { SignRepositoryInterface } from '../../../domain/ports/sign.repository.interface.js';
+import { SignRecordingRepositoryInterface } from '../../../domain/ports/sign-recording.repository.interface.js';
+import { FileStoragePort } from '../../../domain/ports/file-storage.port.js';
+import { TrainingQueuePort } from '../../../domain/ports/training-queue.port.js';
+import { SignRecording } from '../../../../shared/domain/entities/signRecording.js';
 import {
   mergeValidatedWithLandmarkFallback,
   recordingsToTrainingSamples,
   splitRecordingsForDualTraining,
-} from 'src/sign-record/domain/utils/training-data';
-import { featureMetadataForModelType } from 'src/sign-record/domain/utils/landmark-validation';
+} from '../../../domain/utils/training-data.js';
+import { featureMetadataForModelType } from '../../../domain/utils/landmark-validation.js';
+import { assertWithinTrainingLimits } from '../../../domain/utils/training-limits.js';
 
 @Injectable()
 export class TriggerTrainingUseCase {
@@ -39,7 +40,8 @@ export class TriggerTrainingUseCase {
         lessonVariantId,
       );
 
-    if (!lessonVariant) throw new NotFoundException('Lesson variant not found');
+    if (!lessonVariant)
+      throw new NotFoundException('errors.lesson.variantNotFound');
 
     const signs = await this.signRepository.findForTraining(
       lessonVariant.baseLesson.id,
@@ -58,13 +60,13 @@ export class TriggerTrainingUseCase {
     );
 
     if (recordings.length === 0) {
-      throw new NotFoundException(
-        'No hay grabaciones validadas para entrenar esta lección',
-      );
+      throw new NotFoundException('errors.model.noValidatedRecordings');
     }
 
     const { staticRecordings, dynamicRecordings, globalStaticForDynamic } =
       splitRecordingsForDualTraining(recordings);
+    assertWithinTrainingLimits(staticRecordings);
+    assertWithinTrainingLimits(dynamicRecordings);
 
     const jobs: { modelId: string; modelType: 'static' | 'dynamic' }[] = [];
     const baseName = lessonVariant.baseLesson.name;
@@ -100,9 +102,7 @@ export class TriggerTrainingUseCase {
     }
 
     if (jobs.length === 0) {
-      throw new NotFoundException(
-        'No hay grabaciones estáticas ni dinámicas para entrenar',
-      );
+      throw new NotFoundException('errors.model.noStaticOrDynamicRecordings');
     }
 
     return { jobs, jobId: jobs[0]?.modelId, status: 'QUEUED' };

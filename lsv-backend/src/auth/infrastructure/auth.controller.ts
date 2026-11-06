@@ -1,3 +1,4 @@
+import { GoogleOAuthGuard } from './guards/google-oauth/google-oauth.guard.js';
 import {
   Body,
   Controller,
@@ -15,21 +16,20 @@ import { Throttle } from '@nestjs/throttler';
 import * as Sentry from '@sentry/nestjs';
 import { IsString, MinLength } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
-import { CreateUserDto } from '../domain/dto/create-user/create-user';
-import { AuthService } from '../application/auth.service';
-import { AuthGuard } from '@nestjs/passport';
-import { ResetPassword } from '../application/dto/reset-password/reset-password';
-import { ConfirmResetPasswordDto } from '../application/dto/confirm-reset-password/confirm-reset-password-dto';
-import { LoginUserDto } from '../application/dto/login-user/login-user';
-import { Public } from './decorators/public.decorator';
+import { CreateUserDto } from '../domain/dto/create-user/create-user.js';
+import { AuthService } from '../application/auth.service.js';
+import { ResetPassword } from '../application/dto/reset-password/reset-password.js';
+import { ConfirmResetPasswordDto } from '../application/dto/confirm-reset-password/confirm-reset-password-dto.js';
+import { LoginUserDto } from '../application/dto/login-user/login-user.js';
+import { Public } from './decorators/public.decorator.js';
 import { Request, Response } from 'express';
 import { ConfigService } from '@nestjs/config';
-import { OAuthCodeStore } from './oauth-code.store';
+import { OAuthCodeStore } from './oauth-code.store.js';
 import {
   attachAuthCookie,
   clearAuthCookie,
-} from 'src/shared/infrastructure/auth-cookie';
-import { extractAccessToken } from 'src/shared/infrastructure/extract-access-token';
+} from '../../shared/infrastructure/auth-cookie.js';
+import { extractAccessToken } from '../../shared/infrastructure/extract-access-token.js';
 import {
   DocAuth,
   DocConfirmPasswordReset,
@@ -40,7 +40,7 @@ import {
   DocRegister,
   DocRequestPasswordReset,
   DocExchangeGoogleCode,
-} from './docs/auth.docs';
+} from './docs/auth.docs.js';
 
 class ExchangeGoogleCodeDto {
   @ApiProperty({ minLength: 16, example: 'oauth-one-time-code' })
@@ -125,13 +125,13 @@ export class AuthController {
 
   @Public()
   @Get('google')
-  @UseGuards(AuthGuard('google'))
+  @UseGuards(GoogleOAuthGuard)
   @DocGoogleAuth()
   async googleAuth() {}
 
   @Public()
   @Get('google/callback')
-  @UseGuards(AuthGuard('google'))
+  @UseGuards(GoogleOAuthGuard)
   @DocGoogleAuthRedirect()
   async googleAuthRedirect(@Req() req, @Res() res: Response) {
     const payload = req.user;

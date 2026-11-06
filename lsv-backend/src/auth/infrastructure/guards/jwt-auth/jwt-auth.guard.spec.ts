@@ -1,8 +1,8 @@
 import { ExecutionContext, UnauthorizedException } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
-import { JwtAuthGuard } from './jwt-auth.guard';
-import { TokenService } from 'src/auth/domain/ports/token.service/token.service.interface';
-import { UserRepositoryInterface } from 'src/auth/domain/ports/user.repository.interface/user.repository.interface';
+import { JwtAuthGuard } from './jwt-auth.guard.js';
+import { TokenService } from '../../../domain/ports/token.service/token.service.interface.js';
+import { UserRepositoryInterface } from '../../../domain/ports/user.repository.interface/user.repository.interface.js';
 
 function mockContext(
   headers: Record<string, string> = {},

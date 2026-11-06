@@ -1,11 +1,11 @@
 import { Injectable } from '@nestjs/common';
-import { GetGeneralLeaderboardUseCase } from '../../use-cases/get-general-leaderboard-use-case/get-general-leaderboard-use-case';
+import { GetGeneralLeaderboardUseCase } from '../../use-cases/get-general-leaderboard-use-case/get-general-leaderboard-use-case.js';
 import {
   PaginationDto,
   PaginatedResponseDto,
-} from 'src/shared/domain/dto/PaginationDto';
-import { GetLeaderboardByLanguageUseCase } from '../../use-cases/get-leaderboard-by-language-use-case/get-leaderboard-by-language-use-case';
-import { LeaderboardDto } from 'src/leaderboard/domain/dto/leaderboard/leaderboard';
+} from '../../../../shared/domain/dto/PaginationDto.js';
+import { GetLeaderboardByLanguageUseCase } from '../../use-cases/get-leaderboard-by-language-use-case/get-leaderboard-by-language-use-case.js';
+import { LeaderboardDto } from '../../../domain/dto/leaderboard/leaderboard.js';
 
 @Injectable()
 export class LeaderboardService {

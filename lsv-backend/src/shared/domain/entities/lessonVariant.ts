@@ -7,10 +7,11 @@ import {
   OneToMany,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
+  Relation,
 } from 'typeorm';
-import { Lesson } from './lesson';
-import { Region } from './region';
-import type { QuizVariant } from './quizVariant';
+import { Lesson } from './lesson.js';
+import { Region } from './region.js';
+import type { QuizVariant } from './quizVariant.js';
 
 @Entity()
 @Index('IDX_lesson_variant_baseLessonId_regionId', ['baseLesson', 'region'])
@@ -41,18 +42,18 @@ export class LessonVariant {
   @ManyToOne(() => Lesson, (lesson) => lesson.variants, {
     onDelete: 'CASCADE',
   })
-  baseLesson: Lesson;
+  baseLesson: Relation<Lesson>;
 
   @ManyToOne(() => Region, (region) => region.lessonVariants, {
     onDelete: 'CASCADE',
   })
-  region: Region;
+  region: Relation<Region>;
 
   @OneToMany(
     'QuizVariant',
     (quizVariant: QuizVariant) => quizVariant.lessonVariant,
   )
-  quizVariants: QuizVariant[];
+  quizVariants: Relation<QuizVariant[]>;
 
   @CreateDateColumn()
   createdAt: Date;

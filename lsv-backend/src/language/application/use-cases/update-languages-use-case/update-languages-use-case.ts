@@ -1,7 +1,7 @@
 import { BadRequestException, Inject, NotFoundException } from '@nestjs/common';
-import { LanguageRepositoryInterface } from 'src/language/domain/ports/language.repository.interface/language.repository.interface';
-import { CreateLanguageDto } from '../../../domain/dto/create-language/create-language';
-import { Language } from 'src/shared/domain/entities/language';
+import { LanguageRepositoryInterface } from '../../../domain/ports/language.repository.interface/language.repository.interface.js';
+import { CreateLanguageDto } from '../../../domain/dto/create-language/create-language.js';
+import { Language } from '../../../../shared/domain/entities/language.js';
 
 export class UpdateLanguagesUseCase {
   constructor(
@@ -16,7 +16,7 @@ export class UpdateLanguagesUseCase {
 
     const languageToUpdate = await this.languageRepository.findById(id);
     if (!languageToUpdate) {
-      throw new NotFoundException('Language not found');
+      throw new NotFoundException('errors.language.notFound');
     }
 
     const existingLanguageWithSameName =
@@ -26,7 +26,7 @@ export class UpdateLanguagesUseCase {
       existingLanguageWithSameName &&
       existingLanguageWithSameName.id !== id
     ) {
-      throw new BadRequestException('Language with this name already exists');
+      throw new BadRequestException('errors.language.alreadyExists');
     }
     const updatedLanguage = await this.languageRepository.update(
       id,

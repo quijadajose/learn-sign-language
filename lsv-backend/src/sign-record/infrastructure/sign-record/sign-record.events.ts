@@ -6,7 +6,7 @@ import {
 } from '@nestjs/bullmq';
 import { Queue } from 'bullmq';
 import { isUUID } from 'class-validator';
-import { SignRecordService } from '../../application/sign-record/sign-record.service';
+import { SignRecordService } from '../../application/sign-record/sign-record.service.js';
 import { Logger } from '@nestjs/common';
 
 @QueueEventsListener('training-queue')
@@ -31,17 +31,54 @@ export class SignRecordEvents extends QueueEventsHost {
     }
   }
 
+  /**
+   * BE-05: un handler que lanza no puede dejar el modelo en TRAINING.
+   * Si la operación falla, el modelo pasa a FAILED con el motivo.
+   */
+  private async markFailedOnError(
+    jobId: string,
+    operation: () => Promise<void>,
+  ): Promise<void> {
+    try {
+      await operation();
+    } catch (e) {
+      const reason = e instanceof Error ? e.message : String(e);
+      this.logger.error(`Job ${jobId} handler failed: ${reason}`, e as Error);
+      try {
+        const modelId = await this.getModelIdFromJob(jobId);
+        if (isUUID(modelId)) {
+          await this.signRecordService.updateModelStatus(
+            modelId,
+            'FAILED',
+            reason,
+          );
+        }
+      } catch (inner) {
+        this.logger.error(
+          `Could not mark job ${jobId} as FAILED`,
+          inner as Error,
+        );
+      }
+    }
+  }
+
   @OnQueueEvent('active')
   async onActive({ jobId }: { jobId: string }) {
     this.logger.log(`Job ${jobId} is now active (training started)`);
-    const modelId = await this.getModelIdFromJob(jobId);
-    if (isUUID(modelId)) {
-      await this.signRecordService.updateModelStatus(modelId, 'TRAINING');
-    }
+    await this.markFailedOnError(jobId, async () => {
+      const modelId = await this.getModelIdFromJob(jobId);
+      if (isUUID(modelId)) {
+        await this.signRecordService.updateModelStatus(modelId, 'TRAINING');
+      }
+    });
   }
 
   @OnQueueEvent('progress')
   async onProgress({ jobId, data }: { jobId: string; data: unknown }) {
+    await this.markFailedOnError(jobId, () => this.handleProgress(jobId, data));
+  }
+
+  private async handleProgress(jobId: string, data: unknown): Promise<void> {
     let parsedData: unknown = data;
     try {
       if (typeof data === 'string') {
@@ -79,6 +116,15 @@ export class SignRecordEvents extends QueueEventsHost {
     returnvalue: unknown;
   }) {
     this.logger.log(`Job ${jobId} completed`);
+    await this.markFailedOnError(jobId, () =>
+      this.handleCompleted(jobId, returnvalue),
+    );
+  }
+
+  private async handleCompleted(
+    jobId: string,
+    returnvalue: unknown,
+  ): Promise<void> {
     let parsedData: unknown = returnvalue;
     try {
       if (typeof returnvalue === 'string') {
@@ -116,13 +162,15 @@ export class SignRecordEvents extends QueueEventsHost {
     failedReason: string;
   }) {
     this.logger.error(`Job ${jobId} failed: ${failedReason}`);
-    const modelId = await this.getModelIdFromJob(jobId);
-    if (isUUID(modelId)) {
-      await this.signRecordService.updateModelStatus(
-        modelId,
-        'FAILED',
-        failedReason,
-      );
-    }
+    await this.markFailedOnError(jobId, async () => {
+      const modelId = await this.getModelIdFromJob(jobId);
+      if (isUUID(modelId)) {
+        await this.signRecordService.updateModelStatus(
+          modelId,
+          'FAILED',
+          failedReason,
+        );
+      }
+    });
   }
 }

@@ -1,6 +1,6 @@
 import { Inject, Injectable, BadRequestException } from '@nestjs/common';
-import { SignRepositoryInterface } from 'src/sign-record/domain/ports/sign.repository.interface';
-import { CreateSignDto } from 'src/sign-record/domain/dto/sign-record.dto';
+import { SignRepositoryInterface } from '../../../domain/ports/sign.repository.interface.js';
+import { CreateSignDto } from '../../../domain/dto/sign-record.dto.js';
 
 @Injectable()
 export class CreateSignUseCase {
@@ -11,10 +11,10 @@ export class CreateSignUseCase {
 
   async execute(data: CreateSignDto) {
     if (!data.name) {
-      throw new BadRequestException('Name is required');
+      throw new BadRequestException('errors.sign.nameRequired');
     }
     if (!data.languageId) {
-      throw new BadRequestException('languageId is required');
+      throw new BadRequestException('errors.sign.languageIdRequired');
     }
 
     const sign = this.signRepository.create({
