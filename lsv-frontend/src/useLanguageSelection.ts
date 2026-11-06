@@ -148,7 +148,6 @@ export function useLanguageSelection(onLanguageSelected: (lang: Language) => voi
                 "success",
                 `Continuando con ${selectedLanguage.name} - ${selectedRegion.name}.`,
               );
-              setLoading(false);
               return;
             }
           }
@@ -188,14 +187,12 @@ export function useLanguageSelection(onLanguageSelected: (lang: Language) => voi
             if (!active) return;
             setShowRegionSelection(true);
             setTitle("Selecciona tu región:");
-            setLoading(false);
             return;
           } else {
             // Múltiples idiomas inscritos: mostrar selector solo si no hay idioma válido seleccionado
             setTitle("Continuar aprendiendo:");
             setLanguages(enrolledData.data.map((el) => el.language));
             setTotalPages(1);
-            setLoading(false);
             return;
           }
         }

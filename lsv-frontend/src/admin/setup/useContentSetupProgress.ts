@@ -87,7 +87,7 @@ export function useContentSetupProgress({
 
       if (step === "moderators") {
         if (!targetLanguageId) return;
-        navigate(`/admin/languages/${targetLanguageId}?invite=1`);
+        navigate(`/admin/languages/${targetLanguageId}`, { state: { invite: true } });
         return;
       }
 

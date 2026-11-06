@@ -1,6 +1,6 @@
 import i18next from "i18next";
 import { useCallback, useEffect, useState } from "react";
-import { useNavigate, useParams, useSearchParams } from "react-router-dom";
+import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { SingleValue } from "react-select";
 import {
   adminApi,
@@ -34,7 +34,7 @@ export interface WorkspaceLanguage {
 
 export function useLanguageWorkspace() {
   const { languageId = "" } = useParams<{ languageId: string }>();
-  const [searchParams, setSearchParams] = useSearchParams();
+  const location = useLocation();
   const navigate = useNavigate();
   const { isAdmin, hasAnyPermissionForLanguage } = usePermissions();
   const [, setSelectedLanguageId] = useLocalStorage<string | null>(
@@ -130,15 +130,19 @@ export function useLanguageWorkspace() {
     void load();
   }, [canAccess, load]);
 
+  // La invitación llega por el estado de navegación que fija la propia app,
+  // no por la URL, para que un enlace externo no pueda pre-llenar acciones.
+  const inviteRequested =
+    (location.state as { invite?: boolean } | null)?.invite === true;
   useEffect(() => {
-    if (searchParams.get("invite") === "1" && isAdmin) {
+    if (inviteRequested && isAdmin) {
       setIsAssignModalOpen(true);
       setSelectedScope("language");
       setSelectedTargetId(languageId);
       setAssignLanguageId(languageId);
-      setSearchParams({}, { replace: true });
+      navigate(location.pathname, { replace: true, state: null });
     }
-  }, [isAdmin, languageId, searchParams, setSearchParams]);
+  }, [inviteRequested, isAdmin, languageId, location.pathname, navigate]);
 
   const steps = buildSetupSteps(Boolean(language), counts);
   const nextStep = getNextSetupStep(Boolean(language), counts);
