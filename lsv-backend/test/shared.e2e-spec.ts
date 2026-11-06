@@ -1,9 +1,9 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication, ValidationPipe } from '@nestjs/common';
 import request from 'supertest';
-import { AppModule } from './../src/app.module';
+import { AppModule } from './../src/app.module.js';
 import { DataSource } from 'typeorm';
-import { cleanDatabase, getAdminToken } from './test-utils';
+import { cleanDatabase, getAdminToken } from './test-utils.js';
 import { join } from 'path';
 import { writeFileSync, unlinkSync } from 'fs';
 
@@ -55,7 +55,7 @@ describe('Shared (Country, Division, Images) (e2e)', () => {
     let uploadedFilename: string;
 
     it('/images/upload/:folder (POST) - Should upload an image', async () => {
-      const filePath = join(__dirname, 'shared-test.png');
+      const filePath = join(import.meta.dirname, 'shared-test.png');
       // Minimal 1x1 transparent PNG
       const minPng = Buffer.from(
         'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8/5+hHgAHggJ/PchI7wAAAABJRU5ErkJggg==',
@@ -66,18 +66,20 @@ describe('Shared (Country, Division, Images) (e2e)', () => {
       const response = await request(app.getHttpServer())
         .post('/images/upload/user')
         .set('Authorization', `Bearer ${adminToken}`)
-        .field('id', 'test-id')
+        .field('id', '6f1c2a54-0b8e-4b7e-9d1a-2c3f4e5a6b7d')
         .attach('file', filePath)
         .expect(201);
 
       expect(Array.isArray(response.body)).toBe(true);
-      expect(response.body[0]).toContain('/images/user/test-id');
-      uploadedFilename = 'test-id';
+      expect(response.body[0]).toContain(
+        '/images/user/6f1c2a54-0b8e-4b7e-9d1a-2c3f4e5a6b7d',
+      );
+      uploadedFilename = '6f1c2a54-0b8e-4b7e-9d1a-2c3f4e5a6b7d';
       unlinkSync(filePath);
     });
 
     it('/images/upload/:folder (POST) - Should reject unauthenticated upload', async () => {
-      const filePath = join(__dirname, 'shared-test-unauth.png');
+      const filePath = join(import.meta.dirname, 'shared-test-unauth.png');
       const minPng = Buffer.from(
         'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8/5+hHgAHggJ/PchI7wAAAABJRU5ErkJggg==',
         'base64',

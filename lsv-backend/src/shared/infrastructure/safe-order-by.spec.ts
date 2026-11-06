@@ -1,4 +1,4 @@
-import { pickSafeOrderBy } from './safe-order-by';
+import { pickSafeOrderBy } from './safe-order-by.js';
 
 describe('pickSafeOrderBy', () => {
   it('returns the column when it is in the allowlist', () => {

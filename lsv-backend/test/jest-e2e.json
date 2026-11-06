@@ -8,14 +8,26 @@
   "testEnvironment": "node",
   "testRegex": ".e2e-spec.ts$",
   "transform": {
-    "^.+\\.(t|j)s$": "ts-jest"
+    "^.+\\.ts$": [
+      "ts-jest",
+      {
+        "useESM": true,
+        "tsconfig": "../tsconfig.json"
+      }
+    ]
   },
   "moduleNameMapper": {
-    "^src/(.*)$": "<rootDir>/src/$1",
-    "^file-type$": "<rootDir>/test/__mocks__/file-type.js"
+    "^(\\.{1,2}/.*)\\.js$": "$1",
+    "^file-type$": "<rootDir>/test/__mocks__/file-type.mjs"
   },
   "modulePathIgnorePatterns": [
     "<rootDir>/dist/"
   ],
-  "forceExit": true
+  "forceExit": true,
+  "extensionsToTreatAsEsm": [
+    ".ts"
+  ],
+  "setupFiles": [
+    "<rootDir>/test/jest-setup.ts"
+  ]
 }

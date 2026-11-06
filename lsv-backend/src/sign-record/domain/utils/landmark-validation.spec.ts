@@ -20,7 +20,7 @@ import {
   isRecordingValidated,
   isSupportedSchemaVersion,
   LandmarkValidationError,
-} from './landmark-validation';
+} from './landmark-validation.js';
 
 function makeFrame(withHands: boolean): number[] {
   const flat = new Array(FEATURES_COUNT).fill(0);
@@ -91,7 +91,7 @@ describe('landmark-validation', () => {
       path.resolve(process.cwd(), '../schemas/ml-feature-contract.json'),
       path.resolve(process.cwd(), 'schemas/ml-feature-contract.json'),
       path.resolve(
-        __dirname,
+        import.meta.dirname,
         '../../../../../schemas/ml-feature-contract.json',
       ),
     ];

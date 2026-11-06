@@ -8,9 +8,9 @@ import { Request, Response } from 'express';
 import {
   FEATURES_COUNT,
   HAND_FEATURE_START,
-} from 'src/sign-record/domain/utils/landmark-validation';
-import { createSharedModelsAuthMiddleware } from 'src/shared/infrastructure/middleware/shared-models-auth.middleware';
-import { resolveLocale, translate } from 'src/i18n';
+} from '../src/sign-record/domain/utils/landmark-validation.js';
+import { createSharedModelsAuthMiddleware } from '../src/shared/infrastructure/middleware/shared-models-auth.middleware.js';
+import { resolveLocale, translate } from '../src/i18n/index.js';
 
 /**
  * Limpia todas las tablas de la base de datos de pruebas.

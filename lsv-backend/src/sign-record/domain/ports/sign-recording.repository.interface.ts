@@ -1,4 +1,4 @@
-import { SignRecording } from 'src/shared/domain/entities/signRecording';
+import { SignRecording } from '../../../shared/domain/entities/signRecording.js';
 
 export interface SignRecordingRepositoryInterface {
   findById(id: string): Promise<SignRecording | null>;

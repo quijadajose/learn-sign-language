@@ -1,6 +1,6 @@
 ﻿import { Inject } from '@nestjs/common';
-import { UserRepositoryInterface } from 'src/auth/domain/ports/user.repository.interface/user.repository.interface';
-import { User } from 'src/shared/domain/entities/user';
+import { UserRepositoryInterface } from '../../../../auth/domain/ports/user.repository.interface/user.repository.interface.js';
+import { User } from '../../../../shared/domain/entities/user.js';
 
 export class GetUserByIdUseCase {
   constructor(

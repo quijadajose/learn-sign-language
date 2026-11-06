@@ -6,12 +6,13 @@ import {
   OneToMany,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
+  Relation,
 } from 'typeorm';
-import { Stages } from './stage';
-import { Lesson } from './lesson';
-import { UserLanguage } from './userLanguage';
-import { Region } from './region';
-import { Country } from './iso-3166-2/countries';
+import { Stages } from './stage.js';
+import { Lesson } from './lesson.js';
+import { UserLanguage } from './userLanguage.js';
+import { Region } from './region.js';
+import { Country } from './iso-3166-2/countries.js';
 
 @Entity()
 export class Language {
@@ -30,21 +31,21 @@ export class Language {
   @ManyToOne(() => Country, (country) => country.code, {
     onDelete: 'SET NULL',
   })
-  country: Country;
+  country: Relation<Country>;
 
   @OneToMany(() => Stages, (stage) => stage.language)
-  stages: Stages[];
+  stages: Relation<Stages[]>;
 
   @OneToMany(() => Lesson, (lesson) => lesson.language)
-  lessons: Lesson[];
+  lessons: Relation<Lesson[]>;
 
   @OneToMany(() => UserLanguage, (userLanguage) => userLanguage.language)
-  userLanguages: UserLanguage[];
+  userLanguages: Relation<UserLanguage[]>;
 
   @OneToMany(() => Region, (region) => region.language, {
     cascade: true,
   })
-  regions: Region[];
+  regions: Relation<Region[]>;
 
   @CreateDateColumn()
   createdAt: Date;

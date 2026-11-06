@@ -5,9 +5,10 @@ import {
   ManyToOne,
   PrimaryColumn,
   UpdateDateColumn,
+  Relation,
 } from 'typeorm';
-import { User } from './user';
-import { Region } from './region';
+import { User } from './user.js';
+import { Region } from './region.js';
 
 @Entity()
 export class UserRegion {
@@ -25,11 +26,11 @@ export class UserRegion {
 
   @ManyToOne(() => User, (user) => user.userRegions, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'userId' })
-  user: User;
+  user: Relation<User>;
 
   @ManyToOne(() => Region, (region) => region.userRegions, {
     onDelete: 'CASCADE',
   })
   @JoinColumn({ name: 'regionId' })
-  region: Region;
+  region: Relation<Region>;
 }

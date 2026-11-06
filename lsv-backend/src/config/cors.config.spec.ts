@@ -1,4 +1,4 @@
-import { getCorsOrigins } from './cors.config';
+import { getCorsOrigins } from './cors.config.js';
 
 describe('getCorsOrigins', () => {
   const originalEnv = process.env.NODE_ENV;

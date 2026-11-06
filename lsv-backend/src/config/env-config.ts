@@ -3,9 +3,31 @@ import {
   IsEmail,
   IsIn,
   IsNumber,
-  IsOptional,
   IsString,
+  MinLength,
+  Validate,
+  ValidatorConstraint,
+  ValidatorConstraintInterface,
 } from 'class-validator';
+
+const KNOWN_WEAK_SECRETS = new Set([
+  'secret',
+  'password',
+  'admin',
+  'changeme',
+  'ci-test-jwt-secret-not-for-prod',
+]);
+
+@ValidatorConstraint({ name: 'NotKnownWeakSecret', async: false })
+export class NotKnownWeakSecret implements ValidatorConstraintInterface {
+  validate(value: unknown): boolean {
+    if (typeof value !== 'string') return false;
+    return !KNOWN_WEAK_SECRETS.has(value.trim().toLowerCase());
+  }
+  defaultMessage(): string {
+    return 'Secreto no válido: usa un valor aleatorio y largo';
+  }
+}
 
 export class EnvConfig {
   @IsString()
@@ -43,11 +65,19 @@ export class EnvConfig {
   API_PORT: number;
 
   @IsString()
+  @MinLength(32, {
+    message: 'JWT_SECRET debe tener al menos 32 caracteres',
+  })
+  @Validate(NotKnownWeakSecret)
   JWT_SECRET: string;
 
-  @IsOptional()
+  /** HMAC de los jobs del trainer. Obligatorio y distinto de JWT_SECRET. */
   @IsString()
-  TRAINER_JOB_SECRET?: string;
+  @MinLength(32, {
+    message: 'TRAINER_JOB_SECRET debe tener al menos 32 caracteres',
+  })
+  @Validate(NotKnownWeakSecret)
+  TRAINER_JOB_SECRET: string;
 
   @IsEmail()
   API_ADMIN_EMAIL: string;

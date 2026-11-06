@@ -1,13 +1,13 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { Repository } from 'typeorm';
 import { getRepositoryToken } from '@nestjs/typeorm';
-import { QuizRepository } from './quiz.repository';
-import { Quiz } from 'src/shared/domain/entities/quiz';
-import { Question } from 'src/shared/domain/entities/question';
-import { Option } from 'src/shared/domain/entities/option';
-import { Lesson } from 'src/shared/domain/entities/lesson';
-import { QuizSubmission } from 'src/shared/domain/entities/quizSubmission';
-import { SortOrder } from 'src/shared/domain/dto/PaginationDto';
+import { QuizRepository } from './quiz.repository.js';
+import { Quiz } from '../../../../shared/domain/entities/quiz.js';
+import { Question } from '../../../../shared/domain/entities/question.js';
+import { Option } from '../../../../shared/domain/entities/option.js';
+import { Lesson } from '../../../../shared/domain/entities/lesson.js';
+import { QuizSubmission } from '../../../../shared/domain/entities/quizSubmission.js';
+import { SortOrder } from '../../../../shared/domain/dto/PaginationDto.js';
 
 describe('QuizRepository', () => {
   let quizRepository: QuizRepository;

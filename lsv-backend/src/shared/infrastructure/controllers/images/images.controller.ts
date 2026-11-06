@@ -3,10 +3,12 @@ import {
   Body,
   Controller,
   Get,
+  Inject,
   NotFoundException,
   Param,
   Post,
   Query,
+  Req,
   Res,
   StreamableFile,
   UploadedFile,
@@ -15,31 +17,50 @@ import {
 } from '@nestjs/common';
 import { createReadStream, existsSync } from 'fs';
 import { join, resolve } from 'path';
-import { Public } from 'src/auth/infrastructure/decorators/public.decorator';
+import { Public } from '../../../../auth/infrastructure/decorators/public.decorator.js';
 import { lookup } from 'mime-types';
 import type { Response } from 'express';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { UploadPictureUseCase } from 'src/shared/application/use-cases/upload-picture-use-case/upload-picture-use-case';
-import { IsString } from 'class-validator';
+import { UploadPictureUseCase } from '../../../application/use-cases/upload-picture-use-case/upload-picture-use-case.js';
+import { assertImageUploadAllowed } from '../../../application/image-upload-policy.js';
+import { ResourceIdResolver } from '../../../../permissions/infrastructure/guards/resource-access/resource-id-resolver.js';
+import { IsUUID, isUUID } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
-import { RolesGuard } from 'src/auth/infrastructure/guards/roles/roles.guard';
-import { Roles } from 'src/auth/infrastructure/decorators/roles.decorator';
-import { DocGetImage, DocImages, DocUploadPicture } from './docs/images.docs';
-import { withI18nParams } from 'src/i18n';
+import { RolesGuard } from '../../../../auth/infrastructure/guards/roles/roles.guard.js';
+import { Roles } from '../../../../auth/infrastructure/decorators/roles.decorator.js';
+import {
+  DocGetImage,
+  DocImages,
+  DocUploadPicture,
+} from './docs/images.docs.js';
+import { withI18nParams } from '../../../../i18n/index.js';
 
 export class UploadImageDto {
   @ApiProperty({ format: 'uuid' })
-  @IsString()
+  @IsUUID()
   id: string;
 }
 
 const ALLOWED_UPLOAD_FOLDERS = new Set(['user', 'quiz', 'languages', 'lesson']);
 
+/** Lookup mínimo de permisos por idioma; evita importar internals de `moderator` desde `shared`. */
+type LanguagePermissionLookup = {
+  checkUserPermissionForLanguage(
+    userId: string,
+    languageId: string,
+  ): Promise<boolean>;
+};
+
 @DocImages()
 @Controller('images')
 export class ImagesController {
-  constructor(private readonly uploadPictureUseCase: UploadPictureUseCase) {}
+  constructor(
+    private readonly uploadPictureUseCase: UploadPictureUseCase,
+    @Inject('ModeratorPermissionRepositoryInterface')
+    private readonly moderatorPermissionRepository: LanguagePermissionLookup,
+    private readonly resourceIdResolver: ResourceIdResolver,
+  ) {}
   private readonly allowedExtensions = ['png', 'jpeg', 'jpg', 'webp'];
 
   @Public()
@@ -51,8 +72,8 @@ export class ImagesController {
     @Query('size') size: 'original' | 'sm' | 'md' | 'lg' = 'original',
     @Res({ passthrough: true }) res: Response,
   ): StreamableFile {
-    if (!ALLOWED_UPLOAD_FOLDERS.has(folder)) {
-      throw new NotFoundException('Image not found');
+    if (!ALLOWED_UPLOAD_FOLDERS.has(folder) || !isUUID(filename)) {
+      throw new NotFoundException('errors.image.notFound');
     }
     const basePath = join(process.cwd(), 'uploads');
     const id = filename;
@@ -72,7 +93,7 @@ export class ImagesController {
     }
 
     if (!filePath || !foundExt) {
-      throw new NotFoundException('Image not found');
+      throw new NotFoundException('errors.image.notFound');
     }
 
     const mimeType = lookup(foundExt) || 'application/octet-stream';
@@ -88,13 +109,18 @@ export class ImagesController {
 
   @Post('upload/:folder')
   @UseGuards(AuthGuard('jwt'), RolesGuard)
-  @Roles('admin', 'moderator')
-  @UseInterceptors(FileInterceptor('file'))
+  // Alumnos: solo su propia foto (carpeta user); la regla fina está en la política.
+  @Roles('admin', 'moderator', 'user')
+  // BE-08: límite de tamaño; multer ya no carga archivos gigantes en memoria.
+  @UseInterceptors(
+    FileInterceptor('file', { limits: { fileSize: 5 * 1024 * 1024 } }),
+  )
   @DocUploadPicture()
   async uploadPicture(
     @Param('folder') folder: string,
     @UploadedFile() file: Express.Multer.File,
     @Body() body: UploadImageDto,
+    @Req() req: { user: { sub: string; role: string } },
   ): Promise<string[]> {
     if (!ALLOWED_UPLOAD_FOLDERS.has(folder)) {
       throw new BadRequestException(
@@ -104,6 +130,29 @@ export class ImagesController {
       );
     }
     const { id } = body;
+    await assertImageUploadAllowed(
+      { id: req.user.sub, role: req.user.role },
+      folder,
+      id,
+      {
+        // Cubre permisos por idioma y por región (checkUserPermissionForLanguage).
+        hasLanguagePermission: (userId, languageId) =>
+          this.moderatorPermissionRepository.checkUserPermissionForLanguage(
+            userId,
+            languageId,
+          ),
+        resolveLanguageIdForLesson: (lessonId) =>
+          this.resourceIdResolver.resolveFromRelation(
+            'lesson.languageId',
+            lessonId,
+          ),
+        resolveLanguageIdForQuiz: (quizId) =>
+          this.resourceIdResolver.resolveFromRelation(
+            'quiz.languageId',
+            quizId,
+          ),
+      },
+    );
     return await this.uploadPictureUseCase.execute(id, folder, file);
   }
 }

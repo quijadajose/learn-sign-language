@@ -8,13 +8,14 @@ import {
   OneToMany,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
+  Relation,
 } from 'typeorm';
-import { UserLesson } from './userLesson';
-import { Stages } from './stage';
-import { Language } from './language';
-import { Quiz } from './quiz';
-import { LessonVariant } from './lessonVariant';
-import { Sign } from './sign';
+import { UserLesson } from './userLesson.js';
+import { Stages } from './stage.js';
+import { Language } from './language.js';
+import { Quiz } from './quiz.js';
+import { LessonVariant } from './lessonVariant.js';
+import { Sign } from './sign.js';
 
 @Entity()
 @Index('IDX_lesson_languageId_stageId_createdAt', [
@@ -44,20 +45,20 @@ export class Lesson {
   @ManyToOne(() => Language, (language) => language.lessons, {
     onDelete: 'CASCADE',
   })
-  language: Language;
+  language: Relation<Language>;
 
   @ManyToOne(() => Stages, (stage) => stage.lessons, { onDelete: 'SET NULL' })
-  stage: Stages;
+  stage: Relation<Stages>;
 
   @OneToMany(() => UserLesson, (userLesson) => userLesson.lesson)
-  userLessons: UserLesson[];
+  userLessons: Relation<UserLesson[]>;
 
   @OneToMany(() => Quiz, (quiz) => quiz.lesson)
-  quizzes: Quiz[];
+  quizzes: Relation<Quiz[]>;
 
   @OneToMany(() => LessonVariant, (variant) => variant.baseLesson)
-  variants: LessonVariant[];
+  variants: Relation<LessonVariant[]>;
 
   @ManyToMany(() => Sign, (sign) => sign.lessons)
-  signs: Sign[];
+  signs: Relation<Sign[]>;
 }

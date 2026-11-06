@@ -1,5 +1,5 @@
 import { Inject } from '@nestjs/common';
-import { UserLessonRepositoryInterface } from 'src/user-lesson/domain/ports/user-lesson.repository.interface/user-lesson.repository.interface';
+import { UserLessonRepositoryInterface } from '../../../domain/ports/user-lesson.repository.interface/user-lesson.repository.interface.js';
 
 export class StartLessonUseCase {
   constructor(

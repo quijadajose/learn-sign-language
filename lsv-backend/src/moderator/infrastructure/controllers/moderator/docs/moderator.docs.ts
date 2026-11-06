@@ -11,7 +11,7 @@ import {
   ModeratorPermissionResponseDto,
   ModeratorUserSummaryDto,
   PaginatedModeratorResponseDto,
-} from 'src/shared/infrastructure/openapi/resource-responses';
+} from '../../../../../shared/infrastructure/openapi/resource-responses.js';
 
 export const DocModerator = () => {
   return applyDecorators(ApiTags('Moderators'), ApiBearerAuth());

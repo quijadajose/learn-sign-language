@@ -4,7 +4,7 @@ import {
   BadRequestException,
   NotFoundException,
 } from '@nestjs/common';
-import { UserLanguageRepositoryInterface } from 'src/users/domain/ports/user-language.repository.interface';
+import { UserLanguageRepositoryInterface } from '../../../domain/ports/user-language.repository.interface.js';
 
 @Injectable()
 export class UnenrollUserFromLanguageUseCase {
@@ -26,7 +26,7 @@ export class UnenrollUserFromLanguageUseCase {
     );
 
     if (!isEnrolled) {
-      throw new NotFoundException('No estás inscrito en este idioma.');
+      throw new NotFoundException('errors.user.notEnrolledLanguage');
     }
 
     // Verificar cuántos idiomas tiene el usuario ANTES de eliminar

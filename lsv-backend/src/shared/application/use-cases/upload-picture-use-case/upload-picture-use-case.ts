@@ -2,6 +2,7 @@ import sharp from 'sharp';
 import * as fs from 'fs';
 import * as path from 'path';
 import { BadRequestException } from '@nestjs/common';
+import { isUUID } from 'class-validator';
 
 export class UploadPictureUseCase {
   async execute(
@@ -9,12 +10,17 @@ export class UploadPictureUseCase {
     folder: string,
     file: Express.Multer.File,
   ): Promise<string[]> {
+    // BE-08: el id va al nombre de archivo; solo se acepta un UUID.
+    if (!isUUID(id)) {
+      throw new BadRequestException('Invalid image id');
+    }
+
     if (!file) {
-      throw new BadRequestException('No image received');
+      throw new BadRequestException('errors.image.noImageReceived');
     }
 
     if (!file.buffer) {
-      throw new BadRequestException('No image buffer available');
+      throw new BadRequestException('errors.image.noImageBuffer');
     }
 
     const { fileTypeFromBuffer } = await import('file-type');
@@ -33,14 +39,14 @@ export class UploadPictureUseCase {
     const sizes = { original: null, sm: 64, md: 128, lg: 256 };
 
     if (!/^[a-zA-Z0-9_-]+$/.test(folder)) {
-      throw new BadRequestException('Invalid upload folder name');
+      throw new BadRequestException('errors.image.invalidFolder');
     }
 
     const baseUploadDir = path.resolve('./uploads');
     const uploadsDir = path.join(baseUploadDir, folder);
 
     if (!uploadsDir.startsWith(baseUploadDir + path.sep)) {
-      throw new BadRequestException('Invalid upload directory');
+      throw new BadRequestException('errors.image.invalidDirectory');
     }
 
     if (!fs.existsSync(uploadsDir)) {
@@ -62,8 +68,20 @@ export class UploadPictureUseCase {
         const fileName = `${id}-${key}.${format}`;
         const filePath = path.join(uploadsDir, fileName);
 
+        // Al reemplazar, borrar variantes con otra extensión (BE-08).
+        for (const other of ['png', 'jpeg', 'webp']) {
+          if (other !== format) {
+            await fs.promises
+              .rm(path.join(uploadsDir, `${id}-${key}.${other}`), {
+                force: true,
+              })
+              .catch(() => undefined);
+          }
+        }
+
         if (key === 'original') {
-          await fs.promises.writeFile(filePath, file.buffer);
+          // BE-08: el original también se re-codifica: sin EXIF/GPS y con la orientación aplicada.
+          await sharp(file.buffer).rotate().toFormat(format).toFile(filePath);
         } else {
           await sharp(file.buffer)
             .resize(size, size)

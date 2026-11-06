@@ -4,8 +4,8 @@ import { FindOptionsSelect, FindOptionsWhere, Repository } from 'typeorm';
 import {
   ModeratorPermission,
   PermissionScope,
-} from 'src/shared/domain/entities/moderatorPermission';
-import { ModeratorPermissionRepositoryInterface } from 'src/moderator/domain/ports/moderator-permission.repository.interface';
+} from '../../../shared/domain/entities/moderatorPermission.js';
+import { ModeratorPermissionRepositoryInterface } from '../../domain/ports/moderator-permission.repository.interface.js';
 
 @Injectable()
 export class ModeratorPermissionRepository implements ModeratorPermissionRepositoryInterface {
@@ -112,6 +112,22 @@ export class ModeratorPermissionRepository implements ModeratorPermissionReposit
     });
 
     return !!permission;
+  }
+
+  async findAccessibleLanguageIds(userId: string): Promise<string[]> {
+    const permissions = await this.moderatorPermissionRepository.find({
+      where: { userId },
+      relations: { region: true },
+    });
+    const ids = new Set<string>();
+    for (const permission of permissions) {
+      const languageId =
+        permission.scope === PermissionScope.LANGUAGE
+          ? permission.languageId
+          : permission.region?.languageId;
+      if (languageId) ids.add(languageId);
+    }
+    return Array.from(ids);
   }
 
   async findByLanguageId(languageId: string): Promise<ModeratorPermission[]> {

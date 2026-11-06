@@ -1,7 +1,7 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { LessonModel } from 'src/shared/domain/entities/lessonModel';
-import { LessonModelRepositoryInterface } from 'src/sign-record/domain/ports/lesson-model.repository.interface';
-import { SignRecordNotificationPort } from 'src/sign-record/domain/ports/sign-record.notification.port';
+import { LessonModel } from '../../../../shared/domain/entities/lessonModel.js';
+import { LessonModelRepositoryInterface } from '../../../domain/ports/lesson-model.repository.interface.js';
+import { SignRecordNotificationPort } from '../../../domain/ports/sign-record.notification.port.js';
 
 @Injectable()
 export class UpdateModelStatusUseCase {

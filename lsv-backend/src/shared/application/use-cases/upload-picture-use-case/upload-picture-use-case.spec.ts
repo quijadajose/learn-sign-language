@@ -1,4 +1,4 @@
-import { UploadPictureUseCase } from './upload-picture-use-case';
+import { UploadPictureUseCase } from './upload-picture-use-case.js';
 
 describe('UploadPictureUseCase', () => {
   it('should be defined', () => {

@@ -1,13 +1,13 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { QuizVariant } from 'src/shared/domain/entities/quizVariant';
-import { QuestionVariant } from 'src/shared/domain/entities/questionVariant';
-import { OptionVariant } from 'src/shared/domain/entities/optionVariant';
-import { QuizSubmission } from 'src/shared/domain/entities/quizSubmission';
-import { User } from 'src/shared/domain/entities/user';
-import { LessonVariant } from 'src/shared/domain/entities/lessonVariant';
-import { Submission } from 'src/quiz/domain/dto/submission/submission.dto';
+import { QuizVariant } from '../../../../shared/domain/entities/quizVariant.js';
+import { QuestionVariant } from '../../../../shared/domain/entities/questionVariant.js';
+import { OptionVariant } from '../../../../shared/domain/entities/optionVariant.js';
+import { QuizSubmission } from '../../../../shared/domain/entities/quizSubmission.js';
+import { User } from '../../../../shared/domain/entities/user.js';
+import { LessonVariant } from '../../../../shared/domain/entities/lessonVariant.js';
+import { Submission } from '../../../domain/dto/submission/submission.dto.js';
 
 @Injectable()
 export class QuizVariantRepository {

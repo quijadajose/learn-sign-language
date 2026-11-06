@@ -1,7 +1,7 @@
 import { Injectable, Inject } from '@nestjs/common';
-import { ModeratorPermissionRepositoryInterface } from 'src/moderator/domain/ports/moderator-permission.repository.interface';
-import { PaginatedResponseDto } from 'src/shared/domain/dto/PaginationDto';
-import { ModeratorListItem } from 'src/moderator/domain/dto/moderator-list-response.dto';
+import { ModeratorPermissionRepositoryInterface } from '../../../domain/ports/moderator-permission.repository.interface.js';
+import { PaginatedResponseDto } from '../../../../shared/domain/dto/PaginationDto.js';
+import { ModeratorListItem } from '../../../domain/dto/moderator-list-response.dto.js';
 
 @Injectable()
 export class ListModeratorsUseCase {

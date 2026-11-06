@@ -4,8 +4,9 @@ import {
   Index,
   ManyToOne,
   PrimaryGeneratedColumn,
+  Relation,
 } from 'typeorm';
-import { Question } from './question';
+import { Question } from './question.js';
 
 @Entity()
 @Index('IDX_option_questionId', ['question'])
@@ -23,5 +24,5 @@ export class Option {
     nullable: true,
     onDelete: 'CASCADE',
   })
-  question?: Question;
+  question?: Relation<Question>;
 }

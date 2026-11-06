@@ -1,6 +1,6 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
-import { LessonModelRepositoryInterface } from 'src/sign-record/domain/ports/lesson-model.repository.interface';
-import { SignRecordNotificationPort } from 'src/sign-record/domain/ports/sign-record.notification.port';
+import { LessonModelRepositoryInterface } from '../../../domain/ports/lesson-model.repository.interface.js';
+import { SignRecordNotificationPort } from '../../../domain/ports/sign-record.notification.port.js';
 
 @Injectable()
 export class ReportProgressUseCase {

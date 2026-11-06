@@ -7,8 +7,8 @@ import {
   TrainLessonModelJob,
   TrainingJobState,
   TrainingQueuePort,
-} from '../../domain/ports/training-queue.port';
-import { withJobHmac } from './sign-training-job';
+} from '../../domain/ports/training-queue.port.js';
+import { withJobHmac } from './sign-training-job.js';
 
 /** Shared BullMQ options for ML training jobs (long-running, mostly non-retryable). */
 const TRAINING_JOB_OPTIONS = {
@@ -26,11 +26,11 @@ export class BullMqTrainingQueueAdapter implements TrainingQueuePort {
   ) {}
 
   private hmacSecret(): string {
-    const secret =
-      this.configService.get<string>('TRAINER_JOB_SECRET') ||
-      this.configService.get<string>('JWT_SECRET');
+    // Sin fallback a JWT_SECRET: compartirlo haría que filtrar uno comprometa
+    // también el otro (firmar jobs o emitir sesiones).
+    const secret = this.configService.get<string>('TRAINER_JOB_SECRET');
     if (!secret) {
-      throw new Error('TRAINER_JOB_SECRET or JWT_SECRET is required');
+      throw new Error('TRAINER_JOB_SECRET is required');
     }
     return secret;
   }

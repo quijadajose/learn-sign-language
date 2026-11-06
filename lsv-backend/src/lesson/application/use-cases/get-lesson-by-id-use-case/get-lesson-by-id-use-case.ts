@@ -1,6 +1,6 @@
 import { Inject } from '@nestjs/common';
-import { LessonRepositoryInterface } from 'src/lesson/domain/ports/lesson.repository.interface/lesson.repository.interface';
-import { Lesson } from 'src/shared/domain/entities/lesson';
+import { LessonRepositoryInterface } from '../../../domain/ports/lesson.repository.interface/lesson.repository.interface.js';
+import { Lesson } from '../../../../shared/domain/entities/lesson.js';
 
 export class GetLessonByIdUseCase {
   constructor(

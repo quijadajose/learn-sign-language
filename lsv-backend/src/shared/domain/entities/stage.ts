@@ -7,9 +7,10 @@ import {
   OneToMany,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
+  Relation,
 } from 'typeorm';
-import { Language } from './language';
-import { Lesson } from './lesson';
+import { Language } from './language.js';
+import { Lesson } from './lesson.js';
 
 @Entity()
 @Index('IDX_stages_languageId', ['language'])
@@ -32,8 +33,8 @@ export class Stages {
   @ManyToOne(() => Language, (language) => language.stages, {
     onDelete: 'CASCADE',
   })
-  language: Language;
+  language: Relation<Language>;
 
   @OneToMany(() => Lesson, (lesson) => lesson.stage)
-  lessons: Lesson[];
+  lessons: Relation<Lesson[]>;
 }

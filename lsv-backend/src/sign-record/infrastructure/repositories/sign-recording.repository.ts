@@ -8,11 +8,11 @@ import {
   IsNull,
   FindOptionsWhere,
 } from 'typeorm';
-import { SignRecording } from '../../../shared/domain/entities/signRecording';
-import { Sign } from '../../../shared/domain/entities/sign';
-import { SignVariant } from '../../../shared/domain/entities/signVariant';
-import { Region } from '../../../shared/domain/entities/region';
-import { SignRecordingRepositoryInterface } from '../../domain/ports/sign-recording.repository.interface';
+import { SignRecording } from '../../../shared/domain/entities/signRecording.js';
+import { Sign } from '../../../shared/domain/entities/sign.js';
+import { SignVariant } from '../../../shared/domain/entities/signVariant.js';
+import { Region } from '../../../shared/domain/entities/region.js';
+import { SignRecordingRepositoryInterface } from '../../domain/ports/sign-recording.repository.interface.js';
 
 @Injectable()
 export class TypeOrmSignRecordingRepository implements SignRecordingRepositoryInterface {

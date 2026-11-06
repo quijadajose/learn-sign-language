@@ -1,4 +1,4 @@
-import { PaginationDto } from 'src/shared/domain/dto/PaginationDto';
+import { PaginationDto } from '../../../shared/domain/dto/PaginationDto.js';
 import { IsOptional, IsUUID } from 'class-validator';
 import { ApiPropertyOptional } from '@nestjs/swagger';
 

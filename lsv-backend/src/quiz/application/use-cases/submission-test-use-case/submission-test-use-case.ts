@@ -1,8 +1,8 @@
 import { Inject } from '@nestjs/common';
-import { QuizRepositoryInterface } from 'src/quiz/domain/ports/quiz.repository.interface/quiz.repository.interface';
-import { SubmissionDto } from '../../dto/submission/submission-dto';
-import { Quiz } from 'src/shared/domain/entities/quiz';
-import { User } from 'src/shared/domain/entities/user';
+import { QuizRepositoryInterface } from '../../../domain/ports/quiz.repository.interface/quiz.repository.interface.js';
+import { SubmissionDto } from '../../dto/submission/submission-dto.js';
+import { Quiz } from '../../../../shared/domain/entities/quiz.js';
+import { User } from '../../../../shared/domain/entities/user.js';
 
 export class SubmissionTestUseCase {
   constructor(

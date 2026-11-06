@@ -6,34 +6,54 @@ import {
 } from '@nestjs/common';
 import { plainToInstance } from 'class-transformer';
 import { validateSync } from 'class-validator';
-import { LessonModelRepositoryInterface } from 'src/sign-record/domain/ports/lesson-model.repository.interface';
-import { SignRecordNotificationPort } from 'src/sign-record/domain/ports/sign-record.notification.port';
-import { FileStoragePort } from 'src/sign-record/domain/ports/file-storage.port';
-import { SaveModelResultsDto } from 'src/sign-record/domain/dto/save-model-results.dto';
-import { withI18nParams } from 'src/i18n';
+import { LessonModelRepositoryInterface } from '../../../domain/ports/lesson-model.repository.interface.js';
+import { SignRecordNotificationPort } from '../../../domain/ports/sign-record.notification.port.js';
+import { FileStoragePort } from '../../../domain/ports/file-storage.port.js';
+import { SaveModelResultsDto } from '../../../domain/dto/save-model-results.dto.js';
+import { withI18nParams } from '../../../../i18n/index.js';
 import * as path from 'path';
 
-export function resolveSharedModelJsonPath(
-  modelJsonUrl: string,
-  storage: FileStoragePort,
-): string | null {
-  let pathname = modelJsonUrl;
-  try {
-    if (/^https?:\/\//i.test(modelJsonUrl)) {
-      pathname = new URL(modelJsonUrl).pathname;
-    }
-  } catch {
+/**
+ * TR-05: el trainer reporta `models/<job>/model.json` (relativo a /shared).
+ * Se acepta también la forma absoluta `/shared/...` y la URL http(s) anterior.
+ * Devuelve siempre la URL pública canónica `/shared/models/.../model.json`
+ * o null si no es una ruta segura dentro de /shared/models.
+ */
+export function normalizeModelJsonUrl(modelJsonUrl: string): string | null {
+  if (typeof modelJsonUrl !== 'string' || modelJsonUrl.includes('\\')) {
     return null;
+  }
+  let pathname = modelJsonUrl;
+  if (/^https?:\/\//i.test(modelJsonUrl)) {
+    try {
+      pathname = new URL(modelJsonUrl).pathname;
+    } catch {
+      return null;
+    }
+  }
+  if (!pathname.startsWith('/shared/') && pathname.startsWith('models/')) {
+    pathname = `/shared/${pathname}`;
   }
   const prefix = '/shared/';
   if (!pathname.startsWith(prefix) || !pathname.endsWith('/model.json')) {
     return null;
   }
-  const rel = pathname.slice(prefix.length);
-  const segments = rel.split('/').filter(Boolean);
+  const segments = pathname.slice(prefix.length).split('/').filter(Boolean);
   if (segments[0] !== 'models' || segments.some((s) => s === '..')) {
     return null;
   }
+  return `${prefix}${segments.join('/')}`;
+}
+
+export function resolveSharedModelJsonPath(
+  modelJsonUrl: string,
+  storage: FileStoragePort,
+): string | null {
+  const normalized = normalizeModelJsonUrl(modelJsonUrl);
+  if (!normalized) {
+    return null;
+  }
+  const segments = normalized.slice('/shared/'.length).split('/');
   const abs = storage.sharedPath(...segments);
   const root = path.resolve(storage.getSharedDir());
   if (
@@ -56,6 +76,39 @@ export class SaveModelResultsUseCase {
     private readonly fileStorage: FileStoragePort,
   ) {}
 
+  /**
+   * model.json no trae hashes de sus pesos: sin esto, un .bin alterado o de un
+   * export anterior se publicaría como READY sin que nada lo note.
+   */
+  private async verifyWeightShards(
+    modelJsonPath: string,
+    data: SaveModelResultsDto,
+  ): Promise<void> {
+    const expected = data.binSha256 ?? {};
+    const names = data.binUrls;
+    if (
+      names.length === 0 ||
+      Object.keys(expected).length !== names.length ||
+      new Set(names).size !== names.length
+    ) {
+      throw new BadRequestException('errors.model.hashMismatch');
+    }
+    const dir = path.dirname(modelJsonPath);
+    for (const name of names) {
+      if (!name || name !== path.basename(name) || name === '..') {
+        throw new BadRequestException('errors.model.untrustedModelUrl');
+      }
+      const want = expected[name];
+      if (typeof want !== 'string' || !/^[a-f0-9]{64}$/i.test(want)) {
+        throw new BadRequestException('errors.model.hashMismatch');
+      }
+      const digest = await this.fileStorage.sha256File(path.join(dir, name));
+      if (!digest || digest !== want.toLowerCase()) {
+        throw new BadRequestException('errors.model.hashMismatch');
+      }
+    }
+  }
+
   async execute(id: string, raw: unknown) {
     const data = plainToInstance(SaveModelResultsDto, raw);
     const errors = validateSync(data, { whitelist: true });
@@ -76,17 +129,18 @@ export class SaveModelResultsUseCase {
       throw new NotFoundException('errors.model.notFound');
     }
 
-    const filePath = resolveSharedModelJsonPath(
-      data.modelJsonUrl,
-      this.fileStorage,
-    );
-    if (!filePath) {
+    const modelJsonUrl = normalizeModelJsonUrl(data.modelJsonUrl);
+    const filePath = modelJsonUrl
+      ? resolveSharedModelJsonPath(modelJsonUrl, this.fileStorage)
+      : null;
+    if (!modelJsonUrl || !filePath) {
       throw new BadRequestException('errors.model.untrustedModelUrl');
     }
     const digest = await this.fileStorage.sha256File(filePath);
     if (!digest || digest !== data.modelJsonSha256.toLowerCase()) {
       throw new BadRequestException('errors.model.hashMismatch');
     }
+    await this.verifyWeightShards(filePath, data);
 
     const trainingLogs =
       data.logs && typeof data.logs === 'object' && !Array.isArray(data.logs)
@@ -97,7 +151,7 @@ export class SaveModelResultsUseCase {
 
     await this.lessonModelRepository.update(id, {
       status: 'READY',
-      modelJsonUrl: data.modelJsonUrl,
+      modelJsonUrl,
       binUrls: data.binUrls,
       accuracy: data.accuracy,
       labels: data.labels,
@@ -124,7 +178,7 @@ export class SaveModelResultsUseCase {
     });
 
     this.notificationPort.sendModelReady(id, {
-      modelJsonUrl: data.modelJsonUrl,
+      modelJsonUrl,
       binUrls: data.binUrls,
       accuracy: data.accuracy,
       labels: data.labels,

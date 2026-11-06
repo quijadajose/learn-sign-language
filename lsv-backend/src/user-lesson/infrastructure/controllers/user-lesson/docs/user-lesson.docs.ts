@@ -3,12 +3,12 @@ import { ApiTags } from '@nestjs/swagger';
 import {
   SetLessonCompletionDto,
   StartLessonDto,
-} from 'src/user-lesson/domain/dto/user-lesson.dto';
-import { DocOp } from 'src/shared/infrastructure/openapi/doc-op';
+} from '../../../../domain/dto/user-lesson.dto.js';
+import { DocOp } from '../../../../../shared/infrastructure/openapi/doc-op.js';
 import {
   PaginatedUserLessonResponseDto,
   UserLessonResponseDto,
-} from 'src/shared/infrastructure/openapi/resource-responses';
+} from '../../../../../shared/infrastructure/openapi/resource-responses.js';
 
 export const DocUserLesson = () => applyDecorators(ApiTags('UserLesson'));
 

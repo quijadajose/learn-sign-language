@@ -1,7 +1,7 @@
 import { Injectable, NotFoundException, Inject } from '@nestjs/common';
-import { QuizDto } from 'src/quiz/domain/dto/quiz/quiz-dto';
-import { QuizRepositoryInterface } from 'src/quiz/domain/ports/quiz.repository.interface/quiz.repository.interface';
-import { Quiz } from 'src/shared/domain/entities/quiz';
+import { QuizDto } from '../../../domain/dto/quiz/quiz-dto.js';
+import { QuizRepositoryInterface } from '../../../domain/ports/quiz.repository.interface/quiz.repository.interface.js';
+import { Quiz } from '../../../../shared/domain/entities/quiz.js';
 
 @Injectable()
 export class UpdateQuizUseCase {
@@ -13,7 +13,7 @@ export class UpdateQuizUseCase {
   async execute(id: string, quizDto: QuizDto): Promise<Quiz> {
     const existingQuiz = await this.quizRepository.findById(id);
     if (!existingQuiz) {
-      throw new NotFoundException('Quiz not found');
+      throw new NotFoundException('errors.quiz.notFound');
     }
 
     return await this.quizRepository.updateQuizWithQuestionsAndOptions(

@@ -10,7 +10,7 @@ import {
   SslHealthIndicator,
   DomainHealthIndicator,
   ApiHealthIndicator,
-} from '../indicators';
+} from '../indicators/index.js';
 
 @Injectable()
 export class CheckHealthService {

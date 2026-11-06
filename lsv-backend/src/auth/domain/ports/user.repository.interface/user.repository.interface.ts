@@ -1,4 +1,4 @@
-import { User } from 'src/shared/domain/entities/user';
+import { User } from '../../../../shared/domain/entities/user.js';
 
 export type UserAuthState = {
   id: string;

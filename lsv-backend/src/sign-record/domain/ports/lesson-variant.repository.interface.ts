@@ -1,4 +1,4 @@
-import { LessonVariant } from 'src/shared/domain/entities/lessonVariant';
+import { LessonVariant } from '../../../shared/domain/entities/lessonVariant.js';
 
 export interface LessonVariantRepositoryInterface {
   findByIdWithBaseAndRegion(id: string): Promise<LessonVariant | null>;

@@ -5,13 +5,13 @@ import {
   Injectable,
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
-import { PermissionScope } from 'src/shared/domain/entities/moderatorPermission';
+import { PermissionScope } from '../../../../shared/domain/entities/moderatorPermission.js';
 import {
   ResourcePermissionMetadata,
   RESOURCE_PERMISSION_KEY,
-} from '../../interfaces/resource-permission-metadata.interface';
-import { ModeratorPermissionRepositoryInterface } from 'src/moderator/domain/ports/moderator-permission.repository.interface';
-import { ResourceIdResolver } from './resource-id-resolver';
+} from '../../interfaces/resource-permission-metadata.interface.js';
+import { ModeratorPermissionRepositoryInterface } from '../../../../moderator/domain/ports/moderator-permission.repository.interface.js';
+import { ResourceIdResolver } from './resource-id-resolver.js';
 import { Inject } from '@nestjs/common';
 
 @Injectable()
@@ -38,7 +38,7 @@ export class ResourceAccessGuard implements CanActivate {
     const user = request.user;
 
     if (!user) {
-      throw new ForbiddenException('User not authenticated');
+      throw new ForbiddenException('errors.permission.unauthenticated');
     }
 
     // Si el usuario es admin global, permitir acceso
@@ -59,17 +59,9 @@ export class ResourceAccessGuard implements CanActivate {
       query,
     );
 
+    // BE-10: sin lenguaje resoluble no hay permiso por idioma: se deniega siempre.
     if (!resourceId) {
-      if (metadata.allowUnscopedModerator && user.role === 'moderator') {
-        const permissions =
-          await this.moderatorPermissionRepository.findByUserId(
-            user.sub || user.id,
-          );
-        if (permissions.length > 0) {
-          return true;
-        }
-      }
-      throw new ForbiddenException('Resource ID not found');
+      throw new ForbiddenException('errors.permission.resourceIdNotFound');
     }
 
     // Verificar permisos según el scope
@@ -90,6 +82,27 @@ export class ResourceAccessGuard implements CanActivate {
           'You do not have permission to access this language resource',
         );
       }
+
+      // BE-06: el body no puede mover el recurso a otro idioma sin permiso sobre ese idioma.
+      if (
+        typeof body.languageId === 'string' &&
+        body.languageId !== resourceId
+      ) {
+        const targetAllowed = metadata.allowRegionModerators
+          ? await this.moderatorPermissionRepository.checkUserPermissionForLanguage(
+              user.sub || user.id,
+              body.languageId,
+            )
+          : !!(await this.moderatorPermissionRepository.findByUserIdAndLanguageId(
+              user.sub || user.id,
+              body.languageId,
+            ));
+        if (!targetAllowed) {
+          throw new ForbiddenException(
+            'You do not have permission over the target language',
+          );
+        }
+      }
       return true;
     }
 
@@ -102,6 +115,19 @@ export class ResourceAccessGuard implements CanActivate {
         );
 
       if (hasDirectPermission) {
+        // BE-06: no se puede mover a otra región sin permiso directo sobre ella.
+        if (typeof body.regionId === 'string' && body.regionId !== resourceId) {
+          const targetRegion =
+            await this.moderatorPermissionRepository.findByUserIdAndRegionId(
+              user.sub || user.id,
+              body.regionId,
+            );
+          if (!targetRegion) {
+            throw new ForbiddenException(
+              'You do not have permission over the target region',
+            );
+          }
+        }
         return true;
       }
 
@@ -114,7 +140,9 @@ export class ResourceAccessGuard implements CanActivate {
         );
 
         if (!languageId) {
-          throw new ForbiddenException('Region language not found');
+          throw new ForbiddenException(
+            'errors.permission.regionLanguageNotFound',
+          );
         }
 
         const hasLanguagePermission =
@@ -134,7 +162,7 @@ export class ResourceAccessGuard implements CanActivate {
         if (error instanceof ForbiddenException) {
           throw error;
         }
-        throw new ForbiddenException('Error verifying region permissions');
+        throw new ForbiddenException('errors.permission.verifyFailed');
       }
     }
 

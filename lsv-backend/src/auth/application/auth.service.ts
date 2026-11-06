@@ -1,22 +1,23 @@
+import { normalizeEmail } from '../domain/utils/normalize-email.js';
 import {
   BadRequestException,
   Inject,
   Injectable,
   UnauthorizedException,
 } from '@nestjs/common';
-import { RegisterUserUseCase } from '../domain/use-cases/register-user/register-user';
-import { CreateUserDto } from '../domain/dto/create-user/create-user';
-import { User } from 'src/shared/domain/entities/user';
-import { TokenService } from '../domain/ports/token.service/token.service.interface';
-import { SendEmailUseCase } from '../domain/use-cases/send-email/send-email';
-import { EmailParams } from '../domain/ports/email.service/email.service.interface';
+import { RegisterUserUseCase } from '../domain/use-cases/register-user/register-user.js';
+import { CreateUserDto } from '../domain/dto/create-user/create-user.js';
+import { User } from '../../shared/domain/entities/user.js';
+import { TokenService } from '../domain/ports/token.service/token.service.interface.js';
+import { SendEmailUseCase } from '../domain/use-cases/send-email/send-email.js';
+import { EmailParams } from '../domain/ports/email.service/email.service.interface.js';
 import { ConfigService } from '@nestjs/config';
-import { FindUserUseCase } from '../domain/use-cases/find-user/find-user';
-import { HashService } from '../domain/ports/hash.service.interface/hash.service.interface';
-import { UpdateUserUseCase } from '../domain/use-cases/update-user/update-user';
-import { LoginUserDto } from './dto/login-user/login-user';
-import { JwtPayload } from '../interfaces/jwt-payload.interface';
-import { UpdateUserDto } from '../domain/dto/update-user/update-user';
+import { FindUserUseCase } from '../domain/use-cases/find-user/find-user.js';
+import { HashService } from '../domain/ports/hash.service.interface/hash.service.interface.js';
+import { UpdateUserUseCase } from '../domain/use-cases/update-user/update-user.js';
+import { LoginUserDto } from './dto/login-user/login-user.js';
+import { JwtPayload } from '../interfaces/jwt-payload.interface.js';
+import { UpdateUserDto } from '../domain/dto/update-user/update-user.js';
 
 @Injectable()
 export class AuthService {
@@ -53,9 +54,17 @@ export class AuthService {
   async login(
     loginUserDto: LoginUserDto,
   ): Promise<{ user: User; token: string }> {
-    const user = await this.findUserUseCase.findByEmail(loginUserDto.email);
+    const user = await this.findUserUseCase.findByEmail(
+      normalizeEmail(loginUserDto.email),
+    );
 
-    if (!user) {
+    // BE-13: cuentas OAuth no tienen hash; tratarlas como credenciales inválidas.
+    // Se compara contra un hash ficticio para no revelar si el email existe.
+    if (!user || !user.hashPassword) {
+      await this.hashService.compare(
+        loginUserDto.password,
+        await this.getDummyHash(),
+      );
       throw new UnauthorizedException('errors.auth.invalidCredentials');
     }
 
@@ -71,6 +80,15 @@ export class AuthService {
     this.sanitizePublicUser(user);
     return { user, token };
   }
+  private dummyHashPromise?: Promise<string>;
+
+  private getDummyHash(): Promise<string> {
+    if (!this.dummyHashPromise) {
+      this.dummyHashPromise = this.hashService.hash('timing-equalizer');
+    }
+    return this.dummyHashPromise;
+  }
+
   generateToken(payload: User, expiresIn?: string): string {
     return this.tokenService.generateToken(payload, {
       expiresIn,
@@ -78,7 +96,8 @@ export class AuthService {
     });
   }
   async sendPasswordResetToken(email: string): Promise<void> {
-    const user = await this.findUserUseCase.findByEmail(email);
+    const normalized = normalizeEmail(email);
+    const user = await this.findUserUseCase.findByEmail(normalized);
     if (!user) {
       return;
     }
@@ -92,7 +111,7 @@ export class AuthService {
     const resetUrl = `${frontEndUrl}/reset-password#token=${encodeURIComponent(resetToken)}`;
 
     const emailParams: EmailParams = {
-      to: email,
+      to: normalized,
       subject: '🔐 Restablecer Contraseña - LSV',
       body: this.generatePasswordResetEmailHTML(resetUrl),
     };
@@ -111,7 +130,13 @@ export class AuthService {
 
     const user = await this.findUserUseCase.findById(userId);
     if (!user) {
-      throw new BadRequestException('errors.user.notFound');
+      throw new BadRequestException('errors.auth.invalidOrExpiredToken');
+    }
+
+    // BE-12: el token de reset es de un solo uso. Cualquier cambio que suba
+    // tokenVersion (cambio de contraseña, revocación) invalida el enlace.
+    if ((payload.tokenVersion ?? 0) !== (user.tokenVersion ?? 0)) {
+      throw new BadRequestException('errors.auth.invalidOrExpiredToken');
     }
 
     const passwordHash = await this.hashService.hash(newPassword);
@@ -139,7 +164,29 @@ export class AuthService {
     if (!user) {
       throw new BadRequestException('errors.user.notFound');
     }
+
+    // BE-17: cambiar el email exige la contraseña actual (sesión robada no basta).
+    const newEmail = updateUserDto.email
+      ? normalizeEmail(updateUserDto.email)
+      : undefined;
+    if (newEmail && newEmail !== user.email) {
+      if (!user.hashPassword || !updateUserDto.oldPassword) {
+        throw new BadRequestException('errors.auth.currentPasswordMismatch');
+      }
+      const passwordOk = await this.hashService.compare(
+        updateUserDto.oldPassword,
+        user.hashPassword,
+      );
+      if (!passwordOk) {
+        throw new BadRequestException('errors.auth.currentPasswordMismatch');
+      }
+    }
+
     if (updateUserDto.oldPassword && updateUserDto.newPassword) {
+      // BE-13: una cuenta de Google no tiene contraseña que verificar.
+      if (!user.hashPassword) {
+        throw new BadRequestException('errors.auth.currentPasswordMismatch');
+      }
       const isCurrentPassword = await this.hashService.compare(
         updateUserDto.oldPassword,
         user.hashPassword,
@@ -160,7 +207,7 @@ export class AuthService {
         updateUserDto.newPassword,
       );
       const updatedUser = await this.updateUserUseCase.execute(userId, {
-        email: updateUserDto.email,
+        email: newEmail,
         firstName: updateUserDto.firstName,
         lastName: updateUserDto.lastName,
         age: updateUserDto.age,
@@ -172,7 +219,7 @@ export class AuthService {
     }
 
     const updatedUser = await this.updateUserUseCase.execute(userId, {
-      email: updateUserDto.email,
+      email: newEmail,
       firstName: updateUserDto.firstName,
       lastName: updateUserDto.lastName,
       age: updateUserDto.age,

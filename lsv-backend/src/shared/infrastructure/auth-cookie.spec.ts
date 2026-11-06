@@ -2,7 +2,7 @@ import {
   ACCESS_TOKEN_SLIDE_UNDER_MS,
   ACCESS_TOKEN_TTL_MS,
   shouldSlideAccessToken,
-} from './auth-cookie';
+} from './auth-cookie.js';
 
 describe('shouldSlideAccessToken', () => {
   const now = Date.UTC(2026, 7, 15, 12, 0, 0);
