@@ -11,6 +11,7 @@ import type {
   SignRecordingDto,
 } from "../types/signRecord";
 import type { SignDetectionType } from "../utils/signDetection";
+import i18next from "i18next";
 
 let handlingTokenExpiration = false;
 let sessionActive = false;
@@ -99,9 +100,11 @@ export interface RequestConfig {
   retries?: number;
 }
 
-export interface UploadConfig extends RequestConfig {
-  onProgress?: (progress: number) => void;
-}
+/** FE-11: fetch no expone progreso de subida; por eso UploadConfig no ofrece onProgress. */
+export type UploadConfig = RequestConfig;
+
+/** FE-13: mismo límite que el backend (5 MB) para no subir archivos que serán rechazados. */
+const MAX_UPLOAD_BYTES = 5 * 1024 * 1024;
 
 export class ApiService {
   private static baseURL = BACKEND_BASE_URL;
@@ -234,19 +237,19 @@ export class ApiService {
         if (attempt === maxRetries) {
           if (error instanceof Error && error.name === "AbortError") {
             return {
-              message: "La petición ha excedido el tiempo límite",
+              message: i18next.t("common:network.timeout"),
               success: false,
             };
           }
           return {
-            message: "Error de conexión",
+            message: i18next.t("common:network.connection"),
             success: false,
           };
         }
         // Do not retry aborts/timeouts — the server may have already committed.
         if (error instanceof Error && error.name === "AbortError") {
           return {
-            message: "La petición ha excedido el tiempo límite",
+            message: i18next.t("common:network.timeout"),
             success: false,
           };
         }
@@ -257,7 +260,7 @@ export class ApiService {
     }
 
     return {
-      message: "Error de conexión después de múltiples intentos",
+      message: i18next.t("common:network.connectionRetries"),
       success: false,
     };
   }
@@ -306,6 +309,9 @@ export class ApiService {
     additionalData: Record<string, string | Blob> = {},
     config: UploadConfig = {},
   ): Promise<ApiResponse<T>> {
+    if (file.size > MAX_UPLOAD_BYTES) {
+      throw new Error("El archivo supera el tamaño máximo de 5 MB");
+    }
     const formData = new FormData();
     formData.append("file", file);
 
@@ -313,13 +319,11 @@ export class ApiService {
       formData.append(key, value);
     });
 
-    const { onProgress, ...requestConfig } = config;
-    void onProgress;
-
     return this.makeRequest<T>(endpoint, "POST", formData, {
-      ...requestConfig,
+      timeout: 60000, // FE-03: subidas y respuestas pesadas no caben en los 10 s por defecto
+      ...config,
       headers: {
-        ...requestConfig.headers,
+        ...config.headers,
       },
     });
   }
@@ -775,14 +779,18 @@ export const moderatorApi = {
 
 export const signRecordApi = {
   saveLandmarks: (data: SaveLandmarksPayload) =>
-    ApiService.post<{ id: string }>("/sign-record/landmarks", data),
+    // FE-03: payloads de varios MB; 10 s provocaba errores con la grabación ya guardada.
+    ApiService.post<{ id: string }>("/sign-record/landmarks", data, {
+      timeout: 60000,
+      retries: 0,
+    }),
 
   triggerCustomTraining: (filters: CustomTrainingFilters) =>
     ApiService.post<{
       jobId?: string;
       jobs?: Array<{ jobId?: string; modelType?: SignDetectionType }>;
       message?: string;
-    }>("/sign-record/train/custom", filters),
+    }>("/sign-record/train/custom", filters, { timeout: 60000, retries: 0 }),
 
   getLessonSigns: (lessonId: string, regionId?: string) => {
     const url = ApiService.buildUrl(`/sign-record/lesson/${lessonId}/signs`, {

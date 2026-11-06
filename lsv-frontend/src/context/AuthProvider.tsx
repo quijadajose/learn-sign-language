@@ -11,7 +11,8 @@ import { AuthContext } from "./AuthContext";
 import { clearAllStageSelections } from "../utils/learningStorage";
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
-  const [user, setUser] = useLocalStorage<UserData | null>("user", null);
+  // FE-05: el usuario vive en memoria; la sesión la rehidrata /users/me con la cookie httpOnly.
+  const [user, setUser] = useState<UserData | null>(null);
   const [, setSelectedRegionId] = useLocalStorage<string | null>(
     "selectedRegionId",
     null,
@@ -30,6 +31,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     clearAllStageSelections();
     try {
       localStorage.removeItem("auth");
+      // La sesión no deja selección persistida en el navegador compartido.
+      localStorage.removeItem("selectedRegionId");
+      localStorage.removeItem("selectedLanguageId");
     } catch {
       /* ignore */
     }

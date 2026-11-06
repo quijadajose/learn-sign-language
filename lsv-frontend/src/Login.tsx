@@ -10,6 +10,7 @@ import { useAuth } from "./context/AuthContext";
 import { MAIN_CONTENT_ID } from "./components/SkipLink";
 import { useLocalStorage } from "./hooks/useLocalStorage";
 import { useToast } from "./components/ToastProvider";
+import { consumeUrlHash } from "./utils/urlHash";
 
 function handleGoogleLogin() {
   window.location.href = `${BACKEND_BASE_URL}/auth/google`;
@@ -31,7 +32,12 @@ function Login() {
   const { login, isAuthenticated, isHydrating } = useAuth();
   const addToast = useToast();
   const [searchParams] = useSearchParams();
-  const oauthCode = readOauthCode(searchParams);
+  // FE-06: se lee una sola vez y luego se borra el fragmento de la URL.
+  const [oauthCode] = useState(() => readOauthCode(searchParams));
+  useEffect(() => {
+    if (oauthCode) consumeUrlHash();
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- solo al montar
+  }, []);
   const [rememberedEmail, setRememberedEmail] = useLocalStorage<string | null>(
     "rememberedEmail",
     null,

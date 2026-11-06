@@ -1,6 +1,7 @@
 import { useCallback, useMemo } from "react";
 import { BACKEND_BASE_URL } from "../../config";
 import { adminApi } from "../../services/api";
+import i18next from "i18next";
 
 export interface QuillConfig {
   modules: Record<string, unknown>;
@@ -43,7 +44,7 @@ export function useQuillConfig(
             addToast("error", response.message || "Error al subir la imagen");
           }
         } catch (error) {
-          addToast("error", "Error de conexión al subir la imagen");
+          addToast("error", i18next.t("common:network.uploadImage"));
         }
       }
     };
