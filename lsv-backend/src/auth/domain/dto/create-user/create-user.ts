@@ -55,10 +55,11 @@ export class CreateUserDto {
   @ApiProperty({
     description: 'Edad del usuario',
     example: 30,
-    minimum: 14,
+    minimum: 0,
   })
   @IsInt()
-  @Min(14) // BE-18: edad mínima también en el servidor (la app usa cámara y datos biométricos)
+  // BE-18: sin edad mínima en la app; solo se exige un número no negativo.
+  @Min(0)
   age: number;
 
   @ApiProperty({

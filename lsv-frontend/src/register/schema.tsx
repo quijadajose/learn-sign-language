@@ -53,7 +53,7 @@ const personalInfoSchema = z.object({
   lastName: z.string().min(1, { error: "Requerido" }),
   age: z
     .number()
-    .min(14, { error: "Mínimo de 14 años" })
+    .min(0, { error: "La edad no puede ser negativa" })
     .max(99, { error: "Máximo de 99 años" }),
 });
 
