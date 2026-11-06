@@ -1,7 +1,8 @@
 import { Button, Card, Spinner } from "flowbite-react";
 import { useTranslation } from "react-i18next";
 import { CMS_CONTENT_LANG } from "./i18n";
-import { optionLetter, QuizOptionDisplay } from "./QuizOptionDisplay";
+import { QuizOptionDisplay } from "./QuizOptionDisplay";
+import { optionLetter } from "./utils/optionLetter";
 
 interface QuizOption {
   id: string;
