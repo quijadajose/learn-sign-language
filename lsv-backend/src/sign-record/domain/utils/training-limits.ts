@@ -8,15 +8,25 @@ import { BadRequestException } from '@nestjs/common';
 const MAX_SAMPLES = Number(process.env.TRAINER_MAX_SAMPLES ?? 2000);
 const MAX_FRAMES_PER_SAMPLE = Number(process.env.TRAINER_MAX_FRAMES ?? 600);
 
+export function assertSampleCountWithinLimits(count: number): void {
+  if (count > MAX_SAMPLES) {
+    throw new BadRequestException('errors.model.tooManySamples');
+  }
+}
+
+export function assertRecordingWithinFrameLimit(recording: {
+  landmarks: unknown[];
+}): void {
+  if (recording.landmarks?.length > MAX_FRAMES_PER_SAMPLE) {
+    throw new BadRequestException('errors.model.tooManyFrames');
+  }
+}
+
 export function assertWithinTrainingLimits(
   recordings: { landmarks: unknown[] }[],
 ): void {
-  if (recordings.length > MAX_SAMPLES) {
-    throw new BadRequestException('errors.model.tooManySamples');
-  }
+  assertSampleCountWithinLimits(recordings.length);
   for (const recording of recordings) {
-    if (recording.landmarks?.length > MAX_FRAMES_PER_SAMPLE) {
-      throw new BadRequestException('errors.model.tooManyFrames');
-    }
+    assertRecordingWithinFrameLimit(recording);
   }
 }

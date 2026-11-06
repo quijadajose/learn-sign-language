@@ -12,7 +12,10 @@ import { SignRecording } from '../../../shared/domain/entities/signRecording.js'
 import { Sign } from '../../../shared/domain/entities/sign.js';
 import { SignVariant } from '../../../shared/domain/entities/signVariant.js';
 import { Region } from '../../../shared/domain/entities/region.js';
-import { SignRecordingRepositoryInterface } from '../../domain/ports/sign-recording.repository.interface.js';
+import {
+  SignRecordingRepositoryInterface,
+  TrainingRecordingFilters,
+} from '../../domain/ports/sign-recording.repository.interface.js';
 
 @Injectable()
 export class TypeOrmSignRecordingRepository implements SignRecordingRepositoryInterface {
@@ -38,14 +41,25 @@ export class TypeOrmSignRecordingRepository implements SignRecordingRepositoryIn
     return this.repository.remove(recording);
   }
 
-  async findForTraining(filters: {
-    languageId?: string;
-    regionId?: string;
-    stageId?: string;
-    stageIds?: string[];
-    signIds?: string[];
-    lessonId?: string;
-  }): Promise<SignRecording[]> {
+  async findForTraining(
+    filters: TrainingRecordingFilters,
+  ): Promise<SignRecording[]> {
+    return this.buildTrainingQuery(filters).getMany();
+  }
+
+  async findTrainingPage(
+    filters: TrainingRecordingFilters,
+    afterId: string | undefined,
+    limit: number,
+  ): Promise<SignRecording[]> {
+    const query = this.buildTrainingQuery(filters);
+    if (afterId) {
+      query.andWhere('recording.id > :afterId', { afterId });
+    }
+    return query.orderBy('recording.id', 'ASC').take(limit).getMany();
+  }
+
+  private buildTrainingQuery(filters: TrainingRecordingFilters) {
     const query = this.repository
       .createQueryBuilder('recording')
       .leftJoinAndSelect('recording.sign', 'sign')
@@ -97,7 +111,7 @@ export class TypeOrmSignRecordingRepository implements SignRecordingRepositoryIn
       isValidated: true,
     });
 
-    return query.getMany();
+    return query;
   }
 
   async findValidatedForLessonTraining(

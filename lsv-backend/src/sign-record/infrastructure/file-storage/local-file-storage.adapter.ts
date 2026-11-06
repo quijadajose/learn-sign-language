@@ -3,7 +3,13 @@ import { ConfigService } from '@nestjs/config';
 import { createHash } from 'crypto';
 import * as fs from 'fs/promises';
 import * as path from 'path';
-import { FileStoragePort } from '../../domain/ports/file-storage.port.js';
+import {
+  FileStoragePort,
+  TrainingDatasetSource,
+} from '../../domain/ports/file-storage.port.js';
+
+/** Tamaño del búfer de escritura del dataset (BE-11). */
+const TRAINING_WRITE_CHUNK_BYTES = 1024 * 1024;
 
 @Injectable()
 export class LocalFileStorageAdapter implements FileStoragePort {
@@ -13,6 +19,53 @@ export class LocalFileStorageAdapter implements FileStoragePort {
 
   async saveJson(filePath: string, data: unknown): Promise<void> {
     await fs.writeFile(filePath, JSON.stringify(data));
+  }
+
+  /**
+   * BE-11: escribe `{modelType, samples, globalStaticNoise}` muestra a muestra en un
+   * temporal y lo renombra al final. Así nunca se materializa el dataset completo.
+   */
+  async saveTrainingDataset(
+    filePath: string,
+    dataset: TrainingDatasetSource,
+  ): Promise<void> {
+    const tmpPath = `${filePath}.tmp`;
+    const handle = await fs.open(tmpPath, 'w');
+    try {
+      let chunk = `{"modelType":${JSON.stringify(dataset.modelType)},"samples":[`;
+      const flushIfNeeded = async () => {
+        if (chunk.length >= TRAINING_WRITE_CHUNK_BYTES) {
+          await handle.write(chunk);
+          chunk = '';
+        }
+      };
+
+      let first = true;
+      for await (const sample of dataset.samples) {
+        chunk += (first ? '' : ',') + JSON.stringify(sample);
+        first = false;
+        await flushIfNeeded();
+      }
+
+      chunk += '],"globalStaticNoise":[';
+      first = true;
+      if (dataset.globalStaticNoise) {
+        for await (const sample of dataset.globalStaticNoise) {
+          chunk += (first ? '' : ',') + JSON.stringify(sample);
+          first = false;
+          await flushIfNeeded();
+        }
+      }
+
+      chunk += ']}';
+      await handle.write(chunk);
+      await handle.close();
+      await fs.rename(tmpPath, filePath);
+    } catch (err: unknown) {
+      await handle.close().catch(() => undefined);
+      await fs.unlink(tmpPath).catch(() => undefined);
+      throw err;
+    }
   }
 
   async makeDirectory(dirPath: string): Promise<void> {
