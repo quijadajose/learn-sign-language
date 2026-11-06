@@ -27,7 +27,22 @@ export class ReportProgressUseCase {
       );
     }
 
-    this.notificationPort.sendProgress(modelId, data.progress, data.accuracy);
+    const languageId = await this.findLanguageId(modelId);
+    this.notificationPort.sendProgress(
+      modelId,
+      languageId,
+      data.progress,
+      data.accuracy,
+    );
     return { success: true };
+  }
+
+  private async findLanguageId(modelId: string): Promise<string | null> {
+    try {
+      const model = await this.lessonModelRepository.findById(modelId);
+      return model?.lesson?.language?.id ?? null;
+    } catch {
+      return null;
+    }
   }
 }

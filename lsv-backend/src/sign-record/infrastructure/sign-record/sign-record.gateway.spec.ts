@@ -2,6 +2,7 @@ import { Socket } from 'socket.io';
 import { TokenService } from '../../../auth/domain/ports/token.service/token.service.interface.js';
 import { UserRepositoryInterface } from '../../../auth/domain/ports/user.repository.interface/user.repository.interface.js';
 import { SignRecordGateway } from './sign-record.gateway.js';
+import { ModeratorPermissionRepositoryInterface } from '../../../moderator/domain/ports/moderator-permission.repository.interface.js';
 
 function mockSocket(handshake: {
   auth?: { token?: string };
@@ -17,7 +18,8 @@ function mockSocket(handshake: {
     },
     data: {},
     disconnect: jest.fn(),
-  } as unknown as Socket & { disconnect: jest.Mock };
+    join: jest.fn(),
+  } as unknown as Socket & { disconnect: jest.Mock; join: jest.Mock };
 }
 
 describe('SignRecordGateway', () => {
@@ -32,10 +34,16 @@ describe('SignRecordGateway', () => {
       tokenVersion: 3,
     }),
   };
+  const moderatorPermissionRepository = {
+    findAccessibleLanguageIds: jest.fn().mockResolvedValue(['lang-1']),
+  };
   const gateway = new SignRecordGateway(
     tokenService as unknown as TokenService,
     userRepository as unknown as UserRepositoryInterface,
+    moderatorPermissionRepository as unknown as ModeratorPermissionRepositoryInterface,
   );
+  const server = { to: jest.fn(), emit: jest.fn() };
+  gateway.server = server as unknown as typeof gateway.server;
 
   beforeEach(() => {
     jest.clearAllMocks();
@@ -101,5 +109,56 @@ describe('SignRecordGateway', () => {
     const client = mockSocket({ auth: { token: 'jwt-demoted' } });
     await gateway.handleConnection(client);
     expect(client.data).toEqual({ user: { ...payload, role: 'moderator' } });
+  });
+
+  describe('training notifications scoping (BE-16)', () => {
+    beforeEach(() => {
+      server.to.mockReturnValue(server);
+    });
+
+    it('lets admins subscribe to the global admin room only', async () => {
+      const client = mockSocket({});
+      (client as unknown as { data: unknown }).data = {
+        user: { sub: 'user-1', role: 'admin' },
+      };
+      const result = await gateway.handleSubscribeAdmin(client);
+      expect(result).toEqual({ status: 'subscribed' });
+      expect(client.join).toHaveBeenCalledWith('admin-training-updates');
+    });
+
+    it('lets moderators join only the rooms of their languages', async () => {
+      const client = mockSocket({});
+      (client as unknown as { data: unknown }).data = {
+        user: { sub: 'mod-1', role: 'moderator' },
+      };
+      await gateway.handleSubscribeAdmin(client);
+      expect(
+        moderatorPermissionRepository.findAccessibleLanguageIds,
+      ).toHaveBeenCalledWith('mod-1');
+      expect(client.join).toHaveBeenCalledWith('admin-training-lang:lang-1');
+      expect(client.join).not.toHaveBeenCalledWith('admin-training-updates');
+    });
+
+    it('rejects other roles', async () => {
+      const client = mockSocket({});
+      (client as unknown as { data: unknown }).data = {
+        user: { sub: 'user-2', role: 'user' },
+      };
+      const result = await gateway.handleSubscribeAdmin(client);
+      expect(result).toEqual({ status: 'forbidden' });
+      expect(client.join).not.toHaveBeenCalled();
+    });
+
+    it('sends progress to admins and to the model language room', () => {
+      gateway.sendProgress('model-1', 'lang-1', 0.5, 0.9);
+      expect(server.to).toHaveBeenCalledWith('admin-training-updates');
+      expect(server.to).toHaveBeenCalledWith('admin-training-lang:lang-1');
+    });
+
+    it('sends only to admins when the model has no language', () => {
+      gateway.emitStatusChange('model-1', null, 'READY');
+      expect(server.to).toHaveBeenCalledTimes(1);
+      expect(server.to).toHaveBeenCalledWith('admin-training-updates');
+    });
   });
 });
