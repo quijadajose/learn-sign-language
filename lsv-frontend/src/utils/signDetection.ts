@@ -1,4 +1,3 @@
-import * as tf from "@tensorflow/tfjs";
 import {
   PoseLandmarker,
   HandLandmarker,
@@ -15,12 +14,11 @@ export * from "./signDetectionModels";
 export * from "./signDetectionForwardFill";
 export * from "./signDetectionGesture";
 export * from "./signDetectionFeatures";
-import { selectPoseLandmarks } from "./signDetectionFeatures";
+export * from "./signDetectionInference";
 import {
   GesturePhase,
   Landmark,
   landmarksToFlatVector,
-  normalizePoseScale,
 } from "./signDetectionGesture";
 
 import {
@@ -33,7 +31,6 @@ import {
 
 import type { VisionWorkerClient } from "./visionWorkerClient";
 export const DETECTION_INTERVAL_MS = 33;
-export const CONFIDENCE_THRESHOLD = 0.75;
 /** One-shot + 1 reintento explícito en examen dinámico */
 export const MAX_DYNAMIC_EXAM_ATTEMPTS = 2;
 /** Mínimo de frames reales antes de inferir (las muestras de entrenamiento suelen tener 10–16) */
@@ -42,11 +39,6 @@ export const MIN_CAPTURE_FRAMES = 10;
 export function minFramesBeforeInference(sequenceLength: number): number {
   return Math.min(14, Math.max(MIN_CAPTURE_FRAMES, Math.floor(sequenceLength * 0.5)));
 }
-/** Ventana de inferencias recientes (~330 ms @ 30 fps) */
-export const INFERENCE_VOTE_WINDOW = 10;
-/** Cuántas inferencias en esa ventana deben superar el umbral (permite pausas en señas con movimiento) */
-export const INFERENCE_VOTE_REQUIRED = 6;
-
 /** Served from /public (Vite) / nginx. WASM is copied from node_modules; models are downloaded at Vite startup. */
 export const VISION_WASM = "/mediapipe/wasm";
 export const POSE_MODEL = "/mediapipe/models/pose_landmarker_heavy.task";
@@ -359,85 +351,4 @@ export function closeVisionLandmarkers(
   } catch {
     /* already closed */
   }
-}
-
-export type ModelPrediction = {
-  scores: number[];
-  topLabel: string;
-  topScore: number;
-  targetLabel?: string;
-  targetScore: number;
-};
-
-/**
- * La escala de pose y el recorte de landmarks van acá dentro para que ningún
- * caller pueda olvidarlos: recibe el frame capturado de 258D.
- */
-export function runStaticModelInference(
-  model: tf.LayersModel,
-  frame: number[],
-  labels: string[],
-  targetLabel?: string,
-): ModelPrediction {
-  return tf.tidy(() => {
-    const input = tf.tensor2d([selectPoseLandmarks(normalizePoseScale(frame))]);
-    const predictionTensor = model.predict(input) as tf.Tensor;
-    const scores = Array.from(predictionTensor.dataSync() as Float32Array);
-
-    const topIdx = scores.indexOf(Math.max(...scores));
-    const targetIdx = targetLabel
-      ? labels.findIndex((l) => l.toLowerCase() === targetLabel.toLowerCase())
-      : -1;
-
-    return {
-      scores,
-      topLabel: labels[topIdx] ?? `Clase ${topIdx}`,
-      topScore: scores[topIdx] ?? 0,
-      targetLabel,
-      targetScore: targetIdx !== -1 ? scores[targetIdx] : 0,
-    };
-  });
-}
-
-export function runModelInference(
-  model: tf.LayersModel,
-  buffer: number[][],
-  labels: string[],
-  targetLabel?: string,
-): ModelPrediction {
-  return tf.tidy(() => {
-    const input = tf.tensor3d([buffer]);
-    const predictionTensor = model.predict(input) as tf.Tensor;
-    const scores = Array.from(predictionTensor.dataSync() as Float32Array);
-
-    const topIdx = scores.indexOf(Math.max(...scores));
-    const targetIdx = targetLabel
-      ? labels.findIndex((l) => l.toLowerCase() === targetLabel.toLowerCase())
-      : -1;
-
-    return {
-      scores,
-      topLabel: labels[topIdx] ?? `Clase ${topIdx}`,
-      topScore: scores[topIdx] ?? 0,
-      targetLabel,
-      targetScore: targetIdx !== -1 ? scores[targetIdx] : 0,
-    };
-  });
-}
-
-export function applyPredictionToVotes(
-  prediction: ModelPrediction,
-  votesRef: { current: number[] },
-  onSuccess: () => void,
-): number {
-  const votes = votesRef.current;
-  votes.push(prediction.targetScore >= CONFIDENCE_THRESHOLD ? 1 : 0);
-  if (votes.length > INFERENCE_VOTE_WINDOW) {
-    votes.shift();
-  }
-  const hitCount = votes.reduce((sum, v) => sum + v, 0);
-  if (hitCount >= INFERENCE_VOTE_REQUIRED) {
-    onSuccess();
-  }
-  return hitCount;
 }
