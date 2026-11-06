@@ -17,8 +17,8 @@ import {
   resolveInitialStudioRegionId,
 } from "./signStudioUtils";
 import type { BulkSignDraft } from "./signCatalogPresets";
+import { buildTrainingFilters, nextSortState } from "./signStudioDataUtils";
 import type { Language, Region } from "../../types/user";
-import type { CustomTrainingFilters } from "../../types/signRecord";
 import type {
   Lesson,
   Sign,
@@ -593,33 +593,18 @@ export function useSignStudioData() {
 
   const handleTriggerTraining = async (mode: TrainingMode) => {
     setIsTraining(true);
-    const filters: CustomTrainingFilters = {};
-
-    switch(mode) {
-      case 'lesson':
-        filters.signIds = signs.map(s => s.id);
-        filters.lessonId = selectedLessonId;
-        filters.stageId = selectedStageId;
-        filters.languageId = selectedLanguageId;
-        break;
-      case 'stage':
-        filters.stageIds = [selectedStageId];
-        filters.stageId = selectedStageId;
-        filters.languageId = selectedLanguageId;
-        break;
-      case 'language':
-        filters.languageId = selectedLanguageId;
-        filters.regionId = selectedRegionId;
-        break;
-      case 'selection':
-        if (selectedTrainingSignIds.length === 0) {
-          toast.error("Selecciona al menos una seña");
-          setIsTraining(false);
-          return;
-        }
-        filters.signIds = selectedTrainingSignIds;
-        filters.languageId = selectedLanguageId;
-        break;
+    const filters = buildTrainingFilters(mode, {
+      signs,
+      selectedLessonId,
+      selectedStageId,
+      selectedLanguageId,
+      selectedRegionId,
+      selectedTrainingSignIds,
+    });
+    if (!filters) {
+      toast.error("Selecciona al menos una seña");
+      setIsTraining(false);
+      return;
     }
     const langName = languages.find(l => l.id === selectedLanguageId)?.name;
     const rgnName = regions.find(r => r.id === selectedRegionId)?.name;
@@ -684,12 +669,9 @@ export function useSignStudioData() {
   }, [allSigns, searchTerm, sortKey, sortDirection]);
 
   const toggleSort = (key: "name" | "createdAt") => {
-    if (sortKey === key) {
-      setSortDirection(prev => prev === "asc" ? "desc" : "asc");
-    } else {
-      setSortKey(key);
-      setSortDirection("asc");
-    }
+    const next = nextSortState({ key: sortKey, direction: sortDirection }, key);
+    setSortKey(next.key);
+    setSortDirection(next.direction);
   };
 
   return {
