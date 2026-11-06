@@ -31,7 +31,7 @@ class TrainingCancelledError(Exception):
     """El entrenamiento se detuvo porque el job fue cancelado o perdió el lock."""
 
 
-def normalize_training_payload(raw_data, fallback_model_type=None):
+def normalize_training_payload(raw_data: Any, fallback_model_type: str | None = None) -> Any:
     """
     Soporta formato legacy (lista) y nuevo ({ modelType, samples, globalStaticNoise }).
 
@@ -180,7 +180,7 @@ def assert_safe_job_paths(
     return data_path, output_path
 
 
-def _as_landmark_frames(landmarks: Any, sample_index: int) -> np.ndarray:
+def _as_landmark_frames(landmarks: Any, sample_index: int) -> np.ndarray[Any, Any]:
     if not isinstance(landmarks, (list, tuple, np.ndarray)):
         raise ValueError(f"Sample {sample_index}: landmarks must be a list of frames")
 
@@ -215,7 +215,7 @@ def validate_training_samples(
     samples: Iterable[Any],
     *,
     label: str = "samples",
-) -> list[dict]:
+) -> list[dict[str, Any]]:
     """Valida estructura y dimensión 258D. Devuelve samples listos para entrenar.
 
     Omite muestras sin frames (vacías) con warning implícito vía exclusión;
@@ -224,7 +224,7 @@ def validate_training_samples(
     if not isinstance(samples, list):
         raise ValueError(f"Training payload '{label}' must be a list")
 
-    cleaned: list[dict] = []
+    cleaned: list[dict[str, Any]] = []
     for i, item in enumerate(samples):
         if not isinstance(item, dict):
             raise ValueError(f"{label}[{i}] must be an object")
@@ -262,7 +262,7 @@ def validate_training_samples(
     return cleaned
 
 
-def assert_dataset_ready(sample_names: list[str], *, context: str) -> Counter:
+def assert_dataset_ready(sample_names: list[str], *, context: str) -> Counter[str]:
     """Exige mínimo de muestras/clases y avisa clases con una sola muestra."""
     if len(sample_names) < MIN_SAMPLES_TOTAL:
         raise ValueError(
