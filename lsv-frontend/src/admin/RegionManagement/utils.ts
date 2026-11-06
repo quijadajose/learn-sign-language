@@ -60,17 +60,33 @@ export function groupRegionsByCountryAndLanguage(
   );
 }
 
-/** Indica si el idioma ya tiene una región base (solo puede haber una por idioma). */
+/**
+ * Indica si el idioma ya tiene una región base (solo puede haber una por idioma).
+ * `excludeRegionId` permite ignorar la región que se está editando.
+ */
 export function hasBaseRegionForLanguage(
   regions: Region[],
   languageId: string | null | undefined,
+  excludeRegionId?: string,
 ): boolean {
   return Boolean(
     languageId &&
       regions.some(
-        (region) => region.language?.id === languageId && region.isDefault,
+        (region) =>
+          region.language?.id === languageId &&
+          region.isDefault &&
+          (!excludeRegionId || region.id !== excludeRegionId),
       ),
   );
+}
+
+/** Regiones del idioma enfocado; sin idioma enfocado se devuelven todas. */
+export function filterRegionsByLanguage(
+  regions: Region[],
+  languageId: string | null | undefined,
+): Region[] {
+  if (!languageId) return regions;
+  return regions.filter((region) => region.language?.id === languageId);
 }
 
 /** Devuelve una copia del set con el elemento agregado o quitado según esté. */

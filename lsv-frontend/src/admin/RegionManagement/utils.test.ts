@@ -1,6 +1,10 @@
 import { describe, expect, it } from "vitest";
 import type { Region } from "./types";
-import { hasBaseRegionForLanguage, toggleSetItem } from "./utils";
+import {
+  filterRegionsByLanguage,
+  hasBaseRegionForLanguage,
+  toggleSetItem,
+} from "./utils";
 
 const region = (id: string, languageId: string, isDefault: boolean) =>
   ({
@@ -23,10 +27,29 @@ describe("hasBaseRegionForLanguage", () => {
     expect(hasBaseRegionForLanguage(regions, "es")).toBe(false);
   });
 
+  it("ignores the excluded region when looking for another base", () => {
+    const base = [region("r2", "en", true)];
+    expect(hasBaseRegionForLanguage(base, "en", "r2")).toBe(false);
+    expect(hasBaseRegionForLanguage(base, "en", "other")).toBe(true);
+  });
+
   it("returns false for missing or unknown language ids", () => {
     expect(hasBaseRegionForLanguage(regions, null)).toBe(false);
     expect(hasBaseRegionForLanguage(regions, undefined)).toBe(false);
     expect(hasBaseRegionForLanguage(regions, "fr")).toBe(false);
+  });
+});
+
+describe("filterRegionsByLanguage", () => {
+  const regions = [region("r1", "es", false), region("r2", "en", true)];
+
+  it("keeps only the regions of the focused language", () => {
+    expect(filterRegionsByLanguage(regions, "es").map((r) => r.id)).toEqual(["r1"]);
+  });
+
+  it("returns every region when no language is focused", () => {
+    expect(filterRegionsByLanguage(regions, "")).toBe(regions);
+    expect(filterRegionsByLanguage(regions, null)).toBe(regions);
   });
 });
 
