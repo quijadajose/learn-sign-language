@@ -1,8 +1,11 @@
-import { PaginationDto } from 'src/shared/domain/dto/PaginationDto';
-import { LessonModel } from 'src/shared/domain/entities/lessonModel';
+import { PaginationDto } from '../../../shared/domain/dto/PaginationDto.js';
+import { LessonModel } from '../../../shared/domain/entities/lessonModel.js';
 
 export interface LessonModelRepositoryInterface {
-  findAll(pagination: PaginationDto): Promise<LessonModel[]>;
+  findAll(
+    pagination: PaginationDto,
+    languageIds?: string[],
+  ): Promise<LessonModel[]>;
   findByLessonVariantId(lessonVariantId: string): Promise<LessonModel | null>;
   findReadyForLesson(
     lessonId: string,

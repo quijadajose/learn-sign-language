@@ -1,11 +1,11 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { AuthController } from './auth.controller';
-import { AuthService } from '../application/auth.service';
-import { AuthServiceMock } from '../application/__mocks__/auth.service';
-import { CreateUserDto } from '../domain/dto/create-user/create-user';
-import { LoginUserDto } from '../application/dto/login-user/login-user';
+import { AuthController } from './auth.controller.js';
+import { AuthService } from '../application/auth.service.js';
+import { AuthServiceMock } from '../application/__mocks__/auth.service.js';
+import { CreateUserDto } from '../domain/dto/create-user/create-user.js';
+import { LoginUserDto } from '../application/dto/login-user/login-user.js';
 import { ConfigService } from '@nestjs/config';
-import { OAuthCodeStore } from './oauth-code.store';
+import { OAuthCodeStore } from './oauth-code.store.js';
 import { UnauthorizedException } from '@nestjs/common';
 
 function mockRes() {

@@ -1,6 +1,6 @@
 import { Inject } from '@nestjs/common';
-import { QuizDto } from '../../../domain/dto/quiz/quiz-dto';
-import { QuizRepositoryInterface } from 'src/quiz/domain/ports/quiz.repository.interface/quiz.repository.interface';
+import { QuizDto } from '../../../domain/dto/quiz/quiz-dto.js';
+import { QuizRepositoryInterface } from '../../../domain/ports/quiz.repository.interface/quiz.repository.interface.js';
 
 export class CreateQuizWithQuestionsAndOptionsUseCase {
   constructor(

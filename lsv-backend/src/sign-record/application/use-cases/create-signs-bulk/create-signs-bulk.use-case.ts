@@ -1,7 +1,7 @@
 import { Inject, Injectable, BadRequestException } from '@nestjs/common';
-import { SignRepositoryInterface } from 'src/sign-record/domain/ports/sign.repository.interface';
-import { CreateSignsBulkDto } from 'src/sign-record/domain/dto/sign-record.dto';
-import { Sign } from 'src/shared/domain/entities/sign';
+import { SignRepositoryInterface } from '../../../domain/ports/sign.repository.interface.js';
+import { CreateSignsBulkDto } from '../../../domain/dto/sign-record.dto.js';
+import { Sign } from '../../../../shared/domain/entities/sign.js';
 
 export type BulkCreateSkipped = {
   name: string;
@@ -22,13 +22,13 @@ export class CreateSignsBulkUseCase {
 
   async execute(data: CreateSignsBulkDto): Promise<BulkCreateResult> {
     if (!data.languageId) {
-      throw new BadRequestException('languageId is required');
+      throw new BadRequestException('errors.sign.languageIdRequired');
     }
     if (!data.lessonId) {
-      throw new BadRequestException('lessonId is required');
+      throw new BadRequestException('errors.lesson.idRequired');
     }
     if (!Array.isArray(data.signs) || data.signs.length === 0) {
-      throw new BadRequestException('signs must not be empty');
+      throw new BadRequestException('errors.sign.signsEmpty');
     }
 
     const existing = await this.signRepository.findForLessonWithRecordingsCount(

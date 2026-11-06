@@ -1,7 +1,7 @@
 import { Inject } from '@nestjs/common';
-import { CreateLessonDto } from '../../../domain/dto/create-lesson/create-lesson-dto';
-import { Lesson } from 'src/shared/domain/entities/lesson';
-import { LessonRepositoryInterface } from 'src/lesson/domain/ports/lesson.repository.interface/lesson.repository.interface';
+import { CreateLessonDto } from '../../../domain/dto/create-lesson/create-lesson-dto.js';
+import { Lesson } from '../../../../shared/domain/entities/lesson.js';
+import { LessonRepositoryInterface } from '../../../domain/ports/lesson.repository.interface/lesson.repository.interface.js';
 
 export class UpdateLessonuseCase {
   constructor(

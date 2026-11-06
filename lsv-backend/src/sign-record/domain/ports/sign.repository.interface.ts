@@ -1,11 +1,14 @@
-import { Sign } from 'src/shared/domain/entities/sign';
+import { Sign } from '../../../shared/domain/entities/sign.js';
 
 export interface SignRepositoryInterface {
   findById(id: string): Promise<Sign | null>;
   save(sign: Sign): Promise<Sign>;
   update(id: string, partialSign: Partial<Sign>): Promise<void>;
   remove(sign: Sign): Promise<Sign>;
-  findGlobalWithRecordingsCount(regionId?: string): Promise<Sign[]>;
+  findGlobalWithRecordingsCount(
+    regionId?: string,
+    languageIds?: string[],
+  ): Promise<Sign[]>;
   findForLessonWithRecordingsCount(
     lessonId: string,
     regionId?: string,

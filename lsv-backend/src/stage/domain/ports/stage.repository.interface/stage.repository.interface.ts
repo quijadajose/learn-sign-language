@@ -1,9 +1,9 @@
-import { StageDto } from 'src/shared/domain/dto/create-stage/create-stage-dto';
+import { StageDto } from '../../../../shared/domain/dto/create-stage/create-stage-dto.js';
 import {
   PaginationDto,
   PaginatedResponseDto,
-} from 'src/shared/domain/dto/PaginationDto';
-import { Stages } from 'src/shared/domain/entities/stage';
+} from '../../../../shared/domain/dto/PaginationDto.js';
+import { Stages } from '../../../../shared/domain/entities/stage.js';
 
 export interface StageProgressRow {
   id: string;

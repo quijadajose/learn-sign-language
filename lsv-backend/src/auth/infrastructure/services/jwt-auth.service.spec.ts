@@ -1,8 +1,8 @@
 import { UnauthorizedException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
-import { JwtAuthService } from './jwt-auth.service';
-import { User } from 'src/shared/domain/entities/user';
+import { JwtAuthService } from './jwt-auth.service.js';
+import { User } from '../../../shared/domain/entities/user.js';
 
 describe('JwtAuthService', () => {
   const jwtService = {

@@ -1,10 +1,10 @@
 import { ExecutionContext, ForbiddenException } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
-import { PermissionScope } from 'src/shared/domain/entities/moderatorPermission';
-import { ModeratorPermissionRepositoryInterface } from 'src/moderator/domain/ports/moderator-permission.repository.interface';
-import { ResourceAccessGuard } from './resource-access.guard';
-import { ResourceIdResolver } from './resource-id-resolver';
-import { RESOURCE_PERMISSION_KEY } from '../../interfaces/resource-permission-metadata.interface';
+import { PermissionScope } from '../../../../shared/domain/entities/moderatorPermission.js';
+import { ModeratorPermissionRepositoryInterface } from '../../../../moderator/domain/ports/moderator-permission.repository.interface.js';
+import { ResourceAccessGuard } from './resource-access.guard.js';
+import { ResourceIdResolver } from './resource-id-resolver.js';
+import { RESOURCE_PERMISSION_KEY } from '../../interfaces/resource-permission-metadata.interface.js';
 
 describe('ResourceAccessGuard', () => {
   const reflector = { get: jest.fn() };

@@ -2,11 +2,11 @@ import { InjectRepository } from '@nestjs/typeorm';
 import {
   PaginatedResponseDto,
   PaginationDto,
-} from 'src/shared/domain/dto/PaginationDto';
-import { UserLesson } from 'src/shared/domain/entities/userLesson';
-import { UserLessonRepositoryInterface } from 'src/user-lesson/domain/ports/user-lesson.repository.interface/user-lesson.repository.interface';
+} from '../../../../shared/domain/dto/PaginationDto.js';
+import { UserLesson } from '../../../../shared/domain/entities/userLesson.js';
+import { UserLessonRepositoryInterface } from '../../../domain/ports/user-lesson.repository.interface/user-lesson.repository.interface.js';
 import { Repository } from 'typeorm';
-import { pickSafeOrderBy } from 'src/shared/infrastructure/safe-order-by';
+import { pickSafeOrderBy } from '../../../../shared/infrastructure/safe-order-by.js';
 
 export class UserLessonRepository implements UserLessonRepositoryInterface {
   constructor(

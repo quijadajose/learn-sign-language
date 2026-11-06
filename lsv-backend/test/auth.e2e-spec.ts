@@ -1,14 +1,14 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication, ValidationPipe } from '@nestjs/common';
 import request from 'supertest';
-import { AppModule } from './../src/app.module';
+import { AppModule } from './../src/app.module.js';
 import { DataSource } from 'typeorm';
 import {
   accessTokenFromAuthResponse,
   cleanDatabase,
   cookieHeaderFrom,
-} from './test-utils';
-import { OAuthCodeStore } from '../src/auth/infrastructure/oauth-code.store';
+} from './test-utils.js';
+import { OAuthCodeStore } from '../src/auth/infrastructure/oauth-code.store.js';
 
 describe('Authentication (e2e)', () => {
   let app: INestApplication;

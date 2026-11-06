@@ -1,6 +1,6 @@
 import { Injectable, Inject } from '@nestjs/common';
-import { LessonRepositoryInterface } from '../../../domain/ports/lesson.repository.interface/lesson.repository.interface';
-import { LessonVariant } from 'src/shared/domain/entities/lessonVariant';
+import { LessonRepositoryInterface } from '../../../domain/ports/lesson.repository.interface/lesson.repository.interface.js';
+import { LessonVariant } from '../../../../shared/domain/entities/lessonVariant.js';
 
 @Injectable()
 export class GetLessonVariantUseCase {

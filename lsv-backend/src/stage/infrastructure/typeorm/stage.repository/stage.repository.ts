@@ -1,16 +1,16 @@
 import { InjectRepository } from '@nestjs/typeorm';
-import { StageDto } from 'src/shared/domain/dto/create-stage/create-stage-dto';
+import { StageDto } from '../../../../shared/domain/dto/create-stage/create-stage-dto.js';
 import {
   StageProgressRow,
   StageRepositoryInterface,
-} from 'src/stage/domain/ports/stage.repository.interface/stage.repository.interface';
+} from '../../../domain/ports/stage.repository.interface/stage.repository.interface.js';
 import {
   PaginatedResponseDto,
   PaginationDto,
-} from 'src/shared/domain/dto/PaginationDto';
-import { Stages } from 'src/shared/domain/entities/stage';
+} from '../../../../shared/domain/dto/PaginationDto.js';
+import { Stages } from '../../../../shared/domain/entities/stage.js';
 import { FindManyOptions, Repository } from 'typeorm';
-import { QuizSubmission } from 'src/shared/domain/entities/quizSubmission';
+import { QuizSubmission } from '../../../../shared/domain/entities/quizSubmission.js';
 
 export class StageRepository implements StageRepositoryInterface {
   constructor(
@@ -18,7 +18,11 @@ export class StageRepository implements StageRepositoryInterface {
     private readonly stageRepository: Repository<Stages>,
   ) {}
   findById(id: string): Promise<Stages | null> {
-    return this.stageRepository.findOne({ where: { id } });
+    // Se carga el idioma para validar que la lección pertenece al mismo idioma (BE-06).
+    return this.stageRepository.findOne({
+      where: { id },
+      relations: { language: true },
+    });
   }
   findByNameInLanguage(
     name: string,

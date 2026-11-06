@@ -1,8 +1,8 @@
 import { Inject, Injectable, NotFoundException } from '@nestjs/common';
-import { LessonModel } from 'src/shared/domain/entities/lessonModel';
-import { LessonModelRepositoryInterface } from 'src/sign-record/domain/ports/lesson-model.repository.interface';
-import { LessonRepositoryInterface } from 'src/sign-record/domain/ports/lesson.repository.interface';
-import { isSupportedSchemaVersion } from 'src/sign-record/domain/utils/landmark-validation';
+import { LessonModel } from '../../../../shared/domain/entities/lessonModel.js';
+import { LessonModelRepositoryInterface } from '../../../domain/ports/lesson-model.repository.interface.js';
+import { LessonRepositoryInterface } from '../../../domain/ports/lesson.repository.interface.js';
+import { isSupportedSchemaVersion } from '../../../domain/utils/landmark-validation.js';
 
 function supportedOrNull(model: LessonModel | null): LessonModel | null {
   if (!model) return null;
@@ -37,7 +37,7 @@ export class GetLessonModelUseCase {
     const lesson = await this.lessonRepository.findById(lessonId);
 
     if (!lesson) {
-      throw new NotFoundException('Lección no encontrada');
+      throw new NotFoundException('errors.lesson.notFound');
     }
 
     const models = await this.lessonModelRepository.findReadyModelsForLesson(

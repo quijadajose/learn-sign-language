@@ -1,7 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication, ValidationPipe } from '@nestjs/common';
 import request from 'supertest';
-import { AppModule } from './../src/app.module';
+import { AppModule } from './../src/app.module.js';
 import { DataSource } from 'typeorm';
 import {
   accessTokenFromAuthResponse,
@@ -13,7 +13,7 @@ import {
   getUserToken,
   validLandmarkFrames,
   type LanguageCurriculum,
-} from './test-utils';
+} from './test-utils.js';
 
 function expectNoQuizAnswers(payload: unknown) {
   expect(JSON.stringify(payload)).not.toContain('isCorrect');

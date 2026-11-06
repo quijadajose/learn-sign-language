@@ -7,11 +7,12 @@ import {
   OneToMany,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
+  Relation,
 } from 'typeorm';
-import { Language } from './language';
-import { Division } from './iso-3166-2/divisions';
-import { UserRegion } from './userRegion';
-import type { LessonVariant } from './lessonVariant';
+import { Language } from './language.js';
+import { Division } from './iso-3166-2/divisions.js';
+import { UserRegion } from './userRegion.js';
+import type { LessonVariant } from './lessonVariant.js';
 
 @Entity()
 @Index('IDX_region_languageId', ['languageId'])
@@ -44,18 +45,18 @@ export class Region {
   @ManyToOne(() => Language, (language) => language.regions, {
     onDelete: 'CASCADE',
   })
-  language: Language;
+  language: Relation<Language>;
 
   @ManyToOne(() => Division, (division) => division.code, {
     onDelete: 'SET NULL',
   })
-  division: Division;
+  division: Relation<Division>;
 
   @OneToMany('LessonVariant', (variant: LessonVariant) => variant.region)
-  lessonVariants: LessonVariant[];
+  lessonVariants: Relation<LessonVariant[]>;
 
   @OneToMany(() => UserRegion, (userRegion) => userRegion.region)
-  userRegions: UserRegion[];
+  userRegions: Relation<UserRegion[]>;
 
   @CreateDateColumn()
   createdAt: Date;

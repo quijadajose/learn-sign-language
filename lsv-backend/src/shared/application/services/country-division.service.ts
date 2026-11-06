@@ -4,15 +4,15 @@ import {
   NotFoundException,
   Inject,
 } from '@nestjs/common';
-import { CountryDivisionRepositoryInterface } from '../../domain/ports/country-division.repository.interface';
-import { CreateCountryDto } from '../../domain/dto/create-country.dto';
-import { CreateDivisionDto } from '../../domain/dto/create-division.dto';
-import { SearchDivisionsDto } from '../../domain/dto/search-divisions.dto';
-import { SearchCountriesDto } from '../../domain/dto/search-countries.dto';
-import { PaginatedResponseDto } from '../../domain/dto/paginated-response.dto';
-import { Country } from '../../domain/entities/iso-3166-2/countries';
-import { Division } from '../../domain/entities/iso-3166-2/divisions';
-import { CountryWithDivisionsDto } from '../../domain/dto/country-with-divisions.dto';
+import { CountryDivisionRepositoryInterface } from '../../domain/ports/country-division.repository.interface.js';
+import { CreateCountryDto } from '../../domain/dto/create-country.dto.js';
+import { CreateDivisionDto } from '../../domain/dto/create-division.dto.js';
+import { SearchDivisionsDto } from '../../domain/dto/search-divisions.dto.js';
+import { SearchCountriesDto } from '../../domain/dto/search-countries.dto.js';
+import { PaginatedResponseDto } from '../../domain/dto/paginated-response.dto.js';
+import { Country } from '../../domain/entities/iso-3166-2/countries.js';
+import { Division } from '../../domain/entities/iso-3166-2/divisions.js';
+import { CountryWithDivisionsDto } from '../../domain/dto/country-with-divisions.dto.js';
 
 @Injectable()
 export class CountryDivisionService {

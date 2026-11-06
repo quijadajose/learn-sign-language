@@ -1,21 +1,21 @@
 import { NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { LeaderboardDto } from 'src/leaderboard/domain/dto/leaderboard/leaderboard';
-import { QuizDto } from 'src/quiz/domain/dto/quiz/quiz-dto';
-import { Submission } from 'src/quiz/domain/dto/submission/submission.dto';
-import { QuizRepositoryInterface } from 'src/quiz/domain/ports/quiz.repository.interface/quiz.repository.interface';
+import { LeaderboardDto } from '../../../../leaderboard/domain/dto/leaderboard/leaderboard.js';
+import { QuizDto } from '../../../domain/dto/quiz/quiz-dto.js';
+import { Submission } from '../../../domain/dto/submission/submission.dto.js';
+import { QuizRepositoryInterface } from '../../../domain/ports/quiz.repository.interface/quiz.repository.interface.js';
 import {
   PaginationDto,
   PaginatedResponseDto,
-} from 'src/shared/domain/dto/PaginationDto';
-import { Lesson } from 'src/shared/domain/entities/lesson';
-import { Option } from 'src/shared/domain/entities/option';
-import { Question } from 'src/shared/domain/entities/question';
-import { Quiz } from 'src/shared/domain/entities/quiz';
-import { QuizSubmission } from 'src/shared/domain/entities/quizSubmission';
-import { User } from 'src/shared/domain/entities/user';
+} from '../../../../shared/domain/dto/PaginationDto.js';
+import { Lesson } from '../../../../shared/domain/entities/lesson.js';
+import { Option } from '../../../../shared/domain/entities/option.js';
+import { Question } from '../../../../shared/domain/entities/question.js';
+import { Quiz } from '../../../../shared/domain/entities/quiz.js';
+import { QuizSubmission } from '../../../../shared/domain/entities/quizSubmission.js';
+import { User } from '../../../../shared/domain/entities/user.js';
 import { FindManyOptions, Repository } from 'typeorm';
-import { pickSafeOrderBy } from 'src/shared/infrastructure/safe-order-by';
+import { pickSafeOrderBy } from '../../../../shared/infrastructure/safe-order-by.js';
 
 export class QuizRepository implements QuizRepositoryInterface {
   constructor(
@@ -76,7 +76,7 @@ export class QuizRepository implements QuizRepositoryInterface {
     });
 
     if (!lesson) {
-      throw new NotFoundException('Lesson not found');
+      throw new NotFoundException('errors.lesson.notFound');
     }
 
     const existingQuiz = await this.quizRepository.findOne({
@@ -89,44 +89,45 @@ export class QuizRepository implements QuizRepositoryInterface {
     });
 
     if (!existingQuiz) {
-      throw new NotFoundException('Quiz not found');
+      throw new NotFoundException('errors.quiz.notFound');
     }
 
-    if (existingQuiz.questions && existingQuiz.questions.length > 0) {
-      for (const question of existingQuiz.questions) {
-        if (question.options && question.options.length > 0) {
-          await this.optionRepository.delete({ question: { id: question.id } });
-        }
-        await this.questionRepository.delete({ id: question.id });
+    // BE-20: borrar y recrear preguntas/opciones en una sola transacción.
+    // Si algo falla a mitad, el quiz conserva su contenido anterior.
+    return this.quizRepository.manager.transaction(async (em) => {
+      const quizRepo = em.getRepository(Quiz);
+      const questionRepo = em.getRepository(Question);
+      const optionRepo = em.getRepository(Option);
+
+      for (const question of existingQuiz.questions ?? []) {
+        await optionRepo.delete({ question: { id: question.id } });
+        await questionRepo.delete({ id: question.id });
       }
-    }
 
-    const questions = await Promise.all(
-      quizDto.questions.map(async (q) => {
-        const question = this.questionRepository.create({
-          text: q.text,
-          quiz: existingQuiz,
-        });
-        const savedQuestion = await this.questionRepository.save(question);
-
-        const options = await Promise.all(
-          q.options.map(async (o) => {
-            const option = this.optionRepository.create({
-              text: o.text,
-              isCorrect: o.isCorrect,
-              question: savedQuestion,
-            });
-            return this.optionRepository.save(option);
-          }),
+      const questions: Question[] = [];
+      for (const q of quizDto.questions) {
+        const savedQuestion = await questionRepo.save(
+          questionRepo.create({ text: q.text, quiz: existingQuiz }),
         );
-
+        const options: Option[] = [];
+        for (const o of q.options) {
+          options.push(
+            await optionRepo.save(
+              optionRepo.create({
+                text: o.text,
+                isCorrect: o.isCorrect,
+                question: savedQuestion,
+              }),
+            ),
+          );
+        }
         savedQuestion.options = options;
-        return savedQuestion;
-      }),
-    );
+        questions.push(savedQuestion);
+      }
 
-    existingQuiz.questions = questions;
-    return await this.quizRepository.save(existingQuiz);
+      existingQuiz.questions = questions;
+      return quizRepo.save(existingQuiz);
+    });
   }
 
   async saveWithQuestionsAndOptions(quizDto: QuizDto): Promise<Quiz> {
@@ -135,7 +136,7 @@ export class QuizRepository implements QuizRepositoryInterface {
     });
 
     if (!lesson) {
-      throw new NotFoundException('Lesson not found');
+      throw new NotFoundException('errors.lesson.notFound');
     }
 
     const quiz = this.quizRepository.create({ lesson });
@@ -285,8 +286,15 @@ export class QuizRepository implements QuizRepositoryInterface {
       correctAnswersMap.set(option.question.id, option.id);
     });
 
+    // Cada pregunta puntúa una sola vez: se ignoran respuestas repetidas
+    // o de preguntas que no pertenecen al quiz (no tienen entrada en el mapa).
+    const answeredQuestionIds = new Set<string>();
     let correctCount = 0;
     for (const submission of submissionDto.answers) {
+      if (answeredQuestionIds.has(submission.questionId)) {
+        continue;
+      }
+      answeredQuestionIds.add(submission.questionId);
       if (
         correctAnswersMap.get(submission.questionId) === submission.optionId
       ) {
@@ -294,9 +302,12 @@ export class QuizRepository implements QuizRepositoryInterface {
       }
     }
 
-    const totalQuestions = correctOptions.length;
+    // Total = número de preguntas con respuesta correcta, no de opciones.
+    const totalQuestions = correctAnswersMap.size;
     const score =
-      totalQuestions > 0 ? (correctCount / totalQuestions) * 100 : 0;
+      totalQuestions > 0
+        ? Math.min(100, (correctCount / totalQuestions) * 100)
+        : 0;
     const submission = this.submissionRepository.create({
       user: user,
       quiz: quiz,
@@ -371,15 +382,16 @@ export class QuizRepository implements QuizRepositoryInterface {
     const totalResult = await countQuery.getRawOne();
     const total = totalResult ? parseInt(totalResult.count) : 0;
 
-    const dataQuery = this.submissionRepository
-      .createQueryBuilder('qs')
+    // BE-07: se agrega desde el subquery (un máximo por usuario y quiz). Unir las filas
+    // crudas de `qs` multiplicaba SUM(maxScore) por el número de envíos.
+    const dataQuery = this.submissionRepository.manager
+      .createQueryBuilder(User, 'u')
       .select([
         'u.id AS userId',
         'u.firstName AS firstName',
         'u.lastName AS lastName',
         'SUM(subquery.maxScore) AS totalScore',
       ])
-      .innerJoin(User, 'u', 'qs.userId = u.id')
       .innerJoin(
         (subquery) => {
           return subquery
@@ -394,12 +406,12 @@ export class QuizRepository implements QuizRepositoryInterface {
             .addGroupBy('generalQuizId');
         },
         'subquery',
-        'qs.userId = subquery.userId AND COALESCE(qs.quizId, qs.quizVariantId) = subquery.generalQuizId',
+        'subquery.userId = u.id',
       )
       .groupBy('u.id')
       .orderBy(safeOrderBy, sortOrder === 'ASC' ? 'ASC' : 'DESC')
-      .skip(skip)
-      .take(limit);
+      .offset(skip)
+      .limit(limit);
 
     const rawLeaderboard = await dataQuery.getRawMany();
 
@@ -447,15 +459,16 @@ export class QuizRepository implements QuizRepositoryInterface {
     const totalResult = await countQuery.getRawOne();
     const total = totalResult ? parseInt(totalResult.count) : 0;
 
-    const dataQuery = this.submissionRepository
-      .createQueryBuilder('qs')
+    // BE-07: se agrega desde el subquery (un máximo por usuario y quiz). Unir las filas
+    // crudas de `qs` multiplicaba SUM(maxScore) por el número de envíos.
+    const dataQuery = this.submissionRepository.manager
+      .createQueryBuilder(User, 'u')
       .select([
         'u.id AS userId',
         'u.firstName AS firstName',
         'u.lastName AS lastName',
         'SUM(subquery.maxScore) AS totalScore',
       ])
-      .innerJoin(User, 'u', 'qs.userId = u.id')
       .innerJoin(
         (subquery) => {
           return subquery
@@ -478,12 +491,12 @@ export class QuizRepository implements QuizRepositoryInterface {
             .addGroupBy('generalQuizId');
         },
         'subquery',
-        'qs.userId = subquery.userId AND COALESCE(qs.quizId, qs.quizVariantId) = subquery.generalQuizId',
+        'subquery.userId = u.id',
       )
       .groupBy('u.id')
       .orderBy(safeOrderBy, sortOrder === 'ASC' ? 'ASC' : 'DESC')
-      .skip(skip)
-      .take(limit);
+      .offset(skip)
+      .limit(limit);
 
     const rawLeaderboard = await dataQuery.getRawMany();
 

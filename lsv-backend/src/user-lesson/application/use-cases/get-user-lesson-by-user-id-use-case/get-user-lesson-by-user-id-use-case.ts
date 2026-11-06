@@ -2,9 +2,9 @@ import { Inject } from '@nestjs/common';
 import {
   PaginatedResponseDto,
   PaginationDto,
-} from 'src/shared/domain/dto/PaginationDto';
-import { UserLesson } from 'src/shared/domain/entities/userLesson';
-import { UserLessonRepositoryInterface } from 'src/user-lesson/domain/ports/user-lesson.repository.interface/user-lesson.repository.interface';
+} from '../../../../shared/domain/dto/PaginationDto.js';
+import { UserLesson } from '../../../../shared/domain/entities/userLesson.js';
+import { UserLessonRepositoryInterface } from '../../../domain/ports/user-lesson.repository.interface/user-lesson.repository.interface.js';
 
 export class GetUserLessonByUserIdUseCase {
   constructor(

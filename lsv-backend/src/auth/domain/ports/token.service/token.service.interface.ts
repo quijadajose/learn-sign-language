@@ -1,8 +1,8 @@
 import {
   JwtPayload,
   JwtPurpose,
-} from 'src/auth/interfaces/jwt-payload.interface';
-import { User } from 'src/shared/domain/entities/user';
+} from '../../../interfaces/jwt-payload.interface.js';
+import { User } from '../../../../shared/domain/entities/user.js';
 
 export type GenerateTokenOptions = {
   expiresIn?: string;

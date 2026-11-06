@@ -1,10 +1,10 @@
 import { Injectable, Inject } from '@nestjs/common';
-import { LessonRepositoryInterface } from 'src/lesson/domain/ports/lesson.repository.interface/lesson.repository.interface';
+import { LessonRepositoryInterface } from '../../../domain/ports/lesson.repository.interface/lesson.repository.interface.js';
 import {
   PaginationDto,
   PaginatedResponseDto,
-} from 'src/shared/domain/dto/PaginationDto';
-import { Lesson } from 'src/shared/domain/entities/lesson';
+} from '../../../../shared/domain/dto/PaginationDto.js';
+import { Lesson } from '../../../../shared/domain/entities/lesson.js';
 
 @Injectable()
 export class GetLessonsByLanguageWithSubmissionsUseCase {

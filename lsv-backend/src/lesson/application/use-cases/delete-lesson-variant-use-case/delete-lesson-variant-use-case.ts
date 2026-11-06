@@ -1,5 +1,5 @@
 import { Injectable, Inject } from '@nestjs/common';
-import { LessonRepositoryInterface } from '../../../domain/ports/lesson.repository.interface/lesson.repository.interface';
+import { LessonRepositoryInterface } from '../../../domain/ports/lesson.repository.interface/lesson.repository.interface.js';
 
 @Injectable()
 export class DeleteLessonVariantUseCase {

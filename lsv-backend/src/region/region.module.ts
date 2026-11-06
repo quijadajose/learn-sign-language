@@ -1,11 +1,11 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { Region } from 'src/shared/domain/entities/region';
-import { RegionService } from './application/services/region/region.service';
-import { RegionController } from './infrastructure/controllers/region/region.controller';
-import { RegionRepository } from './infrastructure/typeorm/region.repository/region.repository';
-import { LanguageModule } from 'src/language/language.module';
-import { CountryDivisionModule } from 'src/shared/country-division.module';
+import { Region } from '../shared/domain/entities/region.js';
+import { RegionService } from './application/services/region/region.service.js';
+import { RegionController } from './infrastructure/controllers/region/region.controller.js';
+import { RegionRepository } from './infrastructure/typeorm/region.repository/region.repository.js';
+import { LanguageModule } from '../language/language.module.js';
+import { CountryDivisionModule } from '../shared/country-division.module.js';
 
 @Module({
   imports: [

@@ -11,23 +11,23 @@ import {
   Query,
   UseGuards,
 } from '@nestjs/common';
-import { CreateLanguageDto as LanguageDto } from 'src/language/domain/dto/create-language/create-language';
-import { LanguageService } from 'src/language/application/services/language/language-admin.service';
-import { StageService } from 'src/stage/application/services/stage/stage.service';
-import { Roles } from 'src/auth/infrastructure/decorators/roles.decorator';
-import { RolesGuard } from 'src/auth/infrastructure/guards/roles/roles.guard';
-import { RequireResourcePermission } from 'src/permissions/infrastructure/decorators/require-resource-permission.decorator';
-import { PermissionScope } from 'src/shared/domain/entities/moderatorPermission';
-import { ResourceAccessGuard } from 'src/permissions/infrastructure/guards/resource-access/resource-access.guard';
+import { CreateLanguageDto as LanguageDto } from '../../../domain/dto/create-language/create-language.js';
+import { LanguageService } from '../../../application/services/language/language-admin.service.js';
+import { StageService } from '../../../../stage/application/services/stage/stage.service.js';
+import { Roles } from '../../../../auth/infrastructure/decorators/roles.decorator.js';
+import { RolesGuard } from '../../../../auth/infrastructure/guards/roles/roles.guard.js';
+import { RequireResourcePermission } from '../../../../permissions/infrastructure/decorators/require-resource-permission.decorator.js';
+import { PermissionScope } from '../../../../shared/domain/entities/moderatorPermission.js';
+import { ResourceAccessGuard } from '../../../../permissions/infrastructure/guards/resource-access/resource-access.guard.js';
 import {
   PaginatedResponseDto,
   PaginationDto,
-} from 'src/shared/domain/dto/PaginationDto';
-import { Language } from 'src/shared/domain/entities/language';
-import { Stages } from 'src/shared/domain/entities/stage';
+} from '../../../../shared/domain/dto/PaginationDto.js';
+import { Language } from '../../../../shared/domain/entities/language.js';
+import { Stages } from '../../../../shared/domain/entities/stage.js';
 import { AuthGuard } from '@nestjs/passport';
-import { QuizService } from 'src/quiz/application/services/quiz/quiz.service';
-import { Quiz } from 'src/shared/domain/entities/quiz';
+import { QuizService } from '../../../../quiz/application/services/quiz/quiz.service.js';
+import { Quiz } from '../../../../shared/domain/entities/quiz.js';
 import {
   DocCreateLanguage,
   DocGetLanguage,
@@ -37,7 +37,7 @@ import {
   DocListLanguages,
   DocRemoveLanguage,
   DocUpdateLanguage,
-} from './docs/language.docs';
+} from './docs/language.docs.js';
 
 @DocLanguage()
 @Controller('languages')

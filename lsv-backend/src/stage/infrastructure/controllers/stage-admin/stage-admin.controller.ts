@@ -11,23 +11,23 @@ import {
   Query,
   UseGuards,
 } from '@nestjs/common';
-import { StageDto } from 'src/shared/domain/dto/create-stage/create-stage-dto';
-import { StageService } from 'src/stage/application/services/stage/stage.service';
-import { RequireResourcePermission } from 'src/permissions/infrastructure/decorators/require-resource-permission.decorator';
-import { PermissionScope } from 'src/shared/domain/entities/moderatorPermission';
-import { ResourceAccessGuard } from 'src/permissions/infrastructure/guards/resource-access/resource-access.guard';
+import { StageDto } from '../../../../shared/domain/dto/create-stage/create-stage-dto.js';
+import { StageService } from '../../../application/services/stage/stage.service.js';
+import { RequireResourcePermission } from '../../../../permissions/infrastructure/decorators/require-resource-permission.decorator.js';
+import { PermissionScope } from '../../../../shared/domain/entities/moderatorPermission.js';
+import { ResourceAccessGuard } from '../../../../permissions/infrastructure/guards/resource-access/resource-access.guard.js';
 import {
   PaginationDto,
   PaginatedResponseDto,
-} from 'src/shared/domain/dto/PaginationDto';
-import { Stages } from 'src/shared/domain/entities/stage';
+} from '../../../../shared/domain/dto/PaginationDto.js';
+import { Stages } from '../../../../shared/domain/entities/stage.js';
 import {
   DocCreateStage,
   DocDeleteStage,
   DocGetStagesByLanguageId,
   DocStage,
   DocUpdateStage,
-} from './docs/stage.docs';
+} from './docs/stage.docs.js';
 
 @DocStage()
 @Controller('stage')

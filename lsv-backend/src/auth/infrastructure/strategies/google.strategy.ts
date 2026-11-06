@@ -2,10 +2,11 @@ import { Injectable } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
 import { Strategy, VerifyCallback } from 'passport-google-oauth20';
 import { ConfigService } from '@nestjs/config';
-import { RegisterUserUseCase } from 'src/auth/domain/use-cases/register-user/register-user';
-import { FindUserUseCase } from 'src/auth/domain/use-cases/find-user/find-user';
-import { User } from 'src/shared/domain/entities/user';
-import { AuthService } from 'src/auth/application/auth.service';
+import { RegisterUserUseCase } from '../../domain/use-cases/register-user/register-user.js';
+import { FindUserUseCase } from '../../domain/use-cases/find-user/find-user.js';
+import { User } from '../../../shared/domain/entities/user.js';
+import { AuthService } from '../../application/auth.service.js';
+import { normalizeEmail } from '../../domain/utils/normalize-email.js';
 
 @Injectable()
 export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
@@ -40,13 +41,21 @@ export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
   ): Promise<void> {
     const { id, emails, name, birthday } = profile;
 
+    // BE-14: no vincular cuentas por email si Google no lo ha verificado.
+    const emailVerified = (
+      profile as unknown as { _json?: { email_verified?: boolean } }
+    )._json?.email_verified;
+    if (emailVerified === false) {
+      return done(null, false);
+    }
+
     let user: User | null = await this.findUserUseCase.findByEmail(
-      emails[0].value,
+      normalizeEmail(emails[0].value),
     );
 
     if (!user) {
       user = await this.registerUserUseCase.registerUserWithOAuth2({
-        email: emails[0].value,
+        email: normalizeEmail(emails[0].value),
         firstName: name.givenName,
         lastName: name.familyName,
         age: birthday ? this.calculateAge(birthday) : null,

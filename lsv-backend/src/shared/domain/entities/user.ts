@@ -6,12 +6,13 @@ import {
   OneToMany,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
+  Relation,
 } from 'typeorm';
-import { UserLesson } from './userLesson';
-import { QuizSubmission } from './quizSubmission';
-import { UserLanguage } from './userLanguage';
-import { UserRegion } from './userRegion';
-import { ModeratorPermission } from './moderatorPermission';
+import { UserLesson } from './userLesson.js';
+import { QuizSubmission } from './quizSubmission.js';
+import { UserLanguage } from './userLanguage.js';
+import { UserRegion } from './userRegion.js';
+import { ModeratorPermission } from './moderatorPermission.js';
 
 @Entity()
 @Index('UQ_user_googleId', ['googleId'], {
@@ -56,20 +57,20 @@ export class User {
   tokenVersion: number;
 
   @OneToMany(() => UserLesson, (userLesson) => userLesson.user)
-  userLessons: UserLesson[];
+  userLessons: Relation<UserLesson[]>;
 
   @OneToMany(() => QuizSubmission, (submission) => submission.user)
-  quizSubmissions: QuizSubmission[];
+  quizSubmissions: Relation<QuizSubmission[]>;
 
   @OneToMany(() => UserLanguage, (userLanguage) => userLanguage.user)
-  userLanguages: UserLanguage[];
+  userLanguages: Relation<UserLanguage[]>;
 
   @OneToMany(() => UserRegion, (userRegion) => userRegion.user)
-  userRegions: UserRegion[];
+  userRegions: Relation<UserRegion[]>;
 
   @OneToMany(
     () => ModeratorPermission,
     (moderatorPermission) => moderatorPermission.user,
   )
-  moderatorPermissions: ModeratorPermission[];
+  moderatorPermissions: Relation<ModeratorPermission[]>;
 }

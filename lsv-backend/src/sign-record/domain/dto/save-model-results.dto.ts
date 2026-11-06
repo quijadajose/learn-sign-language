@@ -3,6 +3,7 @@ import {
   IsArray,
   IsIn,
   IsNumber,
+  IsObject,
   IsOptional,
   IsString,
   IsUUID,
@@ -67,4 +68,13 @@ export class SaveModelResultsDto {
   @IsString()
   @Matches(/^[a-f0-9]{64}$/)
   modelJsonSha256: string;
+
+  @ApiProperty({
+    description: 'SHA-256 of each weight shard, keyed by binUrls entry',
+    type: 'object',
+    additionalProperties: { type: 'string' },
+    example: { 'group1-shard1of1.bin': 'a'.repeat(64) },
+  })
+  @IsObject()
+  binSha256: Record<string, string>;
 }

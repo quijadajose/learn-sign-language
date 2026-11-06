@@ -4,8 +4,8 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { SignRepositoryInterface } from 'src/sign-record/domain/ports/sign.repository.interface';
-import { UpdateSignDto } from 'src/sign-record/domain/dto/sign-record.dto';
+import { SignRepositoryInterface } from '../../../domain/ports/sign.repository.interface.js';
+import { UpdateSignDto } from '../../../domain/dto/sign-record.dto.js';
 
 @Injectable()
 export class UpdateSignUseCase {
@@ -16,7 +16,7 @@ export class UpdateSignUseCase {
 
   async execute(id: string, data: UpdateSignDto) {
     const sign = await this.signRepository.findById(id);
-    if (!sign) throw new NotFoundException('Sign not found');
+    if (!sign) throw new NotFoundException('errors.sign.notFound');
 
     if (data.name === undefined && data.detectionType === undefined) {
       throw new BadRequestException(

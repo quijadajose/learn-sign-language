@@ -1,5 +1,5 @@
 import { Inject } from '@nestjs/common';
-import { QuizRepositoryInterface } from 'src/quiz/domain/ports/quiz.repository.interface/quiz.repository.interface';
+import { QuizRepositoryInterface } from '../../../domain/ports/quiz.repository.interface/quiz.repository.interface.js';
 
 export class DeleteQuizUseCase {
   constructor(

@@ -1,7 +1,7 @@
 import { NextFunction, Request, Response } from 'express';
-import { getCorsOrigins } from './cors.config';
-import { extractAccessToken } from 'src/shared/infrastructure/extract-access-token';
-import { resolveLocale, translate } from 'src/i18n';
+import { getCorsOrigins } from './cors.config.js';
+import { extractAccessToken } from '../shared/infrastructure/extract-access-token.js';
+import { resolveLocale, translate } from '../i18n/index.js';
 
 const SAFE = new Set(['GET', 'HEAD', 'OPTIONS']);
 

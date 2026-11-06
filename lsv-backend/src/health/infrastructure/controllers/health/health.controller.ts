@@ -1,9 +1,9 @@
 import { Controller, Get, Head, UseGuards } from '@nestjs/common';
 import { HealthCheck } from '@nestjs/terminus';
-import { CheckHealthService } from '../../services/check-health.service';
-import { Public } from 'src/auth/infrastructure/decorators/public.decorator';
-import { Roles } from 'src/auth/infrastructure/decorators/roles.decorator';
-import { RolesGuard } from 'src/auth/infrastructure/guards/roles/roles.guard';
+import { CheckHealthService } from '../../services/check-health.service.js';
+import { Public } from '../../../../auth/infrastructure/decorators/public.decorator.js';
+import { Roles } from '../../../../auth/infrastructure/decorators/roles.decorator.js';
+import { RolesGuard } from '../../../../auth/infrastructure/guards/roles/roles.guard.js';
 import {
   DocHealth,
   DocCheckApi,
@@ -11,7 +11,7 @@ import {
   DocCheckValkey,
   DocCheckSsl,
   DocCheckDomain,
-} from '../../docs/health.docs';
+} from '../../docs/health.docs.js';
 
 @DocHealth()
 @Controller('health')

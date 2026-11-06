@@ -1,10 +1,10 @@
-import { User } from 'src/shared/domain/entities/user';
-import { Region } from 'src/shared/domain/entities/region';
-import { UserRegion } from 'src/shared/domain/entities/userRegion';
+import { User } from '../../../shared/domain/entities/user.js';
+import { Region } from '../../../shared/domain/entities/region.js';
+import { UserRegion } from '../../../shared/domain/entities/userRegion.js';
 import {
   PaginatedResponseDto,
   PaginationDto,
-} from 'src/shared/domain/dto/PaginationDto';
+} from '../../../shared/domain/dto/PaginationDto.js';
 
 export interface UserRegionRepositoryInterface {
   findRegionsByUserId(

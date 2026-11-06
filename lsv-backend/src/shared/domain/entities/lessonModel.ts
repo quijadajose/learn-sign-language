@@ -7,9 +7,10 @@ import {
   PrimaryGeneratedColumn,
   RelationId,
   UpdateDateColumn,
+  Relation,
 } from 'typeorm';
-import { Lesson } from './lesson';
-import { LessonVariant } from './lessonVariant';
+import { Lesson } from './lesson.js';
+import { LessonVariant } from './lessonVariant.js';
 
 @Entity()
 @Index('IDX_lesson_model_lessonId', ['lesson'])
@@ -60,8 +61,8 @@ export class LessonModel {
   featuresCount: number;
 
   /**
-   * Contrato de features del artefacto. Vigentes: static-v2 (202D) y dynamic-v3
-   * (340D, deltas de manos y de brazos → resample). Los dos parten del frame
+   * Contrato de features del artefacto. Vigentes: static-v2 (202D) y dynamic-v4
+   * (340D, resample → deltas de manos y de brazos). Los dos parten del frame
    * capturado de 258D, con el pose escalado por ancho de hombros y recortado al
    * subconjunto de landmarks del contrato. Los registros viejos conservan su
    * versión legacy y se filtran al servirlos, así que no hace falta migrarlos.
@@ -73,13 +74,13 @@ export class LessonModel {
     onDelete: 'CASCADE',
     nullable: true,
   })
-  lessonVariant: LessonVariant;
+  lessonVariant: Relation<LessonVariant>;
 
   @ManyToOne(() => Lesson, {
     onDelete: 'SET NULL',
     nullable: true,
   })
-  lesson: Lesson;
+  lesson: Relation<Lesson>;
 
   /** Expuesto en JSON para agrupar static+dynamic de la misma lección. */
   @RelationId((model: LessonModel) => model.lesson)

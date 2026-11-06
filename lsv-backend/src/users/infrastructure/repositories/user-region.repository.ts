@@ -1,15 +1,15 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { FindManyOptions, Repository } from 'typeorm';
-import { pickSafeOrderBy } from 'src/shared/infrastructure/safe-order-by';
-import { UserRegion } from '../../../shared/domain/entities/userRegion';
-import { UserRegionRepositoryInterface } from '../../domain/ports/user-region.repository.interface';
+import { pickSafeOrderBy } from '../../../shared/infrastructure/safe-order-by.js';
+import { UserRegion } from '../../../shared/domain/entities/userRegion.js';
+import { UserRegionRepositoryInterface } from '../../domain/ports/user-region.repository.interface.js';
 import {
   PaginatedResponseDto,
   PaginationDto,
-} from 'src/shared/domain/dto/PaginationDto';
-import { Region } from 'src/shared/domain/entities/region';
-import { User } from 'src/shared/domain/entities/user';
+} from '../../../shared/domain/dto/PaginationDto.js';
+import { Region } from '../../../shared/domain/entities/region.js';
+import { User } from '../../../shared/domain/entities/user.js';
 
 @Injectable()
 export class UserRegionRepository implements UserRegionRepositoryInterface {

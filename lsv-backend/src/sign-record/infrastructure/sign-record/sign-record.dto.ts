@@ -7,4 +7,4 @@ export {
   BulkSignItemDto,
   UpdateSignDto,
   LandmarkFramesConstraint,
-} from '../../domain/dto/sign-record.dto';
+} from '../../domain/dto/sign-record.dto.js';

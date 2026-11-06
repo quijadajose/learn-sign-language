@@ -4,12 +4,12 @@ import { JwtService, JwtSignOptions } from '@nestjs/jwt';
 import {
   GenerateTokenOptions,
   TokenService,
-} from 'src/auth/domain/ports/token.service/token.service.interface';
+} from '../../domain/ports/token.service/token.service.interface.js';
 import {
   JwtPayload,
   JwtPurpose,
-} from 'src/auth/interfaces/jwt-payload.interface';
-import { User } from 'src/shared/domain/entities/user';
+} from '../../interfaces/jwt-payload.interface.js';
+import { User } from '../../../shared/domain/entities/user.js';
 
 @Injectable()
 export class JwtAuthService implements TokenService {

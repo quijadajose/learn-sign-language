@@ -1,5 +1,5 @@
 import { NotFoundException, BadRequestException, Inject } from '@nestjs/common';
-import { LanguageRepositoryInterface } from 'src/language/domain/ports/language.repository.interface/language.repository.interface';
+import { LanguageRepositoryInterface } from '../../../domain/ports/language.repository.interface/language.repository.interface.js';
 
 export class DeleteLanguagesUseCase {
   constructor(
@@ -8,12 +8,12 @@ export class DeleteLanguagesUseCase {
   ) {}
   async execute(id: string): Promise<void> {
     if (!id) {
-      throw new BadRequestException('ID must be provided');
+      throw new BadRequestException('errors.language.idRequired');
     }
 
     const language = await this.languageRepository.findById(id);
     if (!language) {
-      throw new NotFoundException('Language not found');
+      throw new NotFoundException('errors.language.notFound');
     }
     return this.languageRepository.deleteById(id);
   }

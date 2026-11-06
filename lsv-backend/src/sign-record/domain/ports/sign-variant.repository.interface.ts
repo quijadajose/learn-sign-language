@@ -1,4 +1,4 @@
-import { SignVariant } from 'src/shared/domain/entities/signVariant';
+import { SignVariant } from '../../../shared/domain/entities/signVariant.js';
 
 export interface SignVariantRepositoryInterface {
   findById(id: string): Promise<SignVariant | null>;

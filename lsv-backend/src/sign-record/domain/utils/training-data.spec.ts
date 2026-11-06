@@ -3,9 +3,9 @@ import {
   recordingsToTrainingSamples,
   serializeRecordingLandmarks,
   splitRecordingsForDualTraining,
-} from './training-data';
-import { Sign } from 'src/shared/domain/entities/sign';
-import { SignRecording } from 'src/shared/domain/entities/signRecording';
+} from './training-data.js';
+import { Sign } from '../../../shared/domain/entities/sign.js';
+import { SignRecording } from '../../../shared/domain/entities/signRecording.js';
 
 describe('training-data', () => {
   it('serializes flat and nested landmark frames', () => {

@@ -1,7 +1,7 @@
-import { ListQuizUseCase } from './list-quiz-use-case';
-import { QuizRepositoryInterface } from 'src/quiz/domain/ports/quiz.repository.interface/quiz.repository.interface';
-import { PaginationDto } from 'src/shared/domain/dto/PaginationDto';
-import { Quiz } from 'src/shared/domain/entities/quiz';
+import { ListQuizUseCase } from './list-quiz-use-case.js';
+import { QuizRepositoryInterface } from '../../../domain/ports/quiz.repository.interface/quiz.repository.interface.js';
+import { PaginationDto } from '../../../../shared/domain/dto/PaginationDto.js';
+import { Quiz } from '../../../../shared/domain/entities/quiz.js';
 
 describe('ListQuizUseCase', () => {
   it('returns quizzes from the repository', async () => {

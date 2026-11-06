@@ -2,8 +2,8 @@ import { writeFileSync } from 'fs';
 import { join } from 'path';
 import { INestApplication } from '@nestjs/common';
 import { DocumentBuilder, OpenAPIObject, SwaggerModule } from '@nestjs/swagger';
-import { ApiErrorDetailDto, ApiErrorDto } from './api-error.dto';
-import { PaginationDto } from '../../domain/dto/PaginationDto';
+import { ApiErrorDetailDto, ApiErrorDto } from './api-error.dto.js';
+import { PaginationDto } from '../../domain/dto/PaginationDto.js';
 
 const HTTP_METHODS = [
   'get',

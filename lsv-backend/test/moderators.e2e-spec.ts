@@ -1,14 +1,14 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication, ValidationPipe } from '@nestjs/common';
 import request from 'supertest';
-import { AppModule } from './../src/app.module';
+import { AppModule } from './../src/app.module.js';
 import { DataSource } from 'typeorm';
 import {
   cleanDatabase,
   findUserIdByEmail,
   getAdminToken,
   getUserToken,
-} from './test-utils';
+} from './test-utils.js';
 
 describe('Moderators (e2e)', () => {
   let app: INestApplication;

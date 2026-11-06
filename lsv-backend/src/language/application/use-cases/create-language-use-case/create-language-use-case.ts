@@ -1,7 +1,7 @@
 import { BadRequestException, Inject } from '@nestjs/common';
-import { CreateLanguageDto } from '../../../domain/dto/create-language/create-language';
-import { Language } from 'src/shared/domain/entities/language';
-import { LanguageRepositoryInterface } from 'src/language/domain/ports/language.repository.interface/language.repository.interface';
+import { CreateLanguageDto } from '../../../domain/dto/create-language/create-language.js';
+import { Language } from '../../../../shared/domain/entities/language.js';
+import { LanguageRepositoryInterface } from '../../../domain/ports/language.repository.interface/language.repository.interface.js';
 
 export class CreateLanguageUseCase {
   constructor(
@@ -15,7 +15,7 @@ export class CreateLanguageUseCase {
     const existingLanguage = await this.languageRepository.findByName(name);
 
     if (existingLanguage) {
-      throw new BadRequestException('Language already in use');
+      throw new BadRequestException('errors.language.alreadyInUse');
     }
 
     const language = new Language();

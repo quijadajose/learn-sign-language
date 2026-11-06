@@ -4,9 +4,10 @@ import {
   ManyToOne,
   OneToMany,
   PrimaryGeneratedColumn,
+  Relation,
 } from 'typeorm';
-import { QuizVariant } from './quizVariant';
-import type { OptionVariant } from './optionVariant';
+import { QuizVariant } from './quizVariant.js';
+import type { OptionVariant } from './optionVariant.js';
 
 @Entity()
 export class QuestionVariant {
@@ -19,11 +20,11 @@ export class QuestionVariant {
   @ManyToOne(() => QuizVariant, (quizVariant) => quizVariant.questionVariants, {
     onDelete: 'CASCADE',
   })
-  quizVariant: QuizVariant;
+  quizVariant: Relation<QuizVariant>;
 
   @OneToMany(
     'OptionVariant',
     (optionVariant: OptionVariant) => optionVariant.questionVariant,
   )
-  optionVariants: OptionVariant[];
+  optionVariants: Relation<OptionVariant[]>;
 }

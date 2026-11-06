@@ -1,8 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { Lesson } from 'src/shared/domain/entities/lesson';
-import { LessonRepositoryInterface } from '../../domain/ports/lesson.repository.interface';
+import { Lesson } from '../../../shared/domain/entities/lesson.js';
+import { LessonRepositoryInterface } from '../../domain/ports/lesson.repository.interface.js';
 
 @Injectable()
 export class TypeOrmLessonRepository implements LessonRepositoryInterface {

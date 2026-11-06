@@ -1,31 +1,32 @@
+import { VisibilityActor } from '../../domain/utils/language-visibility.js';
 import { Inject, Injectable, OnApplicationBootstrap } from '@nestjs/common';
-import { PaginationDto } from 'src/shared/domain/dto/PaginationDto';
-import { SaveLandmarksUseCase } from '../use-cases/save-landmarks/save-landmarks.use-case';
-import { GetSignRecordingsUseCase } from '../use-cases/get-sign-recordings/get-sign-recordings.use-case';
-import { TriggerTrainingUseCase } from '../use-cases/trigger-training/trigger-training.use-case';
-import { GetSignsForLessonUseCase } from '../use-cases/get-signs-for-lesson/get-signs-for-lesson.use-case';
-import { GetGlobalSignsUseCase } from '../use-cases/get-global-signs/get-global-signs.use-case';
-import { GetModelsUseCase } from '../use-cases/get-models/get-models.use-case';
-import { GetLessonModelUseCase } from '../use-cases/get-lesson-model/get-lesson-model.use-case';
-import { DeleteModelUseCase } from '../use-cases/delete-model/delete-model.use-case';
-import { DeleteRecordingUseCase } from '../use-cases/delete-recording/delete-recording.use-case';
-import { TriggerCustomTrainingUseCase } from '../use-cases/trigger-custom-training/trigger-custom-training.use-case';
-import { CreateSignUseCase } from '../use-cases/create-sign/create-sign.use-case';
-import { CreateSignsBulkUseCase } from '../use-cases/create-signs-bulk/create-signs-bulk.use-case';
-import { UpdateSignUseCase } from '../use-cases/update-sign/update-sign.use-case';
-import { DeleteSignUseCase } from '../use-cases/delete-sign/delete-sign.use-case';
-import { UpdateModelStatusUseCase } from '../use-cases/update-model-status/update-model-status.use-case';
-import { ReportProgressUseCase } from '../use-cases/report-progress/report-progress.use-case';
-import { SaveModelResultsUseCase } from '../use-cases/save-model-results/save-model-results.use-case';
-import { CleanupModelsUseCase } from '../use-cases/cleanup-models/cleanup-models.use-case';
-import { FileStoragePort } from '../../domain/ports/file-storage.port';
+import { PaginationDto } from '../../../shared/domain/dto/PaginationDto.js';
+import { SaveLandmarksUseCase } from '../use-cases/save-landmarks/save-landmarks.use-case.js';
+import { GetSignRecordingsUseCase } from '../use-cases/get-sign-recordings/get-sign-recordings.use-case.js';
+import { TriggerTrainingUseCase } from '../use-cases/trigger-training/trigger-training.use-case.js';
+import { GetSignsForLessonUseCase } from '../use-cases/get-signs-for-lesson/get-signs-for-lesson.use-case.js';
+import { GetGlobalSignsUseCase } from '../use-cases/get-global-signs/get-global-signs.use-case.js';
+import { GetModelsUseCase } from '../use-cases/get-models/get-models.use-case.js';
+import { GetLessonModelUseCase } from '../use-cases/get-lesson-model/get-lesson-model.use-case.js';
+import { DeleteModelUseCase } from '../use-cases/delete-model/delete-model.use-case.js';
+import { DeleteRecordingUseCase } from '../use-cases/delete-recording/delete-recording.use-case.js';
+import { TriggerCustomTrainingUseCase } from '../use-cases/trigger-custom-training/trigger-custom-training.use-case.js';
+import { CreateSignUseCase } from '../use-cases/create-sign/create-sign.use-case.js';
+import { CreateSignsBulkUseCase } from '../use-cases/create-signs-bulk/create-signs-bulk.use-case.js';
+import { UpdateSignUseCase } from '../use-cases/update-sign/update-sign.use-case.js';
+import { DeleteSignUseCase } from '../use-cases/delete-sign/delete-sign.use-case.js';
+import { UpdateModelStatusUseCase } from '../use-cases/update-model-status/update-model-status.use-case.js';
+import { ReportProgressUseCase } from '../use-cases/report-progress/report-progress.use-case.js';
+import { SaveModelResultsUseCase } from '../use-cases/save-model-results/save-model-results.use-case.js';
+import { CleanupModelsUseCase } from '../use-cases/cleanup-models/cleanup-models.use-case.js';
+import { FileStoragePort } from '../../domain/ports/file-storage.port.js';
 import {
   CreateSignDto,
   CreateSignsBulkDto,
   SaveLandmarksDto,
   TriggerCustomTrainingDto,
   UpdateSignDto,
-} from '../../domain/dto/sign-record.dto';
+} from '../../domain/dto/sign-record.dto.js';
 
 @Injectable()
 export class SignRecordService implements OnApplicationBootstrap {
@@ -72,12 +73,12 @@ export class SignRecordService implements OnApplicationBootstrap {
     return this.getSignsForLessonUseCase.execute(lessonId, regionId);
   }
 
-  async getGlobalSigns(regionId?: string) {
-    return this.getGlobalSignsUseCase.execute(regionId);
+  async getGlobalSigns(actor: VisibilityActor, regionId?: string) {
+    return this.getGlobalSignsUseCase.execute(actor, regionId);
   }
 
-  async getModels(pagination: PaginationDto) {
-    return this.getModelsUseCase.execute(pagination);
+  async getModels(actor: VisibilityActor, pagination: PaginationDto) {
+    return this.getModelsUseCase.execute(actor, pagination);
   }
 
   async getLessonModel(lessonId: string, regionId?: string) {

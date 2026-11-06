@@ -6,17 +6,18 @@ import {
 } from '@nestjs/common';
 import { isUUID } from 'class-validator';
 import { randomUUID } from 'crypto';
-import { SignRecording } from 'src/shared/domain/entities/signRecording';
-import { SignRecordingRepositoryInterface } from 'src/sign-record/domain/ports/sign-recording.repository.interface';
-import { LessonModelRepositoryInterface } from 'src/sign-record/domain/ports/lesson-model.repository.interface';
-import { FileStoragePort } from 'src/sign-record/domain/ports/file-storage.port';
-import { TrainingQueuePort } from 'src/sign-record/domain/ports/training-queue.port';
-import { TriggerCustomTrainingDto } from 'src/sign-record/domain/dto/sign-record.dto';
+import { SignRecording } from '../../../../shared/domain/entities/signRecording.js';
+import { SignRecordingRepositoryInterface } from '../../../domain/ports/sign-recording.repository.interface.js';
+import { LessonModelRepositoryInterface } from '../../../domain/ports/lesson-model.repository.interface.js';
+import { FileStoragePort } from '../../../domain/ports/file-storage.port.js';
+import { TrainingQueuePort } from '../../../domain/ports/training-queue.port.js';
+import { TriggerCustomTrainingDto } from '../../../domain/dto/sign-record.dto.js';
 import {
   recordingsToTrainingSamples,
   splitRecordingsForDualTraining,
-} from 'src/sign-record/domain/utils/training-data';
-import { featureMetadataForModelType } from 'src/sign-record/domain/utils/landmark-validation';
+} from '../../../domain/utils/training-data.js';
+import { featureMetadataForModelType } from '../../../domain/utils/landmark-validation.js';
+import { assertWithinTrainingLimits } from '../../../domain/utils/training-limits.js';
 
 @Injectable()
 export class TriggerCustomTrainingUseCase {
@@ -38,11 +39,13 @@ export class TriggerCustomTrainingUseCase {
       await this.signRecordingRepository.findForTraining(filters);
 
     if (recordings.length === 0) {
-      throw new BadRequestException('No hay datos suficientes para entrenar');
+      throw new BadRequestException('errors.model.insufficientTrainingData');
     }
 
     const { staticRecordings, dynamicRecordings, globalStaticForDynamic } =
       splitRecordingsForDualTraining(recordings);
+    assertWithinTrainingLimits(staticRecordings);
+    assertWithinTrainingLimits(dynamicRecordings);
 
     const baseModelName = this.resolveModelName(filters);
     const jobs: { modelId: string; modelType: 'static' | 'dynamic' }[] = [];
@@ -76,9 +79,7 @@ export class TriggerCustomTrainingUseCase {
     }
 
     if (jobs.length === 0) {
-      throw new BadRequestException(
-        'No hay grabaciones válidas para entrenar modelos estáticos o dinámicos',
-      );
+      throw new BadRequestException('errors.model.noValidRecordingsForDual');
     }
 
     return {

@@ -1,5 +1,5 @@
 import { Inject } from '@nestjs/common';
-import { StageRepositoryInterface } from 'src/stage/domain/ports/stage.repository.interface/stage.repository.interface';
+import { StageRepositoryInterface } from '../../../domain/ports/stage.repository.interface/stage.repository.interface.js';
 
 export class DeleteStageUseCase {
   constructor(

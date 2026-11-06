@@ -1,26 +1,26 @@
 import { Module } from '@nestjs/common';
 import * as nodemailer from 'nodemailer';
-import Redis from 'ioredis';
-import { AuthService } from './application/auth.service';
-import { AuthController } from './infrastructure/auth.controller';
+import { Redis } from 'ioredis';
+import { AuthService } from './application/auth.service.js';
+import { AuthController } from './infrastructure/auth.controller.js';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { User } from 'src/shared/domain/entities/user';
-import { RegisterUserUseCase } from './domain/use-cases/register-user/register-user';
-import { UserRepository } from './infrastructure/typeorm/user.repository/user.repository';
-import { BcryptService } from './infrastructure/services/bcrypt.service';
-import { JwtAuthService } from './infrastructure/services/jwt-auth.service';
+import { User } from '../shared/domain/entities/user.js';
+import { RegisterUserUseCase } from './domain/use-cases/register-user/register-user.js';
+import { UserRepository } from './infrastructure/typeorm/user.repository/user.repository.js';
+import { BcryptService } from './infrastructure/services/bcrypt.service.js';
+import { JwtAuthService } from './infrastructure/services/jwt-auth.service.js';
 import { JwtModule } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
-import { GoogleStrategy } from './infrastructure/strategies/google.strategy';
-import { JwtStrategy } from './infrastructure/strategies/jwt.strategy';
-import { FindUserUseCase } from './domain/use-cases/find-user/find-user';
-import { NodeMailerService } from './infrastructure/services/nodemailer.service';
-import { UpdateUserUseCase } from './domain/use-cases/update-user/update-user';
-import { SendEmailUseCase } from './domain/use-cases/send-email/send-email';
+import { GoogleStrategy } from './infrastructure/strategies/google.strategy.js';
+import { JwtStrategy } from './infrastructure/strategies/jwt.strategy.js';
+import { FindUserUseCase } from './domain/use-cases/find-user/find-user.js';
+import { NodeMailerService } from './infrastructure/services/nodemailer.service.js';
+import { UpdateUserUseCase } from './domain/use-cases/update-user/update-user.js';
+import { SendEmailUseCase } from './domain/use-cases/send-email/send-email.js';
 import { APP_GUARD } from '@nestjs/core';
-import { JwtAuthGuard } from './infrastructure/guards/jwt-auth/jwt-auth.guard';
-import { OAuthCodeStore } from './infrastructure/oauth-code.store';
-import { ACCESS_TOKEN_TTL } from 'src/shared/infrastructure/auth-cookie';
+import { JwtAuthGuard } from './infrastructure/guards/jwt-auth/jwt-auth.guard.js';
+import { OAuthCodeStore } from './infrastructure/oauth-code.store.js';
+import { ACCESS_TOKEN_TTL } from '../shared/infrastructure/auth-cookie.js';
 
 @Module({
   imports: [

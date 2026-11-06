@@ -1,8 +1,9 @@
-﻿import { Injectable, ConflictException, Inject } from '@nestjs/common';
-import { CreateUserDto } from 'src/auth/domain/dto/create-user/create-user';
-import { User } from 'src/shared/domain/entities/user';
-import { UserRepositoryInterface } from '../../ports/user.repository.interface/user.repository.interface';
-import { HashService } from '../../ports/hash.service.interface/hash.service.interface';
+import { normalizeEmail } from '../../utils/normalize-email.js';
+import { Injectable, ConflictException, Inject } from '@nestjs/common';
+import { CreateUserDto } from '../../dto/create-user/create-user.js';
+import { User } from '../../../../shared/domain/entities/user.js';
+import { UserRepositoryInterface } from '../../ports/user.repository.interface/user.repository.interface.js';
+import { HashService } from '../../ports/hash.service.interface/hash.service.interface.js';
 
 @Injectable()
 export class RegisterUserUseCase {
@@ -17,7 +18,9 @@ export class RegisterUserUseCase {
     const { email, firstName, lastName, age, password, isRightHanded, role } =
       createUserDto;
 
-    const existingUser = await this.userRepository.findByEmail(email);
+    const existingUser = await this.userRepository.findByEmail(
+      normalizeEmail(email),
+    );
     if (existingUser) {
       if (password) {
         await this.hashService.hash(password);
@@ -26,7 +29,7 @@ export class RegisterUserUseCase {
     }
 
     const newUser = new User();
-    newUser.email = email;
+    newUser.email = normalizeEmail(email);
     newUser.firstName = firstName;
     newUser.lastName = lastName;
     newUser.age = age;
@@ -39,13 +42,15 @@ export class RegisterUserUseCase {
   async registerUserWithOAuth2(createUserDto: CreateUserDto) {
     const { email, firstName, lastName, age, role } = createUserDto;
 
-    const existingUser = await this.userRepository.findByEmail(email);
+    const existingUser = await this.userRepository.findByEmail(
+      normalizeEmail(email),
+    );
     if (existingUser) {
       throw new ConflictException('errors.auth.emailInUse');
     }
 
     const newUser = new User();
-    newUser.email = email;
+    newUser.email = normalizeEmail(email);
     newUser.firstName = firstName;
     newUser.lastName = lastName;
     newUser.age = age;

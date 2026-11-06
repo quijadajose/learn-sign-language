@@ -1,7 +1,7 @@
-import { User } from 'src/shared/domain/entities/user';
-import { PermissionScope } from 'src/shared/domain/entities/moderatorPermission';
-import { Language } from 'src/shared/domain/entities/language';
-import { Region } from 'src/shared/domain/entities/region';
+import { User } from '../../../shared/domain/entities/user.js';
+import { PermissionScope } from '../../../shared/domain/entities/moderatorPermission.js';
+import { Language } from '../../../shared/domain/entities/language.js';
+import { Region } from '../../../shared/domain/entities/region.js';
 
 export interface ModeratorListItem {
   id: string;

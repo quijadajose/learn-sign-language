@@ -1,5 +1,5 @@
 import { IsOptional, IsUUID } from 'class-validator';
-import { PaginationDto } from 'src/shared/domain/dto/PaginationDto';
+import { PaginationDto } from '../../../shared/domain/dto/PaginationDto.js';
 import { ApiPropertyOptional } from '@nestjs/swagger';
 
 export class GetLessonsQueryDto extends PaginationDto {

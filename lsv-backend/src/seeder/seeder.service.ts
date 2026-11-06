@@ -1,19 +1,19 @@
 import { Inject, Injectable, OnModuleInit } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { FindUserUseCase } from 'src/auth/domain/use-cases/find-user/find-user';
-import { RegisterUserUseCase } from 'src/auth/domain/use-cases/register-user/register-user';
-import { CreateLanguageUseCase } from 'src/language/application/use-cases/create-language-use-case/create-language-use-case';
-import { LanguageRepositoryInterface } from 'src/language/domain/ports/language.repository.interface/language.repository.interface';
-import { CreateLessonUseCase } from 'src/lesson/application/use-cases/create-lesson-use-case/create-lesson-use-case';
-import { LessonRepositoryInterface } from 'src/lesson/domain/ports/lesson.repository.interface/lesson.repository.interface';
-import { LessonService } from 'src/lesson/application/services/lesson/lesson.service';
-import { CreateQuizWithQuestionsAndOptionsUseCase } from 'src/quiz/application/use-cases/create-quiz-with-questions-and-options-use-case/create-quiz-with-questions-and-options-use-case';
-import { QuizVariantService } from 'src/quiz/application/services/quiz-variant.service';
-import { CreateStageUseCase } from 'src/stage/application/use-cases/create-stage-use-case/create-stage-use-case';
-import { StageRepositoryInterface } from 'src/stage/domain/ports/stage.repository.interface/stage.repository.interface';
-import { RegionService } from 'src/region/application/services/region/region.service';
-import { CountryDivisionService } from 'src/shared/application/services/country-division.service';
-import countriesData from './iso-3166-2.json';
+import { FindUserUseCase } from '../auth/domain/use-cases/find-user/find-user.js';
+import { RegisterUserUseCase } from '../auth/domain/use-cases/register-user/register-user.js';
+import { CreateLanguageUseCase } from '../language/application/use-cases/create-language-use-case/create-language-use-case.js';
+import { LanguageRepositoryInterface } from '../language/domain/ports/language.repository.interface/language.repository.interface.js';
+import { CreateLessonUseCase } from '../lesson/application/use-cases/create-lesson-use-case/create-lesson-use-case.js';
+import { LessonRepositoryInterface } from '../lesson/domain/ports/lesson.repository.interface/lesson.repository.interface.js';
+import { LessonService } from '../lesson/application/services/lesson/lesson.service.js';
+import { CreateQuizWithQuestionsAndOptionsUseCase } from '../quiz/application/use-cases/create-quiz-with-questions-and-options-use-case/create-quiz-with-questions-and-options-use-case.js';
+import { QuizVariantService } from '../quiz/application/services/quiz-variant.service.js';
+import { CreateStageUseCase } from '../stage/application/use-cases/create-stage-use-case/create-stage-use-case.js';
+import { StageRepositoryInterface } from '../stage/domain/ports/stage.repository.interface/stage.repository.interface.js';
+import { RegionService } from '../region/application/services/region/region.service.js';
+import { CountryDivisionService } from '../shared/application/services/country-division.service.js';
+import countriesData from './iso-3166-2.json' with { type: 'json' };
 
 interface LanguageSeedData {
   countryCode: string;

@@ -1,9 +1,9 @@
 import { BadRequestException, Inject, NotFoundException } from '@nestjs/common';
-import { Lesson } from 'src/shared/domain/entities/lesson';
-import { StageRepositoryInterface } from 'src/stage/domain/ports/stage.repository.interface/stage.repository.interface';
-import { LanguageRepositoryInterface } from 'src/language/domain/ports/language.repository.interface/language.repository.interface';
-import { LessonRepositoryInterface } from 'src/lesson/domain/ports/lesson.repository.interface/lesson.repository.interface';
-import { CreateLessonDto } from '../../../domain/dto/create-lesson/create-lesson-dto';
+import { Lesson } from '../../../../shared/domain/entities/lesson.js';
+import { StageRepositoryInterface } from '../../../../stage/domain/ports/stage.repository.interface/stage.repository.interface.js';
+import { LanguageRepositoryInterface } from '../../../../language/domain/ports/language.repository.interface/language.repository.interface.js';
+import { LessonRepositoryInterface } from '../../../domain/ports/lesson.repository.interface/lesson.repository.interface.js';
+import { CreateLessonDto } from '../../../domain/dto/create-lesson/create-lesson-dto.js';
 
 export class CreateLessonUseCase {
   constructor(
@@ -23,17 +23,21 @@ export class CreateLessonUseCase {
     );
 
     if (existingLesson) {
-      throw new BadRequestException('Lesson already in use');
+      throw new BadRequestException('errors.lesson.alreadyInUse');
     }
 
     const stage = await this.stageRepository.findById(stageId);
     if (!stage) {
-      throw new NotFoundException('Stage not found');
+      throw new NotFoundException('errors.stage.notFound');
+    }
+    // BE-06: la etapa debe pertenecer al mismo idioma que autorizó el guard.
+    if (stage.language && stage.language.id !== languageId) {
+      throw new BadRequestException('errors.lesson.stageLanguageMismatch');
     }
 
     const language = await this.languageRepository.findById(languageId);
     if (!language) {
-      throw new NotFoundException('Language not found');
+      throw new NotFoundException('errors.language.notFound');
     }
 
     const lesson = new Lesson();

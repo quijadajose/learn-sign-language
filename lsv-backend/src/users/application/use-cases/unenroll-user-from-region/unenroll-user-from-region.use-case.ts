@@ -1,5 +1,5 @@
 import { Inject, Injectable, NotFoundException } from '@nestjs/common';
-import { UserRegionRepositoryInterface } from 'src/users/domain/ports/user-region.repository.interface';
+import { UserRegionRepositoryInterface } from '../../../domain/ports/user-region.repository.interface.js';
 
 @Injectable()
 export class UnenrollUserFromRegionUseCase {
@@ -16,7 +16,7 @@ export class UnenrollUserFromRegionUseCase {
     );
 
     if (!userRegion) {
-      throw new NotFoundException('No estás inscrito en esta región.');
+      throw new NotFoundException('errors.region.notEnrolled');
     }
 
     // Eliminar la inscripción

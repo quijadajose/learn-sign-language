@@ -1,13 +1,13 @@
-import { LeaderboardDto } from 'src/leaderboard/domain/dto/leaderboard/leaderboard';
-import { QuizDto } from 'src/quiz/domain/dto/quiz/quiz-dto';
-import { Submission } from 'src/quiz/domain/dto/submission/submission.dto';
+import { LeaderboardDto } from '../../../../leaderboard/domain/dto/leaderboard/leaderboard.js';
+import { QuizDto } from '../../dto/quiz/quiz-dto.js';
+import { Submission } from '../../dto/submission/submission.dto.js';
 import {
   PaginationDto,
   PaginatedResponseDto,
-} from 'src/shared/domain/dto/PaginationDto';
-import { Quiz } from 'src/shared/domain/entities/quiz';
-import { QuizSubmission } from 'src/shared/domain/entities/quizSubmission';
-import { User } from 'src/shared/domain/entities/user';
+} from '../../../../shared/domain/dto/PaginationDto.js';
+import { Quiz } from '../../../../shared/domain/entities/quiz.js';
+import { QuizSubmission } from '../../../../shared/domain/entities/quizSubmission.js';
+import { User } from '../../../../shared/domain/entities/user.js';
 
 export interface QuizRepositoryInterface {
   findById(id: string): Promise<Quiz | null>;

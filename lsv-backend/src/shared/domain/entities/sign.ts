@@ -10,11 +10,12 @@ import {
   RelationId,
   UpdateDateColumn,
   JoinTable,
+  Relation,
 } from 'typeorm';
-import { Lesson } from './lesson';
-import { Language } from './language';
-import { SignVariant } from './signVariant';
-import { SignRecording } from './signRecording';
+import { Lesson } from './lesson.js';
+import { Language } from './language.js';
+import { SignVariant } from './signVariant.js';
+import { SignRecording } from './signRecording.js';
 
 @Entity()
 @Index('IDX_sign_languageId', ['language'])
@@ -39,7 +40,7 @@ export class Sign {
   landmarks: unknown[] | null;
 
   @ManyToOne(() => Language, { onDelete: 'SET NULL', nullable: true })
-  language: Language | null;
+  language: Relation<Language> | null;
 
   /** Ownership explícito para ACL (evita depender solo del join lesson_signs). */
   @RelationId((sign: Sign) => sign.language)
@@ -47,13 +48,13 @@ export class Sign {
 
   @ManyToMany(() => Lesson, (lesson) => lesson.signs)
   @JoinTable({ name: 'lesson_signs' })
-  lessons: Lesson[];
+  lessons: Relation<Lesson[]>;
 
   @OneToMany(() => SignVariant, (variant) => variant.sign)
-  variants: SignVariant[];
+  variants: Relation<SignVariant[]>;
 
   @OneToMany(() => SignRecording, (recording) => recording.sign)
-  recordings: SignRecording[];
+  recordings: Relation<SignRecording[]>;
 
   @CreateDateColumn()
   createdAt: Date;

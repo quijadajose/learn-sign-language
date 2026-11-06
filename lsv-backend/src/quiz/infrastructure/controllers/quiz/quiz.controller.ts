@@ -13,14 +13,14 @@ import {
   Req,
   UseGuards,
 } from '@nestjs/common';
-import { RequireResourcePermission } from 'src/permissions/infrastructure/decorators/require-resource-permission.decorator';
-import { PermissionScope } from 'src/shared/domain/entities/moderatorPermission';
-import { ResourceAccessGuard } from 'src/permissions/infrastructure/guards/resource-access/resource-access.guard';
-import { QuizDto } from 'src/quiz/domain/dto/quiz/quiz-dto';
-import { SubmissionDto } from 'src/quiz/application/dto/submission/submission-dto';
-import { QuizService } from 'src/quiz/application/services/quiz/quiz.service';
-import { PaginationDto } from 'src/shared/domain/dto/PaginationDto';
-import { Quiz } from 'src/shared/domain/entities/quiz';
+import { RequireResourcePermission } from '../../../../permissions/infrastructure/decorators/require-resource-permission.decorator.js';
+import { PermissionScope } from '../../../../shared/domain/entities/moderatorPermission.js';
+import { ResourceAccessGuard } from '../../../../permissions/infrastructure/guards/resource-access/resource-access.guard.js';
+import { QuizDto } from '../../../domain/dto/quiz/quiz-dto.js';
+import { SubmissionDto } from '../../../application/dto/submission/submission-dto.js';
+import { QuizService } from '../../../application/services/quiz/quiz.service.js';
+import { PaginationDto } from '../../../../shared/domain/dto/PaginationDto.js';
+import { Quiz } from '../../../../shared/domain/entities/quiz.js';
 import {
   DocCreateQuiz,
   DocDeleteQuiz,
@@ -31,7 +31,7 @@ import {
   DocQuiz,
   DocSubmission,
   DocUpdateQuiz,
-} from './docs/quiz.docs';
+} from './docs/quiz.docs.js';
 
 @DocQuiz()
 @Controller('quiz')
@@ -107,7 +107,7 @@ export class QuizController {
   ) {
     const userId = req.user?.sub;
     if (!userId) {
-      throw new BadRequestException('User ID is missing from the request.');
+      throw new BadRequestException('errors.quiz.userIdMissing');
     }
     return this.quizService.submissionTest(userId, quizId, submissionDto);
   }
@@ -121,7 +121,7 @@ export class QuizController {
   ) {
     const userId = req.user?.sub;
     if (!userId) {
-      throw new BadRequestException('User ID is missing from the request.');
+      throw new BadRequestException('errors.quiz.userIdMissing');
     }
     return this.quizService.getQuizSubmissionTestFromUser(
       userId,

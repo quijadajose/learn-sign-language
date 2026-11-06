@@ -1,5 +1,5 @@
-import type Redis from 'ioredis';
-import { OAuthCodeStore } from './oauth-code.store';
+import type { Redis } from 'ioredis';
+import { OAuthCodeStore } from './oauth-code.store.js';
 
 function createMemoryRedis(): Redis {
   const store = new Map<string, { value: string; expiresAt: number }>();

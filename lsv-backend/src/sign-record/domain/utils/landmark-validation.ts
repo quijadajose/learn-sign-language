@@ -10,7 +10,7 @@ export {
   LEGACY_FEATURES_SCHEMA_DYNAMIC,
   MODEL_POSE_LANDMARKS,
   VELOCITY_POSE_LANDMARKS,
-} from './ml-feature-contract.generated';
+} from './ml-feature-contract.generated.js';
 
 import {
   FEATURES_COUNT,
@@ -18,7 +18,7 @@ import {
   DYNAMIC_FEATURES_COUNT,
   FEATURES_SCHEMA_STATIC,
   FEATURES_SCHEMA_DYNAMIC,
-} from './ml-feature-contract.generated';
+} from './ml-feature-contract.generated.js';
 
 export const HAND_FEATURE_START = 33 * 4;
 export const HAND_VALIDATION_THRESHOLD = 0.8;

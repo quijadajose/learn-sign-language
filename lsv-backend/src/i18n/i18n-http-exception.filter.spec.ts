@@ -1,5 +1,5 @@
 import { BadRequestException, HttpException, HttpStatus } from '@nestjs/common';
-import { I18nHttpExceptionFilter } from './i18n-http-exception.filter';
+import { I18nHttpExceptionFilter } from './i18n-http-exception.filter.js';
 
 function mockHost(acceptLanguage?: string) {
   const json = jest.fn();

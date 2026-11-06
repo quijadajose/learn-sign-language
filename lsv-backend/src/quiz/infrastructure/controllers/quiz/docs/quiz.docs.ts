@@ -12,13 +12,13 @@ import {
   ApiForbiddenResponse,
   ApiNotFoundResponse,
 } from '@nestjs/swagger';
-import { QuizDto } from 'src/quiz/domain/dto/quiz/quiz-dto';
-import { SubmissionDto } from 'src/quiz/application/dto/submission/submission-dto';
+import { QuizDto } from '../../../../domain/dto/quiz/quiz-dto.js';
+import { SubmissionDto } from '../../../../application/dto/submission/submission-dto.js';
 import {
   QuizAdminDto,
   QuizPublicDto,
   QuizSubmissionResponseDto,
-} from 'src/shared/infrastructure/openapi/resource-responses';
+} from '../../../../../shared/infrastructure/openapi/resource-responses.js';
 
 export const DocQuiz = () => applyDecorators(ApiTags('Quiz'));
 

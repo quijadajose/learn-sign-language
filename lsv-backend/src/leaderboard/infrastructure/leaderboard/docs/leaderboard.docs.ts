@@ -1,7 +1,7 @@
 import { applyDecorators } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
-import { DocOp } from 'src/shared/infrastructure/openapi/doc-op';
-import { PaginatedLeaderboardResponseDto } from 'src/shared/infrastructure/openapi/resource-responses';
+import { DocOp } from '../../../../shared/infrastructure/openapi/doc-op.js';
+import { PaginatedLeaderboardResponseDto } from '../../../../shared/infrastructure/openapi/resource-responses.js';
 
 export const DocLeaderboard = () => applyDecorators(ApiTags('Leaderboard'));
 

@@ -1,4 +1,4 @@
-import { IsNotEmpty, IsString } from 'class-validator';
+import { IsNotEmpty, IsString, IsUUID } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 
 export class CreateLessonDto {
@@ -19,11 +19,11 @@ export class CreateLessonDto {
 
   @ApiProperty({ format: 'uuid' })
   @IsNotEmpty()
-  @IsString()
+  @IsUUID()
   languageId: string;
 
   @ApiProperty({ format: 'uuid' })
   @IsNotEmpty()
-  @IsString()
+  @IsUUID()
   stageId: string;
 }

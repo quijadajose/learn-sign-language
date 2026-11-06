@@ -1,6 +1,6 @@
-import { QuizVariant } from 'src/shared/domain/entities/quizVariant';
-import { User } from 'src/shared/domain/entities/user';
-import { Submission } from '../dto/submission/submission.dto';
+import { QuizVariant } from '../../../shared/domain/entities/quizVariant.js';
+import { User } from '../../../shared/domain/entities/user.js';
+import { Submission } from '../dto/submission/submission.dto.js';
 
 export interface QuizVariantRepositoryInterface {
   findByLessonVariantId(lessonVariantId: string): Promise<QuizVariant[]>;

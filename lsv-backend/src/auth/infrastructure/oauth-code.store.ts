@@ -1,6 +1,6 @@
 import { Inject, Injectable, OnModuleDestroy } from '@nestjs/common';
 import { randomBytes } from 'crypto';
-import type Redis from 'ioredis';
+import type { Redis } from 'ioredis';
 
 interface StoredExchange {
   accessToken: string;
@@ -9,6 +9,8 @@ interface StoredExchange {
 
 const CODE_TTL_SECONDS = 60;
 const KEY_PREFIX = 'oauth:code:';
+const STATE_KEY_PREFIX = 'oauth-state:';
+const STATE_TTL_SECONDS = 300;
 
 /**
  * Short-lived one-time codes for OAuth callback → frontend exchange.
@@ -52,6 +54,24 @@ export class OAuthCodeStore implements OnModuleDestroy {
     } catch {
       return null;
     }
+  }
+
+  /** BE-14: `state` de un solo uso para el flujo OAuth (anti login-CSRF). */
+  async createState(): Promise<string> {
+    const state = randomBytes(32).toString('hex');
+    await this.redis.set(
+      STATE_KEY_PREFIX + state,
+      '1',
+      'EX',
+      STATE_TTL_SECONDS,
+    );
+    return state;
+  }
+
+  async consumeState(state: string): Promise<boolean> {
+    if (!state || typeof state !== 'string') return false;
+    const value = await this.redis.getdel(STATE_KEY_PREFIX + state);
+    return value === '1';
   }
 
   async onModuleDestroy() {

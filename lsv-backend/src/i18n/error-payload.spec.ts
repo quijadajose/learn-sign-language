@@ -1,7 +1,7 @@
 import {
   detailsFromValidationMessages,
   toBusinessErrorCode,
-} from './error-payload';
+} from './error-payload.js';
 
 describe('toBusinessErrorCode', () => {
   it('maps i18n keys to stable SCREAMING_SNAKE codes', () => {

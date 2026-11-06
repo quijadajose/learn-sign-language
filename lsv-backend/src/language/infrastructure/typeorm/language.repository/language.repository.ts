@@ -1,13 +1,13 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { LanguageRepositoryInterface } from 'src/language/domain/ports/language.repository.interface/language.repository.interface';
+import { LanguageRepositoryInterface } from '../../../domain/ports/language.repository.interface/language.repository.interface.js';
 import {
   PaginatedResponseDto,
   PaginationDto,
-} from 'src/shared/domain/dto/PaginationDto';
-import { Language } from 'src/shared/domain/entities/language';
+} from '../../../../shared/domain/dto/PaginationDto.js';
+import { Language } from '../../../../shared/domain/entities/language.js';
 import { FindManyOptions, Repository } from 'typeorm';
-import { pickSafeOrderBy } from 'src/shared/infrastructure/safe-order-by';
+import { pickSafeOrderBy } from '../../../../shared/infrastructure/safe-order-by.js';
 
 @Injectable()
 export class LanguageRepository implements LanguageRepositoryInterface {

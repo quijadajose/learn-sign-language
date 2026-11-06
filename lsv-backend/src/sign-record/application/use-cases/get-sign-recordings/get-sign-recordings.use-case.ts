@@ -1,5 +1,5 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { SignRecordingRepositoryInterface } from 'src/sign-record/domain/ports/sign-recording.repository.interface';
+import { SignRecordingRepositoryInterface } from '../../../domain/ports/sign-recording.repository.interface.js';
 
 @Injectable()
 export class GetSignRecordingsUseCase {

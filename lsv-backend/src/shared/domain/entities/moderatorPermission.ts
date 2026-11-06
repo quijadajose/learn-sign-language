@@ -6,10 +6,11 @@ import {
   CreateDateColumn,
   JoinColumn,
   Index,
+  Relation,
 } from 'typeorm';
-import { User } from './user';
-import { Language } from './language';
-import { Region } from './region';
+import { User } from './user.js';
+import { Language } from './language.js';
+import { Region } from './region.js';
 
 export enum PermissionScope {
   LANGUAGE = 'language',
@@ -26,7 +27,7 @@ export class ModeratorPermission {
     onDelete: 'CASCADE',
   })
   @JoinColumn({ name: 'userId' })
-  user: User;
+  user: Relation<User>;
 
   @Column()
   userId: string;
@@ -40,7 +41,7 @@ export class ModeratorPermission {
   // Relación opcional con Language (para Moderadores de Lenguaje)
   @ManyToOne(() => Language, { onDelete: 'CASCADE', nullable: true })
   @JoinColumn({ name: 'languageId' })
-  language?: Language;
+  language?: Relation<Language>;
 
   @Column({ nullable: true })
   languageId?: string;
@@ -48,7 +49,7 @@ export class ModeratorPermission {
   // Relación opcional con Region (para Moderadores de Región)
   @ManyToOne(() => Region, { onDelete: 'CASCADE', nullable: true })
   @JoinColumn({ name: 'regionId' })
-  region?: Region;
+  region?: Relation<Region>;
 
   @Column({ nullable: true })
   regionId?: string;

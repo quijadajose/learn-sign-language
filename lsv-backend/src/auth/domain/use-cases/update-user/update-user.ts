@@ -1,7 +1,8 @@
 ﻿import { BadRequestException, Inject, NotFoundException } from '@nestjs/common';
-import { UserRepositoryInterface } from '../../ports/user.repository.interface/user.repository.interface';
-import { User } from 'src/shared/domain/entities/user';
-import { UpdateUserPatch } from 'src/auth/domain/dto/update-user/update-user';
+import { UserRepositoryInterface } from '../../ports/user.repository.interface/user.repository.interface.js';
+import { User } from '../../../../shared/domain/entities/user.js';
+import { UpdateUserPatch } from '../../dto/update-user/update-user.js';
+import { normalizeEmail } from '../../utils/normalize-email.js';
 
 export class UpdateUserUseCase {
   constructor(
@@ -24,12 +25,14 @@ export class UpdateUserUseCase {
       throw new NotFoundException('errors.user.notFound');
     }
 
-    if (email && email !== user.email) {
-      const existingUser = await this.userRepository.findByEmail(email);
+    const normalizedEmail = email ? normalizeEmail(email) : undefined;
+    if (normalizedEmail && normalizedEmail !== user.email) {
+      const existingUser =
+        await this.userRepository.findByEmail(normalizedEmail);
       if (existingUser) {
         throw new BadRequestException('errors.auth.emailInUse');
       }
-      user.email = email;
+      user.email = normalizedEmail;
     }
 
     if (firstName) user.firstName = firstName;

@@ -5,9 +5,10 @@ import {
   ManyToOne,
   PrimaryColumn,
   UpdateDateColumn,
+  Relation,
 } from 'typeorm';
-import { User } from './user';
-import { Language } from './language';
+import { User } from './user.js';
+import { Language } from './language.js';
 
 @Entity()
 export class UserLanguage {
@@ -25,11 +26,11 @@ export class UserLanguage {
 
   @ManyToOne(() => User, (user) => user.userLanguages, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'userId' })
-  user: User;
+  user: Relation<User>;
 
   @ManyToOne(() => Language, (language) => language.userLanguages, {
     onDelete: 'CASCADE',
   })
   @JoinColumn({ name: 'languageId' })
-  language: Language;
+  language: Relation<Language>;
 }

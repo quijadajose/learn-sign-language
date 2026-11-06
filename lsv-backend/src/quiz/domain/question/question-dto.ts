@@ -4,7 +4,7 @@ import {
   IsString,
   ValidateNested,
 } from 'class-validator';
-import { OptionDto } from '../dto/option/option-dto';
+import { OptionDto } from '../dto/option/option-dto.js';
 import { Type } from 'class-transformer';
 import { ApiProperty } from '@nestjs/swagger';
 

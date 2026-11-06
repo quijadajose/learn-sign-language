@@ -1,11 +1,11 @@
 import { applyDecorators } from '@nestjs/common';
 import { ApiParam, ApiTags } from '@nestjs/swagger';
-import { DivisionDto } from '../../../domain/dto/country-with-divisions.dto';
-import { DocOp } from '../../openapi/doc-op';
+import { DivisionDto } from '../../../domain/dto/country-with-divisions.dto.js';
+import { DocOp } from '../../openapi/doc-op.js';
 import {
   IsoCountryDto,
   PaginatedDivisionResponseDto,
-} from '../../openapi/resource-responses';
+} from '../../openapi/resource-responses.js';
 
 export const DocCountryDivision = () =>
   applyDecorators(ApiTags('CountryDivision'));

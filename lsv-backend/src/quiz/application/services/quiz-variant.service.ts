@@ -1,10 +1,10 @@
 import { Injectable } from '@nestjs/common';
-import { GetQuizVariantsUseCase } from '../use-cases/get-quiz-variants-use-case/get-quiz-variants-use-case';
-import { CreateQuizVariantUseCase } from '../use-cases/create-quiz-variant-use-case/create-quiz-variant-use-case';
-import { DeleteQuizVariantUseCase } from '../use-cases/delete-quiz-variant-use-case/delete-quiz-variant-use-case';
-import { UpdateQuizVariantUseCase } from '../use-cases/update-quiz-variant-use-case/update-quiz-variant-use-case';
-import { CreateQuizVariantDto } from 'src/quiz/domain/dto/create-quiz-variant-dto';
-import { QuizVariant } from 'src/shared/domain/entities/quizVariant';
+import { GetQuizVariantsUseCase } from '../use-cases/get-quiz-variants-use-case/get-quiz-variants-use-case.js';
+import { CreateQuizVariantUseCase } from '../use-cases/create-quiz-variant-use-case/create-quiz-variant-use-case.js';
+import { DeleteQuizVariantUseCase } from '../use-cases/delete-quiz-variant-use-case/delete-quiz-variant-use-case.js';
+import { UpdateQuizVariantUseCase } from '../use-cases/update-quiz-variant-use-case/update-quiz-variant-use-case.js';
+import { CreateQuizVariantDto } from '../../domain/dto/create-quiz-variant-dto.js';
+import { QuizVariant } from '../../../shared/domain/entities/quizVariant.js';
 
 @Injectable()
 export class QuizVariantService {

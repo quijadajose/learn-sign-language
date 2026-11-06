@@ -1,6 +1,6 @@
-import { GetQuizByIdUseCase } from './get-quiz-by-id-use-case';
-import { QuizRepositoryInterface } from 'src/quiz/domain/ports/quiz.repository.interface/quiz.repository.interface';
-import { Quiz } from 'src/shared/domain/entities/quiz';
+import { GetQuizByIdUseCase } from './get-quiz-by-id-use-case.js';
+import { QuizRepositoryInterface } from '../../../domain/ports/quiz.repository.interface/quiz.repository.interface.js';
+import { Quiz } from '../../../../shared/domain/entities/quiz.js';
 
 describe('GetQuizByIdUseCase', () => {
   it('strips isCorrect from options before returning the quiz', async () => {

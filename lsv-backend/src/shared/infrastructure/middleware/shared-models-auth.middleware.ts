@@ -1,8 +1,8 @@
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import { Request, Response, NextFunction } from 'express';
-import { resolveLocale, translate } from 'src/i18n';
-import { extractAccessToken } from 'src/shared/infrastructure/extract-access-token';
+import { resolveLocale, translate } from '../../../i18n/index.js';
+import { extractAccessToken } from '../extract-access-token.js';
 
 function isModelsPath(path: string): boolean {
   return path === '/models' || path.startsWith('/models/');

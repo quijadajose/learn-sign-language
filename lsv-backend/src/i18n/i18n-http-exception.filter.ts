@@ -9,8 +9,8 @@ import { Request, Response } from 'express';
 import {
   detailsFromValidationMessages,
   toBusinessErrorCode,
-} from './error-payload';
-import { resolveLocale, translate, type I18nParams } from './translate';
+} from './error-payload.js';
+import { resolveLocale, translate, type I18nParams } from './translate.js';
 
 function asI18nParams(value: unknown): I18nParams | undefined {
   if (!value || typeof value !== 'object' || Array.isArray(value)) {

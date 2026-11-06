@@ -1,13 +1,13 @@
 import { applyDecorators } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiQuery, ApiTags } from '@nestjs/swagger';
-import { CreateRegionDto } from 'src/region/domain/create-region.dto';
-import { CountryWithDivisionsDto } from 'src/shared/domain/dto/country-with-divisions.dto';
-import { DocOp } from 'src/shared/infrastructure/openapi/doc-op';
+import { CreateRegionDto } from '../../../../domain/create-region.dto.js';
+import { CountryWithDivisionsDto } from '../../../../../shared/domain/dto/country-with-divisions.dto.js';
+import { DocOp } from '../../../../../shared/infrastructure/openapi/doc-op.js';
 import {
   AssignLanguageResultDto,
   RegionListResponseDto,
   RegionResponseDto,
-} from 'src/shared/infrastructure/openapi/resource-responses';
+} from '../../../../../shared/infrastructure/openapi/resource-responses.js';
 
 export const DocRegion = () => applyDecorators(ApiTags('Regions'));
 

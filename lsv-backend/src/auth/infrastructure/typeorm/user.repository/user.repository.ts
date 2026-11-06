@@ -1,11 +1,11 @@
 ﻿import { Injectable } from '@nestjs/common';
-import { Repository, Like } from 'typeorm';
+import { Repository, ILike } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
-import { User } from 'src/shared/domain/entities/user';
+import { User } from '../../../../shared/domain/entities/user.js';
 import {
   UserAuthState,
   UserRepositoryInterface,
-} from 'src/auth/domain/ports/user.repository.interface/user.repository.interface';
+} from '../../../domain/ports/user.repository.interface/user.repository.interface.js';
 
 @Injectable()
 export class UserRepository implements UserRepositoryInterface {
@@ -19,7 +19,8 @@ export class UserRepository implements UserRepositoryInterface {
       where: { id },
       relations: {
         moderatorPermissions: {
-          language: true,
+          // FE-04: el cliente necesita las regiones de cada idioma para resolver permisos de región.
+          language: { regions: true },
           region: true,
         },
       },
@@ -46,7 +47,8 @@ export class UserRepository implements UserRepositoryInterface {
       where: { email },
       relations: {
         moderatorPermissions: {
-          language: true,
+          // FE-04: el cliente necesita las regiones de cada idioma para resolver permisos de región.
+          language: { regions: true },
           region: true,
         },
       },
@@ -54,12 +56,14 @@ export class UserRepository implements UserRepositoryInterface {
   }
 
   async searchUsers(query: string): Promise<User[]> {
-    const searchTerm = `%${query}%`;
+    // BE-31: sin distinguir mayúsculas y con los comodines de LIKE escapados.
+    const escaped = query.replace(/[\\%_]/g, (c) => `\\${c}`);
+    const searchTerm = `%${escaped}%`;
     return this.userRepository.find({
       where: [
-        { email: Like(searchTerm) },
-        { firstName: Like(searchTerm) },
-        { lastName: Like(searchTerm) },
+        { email: ILike(searchTerm) },
+        { firstName: ILike(searchTerm) },
+        { lastName: ILike(searchTerm) },
       ],
       take: 10, // Limitar a 10 resultados
     });

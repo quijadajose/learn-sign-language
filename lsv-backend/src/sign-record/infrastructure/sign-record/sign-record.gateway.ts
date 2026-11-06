@@ -6,12 +6,13 @@ import {
   OnGatewayConnection,
 } from '@nestjs/websockets';
 import { Inject, Logger } from '@nestjs/common';
+import { UserRepositoryInterface } from '../../../auth/domain/ports/user.repository.interface/user.repository.interface.js';
 import { Server, Socket } from 'socket.io';
-import { DocSignRecord } from './docs/sign-record.docs';
-import { getCorsOrigins } from 'src/config/cors.config';
-import { SignRecordNotificationPort } from '../../domain/ports/sign-record.notification.port';
-import { TokenService } from 'src/auth/domain/ports/token.service/token.service.interface';
-import { extractAccessToken } from 'src/shared/infrastructure/extract-access-token';
+import { DocSignRecord } from './docs/sign-record.docs.js';
+import { getCorsOrigins } from '../../../config/cors.config.js';
+import { SignRecordNotificationPort } from '../../domain/ports/sign-record.notification.port.js';
+import { TokenService } from '../../../auth/domain/ports/token.service/token.service.interface.js';
+import { extractAccessToken } from '../../../shared/infrastructure/extract-access-token.js';
 
 @DocSignRecord()
 @WebSocketGateway({
@@ -31,9 +32,11 @@ export class SignRecordGateway
   constructor(
     @Inject('TokenService')
     private readonly tokenService: TokenService,
+    @Inject('UserRepositoryInterface')
+    private readonly userRepository: UserRepositoryInterface,
   ) {}
 
-  handleConnection(client: Socket) {
+  async handleConnection(client: Socket): Promise<void> {
     const token = this.extractToken(client);
     if (!token) {
       this.logger.warn(`Rejected unauthenticated socket ${client.id}`);
@@ -42,7 +45,23 @@ export class SignRecordGateway
     }
     try {
       const payload = this.tokenService.verifyToken(token);
-      (client.data as { user?: { role?: string } }).user = payload;
+      // BE-16: el socket solo vive mientras la sesión siga vigente y usa el rol actual de la BD,
+      // no el que llevaba el token (válido 12 h).
+      const authState = payload.sub
+        ? await this.userRepository.findAuthStateById(payload.sub)
+        : null;
+      if (
+        !authState ||
+        authState.tokenVersion !== (payload.tokenVersion ?? 0)
+      ) {
+        this.logger.warn(`Rejected revoked session for socket ${client.id}`);
+        client.disconnect(true);
+        return;
+      }
+      (client.data as { user?: unknown }).user = {
+        ...payload,
+        role: authState.role,
+      };
     } catch {
       this.logger.warn(`Rejected invalid token for socket ${client.id}`);
       client.disconnect(true);

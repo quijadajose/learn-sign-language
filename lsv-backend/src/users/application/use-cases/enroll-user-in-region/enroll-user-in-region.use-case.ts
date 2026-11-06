@@ -1,8 +1,8 @@
 ﻿import { Inject, Injectable, NotFoundException } from '@nestjs/common';
-import { UserRepositoryInterface } from 'src/auth/domain/ports/user.repository.interface/user.repository.interface';
-import { UserRegion } from 'src/shared/domain/entities/userRegion';
-import { UserRegionRepositoryInterface } from 'src/users/domain/ports/user-region.repository.interface';
-import { RegionRepositoryInterface } from 'src/region/domain/ports/region.repository.interface/region.repository.interface';
+import { UserRepositoryInterface } from '../../../../auth/domain/ports/user.repository.interface/user.repository.interface.js';
+import { UserRegion } from '../../../../shared/domain/entities/userRegion.js';
+import { UserRegionRepositoryInterface } from '../../../domain/ports/user-region.repository.interface.js';
+import { RegionRepositoryInterface } from '../../../../region/domain/ports/region.repository.interface/region.repository.interface.js';
 
 @Injectable()
 export class EnrollUserInRegionUseCase {
@@ -18,12 +18,12 @@ export class EnrollUserInRegionUseCase {
   async execute(userId: string, regionId: string): Promise<UserRegion> {
     const user = await this.userRepository.findById(userId);
     if (!user) {
-      throw new NotFoundException('User not found');
+      throw new NotFoundException('errors.user.notFound');
     }
 
     const region = await this.regionRepository.findById(regionId);
     if (!region) {
-      throw new NotFoundException('Region not found');
+      throw new NotFoundException('errors.region.notFound');
     }
 
     const result = await this.userRegionRepository.save(user, region);

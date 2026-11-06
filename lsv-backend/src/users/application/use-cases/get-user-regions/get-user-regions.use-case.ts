@@ -2,9 +2,9 @@ import { Inject, Injectable } from '@nestjs/common';
 import {
   PaginatedResponseDto,
   PaginationDto,
-} from 'src/shared/domain/dto/PaginationDto';
-import { UserRegion } from 'src/shared/domain/entities/userRegion';
-import { UserRegionRepositoryInterface } from 'src/users/domain/ports/user-region.repository.interface';
+} from '../../../../shared/domain/dto/PaginationDto.js';
+import { UserRegion } from '../../../../shared/domain/entities/userRegion.js';
+import { UserRegionRepositoryInterface } from '../../../domain/ports/user-region.repository.interface.js';
 
 @Injectable()
 export class GetUserRegionsUseCase {

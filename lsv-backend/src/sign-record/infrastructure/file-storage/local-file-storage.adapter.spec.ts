@@ -2,7 +2,7 @@ import { ConfigService } from '@nestjs/config';
 import * as fs from 'fs/promises';
 import * as os from 'os';
 import * as path from 'path';
-import { LocalFileStorageAdapter } from './local-file-storage.adapter';
+import { LocalFileStorageAdapter } from './local-file-storage.adapter.js';
 
 describe('LocalFileStorageAdapter', () => {
   let tmpDir: string;

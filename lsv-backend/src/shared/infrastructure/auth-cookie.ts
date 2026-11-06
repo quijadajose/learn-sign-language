@@ -1,5 +1,5 @@
 import { CookieOptions, Response } from 'express';
-import { ACCESS_COOKIE_NAME } from 'src/shared/infrastructure/extract-access-token';
+import { ACCESS_COOKIE_NAME } from './extract-access-token.js';
 
 export const ACCESS_TOKEN_TTL = '12h' as const;
 export const ACCESS_TOKEN_TTL_MS = 12 * 60 * 60 * 1000;

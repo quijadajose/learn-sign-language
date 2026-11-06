@@ -1,28 +1,28 @@
 import { Injectable, Inject, forwardRef } from '@nestjs/common';
-import { QuizVariantService } from 'src/quiz/application/services/quiz-variant.service';
-import { CreateLessonUseCase } from '../../use-cases/create-lesson-use-case/create-lesson-use-case';
-import { CreateLessonDto } from '../../../domain/dto/create-lesson/create-lesson-dto';
-import { UploadPictureUseCase } from 'src/shared/application/use-cases/upload-picture-use-case/upload-picture-use-case';
-import { GetLessonByLanguageUseCase } from '../../use-cases/get-lesson-by-laguage-use-case/get-lesson-by-laguage-use-case';
+import { QuizVariantService } from '../../../../quiz/application/services/quiz-variant.service.js';
+import { CreateLessonUseCase } from '../../use-cases/create-lesson-use-case/create-lesson-use-case.js';
+import { CreateLessonDto } from '../../../domain/dto/create-lesson/create-lesson-dto.js';
+import { UploadPictureUseCase } from '../../../../shared/application/use-cases/upload-picture-use-case/upload-picture-use-case.js';
+import { GetLessonByLanguageUseCase } from '../../use-cases/get-lesson-by-laguage-use-case/get-lesson-by-laguage-use-case.js';
 import {
   PaginationDto,
   PaginatedResponseDto,
-} from 'src/shared/domain/dto/PaginationDto';
-import { GetLessonByIdUseCase } from '../../use-cases/get-lesson-by-id-use-case/get-lesson-by-id-use-case';
-import { DeleteLessonUseCase } from '../../use-cases/delete-lesson-use-case/delete-lesson-use-case';
-import { UpdateLessonuseCase } from '../../use-cases/update-lessonuse-case/update-lessonuse-case';
-import { GetLessonWithQuizzesUseCase } from '../../use-cases/get-lesson-with-quizzes-use-case/get-lesson-with-quizzes-use-case';
-import { GetQuizzesByLessonIdUseCase } from '../../use-cases/get-quizzes-by-lesson-id-use-case/get-quizzes-by-lesson-id-use-case';
-import { GetLessonsByLanguageWithSubmissionsUseCase } from '../../use-cases/get-lessons-by-language-with-submissions-use-case/get-lessons-by-language-with-submissions-use-case';
-import { GetLessonVariantsUseCase } from '../../use-cases/get-lesson-variants-use-case/get-lesson-variants-use-case';
-import { CreateLessonVariantUseCase } from '../../use-cases/create-lesson-variant-use-case/create-lesson-variant-use-case';
-import { GetLessonVariantUseCase } from '../../use-cases/get-lesson-variant-use-case/get-lesson-variant-use-case';
-import { UpdateLessonVariantUseCase } from '../../use-cases/update-lesson-variant-use-case/update-lesson-variant-use-case';
-import { DeleteLessonVariantUseCase } from '../../use-cases/delete-lesson-variant-use-case/delete-lesson-variant-use-case';
-import { GetRegionalLessonUseCase } from '../../use-cases/get-regional-lesson-use-case/get-regional-lesson-use-case';
-import { CreateLessonVariantDto } from '../../../domain/dto/create-lesson-variant/create-lesson-variant-dto';
-import { LessonVariant } from 'src/shared/domain/entities/lessonVariant';
-import { Lesson } from 'src/shared/domain/entities/lesson';
+} from '../../../../shared/domain/dto/PaginationDto.js';
+import { GetLessonByIdUseCase } from '../../use-cases/get-lesson-by-id-use-case/get-lesson-by-id-use-case.js';
+import { DeleteLessonUseCase } from '../../use-cases/delete-lesson-use-case/delete-lesson-use-case.js';
+import { UpdateLessonuseCase } from '../../use-cases/update-lessonuse-case/update-lessonuse-case.js';
+import { GetLessonWithQuizzesUseCase } from '../../use-cases/get-lesson-with-quizzes-use-case/get-lesson-with-quizzes-use-case.js';
+import { GetQuizzesByLessonIdUseCase } from '../../use-cases/get-quizzes-by-lesson-id-use-case/get-quizzes-by-lesson-id-use-case.js';
+import { GetLessonsByLanguageWithSubmissionsUseCase } from '../../use-cases/get-lessons-by-language-with-submissions-use-case/get-lessons-by-language-with-submissions-use-case.js';
+import { GetLessonVariantsUseCase } from '../../use-cases/get-lesson-variants-use-case/get-lesson-variants-use-case.js';
+import { CreateLessonVariantUseCase } from '../../use-cases/create-lesson-variant-use-case/create-lesson-variant-use-case.js';
+import { GetLessonVariantUseCase } from '../../use-cases/get-lesson-variant-use-case/get-lesson-variant-use-case.js';
+import { UpdateLessonVariantUseCase } from '../../use-cases/update-lesson-variant-use-case/update-lesson-variant-use-case.js';
+import { DeleteLessonVariantUseCase } from '../../use-cases/delete-lesson-variant-use-case/delete-lesson-variant-use-case.js';
+import { GetRegionalLessonUseCase } from '../../use-cases/get-regional-lesson-use-case/get-regional-lesson-use-case.js';
+import { CreateLessonVariantDto } from '../../../domain/dto/create-lesson-variant/create-lesson-variant-dto.js';
+import { LessonVariant } from '../../../../shared/domain/entities/lessonVariant.js';
+import { Lesson } from '../../../../shared/domain/entities/lesson.js';
 
 @Injectable()
 export class LessonService {

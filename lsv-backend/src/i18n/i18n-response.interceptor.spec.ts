@@ -1,5 +1,5 @@
 import { of, lastValueFrom } from 'rxjs';
-import { I18nResponseInterceptor } from './i18n-response.interceptor';
+import { I18nResponseInterceptor } from './i18n-response.interceptor.js';
 
 function mockContext(acceptLanguage?: string) {
   return {

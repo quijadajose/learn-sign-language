@@ -2,9 +2,9 @@ import { Inject } from '@nestjs/common';
 import {
   PaginationDto,
   PaginatedResponseDto,
-} from 'src/shared/domain/dto/PaginationDto';
-import { Stages } from 'src/shared/domain/entities/stage';
-import { StageRepositoryInterface } from 'src/stage/domain/ports/stage.repository.interface/stage.repository.interface';
+} from '../../../../shared/domain/dto/PaginationDto.js';
+import { Stages } from '../../../../shared/domain/entities/stage.js';
+import { StageRepositoryInterface } from '../../../domain/ports/stage.repository.interface/stage.repository.interface.js';
 
 export class GetStagesFromLanguageUseCase {
   constructor(

@@ -1,3 +1,3 @@
-export * from './api.health';
-export * from './domain.health';
-export * from './ssl.health';
+export * from './api.health.js';
+export * from './domain.health.js';
+export * from './ssl.health.js';

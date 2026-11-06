@@ -1,6 +1,6 @@
 import { Inject } from '@nestjs/common';
-import { stripQuizAnswerFlags } from 'src/lesson/domain/strip-quiz-answers';
-import { QuizRepositoryInterface } from 'src/quiz/domain/ports/quiz.repository.interface/quiz.repository.interface';
+import { stripQuizAnswerFlags } from '../../../../lesson/domain/strip-quiz-answers.js';
+import { QuizRepositoryInterface } from '../../../domain/ports/quiz.repository.interface/quiz.repository.interface.js';
 
 export class GetQuizByIdUseCase {
   constructor(

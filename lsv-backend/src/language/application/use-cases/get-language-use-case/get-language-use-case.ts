@@ -1,6 +1,6 @@
 import { Inject, NotFoundException } from '@nestjs/common';
-import { LanguageRepositoryInterface } from 'src/language/domain/ports/language.repository.interface/language.repository.interface';
-import { Language } from 'src/shared/domain/entities/language';
+import { LanguageRepositoryInterface } from '../../../domain/ports/language.repository.interface/language.repository.interface.js';
+import { Language } from '../../../../shared/domain/entities/language.js';
 
 export class GetLanguageUseCase {
   constructor(
@@ -10,7 +10,7 @@ export class GetLanguageUseCase {
   async execute(id: string): Promise<Language> {
     const language = await this.languageRepository.findById(id);
     if (!language) {
-      throw new NotFoundException('Language not found');
+      throw new NotFoundException('errors.language.notFound');
     }
     return language;
   }

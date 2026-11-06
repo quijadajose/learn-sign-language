@@ -5,21 +5,21 @@ import {
   NotFoundException,
   Query,
 } from '@nestjs/common';
-import { QuizDto } from '../../../domain/dto/quiz/quiz-dto';
-import { CreateQuizWithQuestionsAndOptionsUseCase } from '../../use-cases/create-quiz-with-questions-and-options-use-case/create-quiz-with-questions-and-options-use-case';
-import { PaginationDto } from 'src/shared/domain/dto/PaginationDto';
-import { Quiz } from 'src/shared/domain/entities/quiz';
-import { listQuizzesByLanguageIdUseCase } from '../../use-cases/list-quizzes-by-language-use-case/list-quizzes-by-language-use-case';
-import { GetQuizByIdUseCase } from '../../use-cases/get-quiz-by-id-use-case/get-quiz-by-id-use-case';
-import { SubmissionTestUseCase } from '../../use-cases/submission-test-use-case/submission-test-use-case';
-import { SubmissionDto } from '../../dto/submission/submission-dto';
-import { GetUserByIdUseCase } from 'src/users/application/use-cases/get-user-by-id-use-case/get-user-by-id-use-case';
-import { GetSubmissionTestFromUserUseCase } from '../../use-cases/get-submission-test-from-user-use-case/get-submission-test-from-user-use-case';
-import { DeleteQuizUseCase } from '../../use-cases/delete-quiz-use-case/delete-quiz-use-case';
-import { UpdateQuizUseCase } from '../../use-cases/update-quiz-use-case/update-quiz-use-case';
-import { ListQuizUseCase } from '../../use-cases/list-quiz-use-case/list-quiz-use-case';
-import { QuizRepositoryInterface } from '../../../domain/ports/quiz.repository.interface/quiz.repository.interface';
-import { QuizVariantRepositoryInterface } from '../../../domain/ports/quiz-variant.repository.interface';
+import { QuizDto } from '../../../domain/dto/quiz/quiz-dto.js';
+import { CreateQuizWithQuestionsAndOptionsUseCase } from '../../use-cases/create-quiz-with-questions-and-options-use-case/create-quiz-with-questions-and-options-use-case.js';
+import { PaginationDto } from '../../../../shared/domain/dto/PaginationDto.js';
+import { Quiz } from '../../../../shared/domain/entities/quiz.js';
+import { listQuizzesByLanguageIdUseCase } from '../../use-cases/list-quizzes-by-language-use-case/list-quizzes-by-language-use-case.js';
+import { GetQuizByIdUseCase } from '../../use-cases/get-quiz-by-id-use-case/get-quiz-by-id-use-case.js';
+import { SubmissionTestUseCase } from '../../use-cases/submission-test-use-case/submission-test-use-case.js';
+import { SubmissionDto } from '../../dto/submission/submission-dto.js';
+import { GetUserByIdUseCase } from '../../../../users/application/use-cases/get-user-by-id-use-case/get-user-by-id-use-case.js';
+import { GetSubmissionTestFromUserUseCase } from '../../use-cases/get-submission-test-from-user-use-case/get-submission-test-from-user-use-case.js';
+import { DeleteQuizUseCase } from '../../use-cases/delete-quiz-use-case/delete-quiz-use-case.js';
+import { UpdateQuizUseCase } from '../../use-cases/update-quiz-use-case/update-quiz-use-case.js';
+import { ListQuizUseCase } from '../../use-cases/list-quiz-use-case/list-quiz-use-case.js';
+import { QuizRepositoryInterface } from '../../../domain/ports/quiz.repository.interface/quiz.repository.interface.js';
+import { QuizVariantRepositoryInterface } from '../../../domain/ports/quiz-variant.repository.interface.js';
 
 @Injectable()
 export class QuizService {
@@ -56,7 +56,7 @@ export class QuizService {
     submission: SubmissionDto,
   ) {
     if (!userId || !quizId) {
-      throw new BadRequestException('User ID and Quiz ID are required.');
+      throw new BadRequestException('errors.quiz.userAndQuizRequired');
     }
 
     const user = await this.getUserByIdUseCase.execute(userId);
@@ -101,7 +101,7 @@ export class QuizService {
     pagination: PaginationDto,
   ) {
     if (!userId || !quizId) {
-      throw new BadRequestException('User ID and Quiz ID are required.');
+      throw new BadRequestException('errors.quiz.userAndQuizRequired');
     }
 
     const user = await this.getUserByIdUseCase.execute(userId);

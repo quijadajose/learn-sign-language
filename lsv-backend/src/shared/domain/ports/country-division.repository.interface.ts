@@ -1,8 +1,8 @@
-import { Country } from '../entities/iso-3166-2/countries';
-import { Division } from '../entities/iso-3166-2/divisions';
-import { SearchDivisionsDto } from '../dto/search-divisions.dto';
-import { PaginatedResponseDto } from '../dto/paginated-response.dto';
-import { CountryWithDivisionsDto } from '../dto/country-with-divisions.dto';
+import { Country } from '../entities/iso-3166-2/countries.js';
+import { Division } from '../entities/iso-3166-2/divisions.js';
+import { SearchDivisionsDto } from '../dto/search-divisions.dto.js';
+import { PaginatedResponseDto } from '../dto/paginated-response.dto.js';
+import { CountryWithDivisionsDto } from '../dto/country-with-divisions.dto.js';
 
 export interface CountryDivisionRepositoryInterface {
   createCountry(countryData: { code: string; name: string }): Promise<Country>;

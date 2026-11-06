@@ -9,13 +9,13 @@ import {
   ApiSecurity,
   ApiTags,
 } from '@nestjs/swagger';
-import { UpdateUserDto } from 'src/auth/domain/dto/update-user/update-user';
-import { EnrollUserInLanguageDto } from '../enroll-user-in-language.dto';
+import { UpdateUserDto } from '../../../../auth/domain/dto/update-user/update-user.js';
+import { EnrollUserInLanguageDto } from '../enroll-user-in-language.dto.js';
 import {
   MessageResponseDto,
   PaginatedUserRegionResponseDto,
   UserRegionResponseDto,
-} from 'src/shared/infrastructure/openapi/resource-responses';
+} from '../../../../shared/infrastructure/openapi/resource-responses.js';
 
 export const DocUsers = () => applyDecorators(ApiTags('Usuarios'));
 

@@ -1,9 +1,9 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication, ValidationPipe } from '@nestjs/common';
 import request from 'supertest';
-import { AppModule } from './../src/app.module';
+import { AppModule } from './../src/app.module.js';
 import { DataSource } from 'typeorm';
-import { cleanDatabase, getAdminToken } from './test-utils';
+import { cleanDatabase, getAdminToken } from './test-utils.js';
 
 describe('Languages (e2e)', () => {
   let app: INestApplication;

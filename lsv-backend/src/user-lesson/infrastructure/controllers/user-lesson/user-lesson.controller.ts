@@ -11,18 +11,18 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
-import { PaginationDto } from 'src/shared/domain/dto/PaginationDto';
-import { UserLessonService } from 'src/user-lesson/application/services/user-lesson/user-lesson.service';
+import { PaginationDto } from '../../../../shared/domain/dto/PaginationDto.js';
+import { UserLessonService } from '../../../application/services/user-lesson/user-lesson.service.js';
 import {
   SetLessonCompletionDto,
   StartLessonDto,
-} from 'src/user-lesson/domain/dto/user-lesson.dto';
+} from '../../../domain/dto/user-lesson.dto.js';
 import {
   DocGetUserLessonByUser,
   DocSetLessonCompletion,
   DocStartLesson,
   DocUserLesson,
-} from './docs/user-lesson.docs';
+} from './docs/user-lesson.docs.js';
 
 @DocUserLesson()
 @Controller('user-lesson')
@@ -55,6 +55,8 @@ export class UserLessonController {
     );
   }
 
+  // BE-23: la finalización la declara el cliente y no hay prueba del servidor.
+  // No usar para ranking, certificados ni nada con valor sin validación adicional.
   @Post('set-lesson-completion')
   @DocSetLessonCompletion()
   setLessonCompletion(@Req() req, @Body() body: SetLessonCompletionDto) {

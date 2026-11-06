@@ -1,5 +1,5 @@
-import { Sign } from 'src/shared/domain/entities/sign';
-import { SignRecording } from 'src/shared/domain/entities/signRecording';
+import { Sign } from '../../../shared/domain/entities/sign.js';
+import { SignRecording } from '../../../shared/domain/entities/signRecording.js';
 
 export type TrainingSample = {
   signName: string;

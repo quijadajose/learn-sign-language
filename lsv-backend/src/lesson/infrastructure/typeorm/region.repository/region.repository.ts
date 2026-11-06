@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { Region } from 'src/shared/domain/entities/region';
+import { Region } from '../../../../shared/domain/entities/region.js';
 
 @Injectable()
 export class RegionRepository {

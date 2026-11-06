@@ -16,21 +16,21 @@ import {
   Req,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { CreateLessonDto } from 'src/lesson/domain/dto/create-lesson/create-lesson-dto';
-import { LessonService } from 'src/lesson/application/services/lesson/lesson.service';
-import { Roles } from 'src/auth/infrastructure/decorators/roles.decorator';
-import { RolesGuard } from 'src/auth/infrastructure/guards/roles/roles.guard';
-import { RequireResourcePermission } from 'src/permissions/infrastructure/decorators/require-resource-permission.decorator';
-import { PermissionScope } from 'src/shared/domain/entities/moderatorPermission';
-import { ResourceAccessGuard } from 'src/permissions/infrastructure/guards/resource-access/resource-access.guard';
-import { Lesson } from 'src/shared/domain/entities/lesson';
-import { Quiz } from 'src/shared/domain/entities/quiz';
-import { PaginatedResponseDto } from 'src/shared/domain/dto/PaginationDto';
-import { GetLessonsQueryDto } from 'src/lesson/domain/dto/get-lessons-query-dto';
-import { GetLessonsWithSubmissionsQueryDto } from 'src/lesson/domain/dto/get-lessons-with-submissions-query-dto';
+import { CreateLessonDto } from '../../../domain/dto/create-lesson/create-lesson-dto.js';
+import { LessonService } from '../../../application/services/lesson/lesson.service.js';
+import { Roles } from '../../../../auth/infrastructure/decorators/roles.decorator.js';
+import { RolesGuard } from '../../../../auth/infrastructure/guards/roles/roles.guard.js';
+import { RequireResourcePermission } from '../../../../permissions/infrastructure/decorators/require-resource-permission.decorator.js';
+import { PermissionScope } from '../../../../shared/domain/entities/moderatorPermission.js';
+import { ResourceAccessGuard } from '../../../../permissions/infrastructure/guards/resource-access/resource-access.guard.js';
+import { Lesson } from '../../../../shared/domain/entities/lesson.js';
+import { Quiz } from '../../../../shared/domain/entities/quiz.js';
+import { PaginatedResponseDto } from '../../../../shared/domain/dto/PaginationDto.js';
+import { GetLessonsQueryDto } from '../../../domain/dto/get-lessons-query-dto.js';
+import { GetLessonsWithSubmissionsQueryDto } from '../../../domain/dto/get-lessons-with-submissions-query-dto.js';
 import { AuthGuard } from '@nestjs/passport';
-import { CreateLessonVariantDto } from 'src/lesson/domain/dto/create-lesson-variant/create-lesson-variant-dto';
-import { LessonVariant } from 'src/shared/domain/entities/lessonVariant';
+import { CreateLessonVariantDto } from '../../../domain/dto/create-lesson-variant/create-lesson-variant-dto.js';
+import { LessonVariant } from '../../../../shared/domain/entities/lessonVariant.js';
 import {
   DocCreateLesson,
   DocCreateLessonVariant,
@@ -49,7 +49,7 @@ import {
   DocUpdateLesson,
   DocUpdateLessonVariant,
   DocUploadLessonImage,
-} from './docs/lesson.docs';
+} from './docs/lesson.docs.js';
 
 @DocLesson()
 @Controller('lesson')
@@ -80,7 +80,7 @@ export class LessonController {
   ): Promise<PaginatedResponseDto<Lesson>> {
     const userId = req.user.sub;
     if (!req.user || !userId) {
-      throw new BadRequestException('User ID is missing from the request.');
+      throw new BadRequestException('errors.quiz.userIdMissing');
     }
 
     return this.lessonAdminService.getLessonsByLanguageWithSubmissions(
@@ -100,7 +100,7 @@ export class LessonController {
     @Query() query: GetLessonsQueryDto,
   ): Promise<PaginatedResponseDto<Lesson>> {
     if (!query.languageId) {
-      throw new BadRequestException('languageId is required');
+      throw new BadRequestException('errors.sign.languageIdRequired');
     }
     return this.lessonAdminService.getLessonsByLanguage(
       query.languageId,
@@ -138,7 +138,7 @@ export class LessonController {
         if (file.mimetype.match(/\/(jpg|jpeg|png|gif)$/)) {
           cb(null, true);
         } else {
-          cb(new BadRequestException('Only image files are allowed!'), false);
+          cb(new BadRequestException('errors.image.onlyImages'), false);
         }
       },
       limits: {
@@ -151,7 +151,7 @@ export class LessonController {
     @UploadedFile() file: Express.Multer.File,
   ): Promise<{ message: string; imageUrl: string }> {
     if (!file) {
-      throw new BadRequestException('No file uploaded');
+      throw new BadRequestException('errors.image.noFile');
     }
 
     const res = await this.lessonAdminService.saveLessonImage(lessonId, file);
@@ -161,21 +161,6 @@ export class LessonController {
       message: 'Image uploaded successfully',
       imageUrl,
     };
-  }
-
-  @UseGuards(RolesGuard)
-  @Roles('admin')
-  @Get('by-language/:languageId')
-  @DocGetLessonsByLanguage()
-  async getLessonsByLanguageAdmin(
-    @Param('languageId', ParseUUIDPipe) languageId: string,
-    @Query() query: GetLessonsQueryDto,
-  ): Promise<PaginatedResponseDto<Lesson>> {
-    return this.lessonAdminService.getLessonsByLanguage(
-      languageId,
-      query,
-      query.stageId,
-    );
   }
 
   @UseGuards(AuthGuard('jwt'))

@@ -1,5 +1,5 @@
-import { Column, Entity, OneToMany, PrimaryColumn } from 'typeorm';
-import { Division } from './divisions';
+import { Column, Entity, OneToMany, PrimaryColumn, Relation } from 'typeorm';
+import { Division } from './divisions.js';
 
 @Entity()
 export class Country {
@@ -10,5 +10,5 @@ export class Country {
   name: string;
 
   @OneToMany(() => Division, (division) => division.country)
-  divisions: Division[];
+  divisions: Relation<Division[]>;
 }

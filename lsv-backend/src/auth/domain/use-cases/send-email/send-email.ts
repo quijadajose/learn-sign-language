@@ -2,7 +2,7 @@ import { Inject, Injectable } from '@nestjs/common';
 import {
   EmailService,
   EmailParams,
-} from '../../ports/email.service/email.service.interface';
+} from '../../ports/email.service/email.service.interface.js';
 
 @Injectable()
 export class SendEmailUseCase {

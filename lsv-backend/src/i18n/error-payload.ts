@@ -1,5 +1,5 @@
-import { legacyMessageToKey } from './messages';
-import { I18N_KEY_PATTERN } from './translate';
+import { legacyMessageToKey } from './messages.js';
+import { I18N_KEY_PATTERN } from './translate.js';
 
 export type ApiErrorDetail = {
   field?: string;

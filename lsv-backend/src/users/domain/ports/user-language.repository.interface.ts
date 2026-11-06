@@ -1,10 +1,10 @@
 import {
   PaginatedResponseDto,
   PaginationDto,
-} from 'src/shared/domain/dto/PaginationDto';
-import { Language } from 'src/shared/domain/entities/language';
-import { User } from 'src/shared/domain/entities/user';
-import { UserLanguage } from 'src/shared/domain/entities/userLanguage';
+} from '../../../shared/domain/dto/PaginationDto.js';
+import { Language } from '../../../shared/domain/entities/language.js';
+import { User } from '../../../shared/domain/entities/user.js';
+import { UserLanguage } from '../../../shared/domain/entities/userLanguage.js';
 
 export interface UserLanguageRepositoryInterface {
   findLanguagesByUserId(

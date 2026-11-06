@@ -1,7 +1,13 @@
-import { Entity, ManyToOne, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
-import { LessonVariant } from './lessonVariant';
-import { QuestionVariant } from './questionVariant';
-import { QuizSubmission } from './quizSubmission';
+import {
+  Entity,
+  ManyToOne,
+  OneToMany,
+  PrimaryGeneratedColumn,
+  Relation,
+} from 'typeorm';
+import { LessonVariant } from './lessonVariant.js';
+import { QuestionVariant } from './questionVariant.js';
+import { QuizSubmission } from './quizSubmission.js';
 
 @Entity()
 export class QuizVariant {
@@ -15,16 +21,16 @@ export class QuizVariant {
       onDelete: 'CASCADE',
     },
   )
-  lessonVariant: LessonVariant;
+  lessonVariant: Relation<LessonVariant>;
 
   @OneToMany(
     () => QuestionVariant,
     (questionVariant) => questionVariant.quizVariant,
   )
-  questionVariants: QuestionVariant[];
+  questionVariants: Relation<QuestionVariant[]>;
 
   @OneToMany(() => QuizSubmission, (submission) => submission.quizVariant, {
     onDelete: 'CASCADE',
   })
-  submissions: QuizSubmission[];
+  submissions: Relation<QuizSubmission[]>;
 }

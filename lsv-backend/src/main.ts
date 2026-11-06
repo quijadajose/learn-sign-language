@@ -1,26 +1,27 @@
+import './instrument.js'; // BE-25: debe ser el primer import
 import { NestFactory } from '@nestjs/core';
-import { AppModule } from './app.module';
+import { AppModule } from './app.module.js';
 import { ConfigService } from '@nestjs/config';
 import { Logger, ValidationPipe } from '@nestjs/common';
 import { SwaggerModule } from '@nestjs/swagger';
 import { JwtService } from '@nestjs/jwt';
 import { json, urlencoded, Request, Response, NextFunction } from 'express';
-import './instrument';
-
 import { NestExpressApplication } from '@nestjs/platform-express';
 import { join } from 'path';
-import { getCorsOrigins } from './config/cors.config';
-import { securityHeaders } from './config/security-headers';
-import { requireTrustedOrigin } from './config/trusted-origin';
-import { createSharedModelsAuthMiddleware } from './shared/infrastructure/middleware/shared-models-auth.middleware';
-import { resolveLocale, translate } from './i18n';
+import { getCorsOrigins } from './config/cors.config.js';
+import { securityHeaders } from './config/security-headers.js';
+import { requireTrustedOrigin } from './config/trusted-origin.js';
+import { createSharedModelsAuthMiddleware } from './shared/infrastructure/middleware/shared-models-auth.middleware.js';
+import { resolveLocale, translate } from './i18n/index.js';
 import {
   buildOpenApiDocument,
   persistOpenApiDocument,
-} from './shared/infrastructure/openapi/openapi';
+} from './shared/infrastructure/openapi/openapi.js';
 
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
+  // BE-04: Caddy es el único proxy delante; sin esto el rate-limit ve siempre la IP del proxy.
+  app.set('trust proxy', 1);
   const configService = app.get(ConfigService);
   const jwtService = app.get(JwtService);
   const logger = new Logger('Bootstrap');
@@ -59,8 +60,10 @@ async function bootstrap() {
     createSharedModelsAuthMiddleware(configService, jwtService),
   );
 
-  app.useStaticAssets(join(process.cwd(), 'shared'), {
-    prefix: '/shared',
+  // BE-09: solo se sirven los modelos. training_data (landmarks biométricos)
+  // nunca sale por estático, ni con codificaciones de URL.
+  app.useStaticAssets(join(process.cwd(), 'shared', 'models'), {
+    prefix: '/shared/models',
   });
 
   // Límites específicos para grabación de señas (pesado)
@@ -73,7 +76,8 @@ async function bootstrap() {
 
   // Swagger en desarrollo, o si se pide exportar el spec
   const nodeEnv = configService.get<string>('NODE_ENV') || 'development';
-  const port = configService.get<number>('PORT') ?? 3000;
+  // BE-24: la validación de entorno define API_PORT, no PORT.
+  const port = configService.get<number>('API_PORT') ?? 3000;
   const serverUrl =
     configService.get<string>('API_PUBLIC_URL') || `http://localhost:${port}`;
   const shouldWriteOpenApi =

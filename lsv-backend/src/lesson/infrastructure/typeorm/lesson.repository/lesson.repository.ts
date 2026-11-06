@@ -5,29 +5,29 @@ import {
   forwardRef,
 } from '@nestjs/common';
 import { InjectRepository, InjectDataSource } from '@nestjs/typeorm';
-import { CreateLessonDto } from 'src/lesson/domain/dto/create-lesson/create-lesson-dto';
-import { LessonRepositoryInterface } from 'src/lesson/domain/ports/lesson.repository.interface/lesson.repository.interface';
+import { CreateLessonDto } from '../../../domain/dto/create-lesson/create-lesson-dto.js';
+import { LessonRepositoryInterface } from '../../../domain/ports/lesson.repository.interface/lesson.repository.interface.js';
 import {
   PaginationDto,
   PaginatedResponseDto,
-} from 'src/shared/domain/dto/PaginationDto';
-import { Language } from 'src/shared/domain/entities/language';
-import { Lesson } from 'src/shared/domain/entities/lesson';
-import { Quiz } from 'src/shared/domain/entities/quiz';
-import { Stages } from 'src/shared/domain/entities/stage';
-import { QuizSubmission } from 'src/shared/domain/entities/quizSubmission';
-import { LessonVariant } from 'src/shared/domain/entities/lessonVariant';
-import { CreateLessonVariantDto } from 'src/lesson/domain/dto/create-lesson-variant/create-lesson-variant-dto';
-import { stripQuizAnswerFlags } from 'src/lesson/domain/strip-quiz-answers';
+} from '../../../../shared/domain/dto/PaginationDto.js';
+import { Language } from '../../../../shared/domain/entities/language.js';
+import { Lesson } from '../../../../shared/domain/entities/lesson.js';
+import { Quiz } from '../../../../shared/domain/entities/quiz.js';
+import { Stages } from '../../../../shared/domain/entities/stage.js';
+import { QuizSubmission } from '../../../../shared/domain/entities/quizSubmission.js';
+import { LessonVariant } from '../../../../shared/domain/entities/lessonVariant.js';
+import { CreateLessonVariantDto } from '../../../domain/dto/create-lesson-variant/create-lesson-variant-dto.js';
+import { stripQuizAnswerFlags } from '../../../domain/strip-quiz-answers.js';
 import {
   FindManyOptions,
   FindOptionsWhere,
   Repository,
   DataSource,
 } from 'typeorm';
-import { QuizService } from 'src/quiz/application/services/quiz/quiz.service';
-import { LessonVariantRepository } from '../lesson-variant.repository/lesson-variant.repository';
-import { RegionRepository } from '../region.repository/region.repository';
+import { QuizService } from '../../../../quiz/application/services/quiz/quiz.service.js';
+import { LessonVariantRepository } from '../lesson-variant.repository/lesson-variant.repository.js';
+import { RegionRepository } from '../region.repository/region.repository.js';
 
 export class LessonRepository implements LessonRepositoryInterface {
   constructor(
@@ -128,7 +128,7 @@ export class LessonRepository implements LessonRepositoryInterface {
   async findQuizzesByLessonId(id: string): Promise<Quiz[]> {
     const lesson = await this.findByIdWithQuizzes(id);
     if (!lesson) {
-      throw new NotFoundException('Lesson not found');
+      throw new NotFoundException('errors.lesson.notFound');
     }
 
     const quizzesToReturn = lesson.quizzes.map((quiz) =>
@@ -190,18 +190,18 @@ export class LessonRepository implements LessonRepositoryInterface {
     });
 
     if (!language) {
-      throw new NotFoundException('Language not found');
+      throw new NotFoundException('errors.language.notFound');
     }
 
     if (!stage) {
-      throw new NotFoundException('Stage not found');
+      throw new NotFoundException('errors.stage.notFound');
     }
 
     const existingLesson = await this.lessonRepository.findOne({
       where: { id },
     });
     if (!existingLesson) {
-      throw new NotFoundException('Lesson not found');
+      throw new NotFoundException('errors.lesson.notFound');
     }
 
     existingLesson.language = language;

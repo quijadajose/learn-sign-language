@@ -1,9 +1,9 @@
-import { Region } from 'src/shared/domain/entities/region';
-import { CreateRegionDto } from 'src/region/domain/dto/create-region/create-region-dto';
+import { Region } from '../../../../shared/domain/entities/region.js';
+import { CreateRegionDto } from '../../create-region.dto.js';
 import {
   PaginationDto,
   PaginatedResponseDto,
-} from 'src/shared/domain/dto/PaginationDto';
+} from '../../../../shared/domain/dto/PaginationDto.js';
 
 export interface RegionRepositoryInterface {
   findById(id: string): Promise<Region | null>;

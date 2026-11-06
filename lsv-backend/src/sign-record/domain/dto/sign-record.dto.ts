@@ -16,7 +16,7 @@ import {
 } from 'class-validator';
 import { Type } from 'class-transformer';
 import { ApiProperty } from '@nestjs/swagger';
-import { FEATURES_COUNT } from '../utils/landmark-validation';
+import { FEATURES_COUNT } from '../utils/landmark-validation.js';
 
 const MAX_LANDMARK_FRAMES = 600;
 

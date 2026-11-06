@@ -5,7 +5,7 @@ import {
   ApiOperation,
   ApiResponse,
 } from '@nestjs/swagger';
-import { ApiStandardErrors } from './api-standard-errors';
+import { ApiStandardErrors } from './api-standard-errors.js';
 
 export function DocOp(options: {
   summary: string;

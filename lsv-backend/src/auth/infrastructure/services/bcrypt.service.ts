@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { HashService } from 'src/auth/domain/ports/hash.service.interface/hash.service.interface';
+import { HashService } from '../../domain/ports/hash.service.interface/hash.service.interface.js';
 import * as bcrypt from 'bcrypt';
 
 @Injectable()

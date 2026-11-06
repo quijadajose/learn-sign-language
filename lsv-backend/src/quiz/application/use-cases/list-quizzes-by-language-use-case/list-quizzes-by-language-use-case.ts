@@ -1,6 +1,6 @@
 import { Inject } from '@nestjs/common';
-import { QuizRepositoryInterface } from 'src/quiz/domain/ports/quiz.repository.interface/quiz.repository.interface';
-import { PaginationDto } from 'src/shared/domain/dto/PaginationDto';
+import { QuizRepositoryInterface } from '../../../domain/ports/quiz.repository.interface/quiz.repository.interface.js';
+import { PaginationDto } from '../../../../shared/domain/dto/PaginationDto.js';
 
 export class listQuizzesByLanguageIdUseCase {
   constructor(

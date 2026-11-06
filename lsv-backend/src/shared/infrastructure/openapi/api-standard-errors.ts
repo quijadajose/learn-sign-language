@@ -1,6 +1,6 @@
 import { applyDecorators } from '@nestjs/common';
 import { ApiExtraModels, ApiResponse, getSchemaPath } from '@nestjs/swagger';
-import { ApiErrorDto } from './api-error.dto';
+import { ApiErrorDto } from './api-error.dto.js';
 
 const errorSchema = {
   schema: { $ref: getSchemaPath(ApiErrorDto) },

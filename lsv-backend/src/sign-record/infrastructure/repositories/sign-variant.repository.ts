@@ -1,8 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, DeepPartial } from 'typeorm';
-import { SignVariant } from '../../../shared/domain/entities/signVariant';
-import { SignVariantRepositoryInterface } from '../../domain/ports/sign-variant.repository.interface';
+import { SignVariant } from '../../../shared/domain/entities/signVariant.js';
+import { SignVariantRepositoryInterface } from '../../domain/ports/sign-variant.repository.interface.js';
 
 @Injectable()
 export class TypeOrmSignVariantRepository implements SignVariantRepositoryInterface {

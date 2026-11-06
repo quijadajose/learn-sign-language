@@ -1,16 +1,16 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { ResourcePermissionSource } from '../../interfaces/resource-permission-metadata.interface';
-import { Lesson } from 'src/shared/domain/entities/lesson';
-import { Region } from 'src/shared/domain/entities/region';
-import { Stages } from 'src/shared/domain/entities/stage';
-import { LessonVariant } from 'src/shared/domain/entities/lessonVariant';
-import { Quiz } from 'src/shared/domain/entities/quiz';
-import { QuizVariant } from 'src/shared/domain/entities/quizVariant';
-import { Sign } from 'src/shared/domain/entities/sign';
-import { LessonModel } from 'src/shared/domain/entities/lessonModel';
-import { SignRecording } from 'src/shared/domain/entities/signRecording';
+import { ResourcePermissionSource } from '../../interfaces/resource-permission-metadata.interface.js';
+import { Lesson } from '../../../../shared/domain/entities/lesson.js';
+import { Region } from '../../../../shared/domain/entities/region.js';
+import { Stages } from '../../../../shared/domain/entities/stage.js';
+import { LessonVariant } from '../../../../shared/domain/entities/lessonVariant.js';
+import { Quiz } from '../../../../shared/domain/entities/quiz.js';
+import { QuizVariant } from '../../../../shared/domain/entities/quizVariant.js';
+import { Sign } from '../../../../shared/domain/entities/sign.js';
+import { LessonModel } from '../../../../shared/domain/entities/lessonModel.js';
+import { SignRecording } from '../../../../shared/domain/entities/signRecording.js';
 
 @Injectable()
 export class ResourceIdResolver {
@@ -94,9 +94,24 @@ export class ResourceIdResolver {
             },
           });
           if (!lesson) {
-            throw new NotFoundException('Lesson not found');
+            throw new NotFoundException('errors.lesson.notFound');
           }
           return lesson.language?.id || null;
+        }
+
+        case 'quiz': {
+          const quiz = await this.quizRepository.findOne({
+            where: { id: resourceId },
+            relations: {
+              lesson: {
+                language: true,
+              },
+            },
+          });
+          if (!quiz) {
+            throw new NotFoundException('errors.quiz.notFound');
+          }
+          return quiz.lesson?.language?.id || null;
         }
 
         case 'stage': {
@@ -107,7 +122,7 @@ export class ResourceIdResolver {
             },
           });
           if (!stage) {
-            throw new NotFoundException('Stage not found');
+            throw new NotFoundException('errors.stage.notFound');
           }
           return stage.language?.id || null;
         }
@@ -120,7 +135,7 @@ export class ResourceIdResolver {
             },
           });
           if (!region) {
-            throw new NotFoundException('Region not found');
+            throw new NotFoundException('errors.region.notFound');
           }
           if (property === 'languageId') {
             return region.language?.id || null;
@@ -136,7 +151,7 @@ export class ResourceIdResolver {
             },
           });
           if (!variant) {
-            throw new NotFoundException('Lesson variant not found');
+            throw new NotFoundException('errors.lesson.variantNotFound');
           }
           return variant.region?.id || null;
         }
@@ -153,14 +168,14 @@ export class ResourceIdResolver {
             },
           });
           if (!sign) {
-            throw new NotFoundException('Sign not found');
+            throw new NotFoundException('errors.sign.notFound');
           }
           if (sign.language?.id) return sign.language.id;
           if (sign.languageId) return sign.languageId;
           const languageId = sign.lessons?.find((l) => l.language?.id)?.language
             ?.id;
           if (languageId) return languageId;
-          // Seña legacy sin languageId ni lección: allowUnscopedModerator
+          // Seña legacy sin languageId ni lección: sin idioma no hay permiso (BE-10).
           return null;
         }
 
@@ -180,7 +195,7 @@ export class ResourceIdResolver {
             },
           });
           if (!model) {
-            throw new NotFoundException('Lesson model not found');
+            throw new NotFoundException('errors.model.lessonModelNotFound');
           }
           return (
             model.lesson?.language?.id ||
@@ -203,7 +218,7 @@ export class ResourceIdResolver {
             },
           });
           if (!recording?.sign) {
-            throw new NotFoundException('Recording not found');
+            throw new NotFoundException('errors.recording.notFound');
           }
           if (recording.sign.language?.id) return recording.sign.language.id;
           if (recording.sign.languageId) return recording.sign.languageId;
@@ -232,7 +247,7 @@ export class ResourceIdResolver {
           },
         });
         if (!quiz || !quiz.lesson) {
-          throw new NotFoundException('Quiz or lesson not found');
+          throw new NotFoundException('errors.quiz.orLessonNotFound');
         }
         return quiz.lesson.language?.id || null;
       }
@@ -270,7 +285,7 @@ export class ResourceIdResolver {
           },
         });
         if (!variant) {
-          throw new NotFoundException('Lesson variant not found');
+          throw new NotFoundException('errors.lesson.variantNotFound');
         }
         return variant.region?.id || null;
       }
@@ -289,7 +304,7 @@ export class ResourceIdResolver {
           },
         });
         if (!variant?.baseLesson) {
-          throw new NotFoundException('Lesson variant not found');
+          throw new NotFoundException('errors.lesson.variantNotFound');
         }
         return variant.baseLesson.language?.id || null;
       }

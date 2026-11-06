@@ -1,5 +1,5 @@
 import { Injectable, Inject } from '@nestjs/common';
-import { QuizVariantRepositoryInterface } from 'src/quiz/domain/ports/quiz-variant.repository.interface';
+import { QuizVariantRepositoryInterface } from '../../../domain/ports/quiz-variant.repository.interface.js';
 
 @Injectable()
 export class DeleteQuizVariantUseCase {

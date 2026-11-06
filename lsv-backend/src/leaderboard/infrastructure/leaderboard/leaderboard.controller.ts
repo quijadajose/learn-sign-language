@@ -6,18 +6,18 @@ import {
   Query,
   UseGuards,
 } from '@nestjs/common';
-import { LeaderboardService } from 'src/leaderboard/application/service/leaderboard/leaderboard.service';
+import { LeaderboardService } from '../../application/service/leaderboard/leaderboard.service.js';
 import {
   PaginationDto,
   PaginatedResponseDto,
-} from 'src/shared/domain/dto/PaginationDto';
-import { LeaderboardDto } from 'src/leaderboard/domain/dto/leaderboard/leaderboard';
+} from '../../../shared/domain/dto/PaginationDto.js';
+import { LeaderboardDto } from '../../domain/dto/leaderboard/leaderboard.js';
 import { AuthGuard } from '@nestjs/passport';
 import {
   DocGetGeneralLeaderboard,
   DocGetLeaderboardByLanguage,
   DocLeaderboard,
-} from './docs/leaderboard.docs';
+} from './docs/leaderboard.docs.js';
 
 @DocLeaderboard()
 @Controller('leaderboard')

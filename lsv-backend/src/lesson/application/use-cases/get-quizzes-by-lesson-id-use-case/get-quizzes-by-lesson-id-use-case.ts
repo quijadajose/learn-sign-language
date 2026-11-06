@@ -1,6 +1,6 @@
 import { Inject } from '@nestjs/common';
-import { LessonRepositoryInterface } from 'src/lesson/domain/ports/lesson.repository.interface/lesson.repository.interface';
-import { Quiz } from 'src/shared/domain/entities/quiz';
+import { LessonRepositoryInterface } from '../../../domain/ports/lesson.repository.interface/lesson.repository.interface.js';
+import { Quiz } from '../../../../shared/domain/entities/quiz.js';
 
 export class GetQuizzesByLessonIdUseCase {
   constructor(

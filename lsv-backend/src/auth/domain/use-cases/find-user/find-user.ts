@@ -1,6 +1,6 @@
 ﻿import { Injectable, Inject } from '@nestjs/common';
-import { User } from 'src/shared/domain/entities/user';
-import { UserRepositoryInterface } from '../../ports/user.repository.interface/user.repository.interface';
+import { User } from '../../../../shared/domain/entities/user.js';
+import { UserRepositoryInterface } from '../../ports/user.repository.interface/user.repository.interface.js';
 
 @Injectable()
 export class FindUserUseCase {

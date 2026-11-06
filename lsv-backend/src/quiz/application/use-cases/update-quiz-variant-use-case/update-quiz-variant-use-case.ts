@@ -1,7 +1,7 @@
 import { Injectable, Inject } from '@nestjs/common';
-import { QuizVariantRepositoryInterface } from 'src/quiz/domain/ports/quiz-variant.repository.interface';
-import { CreateQuizVariantDto } from 'src/quiz/domain/dto/create-quiz-variant-dto';
-import { QuizVariant } from 'src/shared/domain/entities/quizVariant';
+import { QuizVariantRepositoryInterface } from '../../../domain/ports/quiz-variant.repository.interface.js';
+import { CreateQuizVariantDto } from '../../../domain/dto/create-quiz-variant-dto.js';
+import { QuizVariant } from '../../../../shared/domain/entities/quizVariant.js';
 
 @Injectable()
 export class UpdateQuizVariantUseCase {

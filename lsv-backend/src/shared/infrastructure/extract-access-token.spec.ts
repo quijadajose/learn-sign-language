@@ -2,7 +2,7 @@ import {
   ACCESS_COOKIE_NAME,
   extractAccessToken,
   readCookie,
-} from './extract-access-token';
+} from './extract-access-token.js';
 
 describe('extractAccessToken', () => {
   it('prefers the Authorization Bearer header', () => {

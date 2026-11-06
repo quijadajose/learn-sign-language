@@ -44,7 +44,7 @@ export class UpdateUserDto {
   @ApiPropertyOptional({ example: 30, minimum: 0 })
   @IsOptional()
   @IsInt()
-  @Min(0)
+  @Min(14) // BE-18
   age?: number;
 
   @ApiPropertyOptional({ example: true })

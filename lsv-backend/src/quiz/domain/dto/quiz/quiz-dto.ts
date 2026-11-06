@@ -5,7 +5,7 @@ import {
   IsUUID,
   ValidateNested,
 } from 'class-validator';
-import { QuestionDto } from '../../question/question-dto';
+import { QuestionDto } from '../../question/question-dto.js';
 import { Type } from 'class-transformer';
 import { ApiProperty } from '@nestjs/swagger';
 

@@ -1,5 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { DivisionDto } from '../../domain/dto/country-with-divisions.dto';
+import { DivisionDto } from '../../domain/dto/country-with-divisions.dto.js';
 
 const UUID = '8dc31a49-64ae-4c94-b867-d818ce9441e6';
 

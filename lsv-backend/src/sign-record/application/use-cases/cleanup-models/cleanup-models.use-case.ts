@@ -1,7 +1,7 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
-import { LessonModelRepositoryInterface } from 'src/sign-record/domain/ports/lesson-model.repository.interface';
-import { FileStoragePort } from 'src/sign-record/domain/ports/file-storage.port';
-import { TrainingQueuePort } from 'src/sign-record/domain/ports/training-queue.port';
+import { LessonModelRepositoryInterface } from '../../../domain/ports/lesson-model.repository.interface.js';
+import { FileStoragePort } from '../../../domain/ports/file-storage.port.js';
+import { TrainingQueuePort } from '../../../domain/ports/training-queue.port.js';
 
 /** Solo se consideran stale jobs más viejos que este umbral. */
 const STALE_MS = 2 * 60 * 60 * 1000; // 2h

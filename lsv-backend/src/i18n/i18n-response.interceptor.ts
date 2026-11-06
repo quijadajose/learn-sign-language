@@ -7,7 +7,7 @@ import {
 import { Request } from 'express';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
-import { resolveLocale, translate, type I18nParams } from './translate';
+import { resolveLocale, translate, type I18nParams } from './translate.js';
 
 /**
  * Localizes `{ message }` on successful JSON envelopes using Accept-Language.
