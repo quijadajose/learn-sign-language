@@ -1,6 +1,19 @@
 import type { CustomTrainingFilters } from "../../types/signRecord";
 import type { TrainingMode } from "./types";
 
+/**
+ * Une señas globales y de lección sin duplicados por id. Gana la última
+ * aparición, así que las de lección sustituyen a una global repetida.
+ */
+export function mergeSignsById<T extends { id: string }>(
+  globalSigns: T[],
+  signs: T[],
+): T[] {
+  const uniqueMap = new Map<string, T>();
+  [...globalSigns, ...signs].forEach((sign) => uniqueMap.set(sign.id, sign));
+  return Array.from(uniqueMap.values());
+}
+
 export type SortKey = "name" | "createdAt";
 export type SortDirection = "asc" | "desc";
 

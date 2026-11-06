@@ -17,7 +17,11 @@ import {
   resolveInitialStudioRegionId,
 } from "./signStudioUtils";
 import type { BulkSignDraft } from "./signCatalogPresets";
-import { buildTrainingFilters, nextSortState } from "./signStudioDataUtils";
+import {
+  buildTrainingFilters,
+  mergeSignsById,
+  nextSortState,
+} from "./signStudioDataUtils";
 import type { Language, Region } from "../../types/user";
 import type {
   Lesson,
@@ -656,13 +660,10 @@ export function useSignStudioData() {
     }
   };
 
-  const allSigns = React.useMemo(() => {
-    // Usamos Map por ID para evitar duplicados si una global se coló en la lección
-    const combined = [...globalSigns, ...signs];
-    const uniqueMap = new Map();
-    combined.forEach(s => uniqueMap.set(s.id, s));
-    return Array.from(uniqueMap.values());
-  }, [globalSigns, signs]);
+  const allSigns = React.useMemo(
+    () => mergeSignsById(globalSigns, signs),
+    [globalSigns, signs],
+  );
 
   const filteredAndSortedSigns = React.useMemo(() => {
     return filterAndSortSigns(allSigns, searchTerm, sortKey, sortDirection);

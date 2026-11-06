@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   buildTrainingFilters,
+  mergeSignsById,
   nextSortState,
   type TrainingFilterInput,
 } from "./signStudioDataUtils";
@@ -13,6 +14,21 @@ const input: TrainingFilterInput = {
   selectedRegionId: "region-1",
   selectedTrainingSignIds: ["s2"],
 };
+
+describe("mergeSignsById", () => {
+  it("combines global and lesson signs without duplicates", () => {
+    const merged = mergeSignsById([{ id: "a" }, { id: "b" }], [{ id: "b" }, { id: "c" }]);
+    expect(merged.map((s) => s.id)).toEqual(["a", "b", "c"]);
+  });
+
+  it("keeps the lesson copy when the same id appears in both lists", () => {
+    const merged = mergeSignsById(
+      [{ id: "a", name: "global" }],
+      [{ id: "a", name: "lesson" }],
+    );
+    expect(merged).toEqual([{ id: "a", name: "lesson" }]);
+  });
+});
 
 describe("nextSortState", () => {
   it("activates a new column in ascending order", () => {
