@@ -88,7 +88,7 @@ jobs:
       - name: Run e2e smoke
         # Prefer workflow env over .env.test credentials for CI isolation.
         run: |
-          node ./node_modules/jest/bin/jest.js \
+          node --experimental-vm-modules ./node_modules/jest/bin/jest.js \
             --config ./test/jest-e2e.json \
             --runInBand \
             --testPathPatterns=auth.e2e-spec \
