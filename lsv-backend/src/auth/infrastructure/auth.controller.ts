@@ -136,7 +136,10 @@ export class AuthController {
   async googleAuthRedirect(@Req() req, @Res() res: Response) {
     const payload = req.user;
     if (!payload) {
-      throw new HttpException('No user data found', HttpStatus.UNAUTHORIZED);
+      throw new HttpException(
+        'errors.auth.noUserData',
+        HttpStatus.UNAUTHORIZED,
+      );
     }
     const frontendUrl = this.configService.get<string>('FRONTEND_URL');
     const code = await this.oauthCodeStore.create(payload.access_token, {

@@ -12,7 +12,7 @@ export class UploadPictureUseCase {
   ): Promise<string[]> {
     // BE-08: el id va al nombre de archivo; solo se acepta un UUID.
     if (!isUUID(id)) {
-      throw new BadRequestException('Invalid image id');
+      throw new BadRequestException('errors.common.invalidId');
     }
 
     if (!file) {

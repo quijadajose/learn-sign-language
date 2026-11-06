@@ -61,7 +61,7 @@ export class QuizService {
 
     const user = await this.getUserByIdUseCase.execute(userId);
     if (!user) {
-      throw new NotFoundException('User not found.');
+      throw new NotFoundException('errors.user.notFound');
     }
 
     // Primero intentar obtener un quiz normal
@@ -106,12 +106,12 @@ export class QuizService {
 
     const user = await this.getUserByIdUseCase.execute(userId);
     if (!user) {
-      throw new NotFoundException('User not found.');
+      throw new NotFoundException('errors.user.notFound');
     }
 
     const quiz = await this.getQuizByIdUseCase.execute(quizId);
     if (!quiz) {
-      throw new NotFoundException('Quiz not found.');
+      throw new NotFoundException('errors.quiz.notFound');
     }
     return this.getSubmissionTestFromUserUseCase.execute(
       user,
