@@ -55,5 +55,24 @@
       "privacy": "Privacy",
       "terms": "Terms"
     }
+  },
+  "network": {
+    "timeout": "The request timed out",
+    "connection": "Connection error",
+    "connectionRetries": "Connection error after several attempts",
+    "loadQuizzes": "Connection error while loading quizzes",
+    "loadQuiz": "Connection error while loading the quiz",
+    "loadImage": "Connection error while loading the image",
+    "uploadImage": "Connection error while uploading the image",
+    "loadRegions": "Connection error while loading regions",
+    "loadVariants": "Connection error while loading variants",
+    "deleteVariant": "Connection error while deleting the variant",
+    "loadModerators": "Connection error while loading moderators"
+  },
+  "feedback": {
+    "regionalVariantUpdated": "Regional variant updated successfully",
+    "regionalVariantCreated": "Regional variant created successfully",
+    "variantDeleted": "Variant deleted successfully",
+    "permissionAssigned": "Permission assigned successfully"
   }
 }

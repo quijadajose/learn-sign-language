@@ -55,5 +55,24 @@
       "privacy": "Privacidad",
       "terms": "Términos"
     }
+  },
+  "network": {
+    "timeout": "La petición ha excedido el tiempo límite",
+    "connection": "Error de conexión",
+    "connectionRetries": "Error de conexión después de múltiples intentos",
+    "loadQuizzes": "Error de conexión al cargar los quizzes",
+    "loadQuiz": "Error de conexión al cargar el quiz",
+    "loadImage": "Error de conexión al cargar la imagen",
+    "uploadImage": "Error de conexión al subir la imagen",
+    "loadRegions": "Error de conexión al cargar las regiones",
+    "loadVariants": "Error de conexión al cargar las variantes",
+    "deleteVariant": "Error de conexión al eliminar la variante",
+    "loadModerators": "Error de conexión al cargar moderadores"
+  },
+  "feedback": {
+    "regionalVariantUpdated": "Variante regional actualizada exitosamente",
+    "regionalVariantCreated": "Variante regional creada exitosamente",
+    "variantDeleted": "Variante eliminada exitosamente",
+    "permissionAssigned": "Permiso asignado exitosamente"
   }
 }

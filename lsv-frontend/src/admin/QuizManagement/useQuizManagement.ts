@@ -8,6 +8,7 @@ import {
   QuizOption,
   QuizQuestion,
 } from "./types";
+import i18next from "i18next";
 
 const emptyQuestion = (): NewQuizQuestion => ({
   text: "",
@@ -47,7 +48,7 @@ export function useQuizManagement() {
         addToast("error", errorMsg);
       }
     } catch {
-      const errorMsg = "Error de conexión al cargar los quizzes";
+      const errorMsg = i18next.t("common:network.loadQuizzes");
       setError(errorMsg);
       addToast("error", errorMsg);
     } finally {
@@ -96,7 +97,7 @@ export function useQuizManagement() {
         );
       }
     } catch {
-      addToast("error", "Error de conexión al cargar el quiz");
+      addToast("error", i18next.t("common:network.loadQuiz"));
     }
   };
 
@@ -113,7 +114,7 @@ export function useQuizManagement() {
         addToast("error", response.message || "Error al eliminar el quiz");
       }
     } catch {
-      addToast("error", "Error de conexión");
+      addToast("error", i18next.t("common:network.connection"));
     }
   };
 
@@ -193,7 +194,7 @@ export function useQuizManagement() {
         addToast("error", response.message || "Error al cargar la imagen");
       }
     } catch {
-      addToast("error", "Error de conexión al cargar la imagen");
+      addToast("error", i18next.t("common:network.loadImage"));
     } finally {
       setUploadingImage(null);
     }
@@ -266,7 +267,7 @@ export function useQuizManagement() {
         );
       }
     } catch {
-      addToast("error", "Error de conexión");
+      addToast("error", i18next.t("common:network.connection"));
     } finally {
       setSubmitting(false);
     }

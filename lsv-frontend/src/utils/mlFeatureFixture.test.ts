@@ -38,11 +38,14 @@ type Fixture = {
   expectedNormalized258: number[][];
   expectedStatic: number[][];
   expectedDynamic: number[][];
+  resampleLength: number;
+  expectedResampledStatic: number[][];
+  expectedDynamicResampled: number[][];
 };
 
 const fixture: Fixture = JSON.parse(
   readFileSync(
-    resolve(process.cwd(), "../schemas/fixtures/dynamic-v3-golden.json"),
+    resolve(process.cwd(), "../schemas/fixtures/dynamic-v4-golden.json"),
     "utf8",
   ),
 ) as Fixture;
@@ -114,6 +117,15 @@ describe("contrato de features contra el fixture compartido", () => {
     );
     expect(out).not.toBeNull();
     expectMatrixClose(out!, fixture.expectedDynamic);
+  });
+
+  it("dynamic-v4: remuestrea antes de derivar los deltas", () => {
+    const out = buildDynamicInferenceSequence(
+      fixture.input258,
+      fixture.resampleLength,
+    );
+    expect(out).not.toBeNull();
+    expectMatrixClose(out!, fixture.expectedDynamicResampled);
   });
 
   it("visibility no se escala: es una confianza en [0, 1]", () => {

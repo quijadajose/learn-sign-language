@@ -23,6 +23,7 @@ import {
   VariantFormState,
 } from "./types";
 import { useQuillConfig } from "./useQuillConfig";
+import i18next from "i18next";
 
 export function useLessonManagement() {
   const navigate = useNavigate();
@@ -182,7 +183,7 @@ export function useLessonManagement() {
           addToast("error", response.message || "Error al cargar las regiones");
         }
       } catch (err) {
-        addToast("error", "Error de conexión al cargar las regiones");
+        addToast("error", i18next.t("common:network.loadRegions"));
       }
     },
     [addToast],
@@ -590,7 +591,7 @@ export function useLessonManagement() {
         addToast("error", response.message || "Error al cargar las variantes");
       }
     } catch (err) {
-      addToast("error", "Error de conexión al cargar las variantes");
+      addToast("error", i18next.t("common:network.loadVariants"));
     } finally {
       setVariantsLoading(false);
     }
@@ -632,8 +633,8 @@ export function useLessonManagement() {
         addToast(
           "success",
           editingVariantId
-            ? "Variante regional actualizada exitosamente"
-            : "Variante regional creada exitosamente",
+            ? i18next.t("common:feedback.regionalVariantUpdated")
+            : i18next.t("common:feedback.regionalVariantCreated"),
         );
         setIsCreateVariantModalOpen(false);
         setEditingVariantId(null);
@@ -688,13 +689,13 @@ export function useLessonManagement() {
       );
 
       if (response.success) {
-        addToast("success", "Variante eliminada exitosamente");
+        addToast("success", i18next.t("common:feedback.variantDeleted"));
         loadLessonVariants(selectedLessonIdRef.current);
       } else {
         addToast("error", response.message || "Error al eliminar la variante");
       }
     } catch (err) {
-      addToast("error", "Error de conexión al eliminar la variante");
+      addToast("error", i18next.t("common:network.deleteVariant"));
     }
   };
 

@@ -9,6 +9,7 @@ import {
   ToastMessage,
   UserSelectOption,
 } from "./types";
+import i18next from "i18next";
 
 export function useModeratorManagement() {
   const [permissions, setPermissions] = useState<ModeratorPermission[]>([]);
@@ -65,7 +66,7 @@ export function useModeratorManagement() {
           setError(response.message || "Error al cargar moderadores");
         }
       } catch {
-        setError("Error de conexión al cargar moderadores");
+        setError(i18next.t("common:network.loadModerators"));
       } finally {
         setLoading(false);
       }
@@ -159,7 +160,7 @@ export function useModeratorManagement() {
       });
 
       if (response.success) {
-        addToast("success", "Permiso asignado exitosamente");
+        addToast("success", i18next.t("common:feedback.permissionAssigned"));
         setIsAssignModalOpen(false);
         resetAssignForm();
         fetchModerators();
