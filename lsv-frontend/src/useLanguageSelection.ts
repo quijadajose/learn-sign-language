@@ -1,5 +1,5 @@
 import i18next from "i18next";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useLayoutEffect, useRef } from "react";
 import { useLocalStorage } from "./hooks/useLocalStorage";
 import { useToast } from "./components/ToastProvider";
 import { languageApi, regionApi } from "./services/api";
@@ -68,10 +68,14 @@ export function useLanguageSelection(onLanguageSelected: (lang: Language) => voi
   const loadRegionsRef = useRef<
     (languageId: string) => Promise<"empty" | Region | null>
   >(async () => null);
-  selectedLanguageIdRef.current = selectedLanguageId;
-  selectedRegionIdRef.current = selectedRegionId;
-  setSelectedLanguageIdRef.current = setSelectedLanguageId;
-  setSelectedRegionIdRef.current = setSelectedRegionId;
+  // Se sincronizan antes de los efectos (useLayoutEffect) para que el efecto de
+  // inicialización siempre lea valores actuales, sin mutar refs durante render.
+  useLayoutEffect(() => {
+    selectedLanguageIdRef.current = selectedLanguageId;
+    selectedRegionIdRef.current = selectedRegionId;
+    setSelectedLanguageIdRef.current = setSelectedLanguageId;
+    setSelectedRegionIdRef.current = setSelectedRegionId;
+  });
 
   useEffect(() => {
     let active = true;
@@ -305,7 +309,9 @@ export function useLanguageSelection(onLanguageSelected: (lang: Language) => voi
       setLoading(false);
     }
   };
-  loadRegionsRef.current = loadRegions;
+  useLayoutEffect(() => {
+    loadRegionsRef.current = loadRegions;
+  });
 
   const enrollLanguage = async (
     selected: Language,
