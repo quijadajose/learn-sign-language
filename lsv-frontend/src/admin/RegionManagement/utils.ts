@@ -59,3 +59,27 @@ export function groupRegionsByCountryAndLanguage(
     a.countryName.localeCompare(b.countryName),
   );
 }
+
+/** Indica si el idioma ya tiene una región base (solo puede haber una por idioma). */
+export function hasBaseRegionForLanguage(
+  regions: Region[],
+  languageId: string | null | undefined,
+): boolean {
+  return Boolean(
+    languageId &&
+      regions.some(
+        (region) => region.language?.id === languageId && region.isDefault,
+      ),
+  );
+}
+
+/** Devuelve una copia del set con el elemento agregado o quitado según esté. */
+export function toggleSetItem<T>(set: Set<T>, item: T): Set<T> {
+  const next = new Set(set);
+  if (next.has(item)) {
+    next.delete(item);
+  } else {
+    next.add(item);
+  }
+  return next;
+}

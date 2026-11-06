@@ -20,7 +20,11 @@ import {
   RegionForm,
   ToastMessage,
 } from "./types";
-import { groupRegionsByCountryAndLanguage } from "./utils";
+import {
+  groupRegionsByCountryAndLanguage,
+  hasBaseRegionForLanguage,
+  toggleSetItem,
+} from "./utils";
 const emptyRegionForm: RegionForm = {
   name: "",
   code: "",
@@ -231,12 +235,7 @@ export function useRegionManagement() {
   };
 
   const languageHasBaseRegion = (languageId: string | null | undefined) =>
-    Boolean(
-      languageId &&
-        regions.some(
-          (region) => region.language?.id === languageId && region.isDefault,
-        ),
-    );
+    hasBaseRegionForLanguage(regions, languageId);
 
   const handleLanguageSelectChange = async (
     selectedOption: SingleValue<LanguageOption>,
@@ -378,27 +377,11 @@ export function useRegionManagement() {
   }, [isAdmin, selectedLanguageId, addToast]);
 
   const toggleCountry = (countryCode: string) => {
-    setExpandedCountries((prev) => {
-      const newSet = new Set(prev);
-      if (newSet.has(countryCode)) {
-        newSet.delete(countryCode);
-      } else {
-        newSet.add(countryCode);
-      }
-      return newSet;
-    });
+    setExpandedCountries((prev) => toggleSetItem(prev, countryCode));
   };
 
   const toggleLanguage = (languageKey: string) => {
-    setExpandedLanguages((prev) => {
-      const newSet = new Set(prev);
-      if (newSet.has(languageKey)) {
-        newSet.delete(languageKey);
-      } else {
-        newSet.add(languageKey);
-      }
-      return newSet;
-    });
+    setExpandedLanguages((prev) => toggleSetItem(prev, languageKey));
   };
 
   useEffect(() => {
