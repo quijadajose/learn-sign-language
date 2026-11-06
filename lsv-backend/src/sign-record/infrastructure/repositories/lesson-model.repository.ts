@@ -202,7 +202,7 @@ export class TypeOrmLessonModelRepository implements LessonModelRepositoryInterf
     return this.repository.findOne({
       where: { id },
       relations: {
-        lesson: true,
+        lesson: { language: true },
         lessonVariant: true,
       },
     });

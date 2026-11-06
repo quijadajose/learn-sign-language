@@ -58,7 +58,7 @@ describe('SaveModelResultsUseCase', () => {
     id: 'model-1',
     modelType: 'static',
     lessonId: 'lesson-1',
-    lesson: { id: 'lesson-1' },
+    lesson: { id: 'lesson-1', language: { id: 'lang-1' } },
     lessonVariant: { id: 'variant-1' },
   };
 
@@ -144,7 +144,7 @@ describe('SaveModelResultsUseCase', () => {
       id: 'model-1',
       modelType: 'static',
       lessonId: 'lesson-1',
-      lesson: { id: 'lesson-1' },
+      lesson: { id: 'lesson-1', language: { id: 'lang-1' } },
       lessonVariant: { id: 'variant-1' },
     });
     hashesByFile();
@@ -165,6 +165,7 @@ describe('SaveModelResultsUseCase', () => {
     expect(repo.supersedeReadyModels).toHaveBeenCalled();
     expect(notification.sendModelReady).toHaveBeenCalledWith(
       'model-1',
+      'lang-1',
       expect.objectContaining({ modelJsonUrl: validPayload.modelJsonUrl }),
     );
   });

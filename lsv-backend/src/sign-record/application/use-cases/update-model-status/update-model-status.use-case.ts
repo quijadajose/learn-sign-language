@@ -23,8 +23,18 @@ export class UpdateModelStatusUseCase {
     }
     await this.lessonModelRepository.update(id, updateData);
 
-    this.notificationPort.emitStatusChange(id, status);
+    const languageId = await this.findLanguageId(id);
+    this.notificationPort.emitStatusChange(id, languageId, status);
 
     return { success: true };
+  }
+
+  private async findLanguageId(id: string): Promise<string | null> {
+    try {
+      const model = await this.lessonModelRepository.findById(id);
+      return model?.lesson?.language?.id ?? null;
+    } catch {
+      return null;
+    }
   }
 }

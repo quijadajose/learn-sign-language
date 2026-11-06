@@ -177,16 +177,20 @@ export class SaveModelResultsUseCase {
       name: existing.name,
     });
 
-    this.notificationPort.sendModelReady(id, {
-      modelJsonUrl,
-      binUrls: data.binUrls,
-      accuracy: data.accuracy,
-      labels: data.labels,
-      modelType: data.modelType,
-      featuresCount: data.featuresCount,
-      featuresSchemaVersion: data.featuresSchemaVersion,
-      trainingLogs,
-    });
+    this.notificationPort.sendModelReady(
+      id,
+      existing.lesson?.language?.id ?? null,
+      {
+        modelJsonUrl,
+        binUrls: data.binUrls,
+        accuracy: data.accuracy,
+        labels: data.labels,
+        modelType: data.modelType,
+        featuresCount: data.featuresCount,
+        featuresSchemaVersion: data.featuresSchemaVersion,
+        trainingLogs,
+      },
+    );
     return { success: true };
   }
 }
