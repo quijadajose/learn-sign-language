@@ -5,6 +5,12 @@ on:
   push:
     branches:
       - main
+  # TR-02: el job de TensorFlow (model-trainer-tf) solo corre en estos disparadores.
+  workflow_dispatch:
+  schedule:
+    - cron: "0 6 * * 1"
+  # Reutilizado por deploy.yml antes de desplegar (INF-06).
+  workflow_call:
 
 jobs:
   ml-feature-contract:
@@ -97,6 +103,7 @@ jobs:
           FRONTEND_URL: http://localhost:8080
           API_PORT: "3000"
           JWT_SECRET: ci-test-jwt-secret-not-for-prod
+          TRAINER_JOB_SECRET: ci-test-trainer-hmac-secret-not-for-prod
           API_ADMIN_EMAIL: admin@example.com
           API_ADMIN_PASSWORD: password
           API_USER_EMAIL: user@example.com
@@ -157,3 +164,28 @@ jobs:
       - name: Mypy
         run: mypy
       - run: python -m unittest discover -s tests -v
+
+  model-trainer-tf:
+    name: Model trainer TensorFlow smoke (manual / semanal)
+    # Excluido de PRs y de deploy.yml (workflow_call): TensorFlow pesa varios GB.
+    if: github.event_name == 'workflow_dispatch' || github.event_name == 'schedule'
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    defaults:
+      run:
+        working-directory: lsv-model-trainer
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+          cache-dependency-path: lsv-model-trainer/requirements*.txt
+      - name: Install runtime and test dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt -r requirements-dev.txt
+      - name: TensorFlow train + TF.js export smoke (2 señas x 4 muestras)
+        env:
+          RUN_TF_SMOKE: "1"
+        run: python -m unittest tests.test_tf_smoke -v
