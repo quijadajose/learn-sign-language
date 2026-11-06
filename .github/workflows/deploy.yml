@@ -13,8 +13,13 @@ env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: 'true'
 
 jobs:
+  # INF-06: el deploy solo sale si pasa toda la CI (lint, unit tests, trainer, frontend).
+  ci:
+    uses: ./.github/workflows/ci.yml
+
   smoke:
     name: E2E smoke before deploy
+    needs: ci
     runs-on: ubuntu-latest
     timeout-minutes: 15
     defaults:
@@ -73,6 +78,8 @@ jobs:
           FRONTEND_URL: http://localhost:8080
           API_PORT: "3000"
           JWT_SECRET: ci-test-jwt-secret-not-for-prod
+          # INF-02: obligatorio (EnvConfig). Distinto de JWT_SECRET.
+          TRAINER_JOB_SECRET: ci-smoke-trainer-hmac-secret-not-for-prod
           API_ADMIN_EMAIL: admin@example.com
           API_ADMIN_PASSWORD: password
           API_USER_EMAIL: user@example.com
@@ -112,13 +119,16 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      # INF-06: cada imagen queda etiquetada con el SHA del commit (rollback posible) además de latest.
       - name: Build and push Backend
         uses: docker/build-push-action@v7
         with:
           context: ./lsv-backend
           target: production
           push: true
-          tags: ${{ env.REGISTRY }}/${{ env.BACKEND_IMAGE }}:latest
+          tags: |
+            ${{ env.REGISTRY }}/${{ env.BACKEND_IMAGE }}:latest
+            ${{ env.REGISTRY }}/${{ env.BACKEND_IMAGE }}:${{ github.sha }}
 
       - name: Build and push Frontend
         uses: docker/build-push-action@v7
@@ -127,14 +137,18 @@ jobs:
           push: true
           build-args: |
             VITE_SENTRY_DSN=${{ secrets.VITE_SENTRY_DSN }}
-          tags: ${{ env.REGISTRY }}/${{ env.FRONTEND_IMAGE }}:latest
+          tags: |
+            ${{ env.REGISTRY }}/${{ env.FRONTEND_IMAGE }}:latest
+            ${{ env.REGISTRY }}/${{ env.FRONTEND_IMAGE }}:${{ github.sha }}
 
       - name: Build and push Model Trainer
         uses: docker/build-push-action@v7
         with:
           context: ./lsv-model-trainer
           push: true
-          tags: ${{ env.REGISTRY }}/${{ env.TRAINER_IMAGE }}:latest
+          tags: |
+            ${{ env.REGISTRY }}/${{ env.TRAINER_IMAGE }}:latest
+            ${{ env.REGISTRY }}/${{ env.TRAINER_IMAGE }}:${{ github.sha }}
 
   deploy:
     needs: build
@@ -154,15 +168,34 @@ jobs:
 
       - name: Deploy to Server via SSH
         uses: appleboy/ssh-action@v1.0.3
+        env:
+          IMAGE_TAG: ${{ github.sha }}
         with:
           host: ${{ secrets.SSH_HOST }}
           username: ${{ secrets.SSH_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
+          envs: IMAGE_TAG
           script: |
+            set -eu
             cd ~/apps/lsv
 
-            echo ${{ secrets.GITHUB_TOKEN }} | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+            # INF-07: el token no aparece en la línea de comandos ni en el historial.
+            # Para despliegues fuera de Actions conviene un PAT de solo lectura (read:packages).
+            echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u "${{ github.actor }}" --password-stdin
 
+            # INF-06: backup de la BD antes de migrar (las migraciones corren al arrancar la API).
+            if docker compose -f docker-compose.yml -f docker-compose.prod.yml ps -q lsv-db | grep -q .; then
+              mkdir -p ~/backups
+              DB_USER=$(grep '^DB_USERNAME=' .env | cut -d= -f2-)
+              DB_NAME=$(grep '^DB_DATABASE=' .env | cut -d= -f2- || true)
+              DB_NAME=${DB_NAME:-plataforma}
+              STAMP=$(date +%Y%m%d-%H%M%S)
+              docker compose -f docker-compose.yml -f docker-compose.prod.yml exec -T lsv-db \
+                pg_dump -U "$DB_USER" -d "$DB_NAME" > ~/backups/lsv-$STAMP.sql
+              gzip ~/backups/lsv-$STAMP.sql
+              ls -t ~/backups/lsv-*.sql.gz | tail -n +8 | xargs -r rm -f
+            fi
+
+            export IMAGE_TAG
             docker compose -f docker-compose.yml -f docker-compose.prod.yml pull
-
             docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --remove-orphans
