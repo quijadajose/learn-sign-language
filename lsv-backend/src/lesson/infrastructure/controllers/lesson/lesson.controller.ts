@@ -28,7 +28,6 @@ import { Quiz } from '../../../../shared/domain/entities/quiz.js';
 import { PaginatedResponseDto } from '../../../../shared/domain/dto/PaginationDto.js';
 import { GetLessonsQueryDto } from '../../../domain/dto/get-lessons-query-dto.js';
 import { GetLessonsWithSubmissionsQueryDto } from '../../../domain/dto/get-lessons-with-submissions-query-dto.js';
-import { AuthGuard } from '@nestjs/passport';
 import { CreateLessonVariantDto } from '../../../domain/dto/create-lesson-variant/create-lesson-variant-dto.js';
 import { LessonVariant } from '../../../../shared/domain/entities/lessonVariant.js';
 import {
@@ -56,7 +55,6 @@ import {
 export class LessonController {
   constructor(private readonly lessonAdminService: LessonService) {}
 
-  @UseGuards(AuthGuard('jwt'))
   @Get('by-language/:languageId')
   @DocGetLessonsByLanguage()
   async getLessonsByLanguage(
@@ -70,7 +68,6 @@ export class LessonController {
     );
   }
 
-  @UseGuards(AuthGuard('jwt'))
   @Get('by-language/:languageId/with-submissions')
   @DocGetLessonsWithSubmissions()
   async getLessonsByLanguageWithSubmissions(
@@ -163,7 +160,6 @@ export class LessonController {
     };
   }
 
-  @UseGuards(AuthGuard('jwt'))
   @Get(':id/with-quizzes')
   @DocGetLessonWithQuizzes()
   async getLessonWithQuizzes(
@@ -171,7 +167,6 @@ export class LessonController {
   ): Promise<Lesson> {
     return this.lessonAdminService.getLessonWithQuizzes(id);
   }
-  @UseGuards(AuthGuard('jwt'))
   @Get(':id/quizzes')
   @DocGetQuizzesByLesson()
   async getQuizzesByLessonId(
@@ -316,7 +311,6 @@ export class LessonController {
     return { message: 'Lesson variant deleted successfully' };
   }
 
-  @UseGuards(AuthGuard('jwt'))
   @Get('regional/:id')
   @DocGetRegionalLesson()
   async getRegionalLesson(
