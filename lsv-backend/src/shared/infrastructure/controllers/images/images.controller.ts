@@ -26,7 +26,6 @@ import { assertImageUploadAllowed } from '../../../application/image-upload-poli
 import { ResourceIdResolver } from '../../../../permissions/infrastructure/guards/resource-access/resource-id-resolver.js';
 import { IsUUID, isUUID } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
-import { AuthGuard } from '@nestjs/passport';
 import { RolesGuard } from '../../../../auth/infrastructure/guards/roles/roles.guard.js';
 import { Roles } from '../../../../auth/infrastructure/decorators/roles.decorator.js';
 import {
@@ -108,7 +107,7 @@ export class ImagesController {
   }
 
   @Post('upload/:folder')
-  @UseGuards(AuthGuard('jwt'), RolesGuard)
+  @UseGuards(RolesGuard)
   // Alumnos: solo su propia foto (carpeta user); la regla fina está en la política.
   @Roles('admin', 'moderator', 'user')
   // BE-08: límite de tamaño; multer ya no carga archivos gigantes en memoria.

@@ -8,9 +8,7 @@ import {
   Post,
   Query,
   Req,
-  UseGuards,
 } from '@nestjs/common';
-import { AuthGuard } from '@nestjs/passport';
 import { PaginationDto } from '../../../../shared/domain/dto/PaginationDto.js';
 import { UserLessonService } from '../../../application/services/user-lesson/user-lesson.service.js';
 import {
@@ -26,7 +24,6 @@ import {
 
 @DocUserLesson()
 @Controller('user-lesson')
-@UseGuards(AuthGuard('jwt'))
 export class UserLessonController {
   constructor(private readonly userLessonService: UserLessonService) {}
   @Get('by-user/:id')

@@ -25,7 +25,6 @@ import {
 } from '../../../../shared/domain/dto/PaginationDto.js';
 import { Language } from '../../../../shared/domain/entities/language.js';
 import { Stages } from '../../../../shared/domain/entities/stage.js';
-import { AuthGuard } from '@nestjs/passport';
 import { QuizService } from '../../../../quiz/application/services/quiz/quiz.service.js';
 import { Quiz } from '../../../../shared/domain/entities/quiz.js';
 import {
@@ -56,7 +55,6 @@ export class LanguageController {
     return this.languageService.createLanguage(createLanguageDto);
   }
 
-  @UseGuards(AuthGuard('jwt'))
   @Get('/')
   @DocListLanguages()
   async listLanguages(
@@ -104,7 +102,6 @@ export class LanguageController {
     return this.stageService.getStagesByLanguage(id, pagination);
   }
 
-  @UseGuards(AuthGuard('jwt'))
   @Get(':id/quizzes')
   @DocGetQuizzes()
   async getQuizzes(

@@ -9,7 +9,6 @@ import {
   UseGuards,
   ParseUUIDPipe,
 } from '@nestjs/common';
-import { AuthGuard } from '@nestjs/passport';
 import { RequireResourcePermission } from '../../../permissions/infrastructure/decorators/require-resource-permission.decorator.js';
 import { PermissionScope } from '../../../shared/domain/entities/moderatorPermission.js';
 import { ResourceAccessGuard } from '../../../permissions/infrastructure/guards/resource-access/resource-access.guard.js';
@@ -26,7 +25,7 @@ import {
 
 @DocQuizVariant()
 @Controller('quiz-variants')
-@UseGuards(AuthGuard('jwt'), ResourceAccessGuard)
+@UseGuards(ResourceAccessGuard)
 export class QuizVariantController {
   constructor(private readonly quizVariantService: QuizVariantService) {}
 

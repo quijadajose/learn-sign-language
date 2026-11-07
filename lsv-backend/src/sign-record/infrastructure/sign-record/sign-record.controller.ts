@@ -14,7 +14,6 @@ import {
 } from '@nestjs/common';
 import { PaginationDto } from '../../../shared/domain/dto/PaginationDto.js';
 import { SignRecordService } from '../../application/sign-record/sign-record.service.js';
-import { AuthGuard } from '@nestjs/passport';
 import { RolesGuard } from '../../../auth/infrastructure/guards/roles/roles.guard.js';
 import { Roles } from '../../../auth/infrastructure/decorators/roles.decorator.js';
 import { ResourceAccessGuard } from '../../../permissions/infrastructure/guards/resource-access/resource-access.guard.js';
@@ -47,7 +46,7 @@ import {
 
 @DocSignRecord()
 @Controller('sign-record')
-@UseGuards(AuthGuard('jwt'), RolesGuard)
+@UseGuards(RolesGuard)
 export class SignRecordController {
   constructor(private readonly signRecordService: SignRecordService) {}
 
