@@ -16,7 +16,7 @@ import {
   UseInterceptors,
 } from '@nestjs/common';
 import { createReadStream, existsSync } from 'fs';
-import { join, resolve } from 'path';
+import { isAbsolute, join, relative, resolve } from 'path';
 import { Public } from '../../../../auth/infrastructure/decorators/public.decorator.js';
 import { lookup } from 'mime-types';
 import type { Response } from 'express';
@@ -60,6 +60,12 @@ export class UploadImageDto {
 
 const ALLOWED_UPLOAD_FOLDERS = new Set(['user', 'quiz', 'languages', 'lesson']);
 
+/** True si `target` queda dentro de `base` (no basta un prefijo: `uploads-x` no cuenta). */
+function isPathInside(base: string, target: string): boolean {
+  const rel = relative(base, target);
+  return rel !== '' && !rel.startsWith('..') && !isAbsolute(rel);
+}
+
 /** Lookup mínimo de permisos por idioma; evita importar internals de `moderator` desde `shared`. */
 type LanguagePermissionLookup = {
   checkUserPermissionForLanguage(
@@ -101,7 +107,7 @@ export class ImagesController {
 
     for (const ext of this.allowedExtensions) {
       const tryPath = resolve(basePath, folder, `${fileBaseName}.${ext}`);
-      if (tryPath.startsWith(basePath) && existsSync(tryPath)) {
+      if (isPathInside(basePath, tryPath) && existsSync(tryPath)) {
         filePath = tryPath;
         foundExt = ext;
         break;
