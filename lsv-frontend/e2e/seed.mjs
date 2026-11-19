@@ -23,6 +23,12 @@ export async function seedCurriculum(api, token) {
     description: "e2e fixture",
     languageId: language.id,
   });
+  await post("/region", {
+    name: `Alternate ${suffix}`,
+    code: `${suffix.slice(-8)}B`,
+    description: "alternate e2e region",
+    languageId: language.id,
+  });
   const stage = await post("/stage", {
     name: `Stage ${suffix}`,
     description: "e2e fixture",

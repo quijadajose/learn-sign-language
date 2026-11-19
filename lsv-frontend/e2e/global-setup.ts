@@ -125,15 +125,6 @@ export default async function globalSetup(config: FullConfig) {
     userPassword,
     resolve(states, "student.json"),
   );
-  const enrollment = await student.context.post("/api/users/enroll", {
-    headers: { Authorization: `Bearer ${student.token}` },
-    data: { languageId: curriculum.languageId, regionId: curriculum.regionId },
-  });
-  if (!enrollment.ok()) {
-    throw new Error(
-      `Student enrollment failed with status ${enrollment.status()}`,
-    );
-  }
   await student.context.dispose();
   await login(
     baseURL,

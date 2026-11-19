@@ -1,10 +1,16 @@
 import AxeBuilder from "@axe-core/playwright";
 import { readFile } from "node:fs/promises";
 import { expect, test } from "./fixtures/roles";
+import { ensureStudentEnrolled } from "./fixtures/enrollment";
 
 const curriculum = JSON.parse(
   await readFile("e2e/.auth/curriculum.json", "utf8"),
-) as { lessonId: string; quizId: string };
+) as {
+  lessonId: string;
+  quizId: string;
+  languageName: string;
+  regionName: string;
+};
 
 async function seriousA11y(page: import("@playwright/test").Page) {
   const results = await new AxeBuilder({ page })
@@ -62,6 +68,7 @@ test("nested learner routes survive refresh and a new tab", async ({
   browser,
   baseURL,
 }) => {
+  await ensureStudentEnrolled(studentPage, curriculum);
   const route = `/lesson/${curriculum.lessonId}`;
   await studentPage.goto(route);
   await expect(
@@ -81,6 +88,7 @@ test("nested learner routes survive refresh and a new tab", async ({
 });
 
 test("API outage leaves a clear terminal message", async ({ studentPage }) => {
+  await ensureStudentEnrolled(studentPage, curriculum);
   test.fail(
     true,
     "AF-F6-02: API outage redirects to login without explaining the failure",
@@ -93,6 +101,7 @@ test("API outage leaves a clear terminal message", async ({ studentPage }) => {
 test("nonexistent lesson shows a not-found message", async ({
   studentPage,
 }) => {
+  await ensureStudentEnrolled(studentPage, curriculum);
   test.fail(
     true,
     "AF-F6-03: nonexistent lesson shows a success alert instead of not found",
@@ -109,6 +118,7 @@ test("serious and critical WCAG A/AA checks on primary screens", async ({
   studentPage,
 }) => {
   await page.goto("/login");
+  await ensureStudentEnrolled(studentPage, curriculum);
   const violations: unknown[] = [];
   const append = async (
     screen: string,

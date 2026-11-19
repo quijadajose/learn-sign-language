@@ -21,7 +21,7 @@ async function getCurriculum(): Promise<Curriculum> {
   ) as Curriculum;
 }
 
-test("student enrolls in a regional curriculum, studies, and earns best quiz score", async ({
+test("student studies a regional curriculum and earns best quiz score", async ({
   browser,
   baseURL,
 }) => {
@@ -35,6 +35,20 @@ test("student enrolls in a regional curriculum, studies, and earns best quiz sco
   await page.goto("/dashboard");
   await page.getByText(curriculum.languageName, { exact: true }).click();
   await page.getByRole("button", { name: "Siguiente" }).click();
+  const enrollmentResponse = page.waitForResponse(
+    (response) =>
+      response.url().endsWith("/api/users/enroll") &&
+      response.request().method() === "POST",
+  );
+  await page
+    .getByText(curriculum.regionName, { exact: true })
+    .dispatchEvent("click");
+  expect((await enrollmentResponse).ok()).toBe(true);
+  await expect(
+    page.getByRole("heading", {
+      name: `Progreso en ${curriculum.languageName}`,
+    }),
+  ).toBeVisible();
   await expect(
     page.getByText(curriculum.stageName, { exact: true }),
   ).toBeVisible();
@@ -67,12 +81,13 @@ test("student enrolls in a regional curriculum, studies, and earns best quiz sco
   await expect(page.getByText(/100\.00/)).toBeVisible();
 
   await page.goto("/leaderboard");
-  await page
-    .locator("#leaderboard-language")
-    .selectOption(curriculum.languageId);
+  await expect(page.locator("#leaderboard-language")).toHaveValue("global");
   await expect(
     page.getByText("Playwright Student", { exact: true }),
   ).toBeVisible();
-  await expect(page.getByText("100")).toBeVisible();
+  const studentRow = page
+    .getByRole("heading", { name: "Playwright Student", exact: true })
+    .locator("../..");
+  await expect(studentRow.getByText("100", { exact: true })).toBeVisible();
   await context.close();
 });
