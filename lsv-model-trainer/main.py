@@ -5,7 +5,6 @@ import logging
 import os
 import resource
 import signal
-import sys
 import threading
 import time
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
@@ -16,7 +15,7 @@ from bullmq import UnrecoverableError, Worker
 from redis.asyncio import Redis
 
 from job_hmac import verify_training_job_hmac
-from trainer_logic import train_model
+from trainer_logic import clear_keras_session, train_model
 from validation import (
     TrainingCancelledError,
     assert_safe_job_paths,
@@ -256,6 +255,31 @@ def _load_training_payload(job_data: dict) -> tuple[Any, str]:
         return json.load(f), output_path
 
 
+def _release_training_memory() -> None:
+    """TR-01: el worker vive mucho y sin esto cada job deja su modelo y sus
+    grafos de Keras en memoria hasta acabar en OOM con el límite del contenedor.
+    Un fallo aquí no debe tapar el resultado o el error del entrenamiento."""
+    try:
+        clear_keras_session()
+    except Exception:
+        logger.warning("No se pudo limpiar la sesión de Keras", exc_info=True)
+    gc.collect()
+
+
+def _train_and_release(*args: Any) -> Any:
+    """TR-01: entrena y limpia en el mismo hilo, pase lo que pase.
+
+    El estado global de Keras 3 es por hilo y `asyncio.to_thread` reutiliza los
+    hilos del executor, así que limpiar desde el hilo del event loop no libera
+    nada. Además, si se cancela la corrutina el hilo sigue entrenando: limpiar
+    aquí evita borrar la sesión con un fit todavía en marcha.
+    """
+    try:
+        return train_model(*args)
+    finally:
+        _release_training_memory()
+
+
 async def process_job(job, token):
     logger.info("Procesando trabajo %s: %s", job.id, job.name)
     data = job.data or {}
@@ -341,7 +365,7 @@ async def process_job(job, token):
                 )
 
         model_results = await asyncio.to_thread(
-            train_model,
+            _train_and_release,
             model_type,
             samples,
             noise,
@@ -399,14 +423,9 @@ async def process_job(job, token):
         with _ACTIVE_STOP_LOCK:
             _ACTIVE_STOP_EVENTS.pop(job_key, None)
             _LOCK_LOST_JOBS.discard(job_key)
-        # TR-01: el worker es de larga vida; liberar grafos y tensores de TF entre jobs.
-        tf_module = sys.modules.get("tensorflow")
-        if tf_module is not None:
-            try:
-                tf_module.keras.backend.clear_session()
-            except Exception:  # pragma: no cover - limpieza best-effort
-                logger.debug("clear_session falló", exc_info=True)
-        gc.collect()
+        # TR-01: la sesión de Keras se limpia en _train_and_release, en el hilo que
+        # entrenó. Hacerlo aquí (hilo del event loop) no libera el estado de Keras 3,
+        # que es por hilo.
         # TR-04: los landmarks son biométricos; se borran al terminar con éxito.
         if succeeded:
             _discard_training_payload(data)

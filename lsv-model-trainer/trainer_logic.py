@@ -8,6 +8,7 @@ import numpy as np
 import tensorflowjs as tfjs
 from sklearn.metrics import classification_report, confusion_matrix
 from sklearn.model_selection import train_test_split
+from tensorflow.keras import backend as keras_backend
 from tensorflow.keras.callbacks import Callback, EarlyStopping, ReduceLROnPlateau
 from tensorflow.keras.layers import LSTM, Dense, Dropout, Input
 from tensorflow.keras.models import Sequential
@@ -678,3 +679,12 @@ def train_lstm_model(training_data, output_dir, on_progress_fn, stop_event=None,
         training_data, fallback_model_type=model_type
     )
     return train_model(resolved_type, samples, noise, output_dir, on_progress_fn, stop_event)
+
+
+def clear_keras_session():
+    """TR-01: suelta el modelo, el optimizador y los grafos del último fit.
+
+    Con TF 2.18 `tf.keras` es Keras 3 y su estado global es por hilo, así que
+    hay que llamarlo desde el mismo hilo que entrenó (ver main._train_and_release).
+    """
+    keras_backend.clear_session()
