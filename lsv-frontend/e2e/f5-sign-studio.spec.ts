@@ -21,7 +21,10 @@ test("language moderator creates individual and bulk signs", async ({
   if (!stageResult.ok()) {
     throw new Error(`Stage list returned ${stageResult.status()}`);
   }
-  await expect(moderatorPage.locator("#stage option")).toHaveCount(2);
+  // El idioma puede tener varias etapas (F4 crea una): basta con que exista la del currículo.
+  await expect(
+    moderatorPage.locator(`#stage option[value="${curriculum.stageId}"]`),
+  ).toHaveCount(1);
   await moderatorPage.locator("#stage").selectOption(curriculum.stageId);
   await moderatorPage.locator("#lesson").selectOption(curriculum.lessonId);
 

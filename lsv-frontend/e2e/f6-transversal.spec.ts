@@ -102,14 +102,10 @@ test("nonexistent lesson shows a not-found message", async ({
   studentPage,
 }) => {
   await ensureStudentEnrolled(studentPage, curriculum);
-  test.fail(
-    true,
-    "AF-F6-03: nonexistent lesson shows a success alert instead of not found",
-  );
   await studentPage.unrouteAll();
   await studentPage.goto("/lesson/00000000-0000-4000-8000-000000000000");
   await expect(
-    studentPage.getByText(/not found|no se encontró/i),
+    studentPage.getByText(/no encontrada|not found/i).first(),
   ).toBeVisible();
 });
 
