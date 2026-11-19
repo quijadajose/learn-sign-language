@@ -14,7 +14,7 @@ import { Question } from '../../../../shared/domain/entities/question.js';
 import { Quiz } from '../../../../shared/domain/entities/quiz.js';
 import { QuizSubmission } from '../../../../shared/domain/entities/quizSubmission.js';
 import { User } from '../../../../shared/domain/entities/user.js';
-import { FindManyOptions, Repository } from 'typeorm';
+import { FindManyOptions, Repository, SelectQueryBuilder } from 'typeorm';
 import { pickSafeOrderBy } from '../../../../shared/infrastructure/safe-order-by.js';
 
 export class QuizRepository implements QuizRepositoryInterface {
@@ -364,148 +364,103 @@ export class QuizRepository implements QuizRepositoryInterface {
     return this.submissionRepository.find(findOptions);
   }
 
-  async getLeaderboard(
+  getLeaderboard(
     pagination: PaginationDto,
   ): Promise<PaginatedResponseDto<LeaderboardDto>> {
-    const {
-      page,
-      limit,
-      orderBy = 'totalScore',
-      sortOrder = 'DESC',
-    } = pagination;
-    const skip = (page - 1) * limit;
-    const safeOrderBy =
-      pickSafeOrderBy(
-        orderBy,
-        ['totalScore', 'firstName', 'lastName', 'userId'],
-        'totalScore',
-      ) ?? 'totalScore';
-
-    const countQuery = this.submissionRepository
-      .createQueryBuilder('qs')
-      .select('COUNT(DISTINCT qs.userId)', 'count')
-      .where('qs.score IS NOT NULL');
-
-    const totalResult = await countQuery.getRawOne();
-    const total = totalResult ? parseInt(totalResult.count) : 0;
-
-    // BE-07: se agrega desde el subquery (un máximo por usuario y quiz). Unir las filas
-    // crudas de `qs` multiplicaba SUM(maxScore) por el número de envíos.
-    const dataQuery = this.submissionRepository.manager
-      .createQueryBuilder(User, 'u')
-      .select([
-        'u.id AS userId',
-        'u.firstName AS firstName',
-        'u.lastName AS lastName',
-        'SUM(subquery.maxScore) AS totalScore',
-      ])
-      .innerJoin(
-        (subquery) => {
-          return subquery
-            .select([
-              'qs2.userId AS userId',
-              'COALESCE(qs2.quizId, qs2.quizVariantId) AS generalQuizId',
-              'MAX(qs2.score) AS maxScore',
-            ])
-            .from(QuizSubmission, 'qs2')
-            .where('qs2.score IS NOT NULL')
-            .groupBy('qs2.userId')
-            .addGroupBy('generalQuizId');
-        },
-        'subquery',
-        'subquery.userId = u.id',
-      )
-      .groupBy('u.id')
-      .orderBy(safeOrderBy, sortOrder === 'ASC' ? 'ASC' : 'DESC')
-      .offset(skip)
-      .limit(limit);
-
-    const rawLeaderboard = await dataQuery.getRawMany();
-
-    const leaderboard: LeaderboardDto[] = rawLeaderboard.map((entry) => ({
-      userId: entry.userId,
-      firstName: entry.firstName,
-      lastName: entry.lastName,
-      totalScore: Number(entry.totalScore),
-    }));
-
-    return new PaginatedResponseDto(leaderboard, total, page, limit);
+    return this.buildLeaderboardPage(pagination);
   }
 
-  async getLeaderboardByLanguageId(
+  getLeaderboardByLanguageId(
     languageId: string,
     pagination: PaginationDto,
   ): Promise<PaginatedResponseDto<LeaderboardDto>> {
+    return this.buildLeaderboardPage(pagination, (qb) =>
+      qb
+        .leftJoin('qs.quiz', 'q')
+        .leftJoin('q.lesson', 'l')
+        .leftJoin('qs.quizVariant', 'qv')
+        .leftJoin('qv.lessonVariant', 'lv')
+        .leftJoin('lv.baseLesson', 'l2')
+        .andWhere('COALESCE(l.languageId, l2.languageId) = :languageId', {
+          languageId,
+        }),
+    );
+  }
+
+  /**
+   * BE-07: antes el SUM se hacía sobre un JOIN de *todas* las filas de
+   * quiz_submission contra el subquery de máximos, así que el mejor puntaje de
+   * cada quiz se sumaba una vez por cada envío (quien más repetía, más sumaba).
+   * Además `.skip()/.take()` con joins y `getRawMany()` no genera LIMIT/OFFSET
+   * en TypeORM, por lo que se devolvía el ranking completo.
+   *
+   * Ahora se agrega solo sobre el subquery (una fila por usuario y quiz con su
+   * puntaje máximo) y se pagina con `.offset()/.limit()`. El tamaño de página
+   * ya está acotado por PaginationDto (por defecto 10, máximo 100).
+   */
+  private async buildLeaderboardPage(
+    pagination: PaginationDto,
+    scope: (
+      qb: SelectQueryBuilder<QuizSubmission>,
+    ) => SelectQueryBuilder<QuizSubmission> = (qb) => qb,
+  ): Promise<PaginatedResponseDto<LeaderboardDto>> {
     const {
-      page,
-      limit,
+      page = 1,
+      limit = 10,
       orderBy = 'totalScore',
       sortOrder = 'DESC',
     } = pagination;
-    const skip = (page - 1) * limit;
     const safeOrderBy =
       pickSafeOrderBy(
         orderBy,
         ['totalScore', 'firstName', 'lastName', 'userId'],
         'totalScore',
       ) ?? 'totalScore';
+    const direction = sortOrder === 'ASC' ? 'ASC' : 'DESC';
 
-    const countQuery = this.submissionRepository
-      .createQueryBuilder('qs')
-      .select('COUNT(DISTINCT qs.userId)', 'count')
-      .leftJoin('qs.quiz', 'q')
-      .leftJoin('q.lesson', 'l')
-      .leftJoin('qs.quizVariant', 'qv')
-      .leftJoin('qv.lessonVariant', 'lv')
-      .leftJoin('lv.baseLesson', 'l2')
-      .where('COALESCE(l.languageId, l2.languageId) = :languageId', {
-        languageId,
-      })
-      .andWhere('qs.score IS NOT NULL');
-
-    const totalResult = await countQuery.getRawOne();
-    const total = totalResult ? parseInt(totalResult.count) : 0;
-
-    // BE-07: se agrega desde el subquery (un máximo por usuario y quiz). Unir las filas
-    // crudas de `qs` multiplicaba SUM(maxScore) por el número de envíos.
-    const dataQuery = this.submissionRepository.manager
-      .createQueryBuilder(User, 'u')
-      .select([
-        'u.id AS userId',
-        'u.firstName AS firstName',
-        'u.lastName AS lastName',
-        'SUM(subquery.maxScore) AS totalScore',
-      ])
-      .innerJoin(
-        (subquery) => {
-          return subquery
-            .select([
-              'qs2.userId AS userId',
-              'COALESCE(qs2.quizId, qs2.quizVariantId) AS generalQuizId',
-              'MAX(qs2.score) AS maxScore',
-            ])
-            .from(QuizSubmission, 'qs2')
-            .leftJoin('qs2.quiz', 'q3')
-            .leftJoin('q3.lesson', 'l3')
-            .leftJoin('qs2.quizVariant', 'qv3')
-            .leftJoin('qv3.lessonVariant', 'lv3')
-            .leftJoin('lv3.baseLesson', 'l4')
-            .where('COALESCE(l3.languageId, l4.languageId) = :languageId', {
-              languageId,
-            })
-            .andWhere('qs2.score IS NOT NULL')
-            .groupBy('qs2.userId')
-            .addGroupBy('generalQuizId');
-        },
-        'subquery',
-        'subquery.userId = u.id',
+    // Una fila por (usuario, quiz o variante) con el mejor puntaje obtenido.
+    const bestScorePerQuiz = (
+      qb: SelectQueryBuilder<unknown>,
+    ): SelectQueryBuilder<QuizSubmission> =>
+      scope(
+        qb
+          .select('qs.userId', 'userId')
+          .addSelect('MAX(qs.score)', 'maxScore')
+          .from(QuizSubmission, 'qs')
+          .where('qs.score IS NOT NULL'),
       )
-      .groupBy('u.id')
-      .orderBy(safeOrderBy, sortOrder === 'ASC' ? 'ASC' : 'DESC')
-      .offset(skip)
-      .limit(limit);
+        .groupBy('qs.userId')
+        .addGroupBy('COALESCE(qs.quizId, qs.quizVariantId)');
 
-    const rawLeaderboard = await dataQuery.getRawMany();
+    const totalResult = await this.submissionRepository.manager
+      .createQueryBuilder()
+      .select('COUNT(DISTINCT "best"."userId")', 'count')
+      .from((qb) => bestScorePerQuiz(qb.subQuery()), 'best')
+      .getRawOne<{ count: string }>();
+    const total = totalResult ? parseInt(totalResult.count, 10) : 0;
+
+    const rawLeaderboard = await this.submissionRepository.manager
+      .createQueryBuilder()
+      .select('u.id', 'userId')
+      .addSelect('u.firstName', 'firstName')
+      .addSelect('u.lastName', 'lastName')
+      .addSelect('SUM("best"."maxScore")', 'totalScore')
+      .from((qb) => bestScorePerQuiz(qb.subQuery()), 'best')
+      .innerJoin(User, 'u', 'u.id = "best"."userId"')
+      .groupBy('u.id')
+      .addGroupBy('u.firstName')
+      .addGroupBy('u.lastName')
+      .orderBy(safeOrderBy, direction)
+      // Desempate estable para que las páginas no se solapen.
+      .addOrderBy('userId', 'ASC')
+      .offset((page - 1) * limit)
+      .limit(limit)
+      .getRawMany<{
+        userId: string;
+        firstName: string;
+        lastName: string;
+        totalScore: string | number;
+      }>();
 
     const leaderboard: LeaderboardDto[] = rawLeaderboard.map((entry) => ({
       userId: entry.userId,
