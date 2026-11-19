@@ -23,7 +23,11 @@ const frontendRoot = dirname(fileURLToPath(import.meta.url));
  * INF-14: sha256 esperado de cada modelo (verificado con `sha256sum public/mediapipe/models/*.task`).
  * Si Google publica una versión nueva del modelo, actualiza el hash junto con la URL.
  */
-const MEDIAPIPE_MODELS: ReadonlyArray<{ file: string; url: string; sha256: string }> = [
+const MEDIAPIPE_MODELS: ReadonlyArray<{
+  file: string;
+  url: string;
+  sha256: string;
+}> = [
   {
     file: "pose_landmarker_heavy.task",
     url: "https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_heavy/float16/1/pose_landmarker_heavy.task",
@@ -104,7 +108,9 @@ async function ensureMediapipeModels(): Promise<void> {
       const dest = resolve(destDir, file);
       const verify = async () => {
         if (!sha256) {
-          console.warn(`[mediapipe] ${file}: sin sha256 fijado en vite.config.ts (INF-14)`);
+          console.warn(
+            `[mediapipe] ${file}: sin sha256 fijado en vite.config.ts (INF-14)`,
+          );
           return;
         }
         const actual = await sha256OfFile(dest);
@@ -154,6 +160,15 @@ const dockerWs = hmrClientPort
     }
   : undefined;
 
+const apiProxy = {
+  "/api": {
+    target: process.env.VITE_API_PROXY_TARGET || "http://127.0.0.1:3000",
+    changeOrigin: true,
+    ws: true,
+    rewrite: (path: string) => path.replace(/^\/api/, ""),
+  },
+};
+
 // https://vitejs.dev/config/
 export default defineConfig(() => ({
   plugins: [mediapipeAssetsPlugin(), react(), tailwindcss(), flowbiteReact()],
@@ -186,14 +201,12 @@ export default defineConfig(() => ({
       ignored: ["**/.flowbite-react/class-list.json"],
     },
     ws: dockerWs,
-    proxy: {
-      // Mirrors nginx.conf so /api works in docker-compose (Vite) local.
-      "/api": {
-        target: process.env.VITE_API_PROXY_TARGET || "http://localhost:3000",
-        changeOrigin: true,
-        ws: true,
-        rewrite: (path) => path.replace(/^\/api/, ""),
-      },
-    },
+    proxy: apiProxy,
+  },
+  preview: {
+    host: "0.0.0.0",
+    port: 4174,
+    strictPort: true,
+    proxy: apiProxy,
   },
 }));
