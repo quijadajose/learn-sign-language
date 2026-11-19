@@ -150,3 +150,48 @@ test("serious and critical WCAG A/AA checks on primary screens", async ({
   );
   expect(violations).toEqual([]);
 });
+
+test("student quiz and practice have no horizontal overflow on a phone", async ({
+  studentPage,
+}) => {
+  const curriculum = JSON.parse(
+    await readFile("e2e/.auth/curriculum.json", "utf8"),
+  ) as { lessonId: string };
+  await studentPage.setViewportSize({ width: 375, height: 812 });
+  const noOverflow = () =>
+    studentPage.evaluate(
+      () => document.documentElement.scrollWidth <= window.innerWidth,
+    );
+
+  await studentPage.goto(`/quiz/${curriculum.lessonId}`);
+  await expect(studentPage.getByRole("main")).toBeVisible();
+  expect(await noOverflow()).toBe(true);
+
+  await studentPage.goto(`/lesson/${curriculum.lessonId}/practice`);
+  await expect(studentPage.getByRole("main")).toBeVisible();
+  expect(await noOverflow()).toBe(true);
+});
+
+test("a stalled lesson request ends with the timeout message after 10 s", async ({
+  studentPage,
+}) => {
+  const curriculum = JSON.parse(
+    await readFile("e2e/.auth/curriculum.json", "utf8"),
+  ) as { lessonId: string };
+  // Reloj falso: el timeout por defecto (10 s) se dispara sin esperar en tiempo real.
+  await studentPage.clock.install();
+  await studentPage.route(`**/api/lesson/${curriculum.lessonId}**`, () => {
+    // Respuesta que nunca llega: la petición queda pendiente hasta el timeout.
+  });
+  await studentPage.goto(`/lesson/${curriculum.lessonId}`);
+  test.fail(
+    true,
+    "AF-F6-02: a stalled request ends on /login without the timeout message",
+  );
+  await studentPage.clock.runFor(10_500);
+  await expect(
+    studentPage.getByText("La petición ha excedido el tiempo límite", {
+      exact: true,
+    }),
+  ).toBeVisible({ timeout: 10000 });
+});
