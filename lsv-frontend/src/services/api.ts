@@ -103,12 +103,28 @@ export interface RequestConfig {
 /** FE-11: fetch no expone progreso de subida; por eso UploadConfig no ofrece onProgress. */
 export type UploadConfig = RequestConfig;
 
+/** FE-03: límite por defecto para llamadas normales (listados, CRUD ligero). */
+export const DEFAULT_REQUEST_TIMEOUT_MS = 10_000;
+
+/**
+ * FE-03: límite para operaciones pesadas (subidas, landmarks de varios MB,
+ * alta masiva de señas y disparo de entrenamiento, que escribe el dataset
+ * antes de responder). Con 10 s el usuario veía un error aunque el servidor
+ * ya hubiera guardado la grabación o creado el job, y lo repetía.
+ */
+export const HEAVY_REQUEST_TIMEOUT_MS = 60_000;
+
+const isAbortError = (error: unknown): boolean =>
+  typeof error === "object" &&
+  error !== null &&
+  (error as { name?: unknown }).name === "AbortError";
+
 /** FE-13: mismo límite que el backend (5 MB) para no subir archivos que serán rechazados. */
 const MAX_UPLOAD_BYTES = 5 * 1024 * 1024;
 
 export class ApiService {
   private static baseURL = BACKEND_BASE_URL;
-  private static defaultTimeout = 10000;
+  private static defaultTimeout = DEFAULT_REQUEST_TIMEOUT_MS;
   private static defaultRetries = 3;
 
   private static getLocaleHeaders(): Record<string, string> {
@@ -180,6 +196,8 @@ export class ApiService {
         };
       }
     } catch (error) {
+      // FE-03: un timeout durante la lectura del cuerpo lo traduce makeRequest.
+      if (isAbortError(error)) throw error;
       return {
         message: i18n.t("api.unexpected"),
         success: false,
@@ -222,45 +240,56 @@ export class ApiService {
     }
 
     for (let attempt = 0; attempt <= maxRetries; attempt++) {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), timeout);
       try {
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), timeout);
-
         const response = await fetch(url, {
           ...requestConfig,
           signal: controller.signal,
         });
 
-        clearTimeout(timeoutId);
+        // FE-03: el temporizador sigue activo mientras se lee el cuerpo; si se
+        // limpiaba tras los headers, una respuesta atascada dejaba la UI colgada.
         return await this.handleResponse<T>(response, endpoint);
       } catch (error) {
+        clearTimeout(timeoutId);
+        // Do not retry aborts/timeouts — the server may have already committed.
+        if (isAbortError(error)) {
+          return this.timeoutResponse<T>(method);
+        }
         if (attempt === maxRetries) {
-          if (error instanceof Error && error.name === "AbortError") {
-            return {
-              message: i18next.t("common:network.timeout"),
-              success: false,
-            };
-          }
           return {
             message: i18next.t("common:network.connection"),
-            success: false,
-          };
-        }
-        // Do not retry aborts/timeouts — the server may have already committed.
-        if (error instanceof Error && error.name === "AbortError") {
-          return {
-            message: i18next.t("common:network.timeout"),
             success: false,
           };
         }
         await new Promise((resolve) =>
           setTimeout(resolve, 1000 * (attempt + 1)),
         );
+      } finally {
+        clearTimeout(timeoutId);
       }
     }
 
     return {
       message: i18next.t("common:network.connectionRetries"),
+      success: false,
+    };
+  }
+
+  /**
+   * FE-03: en métodos que modifican datos el servidor puede haber completado
+   * la operación; se avisa para que el usuario compruebe antes de repetirla.
+   */
+  private static timeoutResponse<T>(method: string): ApiResponse<T> {
+    const upper = method.toUpperCase();
+    const idempotentRead = upper === "GET" || upper === "HEAD";
+    return {
+      message: i18next.t(
+        idempotentRead
+          ? "common:network.timeout"
+          : "common:network.timeoutMaybeApplied",
+      ),
       success: false,
     };
   }
@@ -320,7 +349,7 @@ export class ApiService {
     });
 
     return this.makeRequest<T>(endpoint, "POST", formData, {
-      timeout: 60000, // FE-03: subidas y respuestas pesadas no caben en los 10 s por defecto
+      timeout: HEAVY_REQUEST_TIMEOUT_MS, // FE-03: las subidas no caben en los 10 s por defecto
       ...config,
       headers: {
         ...config.headers,
@@ -779,7 +808,7 @@ export const signRecordApi = {
   saveLandmarks: (data: SaveLandmarksPayload) =>
     // FE-03: payloads de varios MB; 10 s provocaba errores con la grabación ya guardada.
     ApiService.post<{ id: string }>("/sign-record/landmarks", data, {
-      timeout: 60000,
+      timeout: HEAVY_REQUEST_TIMEOUT_MS,
       retries: 0,
     }),
 
@@ -788,7 +817,11 @@ export const signRecordApi = {
       jobId?: string;
       jobs?: Array<{ jobId?: string; modelType?: SignDetectionType }>;
       message?: string;
-    }>("/sign-record/train/custom", filters, { timeout: 60000, retries: 0 }),
+    }>("/sign-record/train/custom", filters, {
+      // FE-03: el backend escribe el dataset antes de responder.
+      timeout: HEAVY_REQUEST_TIMEOUT_MS,
+      retries: 0,
+    }),
 
   getLessonSigns: (lessonId: string, regionId?: string) => {
     const url = ApiService.buildUrl(`/sign-record/lesson/${lessonId}/signs`, {
@@ -834,11 +867,12 @@ export const signRecordApi = {
     lessonId: string,
     signs: { name: string; detectionType?: SignDetectionType }[],
   ) =>
-    ApiService.post<BulkCreateSignsResultDto>("/sign-record/signs", {
-      languageId,
-      lessonId,
-      signs,
-    }),
+    ApiService.post<BulkCreateSignsResultDto>(
+      "/sign-record/signs",
+      { languageId, lessonId, signs },
+      // FE-03: alta masiva; una lista larga puede superar los 10 s.
+      { timeout: HEAVY_REQUEST_TIMEOUT_MS, retries: 0 },
+    ),
 
   updateSign: (
     id: string,
