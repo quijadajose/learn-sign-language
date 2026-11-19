@@ -229,3 +229,43 @@ test("admin deletes an empty language from the table", async ({
     adminPage.getByRole("row").filter({ hasText: name }),
   ).toHaveCount(0);
 });
+
+test("admin inserts an image into a lesson with the Quill editor", async ({
+  adminPage,
+}) => {
+  const curriculum = JSON.parse(
+    await readFile("e2e/.auth/curriculum.json", "utf8"),
+  ) as { languageId: string; stageId: string };
+  const origin = String(test.info().project.use.baseURL);
+  const name = `F4 Quill ${Date.now()}`;
+  const created = await adminPage.context().request.post("/api/lesson", {
+    headers: { Origin: origin },
+    data: {
+      name,
+      description: "F4 quill fixture",
+      content: "Contenido inicial",
+      languageId: curriculum.languageId,
+      stageId: curriculum.stageId,
+    },
+  });
+  expect(created.status()).toBe(201);
+
+  await adminPage.goto(`/admin/languages/${curriculum.languageId}`);
+  await adminPage.getByText("Lecciones", { exact: true }).first().click();
+  await expect(adminPage).toHaveURL(/\/admin\/lessons/);
+  const row = adminPage.getByRole("row").filter({ hasText: name }).first();
+  await expect(row).toBeVisible({ timeout: 15000 });
+  await row.getByRole("button", { name: /Editar/ }).click();
+
+  const uploaded = adminPage.waitForResponse(
+    (response) =>
+      response.url().includes("/api/images/upload/lesson") &&
+      response.request().method() === "POST",
+  );
+  const chooser = adminPage.waitForEvent("filechooser");
+  await adminPage.locator(".ql-image").first().click();
+  await (await chooser).setFiles("e2e/fixtures/hand.png");
+
+  expect((await uploaded).status()).toBe(201);
+  await expect(adminPage.locator(".ql-editor img").first()).toBeVisible();
+});
