@@ -39,3 +39,14 @@ services:
       interval: 2s
       timeout: 3s
       retries: 30
+
+  # H3: servidor SMTP de pruebas. Atrapa los correos (no los envía) y expone su API
+  # HTTP para que los e2e lean el enlace de reset. Solo en 127.0.0.1.
+  lsv-mailpit-test:
+    image: axllent/mailpit:v1.21
+    environment:
+      MP_SMTP_AUTH_ACCEPT_ANY: "1"
+      MP_SMTP_AUTH_ALLOW_INSECURE: "1"
+    ports:
+      - "127.0.0.1:1025:1025"
+      - "127.0.0.1:8025:8025"

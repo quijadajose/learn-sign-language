@@ -1,4 +1,9 @@
 import { expect, test } from "./fixtures/roles";
+import {
+  extractResetToken,
+  messageHtml,
+  waitForMail,
+} from "./fixtures/mailpit";
 
 test("registration completes both steps and creates a usable account", async ({
   page,
@@ -76,13 +81,60 @@ test("student can update profile details and see the persisted value", async ({
   }
 });
 
-test("password reset request accepts the test account email", async ({
+test("password reset works end to end through the mail server", async ({
   page,
+  request,
+  baseURL,
 }) => {
+  // Usuario propio: cambiar la contraseña sube tokenVersion y cerraría la sesión del alumno compartido.
+  const email = `pw-reset-${Date.now()}@example.com`;
+  const oldPassword = "Old-password-9081";
+  const newPassword = "New-password-9082";
+  const registered = await request.post("/api/auth/register", {
+    data: {
+      email,
+      password: oldPassword,
+      firstName: "Reset",
+      lastName: "Flow",
+      age: 30,
+      isRightHanded: true,
+    },
+  });
+  expect(registered.status()).toBe(201);
+
   await page.goto("/forgotPassword");
-  await page
-    .getByLabel(/correo electrónico|email/i)
-    .fill(process.env.API_USER_EMAIL!);
-  await page.getByRole("button", { name: /enviar|send/i }).click();
-  await expect(page).toHaveURL(/\/login/, { timeout: 7000 });
+  await page.locator("#email").fill(email);
+  await page.locator('form button[type="submit"]').click();
+
+  const mail = await waitForMail(email, "Restablecer");
+  const token = extractResetToken(await messageHtml(mail.ID));
+
+  await page.goto(`/reset-password#token=${encodeURIComponent(token)}`);
+  const confirmed = page.waitForResponse(
+    (response) =>
+      response.url().includes("/password/reset/confirm") &&
+      response.request().method() === "POST",
+  );
+  await page.locator("#newPassword").fill(newPassword);
+  await page.locator("#confirmPassword").fill(newPassword);
+  await page.locator('form button[type="submit"]').click();
+  expect((await confirmed).ok()).toBe(true);
+
+  const withNew = await request.post("/api/auth/login", {
+    data: { email, password: newPassword },
+    headers: { Origin: baseURL! },
+  });
+  expect(withNew.status()).toBe(200);
+  const withOld = await request.post("/api/auth/login", {
+    data: { email, password: oldPassword },
+    headers: { Origin: baseURL! },
+  });
+  expect(withOld.status()).toBe(401);
+
+  // BE-12: el enlace es de un solo uso.
+  const reused = await request.post("/api/auth/password/reset/confirm", {
+    data: { token, newPassword: "Another-9083" },
+    headers: { Origin: baseURL! },
+  });
+  expect(reused.status()).toBe(400);
 });
