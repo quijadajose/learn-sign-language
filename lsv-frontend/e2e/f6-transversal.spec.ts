@@ -183,11 +183,45 @@ test("a stalled lesson request ends with the timeout message after 10 s", async 
   await studentPage.route(`**/api/lesson/${curriculum.lessonId}**`, () => {
     // Respuesta que nunca llega: la petición queda pendiente hasta el timeout.
   });
+  const stalled = studentPage.waitForRequest((request) =>
+    request.url().includes(`/lesson/${curriculum.lessonId}`),
+  );
   await studentPage.goto(`/lesson/${curriculum.lessonId}`);
+  // Solo se avanza el reloj cuando la petición ya está pendiente.
+  await stalled;
   await studentPage.clock.runFor(10_500);
   await expect(
     studentPage
       .getByRole("alert")
       .getByText(/no responde|not responding|tiempo límite|timed out/i),
+  ).toBeVisible({ timeout: 10000 });
+});
+
+test("a stalled quiz submission warns that the server may have completed it", async ({
+  studentPage,
+}) => {
+  const curriculum = JSON.parse(
+    await readFile("e2e/.auth/curriculum.json", "utf8"),
+  ) as {
+    lessonId: string;
+    languageName: string;
+    regionName: string;
+  };
+  await ensureStudentEnrolled(studentPage, curriculum);
+  await studentPage.clock.install();
+  await studentPage.route(`**/api/quiz/**/submissions`, () => {
+    // El envío nunca responde: la escritura queda pendiente hasta el timeout de 10 s.
+  });
+  await studentPage.goto(`/quiz/${curriculum.lessonId}`);
+  await studentPage.locator('input[type="radio"]').first().check();
+  const pending = studentPage.waitForRequest(
+    (request) =>
+      request.url().includes("/submissions") && request.method() === "POST",
+  );
+  await studentPage.getByRole("button", { name: /submit|enviar/i }).click();
+  await pending;
+  await studentPage.clock.runFor(10_500);
+  await expect(
+    studentPage.getByText(/may have completed|puede que el servidor/i).first(),
   ).toBeVisible({ timeout: 10000 });
 });
