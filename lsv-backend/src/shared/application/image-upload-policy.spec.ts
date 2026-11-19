@@ -8,19 +8,12 @@ const USER = '11111111-1111-4111-8111-111111111111';
 const OTHER_USER = '22222222-2222-4222-8222-222222222222';
 const LANG = '33333333-3333-4333-8333-333333333333';
 const OTHER_LANG = '44444444-4444-4444-8444-444444444444';
-const LESSON_IN_LANG = '55555555-5555-4555-8555-555555555555';
-const LESSON_OTHER = '66666666-6666-4666-8666-666666666666';
-const QUIZ_IN_LANG = '77777777-7777-4777-8777-777777777777';
 
 function makePorts(): UploadPolicyPorts {
   return {
     hasLanguagePermission: jest.fn(
       async (_userId: string, languageId: string) => languageId === LANG,
     ),
-    resolveLanguageIdForLesson: jest.fn(async (lessonId: string) =>
-      lessonId === LESSON_IN_LANG ? LANG : OTHER_LANG,
-    ),
-    resolveLanguageIdForQuiz: jest.fn(async () => LANG),
   };
 }
 
@@ -60,25 +53,27 @@ describe('assertImageUploadAllowed (BE-08)', () => {
     ).rejects.toThrow(ForbiddenException);
   });
 
-  it('checks the language of a lesson before allowing its image', async () => {
+  it('authorizes lesson and quiz images by language (the subject is the language)', async () => {
     const actor = { id: USER, role: 'moderator' };
-    await expect(
-      assertImageUploadAllowed(actor, 'lesson', LESSON_IN_LANG, makePorts()),
-    ).resolves.toBeUndefined();
-    await expect(
-      assertImageUploadAllowed(actor, 'lesson', LESSON_OTHER, makePorts()),
-    ).rejects.toThrow(ForbiddenException);
+    for (const folder of ['lesson', 'quiz']) {
+      await expect(
+        assertImageUploadAllowed(actor, folder, LANG, makePorts()),
+      ).resolves.toBeUndefined();
+      await expect(
+        assertImageUploadAllowed(actor, folder, OTHER_LANG, makePorts()),
+      ).rejects.toThrow(ForbiddenException);
+    }
   });
 
-  it('checks the language of a quiz before allowing its image', async () => {
+  it('blocks a moderator from an unknown folder', async () => {
     await expect(
       assertImageUploadAllowed(
         { id: USER, role: 'moderator' },
-        'quiz',
-        QUIZ_IN_LANG,
+        'other',
+        LANG,
         makePorts(),
       ),
-    ).resolves.toBeUndefined();
+    ).rejects.toThrow(ForbiddenException);
   });
 
   it('lets a moderator upload only their own profile picture', async () => {
@@ -120,10 +115,10 @@ describe('assertImageUploadAllowed (BE-08)', () => {
       assertImageUploadAllowed(actor, 'languages', LANG, ports),
     ).rejects.toThrow(ForbiddenException);
     await expect(
-      assertImageUploadAllowed(actor, 'lesson', LESSON_IN_LANG, ports),
+      assertImageUploadAllowed(actor, 'lesson', LANG, ports),
     ).rejects.toThrow(ForbiddenException);
     await expect(
-      assertImageUploadAllowed(actor, 'quiz', QUIZ_IN_LANG, ports),
+      assertImageUploadAllowed(actor, 'quiz', LANG, ports),
     ).rejects.toThrow(ForbiddenException);
     expect(ports.hasLanguagePermission).not.toHaveBeenCalled();
   });
@@ -149,6 +144,6 @@ describe('assertImageUploadAllowed (BE-08)', () => {
         ports,
       ),
     ).rejects.toThrow(BadRequestException);
-    expect(ports.resolveLanguageIdForLesson).not.toHaveBeenCalled();
+    expect(ports.hasLanguagePermission).not.toHaveBeenCalled();
   });
 });

@@ -72,7 +72,7 @@ export function useLessonManagement() {
   }, []);
 
   const { quillModules, quillEditModules, quillFormats, quillConfig } =
-    useQuillConfig(addToast);
+    useQuillConfig(addToast, selectedLanguageId);
 
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [editLoading, setEditLoading] = useState(false);

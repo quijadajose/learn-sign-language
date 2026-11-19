@@ -83,7 +83,9 @@ export class UploadPictureUseCase {
           // BE-08: el original también se re-codifica: sin EXIF/GPS y con la orientación aplicada.
           await sharp(file.buffer).rotate().toFormat(format).toFile(filePath);
         } else {
+          // rotate() antes de resize(): sin EXIF, una foto de móvil quedaría de lado.
           await sharp(file.buffer)
+            .rotate()
             .resize(size, size)
             .toFormat(format)
             .toFile(filePath);

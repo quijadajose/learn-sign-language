@@ -488,12 +488,9 @@ export const quizApi = {
 
   deleteQuiz: (quizId: string) => ApiService.delete(`/quiz/${quizId}`),
 
-  uploadQuizImage: (file: File, id: string, format?: string) =>
-    ApiService.upload(
-      "/images/upload/quiz",
-      file,
-      format ? { id, format } : { id },
-    ),
+  // BE-08: el id de la imagen lo genera el servidor; el permiso sale del idioma de la lección.
+  uploadQuizImage: (file: File, lessonId: string) =>
+    ApiService.upload("/images/upload/quiz", file, { lessonId }),
 };
 
 export const adminApi = {
@@ -521,8 +518,9 @@ export const adminApi = {
     });
   },
 
-  uploadLessonImage: (file: File, id: string) =>
-    ApiService.upload("/images/upload/lesson", file, { id }),
+  // BE-08: el id de la imagen lo genera el servidor; el permiso sale del idioma.
+  uploadLessonImage: (file: File, languageId: string) =>
+    ApiService.upload("/images/upload/lesson", file, { languageId }),
 
   getLessonsByLanguage: (
     languageId: string,

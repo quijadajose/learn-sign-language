@@ -319,4 +319,63 @@ describe('Language isolation for moderators (BE-06, e2e)', () => {
       expect(await exists(id)).toBe(false);
     });
   });
+
+  /**
+   * BE-08: en `quiz` y `lesson` el id de la imagen lo genera el servidor y el permiso
+   * se pide sobre el idioma (`languageId` o el de `lessonId`).
+   */
+  describe('POST /images/upload/:folder for lesson and quiz images (BE-08)', () => {
+    const png = Buffer.from(
+      'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8/5+hHgAHggJ/PchI7wAAAABJRU5ErkJggg==',
+      'base64',
+    );
+    const upload = (folder: string, fields: Record<string, string>) => {
+      let req = asModA(http().post(`/images/upload/${folder}`));
+      for (const [key, value] of Object.entries(fields)) {
+        req = req.field(key, value);
+      }
+      return req.attach('file', png, 'qa.png');
+    };
+    const imageIdFrom = (url: string) =>
+      /\/images\/(?:quiz|lesson)\/([0-9a-f-]{36})/.exec(url)?.[1];
+
+    it('uploads a quiz image of its lesson with a server-generated id', async () => {
+      const first = await upload('quiz', { lessonId: a.lessonId }).expect(201);
+      const second = await upload('quiz', { lessonId: a.lessonId }).expect(201);
+      const firstId = imageIdFrom(first.body[0]);
+      expect(firstId).toBeDefined();
+      expect(imageIdFrom(second.body[0])).not.toBe(firstId);
+    });
+
+    it('uploads a lesson image by languageId', async () => {
+      const res = await upload('lesson', { languageId: a.languageId }).expect(
+        201,
+      );
+      expect(imageIdFrom(res.body[0])).toBeDefined();
+    });
+
+    it('forbids images for another language, by languageId or by lessonId', async () => {
+      await upload('quiz', { languageId: b.languageId }).expect(403);
+      await upload('quiz', { lessonId: b.lessonId }).expect(403);
+      await upload('lesson', { languageId: b.languageId }).expect(403);
+    });
+
+    it('rejects a client-chosen id, so existing images cannot be overwritten', async () => {
+      await upload('quiz', {
+        id: '0c6f7a1e-3b2d-4c5e-8f9a-1b2c3d4e5f60',
+        lessonId: a.lessonId,
+      }).expect(400);
+    });
+
+    it('rejects a lessonId that is not from the given languageId', async () => {
+      await upload('quiz', {
+        languageId: a.languageId,
+        lessonId: b.lessonId,
+      }).expect(400);
+    });
+
+    it('requires a languageId or a lessonId', async () => {
+      await upload('quiz', {}).expect(400);
+    });
+  });
 });

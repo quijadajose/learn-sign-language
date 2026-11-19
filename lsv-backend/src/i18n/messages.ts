@@ -122,6 +122,10 @@ export const messages: Record<AppLocale, MessageTree> = {
         noImageReceived: 'No se recibió ninguna imagen',
         noImageBuffer: 'No hay buffer de imagen disponible',
         invalidFolder: 'Nombre de carpeta de carga inválido',
+        idRequired: 'Falta el id del recurso de la imagen',
+        languageRequired:
+          'Indica el idioma (languageId) o la lección (lessonId) de la imagen',
+        lessonLanguageMismatch: 'La lección no pertenece a ese idioma',
         invalidDirectory: 'Directorio de carga inválido',
         invalidFolderAllowed:
           'Carpeta de carga inválida. Permitidas: {folders}',
@@ -302,6 +306,10 @@ export const messages: Record<AppLocale, MessageTree> = {
         noImageReceived: 'No image received',
         noImageBuffer: 'No image buffer available',
         invalidFolder: 'Invalid upload folder name',
+        idRequired: 'The image resource id is required',
+        languageRequired:
+          'Provide the language (languageId) or lesson (lessonId) of the image',
+        lessonLanguageMismatch: 'The lesson does not belong to that language',
         invalidDirectory: 'Invalid upload directory',
         invalidFolderAllowed: 'Invalid upload folder. Allowed: {folders}',
         unsupportedFormat: 'Unsupported image format. Use PNG, JPEG or WebP',
