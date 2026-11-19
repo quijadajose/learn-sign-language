@@ -40,10 +40,7 @@ export default async function globalSetup(config: FullConfig) {
     adminPassword,
     resolve(states, "admin.json"),
   );
-  const curriculum = await seedCurriculum(
-    process.env.PLAYWRIGHT_API_URL ?? "http://127.0.0.1:3001",
-    admin.token,
-  );
+  const curriculum = await seedCurriculum(`${baseURL}/api`, admin.token);
   const suffix = Date.now();
   const modEmail = `pw-moderator-${suffix}@example.com`;
   const modPassword = userPassword;
