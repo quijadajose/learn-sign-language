@@ -31,7 +31,8 @@ export class CreateLessonUseCase {
       throw new NotFoundException('errors.stage.notFound');
     }
     // BE-06: la etapa debe pertenecer al mismo idioma que autorizó el guard.
-    if (stage.language && stage.language.id !== languageId) {
+    // Una etapa sin idioma también se rechaza (fail-closed).
+    if (stage.language?.id !== languageId) {
       throw new BadRequestException('errors.lesson.stageLanguageMismatch');
     }
 
