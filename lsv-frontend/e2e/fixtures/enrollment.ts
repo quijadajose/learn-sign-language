@@ -1,4 +1,5 @@
 import { expect, type Page } from "@playwright/test";
+import { selectLanguageCard } from "./language-picker";
 
 export async function ensureStudentEnrolled(
   page: Page,
@@ -23,7 +24,7 @@ export async function ensureStudentEnrolled(
   ]);
   if (alreadyEnrolled) return;
 
-  await languageCard.click();
+  await selectLanguageCard(page, curriculum.languageName);
   await page.getByRole("button", { name: "Siguiente" }).click();
   const enrollmentResponse = page.waitForResponse(
     (response) =>
