@@ -22,6 +22,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     null,
   );
   const [isHydrating, setIsHydrating] = useState(true);
+  // AF-F6-02: no poder verificar la sesión no es lo mismo que una sesión caducada.
+  const [sessionUnavailable, setSessionUnavailable] = useState(false);
 
   const clearSession = useCallback(() => {
     setUser(null);
@@ -76,6 +78,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         if (cancelled) return;
 
         if (response.success && response.data) {
+          setSessionUnavailable(false);
           setUser(unwrapApiData<UserData>(response.data));
           markSessionActive(true);
           return;
@@ -83,11 +86,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
         if (response.status === 401 || response.status === 403) {
           void authApi.logout();
+          clearSession();
+          return;
         }
-        clearSession();
+        // Red caída, timeout o 5xx: la sesión puede seguir siendo válida; no se borra nada.
+        setSessionUnavailable(true);
       } catch (error) {
         console.error("Error hydrating user session:", error);
-        if (!cancelled) clearSession();
+        if (!cancelled) setSessionUnavailable(true);
       } finally {
         if (!cancelled) setIsHydrating(false);
       }
@@ -138,15 +144,23 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       user,
       isAuthenticated,
       isHydrating,
+      sessionUnavailable,
       login,
       logout,
       updateUser,
       refreshUser,
     }),
-    [user, isAuthenticated, isHydrating, login, logout, updateUser, refreshUser],
+    [
+      user,
+      isAuthenticated,
+      isHydrating,
+      sessionUnavailable,
+      login,
+      logout,
+      updateUser,
+      refreshUser,
+    ],
   );
 
-  return (
-    <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
-  );
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };

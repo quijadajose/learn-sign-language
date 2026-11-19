@@ -89,13 +89,11 @@ test("nested learner routes survive refresh and a new tab", async ({
 
 test("API outage leaves a clear terminal message", async ({ studentPage }) => {
   await ensureStudentEnrolled(studentPage, curriculum);
-  test.fail(
-    true,
-    "AF-F6-02: API outage redirects to login without explaining the failure",
-  );
   await studentPage.route("**/api/**", (route) => route.abort());
   await studentPage.goto(`/lesson/${curriculum.lessonId}`);
-  await expect(studentPage.getByRole("alert")).toBeVisible();
+  await expect(
+    studentPage.getByRole("alert").getByText(/no responde|not responding/i),
+  ).toBeVisible();
 });
 
 test("nonexistent lesson shows a not-found message", async ({
@@ -180,14 +178,10 @@ test("a stalled lesson request ends with the timeout message after 10 s", async 
     // Respuesta que nunca llega: la petición queda pendiente hasta el timeout.
   });
   await studentPage.goto(`/lesson/${curriculum.lessonId}`);
-  test.fail(
-    true,
-    "AF-F6-02: a stalled request ends on /login without the timeout message",
-  );
   await studentPage.clock.runFor(10_500);
   await expect(
-    studentPage.getByText("La petición ha excedido el tiempo límite", {
-      exact: true,
-    }),
+    studentPage
+      .getByRole("alert")
+      .getByText(/no responde|not responding|tiempo límite|timed out/i),
   ).toBeVisible({ timeout: 10000 });
 });

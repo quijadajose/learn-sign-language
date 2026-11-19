@@ -68,7 +68,9 @@
     "loadRegions": "Connection error while loading regions",
     "loadVariants": "Connection error while loading variants",
     "deleteVariant": "Connection error while deleting the variant",
-    "loadModerators": "Connection error while loading moderators"
+    "loadModerators": "Connection error while loading moderators",
+    "serviceUnavailable": "The service is not responding. Check your connection and try again.",
+    "retry": "Try again"
   },
   "feedback": {
     "regionalVariantUpdated": "Regional variant updated successfully",
