@@ -6,11 +6,14 @@ const chromiumExecutable = process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH;
 export default defineConfig({
   testDir: "./e2e",
   fullyParallel: false,
+  // The E2E suite shares one generated student; F2 enrolls it before F3/F6 use it.
+  workers: 1,
   retries: 0,
   reporter: "list",
   use: {
     baseURL: process.env.PLAYWRIGHT_BASE_URL ?? "http://127.0.0.1:4174",
     trace: "retain-on-failure",
+    video: "retain-on-failure",
     ...devices["Desktop Chrome"],
     launchOptions: {
       ...(chromiumExecutable ? { executablePath: chromiumExecutable } : {}),

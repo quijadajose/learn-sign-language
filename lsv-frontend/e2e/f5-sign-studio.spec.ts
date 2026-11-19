@@ -5,7 +5,6 @@ test("language moderator creates individual and bulk signs", async ({
   moderatorPage,
 }) => {
   test.setTimeout(60000);
-  test.fail(true, "AF-F5-01: moderator sign creation is rejected with HTTP 403");
   const curriculum = JSON.parse(
     await readFile("e2e/.auth/curriculum.json", "utf8"),
   ) as { languageId: string; stageId: string; lessonId: string };
@@ -29,37 +28,43 @@ test("language moderator creates individual and bulk signs", async ({
   const singleName = `Moderator ${Date.now()}`;
   await moderatorPage.getByRole("button", { name: "Nueva Seña" }).click();
   await moderatorPage.getByLabel(/Nombre de la seña/).fill(singleName);
-  const createResponse = moderatorPage.waitForResponse((response) =>
-    response.url().endsWith("/api/sign-record/sign") &&
-    response.request().method() === "POST",
+  const createResponse = moderatorPage.waitForResponse(
+    (response) =>
+      response.url().endsWith("/api/sign-record/sign") &&
+      response.request().method() === "POST",
   );
   await moderatorPage.getByRole("button", { name: "Crear Seña" }).click();
   const created = await createResponse;
   if (!created.ok()) {
-    throw new Error(`Sign creation returned ${created.status()}: ${await created.text()}`);
+    throw new Error(
+      `Sign creation returned ${created.status()}: ${await created.text()}`,
+    );
   }
   await expect(moderatorPage.getByText(singleName)).toBeVisible();
 
-  const bulkName = `Bulk ${Date.now()}`;
+  const bulkName = `Bulk${Date.now()}`;
   await moderatorPage.getByRole("button", { name: "Nueva Seña" }).click();
   await moderatorPage.getByRole("button", { name: "Varias" }).click();
   await moderatorPage
     .getByPlaceholder(/Hola, Casa Gracias/)
-    .fill(`${bulkName} One ${bulkName} Two`);
+    .fill(`${bulkName}One ${bulkName}Two`);
   await moderatorPage
     .getByRole("button", { name: "Agregar", exact: true })
     .click();
-  const bulkResponse = moderatorPage.waitForResponse((response) =>
-    response.url().endsWith("/api/sign-record/signs") &&
-    response.request().method() === "POST",
+  const bulkResponse = moderatorPage.waitForResponse(
+    (response) =>
+      response.url().endsWith("/api/sign-record/signs") &&
+      response.request().method() === "POST",
   );
   await moderatorPage
     .getByRole("button", { name: /Crear catálogo \(2\)/ })
     .click({ noWaitAfter: true });
   const bulkResult = await bulkResponse;
   if (!bulkResult.ok()) {
-    throw new Error(`Bulk sign creation returned ${bulkResult.status()}: ${await bulkResult.text()}`);
+    throw new Error(
+      `Bulk sign creation returned ${bulkResult.status()}: ${await bulkResult.text()}`,
+    );
   }
-  await expect(moderatorPage.getByText(`${bulkName} One`)).toBeVisible();
-  await expect(moderatorPage.getByText(`${bulkName} Two`)).toBeVisible();
+  await expect(moderatorPage.getByText(`${bulkName}One`)).toBeVisible();
+  await expect(moderatorPage.getByText(`${bulkName}Two`)).toBeVisible();
 });

@@ -55,7 +55,6 @@ test("login reports invalid credentials and Google button targets local OAuth", 
 test("student can update profile details and see the persisted value", async ({
   studentPage,
 }) => {
-  test.fail(true, "AF-F1-01: profile name reverts after reload");
   await studentPage.goto("/profile");
   await studentPage.getByRole("button", { name: "Editar Perfil" }).click();
   const updatedName = `Student ${Date.now()}`;
