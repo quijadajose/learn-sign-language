@@ -15,6 +15,8 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
+    "test:e2e": "node --env-file=../.env.test ./node_modules/@playwright/test/cli.js test",
+    "test:e2e:seed": "node --env-file=../.env.test ./e2e/seed.mjs",
     "doctor": "react-doctor --verbose -y",
     "doctor:json": "react-doctor --json -y --json-out /tmp/react-doctor-report.json",
     "doctor:ci": "react-doctor -y --blocking error --no-warnings"
@@ -54,6 +56,7 @@
   },
   "devDependencies": {
     "@eslint/js": "^9.39.5",
+    "@playwright/test": "^1.65.1",
     "@tailwindcss/vite": "^4.3.3",
     "@testing-library/dom": "^10.4.2",
     "@testing-library/react": "^16.3.0",
