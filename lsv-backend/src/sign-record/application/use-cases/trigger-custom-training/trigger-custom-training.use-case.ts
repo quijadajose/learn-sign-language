@@ -24,6 +24,7 @@ import {
   assertRecordingWithinFrameLimit,
   assertSampleCountWithinLimits,
 } from '../../../domain/utils/training-limits.js';
+import { pageByKeyset } from '../../../domain/utils/keyset-paging.js';
 
 /** Grabaciones leídas de la BD por página (BE-11). */
 const TRAINING_PAGE_SIZE = 200;
@@ -127,19 +128,11 @@ export class TriggerCustomTrainingUseCase {
   private async *pageRecordings(
     filters: TrainingRecordingFilters,
   ): AsyncGenerator<SignRecording> {
-    let afterId: string | undefined;
-    for (;;) {
-      const page = await this.signRecordingRepository.findTrainingPage(
-        filters,
-        afterId,
-        TRAINING_PAGE_SIZE,
-      );
-      for (const recording of page) {
-        yield recording;
-      }
-      if (page.length < TRAINING_PAGE_SIZE) return;
-      afterId = page[page.length - 1].id;
-    }
+    yield* pageByKeyset(
+      (afterId, limit) =>
+        this.signRecordingRepository.findTrainingPage(filters, afterId, limit),
+      TRAINING_PAGE_SIZE,
+    );
   }
 
   private async summarizeTrainingSet(

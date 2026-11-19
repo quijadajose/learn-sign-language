@@ -74,7 +74,22 @@ export function mergeValidatedWithLandmarkFallback(
       .filter((id): id is string => Boolean(id)),
   );
 
-  const fallbacks = signs
+  return [
+    ...validatedRecordings,
+    ...landmarkFallbacksForUncoveredSigns(coveredSignIds, signs, regionId),
+  ];
+}
+
+/**
+ * BE-11: landmarks legacy de las señas sin ninguna grabación validada. Solo necesita
+ * los ids ya cubiertos, así las grabaciones se leen por páginas sin retenerlas.
+ */
+export function landmarkFallbacksForUncoveredSigns(
+  coveredSignIds: ReadonlySet<string>,
+  signs: Sign[],
+  regionId?: string,
+): SignRecording[] {
+  return signs
     .filter((sign) => !coveredSignIds.has(sign.id))
     .map((sign) => {
       const variant = sign.variants?.find((v) => v.region?.id === regionId);
@@ -87,6 +102,4 @@ export function mergeValidatedWithLandmarkFallback(
       } as unknown as SignRecording;
     })
     .filter((item): item is SignRecording => Boolean(item));
-
-  return [...validatedRecordings, ...fallbacks];
 }
