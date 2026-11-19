@@ -1,7 +1,9 @@
 import { expect, test } from "@playwright/test";
+import { selectLanguageCard } from "./fixtures/language-picker";
 import { readFile } from "node:fs/promises";
 
 type Curriculum = {
+  studentName: string;
   languageName: string;
   regionName: string;
   stageName: string;
@@ -26,6 +28,7 @@ test("student studies a regional curriculum and earns best quiz score", async ({
   baseURL,
 }) => {
   const curriculum = await getCurriculum();
+  const { studentName } = curriculum;
   const context = await browser.newContext({
     baseURL,
     storageState: "e2e/.auth/student.json",
@@ -33,7 +36,7 @@ test("student studies a regional curriculum and earns best quiz score", async ({
   const page = await context.newPage();
 
   await page.goto("/dashboard");
-  await page.getByText(curriculum.languageName, { exact: true }).click();
+  await selectLanguageCard(page, curriculum.languageName);
   await page.getByRole("button", { name: "Siguiente" }).click();
   const enrollmentResponse = page.waitForResponse(
     (response) =>
@@ -82,11 +85,9 @@ test("student studies a regional curriculum and earns best quiz score", async ({
 
   await page.goto("/leaderboard");
   await expect(page.locator("#leaderboard-language")).toHaveValue("global");
-  await expect(
-    page.getByText("Playwright Student", { exact: true }),
-  ).toBeVisible();
+  await expect(page.getByText(studentName, { exact: true })).toBeVisible();
   const studentRow = page
-    .getByRole("heading", { name: "Playwright Student", exact: true })
+    .getByRole("heading", { name: studentName, exact: true })
     .locator("../..");
   await expect(studentRow.getByText("100", { exact: true })).toBeVisible();
   await context.close();

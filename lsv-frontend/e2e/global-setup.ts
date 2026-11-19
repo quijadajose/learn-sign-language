@@ -103,12 +103,14 @@ export default async function globalSetup(config: FullConfig) {
       `Moderator permission assignment failed with status ${assigned.status()}`,
     );
   const studentEmail = `pw-student-${suffix}@example.com`;
+  // Nombre único por corrida: el leaderboard es compartido y F2 busca a este alumno.
+  const studentFirstName = `Playwright ${suffix}`;
   const studentRegistration = await admin.context.post("/api/auth/register", {
     headers: bearer,
     data: {
       email: studentEmail,
       password: userPassword,
-      firstName: "Playwright",
+      firstName: studentFirstName,
       lastName: "Student",
       age: 25,
       isRightHanded: true,
@@ -134,6 +136,9 @@ export default async function globalSetup(config: FullConfig) {
   ).then(({ context }) => context.dispose());
   await writeFile(
     resolve(states, "curriculum.json"),
-    JSON.stringify(curriculum),
+    JSON.stringify({
+      ...curriculum,
+      studentName: `${studentFirstName} Student`,
+    }),
   );
 }
