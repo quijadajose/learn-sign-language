@@ -59,6 +59,11 @@ export async function seedCurriculum(api, token) {
     lessonId: lesson.id,
   });
   return {
+    languageName: language.name,
+    regionName: region.name,
+    stageName: stage.name,
+    lessonName: lesson.name,
+    variantName: variant.name,
     languageId: language.id,
     regionId: region.id,
     stageId: stage.id,

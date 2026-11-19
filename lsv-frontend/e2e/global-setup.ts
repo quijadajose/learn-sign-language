@@ -15,10 +15,11 @@ async function login(
   });
   if (!response.ok())
     throw new Error(`API login failed with status ${response.status()}`);
-  const token = (await context.storageState()).cookies.find(
-    (cookie) => cookie.name === "lsv_access",
-  )?.value;
-  if (!token) throw new Error("Admin login did not provide lsv_access");
+  const cookie = response
+    .headers()
+    ["set-cookie"]?.match(/lsv_access=([^;,]+)/)?.[1];
+  if (!cookie) throw new Error("Admin login did not provide lsv_access");
+  const token = decodeURIComponent(cookie);
   await context.storageState({ path: statePath });
   return { context, token };
 }
@@ -41,10 +42,29 @@ export default async function globalSetup(config: FullConfig) {
     resolve(states, "admin.json"),
   );
   const curriculum = await seedCurriculum(`${baseURL}/api`, admin.token);
+  const bearer = { Authorization: `Bearer ${admin.token}` };
+  const quizVariant = await admin.context.post("/api/quiz-variants", {
+    headers: bearer,
+    data: {
+      lessonVariantId: curriculum.lessonVariantId,
+      questions: [
+        {
+          question: "Regional question",
+          options: [
+            { text: "Regional correct", isCorrect: true },
+            { text: "Regional other", isCorrect: false },
+          ],
+        },
+      ],
+    },
+  });
+  if (!quizVariant.ok())
+    throw new Error(
+      `Quiz variant setup failed with status ${quizVariant.status()}`,
+    );
   const suffix = Date.now();
   const modEmail = `pw-moderator-${suffix}@example.com`;
   const modPassword = userPassword;
-  const bearer = { Authorization: `Bearer ${admin.token}` };
   const register = await admin.context.post("/api/auth/register", {
     headers: bearer,
     data: {
@@ -82,10 +102,11 @@ export default async function globalSetup(config: FullConfig) {
     throw new Error(
       `Moderator permission assignment failed with status ${assigned.status()}`,
     );
+  const studentEmail = `pw-student-${suffix}@example.com`;
   const studentRegistration = await admin.context.post("/api/auth/register", {
     headers: bearer,
     data: {
-      email: userEmail,
+      email: studentEmail,
       password: userPassword,
       firstName: "Playwright",
       lastName: "Student",
@@ -100,7 +121,7 @@ export default async function globalSetup(config: FullConfig) {
   await admin.context.dispose();
   const student = await login(
     baseURL,
-    userEmail,
+    studentEmail,
     userPassword,
     resolve(states, "student.json"),
   );
