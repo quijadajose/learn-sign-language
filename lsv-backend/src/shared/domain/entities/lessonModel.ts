@@ -11,10 +11,12 @@ import {
 } from 'typeorm';
 import { Lesson } from './lesson.js';
 import { LessonVariant } from './lessonVariant.js';
+import { Language } from './language.js';
 
 @Entity()
 @Index('IDX_lesson_model_lessonId', ['lesson'])
 @Index('IDX_lesson_model_lessonVariantId', ['lessonVariant'])
+@Index('IDX_lesson_model_languageId', ['language'])
 @Index('IDX_lesson_model_ready_lessonId_modelType', ['lesson', 'modelType'], {
   where: `"status" = 'READY'`,
 })
@@ -85,6 +87,19 @@ export class LessonModel {
   /** Expuesto en JSON para agrupar static+dynamic de la misma lección. */
   @RelationId((model: LessonModel) => model.lesson)
   lessonId: string | null;
+
+  /**
+   * BE-10: idioma del modelo. Los modelos custom no tienen lección, así que sin esto
+   * no se puede autorizar a un moderador sobre ellos (solo un admin podría gestionarlos).
+   */
+  @ManyToOne(() => Language, {
+    onDelete: 'SET NULL',
+    nullable: true,
+  })
+  language: Relation<Language> | null;
+
+  @RelationId((model: LessonModel) => model.language)
+  languageId: string | null;
 
   @Column('json', { nullable: true })
   trainingLogs: Record<string, unknown> | null;

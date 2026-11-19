@@ -216,6 +216,10 @@ export class TriggerCustomTrainingUseCase {
       ...(params.filters.lessonId
         ? { lesson: { id: params.filters.lessonId } }
         : {}),
+      // BE-10: el idioma autorizado por el guard; sin él el modelo solo lo gestiona un admin.
+      ...(params.filters.languageId
+        ? { language: { id: params.filters.languageId } }
+        : {}),
     });
     await this.lessonModelRepository.save(newModel);
 

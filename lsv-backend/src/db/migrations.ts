@@ -16,6 +16,7 @@ import { AddLanguageIdToSign1778500000000 } from './migrations/1778500000000-Add
 import { AddPerformanceIndexes1778600000000 } from './migrations/1778600000000-AddPerformanceIndexes.js';
 import { AddUserTokenVersion1778700000000 } from './migrations/1778700000000-AddUserTokenVersion.js';
 import { AddUniqueLowerEmailIndex1778800000000 } from './migrations/1778800000000-AddUniqueLowerEmailIndex.js';
+import { AddLanguageIdToLessonModel1778900000000 } from './migrations/1778900000000-AddLanguageIdToLessonModel.js';
 
 export const migrations = [
   InitialSchema1773939643549,
@@ -29,4 +30,5 @@ export const migrations = [
   AddPerformanceIndexes1778600000000,
   AddUserTokenVersion1778700000000,
   AddUniqueLowerEmailIndex1778800000000,
+  AddLanguageIdToLessonModel1778900000000,
 ];

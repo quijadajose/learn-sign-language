@@ -138,6 +138,22 @@ describe('TriggerCustomTrainingUseCase (BE-11 streaming)', () => {
     expect(captured[0].noise).toBeUndefined();
   });
 
+  it('stores the authorized language on the model (BE-10)', async () => {
+    const { useCase } = build([rec('a')]);
+    await useCase.execute(filters);
+
+    expect(lessonModels.create).toHaveBeenCalledWith(
+      expect.objectContaining({ language: { id: 'lang-1' } }),
+    );
+  });
+
+  it('leaves the language empty when the filters have none (admin only)', async () => {
+    const { useCase } = build([rec('a')]);
+    await useCase.execute({} as TriggerCustomTrainingDto);
+
+    expect(lessonModels.create.mock.calls[0][0]).not.toHaveProperty('language');
+  });
+
   it('splits dynamic recordings into their own job and feeds global static noise to it', async () => {
     const all = [
       rec('a'),

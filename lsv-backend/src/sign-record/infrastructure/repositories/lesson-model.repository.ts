@@ -209,9 +209,12 @@ export class TypeOrmLessonModelRepository implements LessonModelRepositoryInterf
   }
 
   create(
-    data: Partial<Omit<LessonModel, 'lesson' | 'lessonVariant'>> & {
+    data: Partial<
+      Omit<LessonModel, 'lesson' | 'lessonVariant' | 'language'>
+    > & {
       lesson?: { id: string };
       lessonVariant?: { id: string };
+      language?: { id: string };
     },
   ): LessonModel {
     return this.repository.create(data as DeepPartial<LessonModel>);
