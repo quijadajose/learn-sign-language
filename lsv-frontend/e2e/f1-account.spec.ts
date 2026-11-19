@@ -55,14 +55,25 @@ test("login reports invalid credentials and Google button targets local OAuth", 
 test("student can update profile details and see the persisted value", async ({
   studentPage,
 }) => {
+  // El alumno es compartido entre specs (F2 busca su nombre en el leaderboard):
+  // se restaura el nombre original al final aunque una aserción falle.
   await studentPage.goto("/profile");
   await studentPage.getByRole("button", { name: "Editar Perfil" }).click();
+  const originalName = await studentPage.getByLabel("Nombre").inputValue();
   const updatedName = `Student ${Date.now()}`;
-  await studentPage.getByLabel("Nombre").fill(updatedName);
-  await studentPage.getByRole("button", { name: "Guardar Cambios" }).click();
-  await expect(studentPage.getByLabel("Nombre")).toHaveValue(updatedName);
-  await studentPage.reload();
-  await expect(studentPage.getByLabel("Nombre")).toHaveValue(updatedName);
+  try {
+    await studentPage.getByLabel("Nombre").fill(updatedName);
+    await studentPage.getByRole("button", { name: "Guardar Cambios" }).click();
+    await expect(studentPage.getByLabel("Nombre")).toHaveValue(updatedName);
+    await studentPage.reload();
+    await expect(studentPage.getByLabel("Nombre")).toHaveValue(updatedName);
+  } finally {
+    await studentPage.goto("/profile");
+    await studentPage.getByRole("button", { name: "Editar Perfil" }).click();
+    await studentPage.getByLabel("Nombre").fill(originalName);
+    await studentPage.getByRole("button", { name: "Guardar Cambios" }).click();
+    await expect(studentPage.getByLabel("Nombre")).toHaveValue(originalName);
+  }
 });
 
 test("password reset request accepts the test account email", async ({
