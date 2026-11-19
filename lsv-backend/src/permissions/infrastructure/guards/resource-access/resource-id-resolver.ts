@@ -183,6 +183,7 @@ export class ResourceIdResolver {
           const model = await this.lessonModelRepository.findOne({
             where: { id: resourceId },
             relations: {
+              language: true,
               lesson: {
                 language: true,
               },
@@ -197,9 +198,11 @@ export class ResourceIdResolver {
           if (!model) {
             throw new NotFoundException('errors.model.lessonModelNotFound');
           }
+          // BE-10: la lección manda; el idioma propio cubre los modelos custom sin lección.
           return (
             model.lesson?.language?.id ||
             model.lessonVariant?.baseLesson?.language?.id ||
+            model.language?.id ||
             null
           );
         }

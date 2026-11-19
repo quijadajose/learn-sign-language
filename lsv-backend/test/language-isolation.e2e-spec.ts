@@ -3,6 +3,7 @@ import { INestApplication, ValidationPipe } from '@nestjs/common';
 import request from 'supertest';
 import { AppModule } from './../src/app.module.js';
 import { DataSource } from 'typeorm';
+import { LessonModel } from '../src/shared/domain/entities/lessonModel.js';
 import {
   cleanDatabase,
   createLanguageCurriculum,
@@ -268,5 +269,54 @@ describe('Language isolation for moderators (BE-06, e2e)', () => {
     );
     expect(after[0].n).toBe(before[0].n);
     expect(await languageOf('sign', signAId)).toBe(a.languageId);
+  });
+
+  /**
+   * BE-10: los modelos custom no tienen lección. Antes cualquier moderador podía
+   * gestionarlos; ahora el guard usa el idioma guardado en el modelo y, sin idioma,
+   * solo un admin.
+   */
+  describe('DELETE /sign-record/model/:id for models without a lesson (BE-10)', () => {
+    const createModel = async (languageId: string | null) => {
+      const repo = dataSource.getRepository(LessonModel);
+      const model = await repo.save(
+        repo.create({
+          name: `ISO custom ${languageId ?? 'none'}`,
+          status: 'READY',
+          modelType: 'static',
+          ...(languageId ? { language: { id: languageId } } : {}),
+        }),
+      );
+      return model.id;
+    };
+    const exists = async (id: string) =>
+      (await dataSource.getRepository(LessonModel).countBy({ id })) > 0;
+
+    it('lets the moderator delete a custom model of its own language', async () => {
+      const id = await createModel(a.languageId);
+      await asModA(http().delete(`/sign-record/model/${id}`)).expect(200);
+      expect(await exists(id)).toBe(false);
+    });
+
+    it('forbids a custom model of another language', async () => {
+      const id = await createModel(b.languageId);
+      await asModA(http().delete(`/sign-record/model/${id}`)).expect(403);
+      expect(await exists(id)).toBe(true);
+    });
+
+    it('forbids a custom model with no language to any moderator', async () => {
+      const id = await createModel(null);
+      await asModA(http().delete(`/sign-record/model/${id}`)).expect(403);
+      expect(await exists(id)).toBe(true);
+    });
+
+    it('still lets an admin delete a custom model with no language', async () => {
+      const id = await createModel(null);
+      await http()
+        .delete(`/sign-record/model/${id}`)
+        .set('Authorization', `Bearer ${adminToken}`)
+        .expect(200);
+      expect(await exists(id)).toBe(false);
+    });
   });
 });

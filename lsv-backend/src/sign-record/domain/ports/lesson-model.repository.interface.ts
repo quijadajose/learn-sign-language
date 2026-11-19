@@ -20,9 +20,12 @@ export interface LessonModelRepositoryInterface {
   findPendingOrTraining(): Promise<LessonModel[]>;
   findById(id: string): Promise<LessonModel | null>;
   create(
-    data: Partial<Omit<LessonModel, 'lesson' | 'lessonVariant'>> & {
+    data: Partial<
+      Omit<LessonModel, 'lesson' | 'lessonVariant' | 'language'>
+    > & {
       lesson?: { id: string };
       lessonVariant?: { id: string };
+      language?: { id: string };
     },
   ): LessonModel;
   save(model: LessonModel): Promise<LessonModel>;
