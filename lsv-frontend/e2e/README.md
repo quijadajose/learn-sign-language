@@ -7,3 +7,10 @@ Run `npm run test:e2e` from `lsv-frontend`. Playwright global setup logs in once
 On NixOS, the downloaded Playwright Chromium may not launch. `PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH` selects the system Chromium. For example, obtain its path with `nix-shell -p chromium --run 'command -v chromium'`, then pass that path when running `npm run test:e2e`. In this environment the Nix Chromium 157.0.8103.50 launched and Playwright passed the smoke test when run outside the restricted sandbox, which blocks Chromium's crashpad socket.
 
 The smoke test opens `/`, uses the admin API session to reach the dashboard, then signs out through the UI and verifies the redirect to `/login`.
+
+## Ejecución reproducible (H1)
+
+`npm run test:e2e:local` hace todo en un solo comando: recrea los contenedores de test
+(base vacía), compila la API si hace falta, la arranca en el puerto 3001, corre la suite
+y apaga la API al salir. Si 3001 o 4174 ya están ocupados, se detiene sin matar nada.
+Acepta argumentos de Playwright, por ejemplo `npm run test:e2e:local -- e2e/f2-student.spec.ts`.
