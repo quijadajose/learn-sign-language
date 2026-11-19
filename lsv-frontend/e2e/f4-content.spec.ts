@@ -131,3 +131,49 @@ test("admin creates a region with an ISO division", async ({ adminPage }) => {
     adminPage.getByText("Región creada exitosamente", { exact: true }),
   ).toBeVisible();
 });
+
+test("admin creates a quiz whose option is an image (BE-08 path)", async ({
+  adminPage,
+}) => {
+  const curriculum = JSON.parse(
+    await readFile("e2e/.auth/curriculum.json", "utf8"),
+  ) as { lessonId: string };
+  const question = `F4 image question ${Date.now()}`;
+  await adminPage.goto(`/admin/lessons/${curriculum.lessonId}/quizzes`);
+  await adminPage.getByRole("button", { name: "Crear quiz" }).click();
+
+  await adminPage.locator("#question-0").fill(question);
+  await adminPage
+    .getByPlaceholder("Texto de la opción...")
+    .nth(0)
+    .fill("Opción A");
+  await adminPage
+    .getByPlaceholder("Texto de la opción...")
+    .nth(1)
+    .fill("Opción B");
+  await adminPage
+    .getByRole("radio", { name: "Marcar opción 1 como respuesta correcta" })
+    .click();
+
+  // Subida de imagen a la opción 2: el servidor genera el id y autoriza por lessonId.
+  const uploaded = adminPage.waitForResponse(
+    (response) =>
+      response.url().includes("/api/images/upload/quiz") &&
+      response.request().method() === "POST",
+  );
+  await adminPage
+    .locator("#file-input-0-1")
+    .setInputFiles("e2e/fixtures/hand.png");
+  expect((await uploaded).status()).toBe(201);
+
+  const created = adminPage.waitForResponse(
+    (response) =>
+      response.url().endsWith("/api/quiz") &&
+      response.request().method() === "POST",
+  );
+  await adminPage.getByRole("button", { name: "Crear Quiz" }).click();
+  const saved = await created;
+  expect(saved.status()).toBe(201);
+  // La opción con imagen guarda la URL servida por /images/quiz (el texto de la opción).
+  expect(JSON.stringify(await saved.json())).toContain("/images/quiz/");
+});
