@@ -6,6 +6,10 @@ export class ThrottlerGuard {
   canActivate() {
     return true;
   }
+  // Igual que el paquete real: por defecto no se omite nada.
+  async shouldSkip() {
+    return false;
+  }
 }
 export class ThrottlerModule {
   static forRoot() {

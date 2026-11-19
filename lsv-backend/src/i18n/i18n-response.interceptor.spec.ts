@@ -3,6 +3,7 @@ import { I18nResponseInterceptor } from './i18n-response.interceptor.js';
 
 function mockContext(acceptLanguage?: string) {
   return {
+    getType: () => 'http',
     switchToHttp: () => ({
       getRequest: () => ({
         headers: acceptLanguage ? { 'accept-language': acceptLanguage } : {},
@@ -56,5 +57,20 @@ describe('I18nResponseInterceptor', () => {
       handle: () => of(payload),
     });
     await expect(lastValueFrom(result$)).resolves.toBe(payload);
+  });
+
+  it('passes WebSocket responses through without touching HTTP', async () => {
+    const wsContext = {
+      getType: () => 'ws',
+      switchToHttp: () => {
+        throw new Error('switchToHttp should not be called for ws');
+      },
+    } as never;
+    const result$ = interceptor.intercept(wsContext, {
+      handle: () => of({ status: 'subscribed' }),
+    });
+    await expect(lastValueFrom(result$)).resolves.toEqual({
+      status: 'subscribed',
+    });
   });
 });
