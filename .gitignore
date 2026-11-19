@@ -15,7 +15,7 @@ coverage
 dbhub.toml
 lsv-frontend/public/flags
 lsv-frontend/.agents/
-lsv-frontend/.claude/
+.claude/
 REVIEW-SCORES.md
 # Estado de scripts/deploy.sh en el servidor (INF-06)
 .deploy/
