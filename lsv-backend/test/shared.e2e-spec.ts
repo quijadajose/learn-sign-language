@@ -19,7 +19,12 @@ describe('Shared (Country, Division, Images) (e2e)', () => {
 
     app = moduleFixture.createNestApplication();
     app.useGlobalPipes(
-      new ValidationPipe({ whitelist: true, transform: true }),
+      // Igual que main.ts: forbidNonWhitelisted rechaza campos extra del body.
+      new ValidationPipe({
+        whitelist: true,
+        forbidNonWhitelisted: true,
+        transform: true,
+      }),
     );
     await app.init();
     dataSource = app.get(DataSource);
@@ -76,6 +81,31 @@ describe('Shared (Country, Division, Images) (e2e)', () => {
       );
       uploadedFilename = '6f1c2a54-0b8e-4b7e-9d1a-2c3f4e5a6b7d';
       unlinkSync(filePath);
+    });
+
+    it('/images/upload/:folder (POST) - Should accept the format field sent by the admin quiz form', async () => {
+      const filePath = join(import.meta.dirname, 'shared-test-format.png');
+      const minPng = Buffer.from(
+        'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8/5+hHgAHggJ/PchI7wAAAABJRU5ErkJggg==',
+        'base64',
+      );
+      writeFileSync(filePath, minPng);
+
+      try {
+        const id = '0c6f7a1e-3b2d-4c5e-8f9a-1b2c3d4e5f60';
+        const response = await request(app.getHttpServer())
+          .post('/images/upload/user')
+          .set('Authorization', `Bearer ${adminToken}`)
+          .field('id', id)
+          .field('format', 'jpg')
+          .attach('file', filePath)
+          .expect(201);
+
+        // El formato sale de los magic bytes, no del campo del cliente.
+        expect(response.body[0]).toContain(`/images/user/${id}`);
+      } finally {
+        unlinkSync(filePath);
+      }
     });
 
     it('/images/upload/:folder (POST) - Should reject unauthenticated upload', async () => {

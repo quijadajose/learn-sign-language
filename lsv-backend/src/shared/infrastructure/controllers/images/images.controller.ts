@@ -24,7 +24,13 @@ import { FileInterceptor } from '@nestjs/platform-express';
 import { UploadPictureUseCase } from '../../../application/use-cases/upload-picture-use-case/upload-picture-use-case.js';
 import { assertImageUploadAllowed } from '../../../application/image-upload-policy.js';
 import { ResourceIdResolver } from '../../../../permissions/infrastructure/guards/resource-access/resource-id-resolver.js';
-import { IsUUID, isUUID } from 'class-validator';
+import {
+  IsOptional,
+  IsString,
+  IsUUID,
+  isUUID,
+  MaxLength,
+} from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 import { RolesGuard } from '../../../../auth/infrastructure/guards/roles/roles.guard.js';
 import { Roles } from '../../../../auth/infrastructure/decorators/roles.decorator.js';
@@ -39,6 +45,17 @@ export class UploadImageDto {
   @ApiProperty({ format: 'uuid' })
   @IsUUID()
   id: string;
+
+  /**
+   * Extensión que manda el admin al subir imágenes de quiz. Se acepta para no
+   * romper `forbidNonWhitelisted`, pero se ignora: el formato real sale de los
+   * magic bytes en UploadPictureUseCase.
+   */
+  @ApiProperty({ required: false, example: 'png' })
+  @IsOptional()
+  @IsString()
+  @MaxLength(10)
+  format?: string;
 }
 
 const ALLOWED_UPLOAD_FOLDERS = new Set(['user', 'quiz', 'languages', 'lesson']);
