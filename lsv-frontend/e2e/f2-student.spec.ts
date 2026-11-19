@@ -92,3 +92,43 @@ test("student studies a regional curriculum and earns best quiz score", async ({
   await expect(studentRow.getByText("100", { exact: true })).toBeVisible();
   await context.close();
 });
+
+test("leaderboard language filter shows the student under its language", async ({
+  browser,
+  baseURL,
+}) => {
+  const context = await browser.newContext({
+    baseURL,
+    storageState: "e2e/.auth/student.json",
+  });
+  const studentPage = await context.newPage();
+  const curriculum = JSON.parse(
+    await readFile("e2e/.auth/curriculum.json", "utf8"),
+  ) as Curriculum;
+
+  await studentPage.goto("/leaderboard");
+  const selector = studentPage.locator("#leaderboard-language");
+  await expect(selector).toHaveValue("global");
+  await expect(
+    studentPage.getByRole("heading", {
+      name: curriculum.studentName,
+      exact: true,
+    }),
+  ).toBeVisible();
+
+  const byLanguage = studentPage.waitForResponse(
+    (response) =>
+      response.url().includes("/leaderboard") &&
+      response.url().includes(curriculum.languageId),
+  );
+  await selector.selectOption(curriculum.languageId);
+  expect((await byLanguage).ok()).toBe(true);
+  await expect(selector).toHaveValue(curriculum.languageId);
+  await expect(
+    studentPage.getByRole("heading", {
+      name: curriculum.studentName,
+      exact: true,
+    }),
+  ).toBeVisible();
+  await context.close();
+});
