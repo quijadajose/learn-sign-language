@@ -5,25 +5,33 @@ export type UploadActor = { id: string; role: string };
 
 export type UploadPolicyPorts = {
   hasLanguagePermission(userId: string, languageId: string): Promise<boolean>;
-  resolveLanguageIdForLesson(lessonId: string): Promise<string | null>;
-  resolveLanguageIdForQuiz(quizId: string): Promise<string | null>;
 };
+
+/** Carpetas cuyas imágenes reciben un id generado por el servidor (no se pueden sobrescribir). */
+export const SERVER_ID_FOLDERS: ReadonlySet<string> = new Set([
+  'lesson',
+  'quiz',
+]);
 
 const LANGUAGE_DENIED =
   'You do not have permission to access this language resource';
 
 /**
- * BE-03/BE-08: con el rol moderador activo, el upload no puede sobrescribir
- * imágenes ajenas. Admin no tiene restricción. Un moderador solo sube imágenes
- * de idiomas donde tiene permiso (languages, lesson, quiz) y su propio avatar.
+ * BE-03/BE-08: quién puede subir una imagen.
+ *
+ * `subjectId` es aquello sobre lo que se pide permiso:
+ * - `user`: el usuario dueño del avatar (solo el propio, salvo admin).
+ * - `languages`, `lesson`, `quiz`: el idioma. Para `lesson`/`quiz` el controlador lo
+ *   resuelve del body y el id de la imagen lo genera el servidor, así que nadie puede
+ *   sobrescribir una imagen ajena eligiendo su id.
  */
 export async function assertImageUploadAllowed(
   actor: UploadActor,
   folder: string,
-  id: string,
+  subjectId: string,
   ports: UploadPolicyPorts,
 ): Promise<void> {
-  if (!isUUID(id)) {
+  if (!isUUID(subjectId)) {
     throw new BadRequestException('errors.common.invalidId');
   }
   if (actor.role === 'admin') {
@@ -33,7 +41,7 @@ export async function assertImageUploadAllowed(
     throw new ForbiddenException(LANGUAGE_DENIED);
   }
   if (folder === 'user') {
-    if (id === actor.id) {
+    if (subjectId === actor.id) {
       return;
     }
     throw new ForbiddenException(
@@ -44,20 +52,10 @@ export async function assertImageUploadAllowed(
   if (actor.role === 'user') {
     throw new ForbiddenException(LANGUAGE_DENIED);
   }
-
-  let languageId: string | null = null;
-  if (folder === 'languages') {
-    languageId = id;
-  } else if (folder === 'lesson') {
-    languageId = await ports.resolveLanguageIdForLesson(id);
-  } else if (folder === 'quiz') {
-    languageId = await ports.resolveLanguageIdForQuiz(id);
+  if (folder !== 'languages' && !SERVER_ID_FOLDERS.has(folder)) {
+    throw new ForbiddenException(LANGUAGE_DENIED);
   }
-
-  if (
-    !languageId ||
-    !(await ports.hasLanguagePermission(actor.id, languageId))
-  ) {
+  if (!(await ports.hasLanguagePermission(actor.id, subjectId))) {
     throw new ForbiddenException(LANGUAGE_DENIED);
   }
 }

@@ -16,13 +16,17 @@ import {
   UseInterceptors,
 } from '@nestjs/common';
 import { createReadStream, existsSync } from 'fs';
+import { randomUUID } from 'crypto';
 import { isAbsolute, join, relative, resolve } from 'path';
 import { Public } from '../../../../auth/infrastructure/decorators/public.decorator.js';
 import { lookup } from 'mime-types';
 import type { Response } from 'express';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { UploadPictureUseCase } from '../../../application/use-cases/upload-picture-use-case/upload-picture-use-case.js';
-import { assertImageUploadAllowed } from '../../../application/image-upload-policy.js';
+import {
+  assertImageUploadAllowed,
+  SERVER_ID_FOLDERS,
+} from '../../../application/image-upload-policy.js';
 import { ResourceIdResolver } from '../../../../permissions/infrastructure/guards/resource-access/resource-id-resolver.js';
 import {
   IsOptional,
@@ -42,9 +46,26 @@ import {
 import { withI18nParams } from '../../../../i18n/index.js';
 
 export class UploadImageDto {
-  @ApiProperty({ format: 'uuid' })
+  /**
+   * Recurso dueño de la imagen en `user` (el propio usuario) y `languages` (el idioma).
+   * En `lesson` y `quiz` no se acepta: el id de la imagen lo genera el servidor (BE-08).
+   */
+  @ApiProperty({ format: 'uuid', required: false })
+  @IsOptional()
   @IsUUID()
-  id: string;
+  id?: string;
+
+  /** `lesson`/`quiz`: idioma de la imagen. Alternativa a `lessonId`. */
+  @ApiProperty({ format: 'uuid', required: false })
+  @IsOptional()
+  @IsUUID()
+  languageId?: string;
+
+  /** `lesson`/`quiz`: lección de la que sale el idioma. Alternativa a `languageId`. */
+  @ApiProperty({ format: 'uuid', required: false })
+  @IsOptional()
+  @IsUUID()
+  lessonId?: string;
 
   /**
    * Extensión que manda el admin al subir imágenes de quiz. Se acepta para no
@@ -151,30 +172,54 @@ export class ImagesController {
         }),
       );
     }
-    const { id } = body;
-    await assertImageUploadAllowed(
-      { id: req.user.sub, role: req.user.role },
-      folder,
-      id,
-      {
-        // Cubre permisos por idioma y por región (checkUserPermissionForLanguage).
-        hasLanguagePermission: (userId, languageId) =>
-          this.moderatorPermissionRepository.checkUserPermissionForLanguage(
-            userId,
-            languageId,
-          ),
-        resolveLanguageIdForLesson: (lessonId) =>
-          this.resourceIdResolver.resolveFromRelation(
-            'lesson.languageId',
-            lessonId,
-          ),
-        resolveLanguageIdForQuiz: (quizId) =>
-          this.resourceIdResolver.resolveFromRelation(
-            'quiz.languageId',
-            quizId,
-          ),
-      },
+    const actor = { id: req.user.sub, role: req.user.role };
+    let imageId: string;
+    let subjectId: string;
+
+    if (SERVER_ID_FOLDERS.has(folder)) {
+      // BE-08: el cliente no elige el id, así que no puede sobrescribir imágenes ajenas.
+      if (body.id) {
+        throw new BadRequestException('errors.image.languageRequired');
+      }
+      subjectId = await this.resolveImageLanguage(body);
+      imageId = randomUUID();
+    } else {
+      if (!body.id) {
+        throw new BadRequestException('errors.image.idRequired');
+      }
+      subjectId = body.id;
+      imageId = body.id;
+    }
+
+    await assertImageUploadAllowed(actor, folder, subjectId, {
+      // Cubre permisos por idioma y por región (checkUserPermissionForLanguage).
+      hasLanguagePermission: (userId, languageId) =>
+        this.moderatorPermissionRepository.checkUserPermissionForLanguage(
+          userId,
+          languageId,
+        ),
+    });
+    return await this.uploadPictureUseCase.execute(imageId, folder, file);
+  }
+
+  /** Idioma de una imagen de lección o quiz, a partir de `languageId` y/o `lessonId`. */
+  private async resolveImageLanguage(body: UploadImageDto): Promise<string> {
+    if (!body.lessonId) {
+      if (!body.languageId) {
+        throw new BadRequestException('errors.image.languageRequired');
+      }
+      return body.languageId;
+    }
+    const lessonLanguageId = await this.resourceIdResolver.resolveFromRelation(
+      'lesson.languageId',
+      body.lessonId,
     );
-    return await this.uploadPictureUseCase.execute(id, folder, file);
+    if (!lessonLanguageId) {
+      throw new NotFoundException('errors.lesson.notFound');
+    }
+    if (body.languageId && body.languageId !== lessonLanguageId) {
+      throw new BadRequestException('errors.image.lessonLanguageMismatch');
+    }
+    return lessonLanguageId;
   }
 }
