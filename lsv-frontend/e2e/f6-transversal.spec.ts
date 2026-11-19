@@ -1,0 +1,142 @@
+import AxeBuilder from "@axe-core/playwright";
+import { readFile } from "node:fs/promises";
+import { expect, test } from "./fixtures/roles";
+
+const curriculum = JSON.parse(
+  await readFile("e2e/.auth/curriculum.json", "utf8"),
+) as { lessonId: string; quizId: string };
+
+async function seriousA11y(page: import("@playwright/test").Page) {
+  const results = await new AxeBuilder({ page })
+    .withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"])
+    .analyze();
+  return results.violations.filter((item) =>
+    ["serious", "critical"].includes(item.impact ?? ""),
+  );
+}
+
+test("i18n renders login in Spanish and English", async ({
+  page,
+  browser,
+  baseURL,
+}) => {
+  await page.addInitScript(() => localStorage.setItem("lsv.uiLocale", "es"));
+  await page.goto("/login");
+  await expect(
+    page.getByRole("heading", { name: "Iniciar sesión" }),
+  ).toBeVisible();
+  const englishContext = await browser.newContext({ baseURL });
+  await englishContext.addInitScript(() =>
+    localStorage.setItem("lsv.uiLocale", "en"),
+  );
+  const englishPage = await englishContext.newPage();
+  await englishPage.goto("/login");
+  await expect(
+    englishPage.getByRole("heading", { name: "Sign in" }),
+  ).toBeVisible();
+  await expect(englishPage.locator("html")).toHaveAttribute("lang", "en");
+  await englishContext.close();
+});
+
+test("mobile login and landing have no horizontal overflow", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 375, height: 812 });
+  await page.goto("/");
+  expect(
+    await page.evaluate(
+      () => document.documentElement.scrollWidth <= window.innerWidth,
+    ),
+  ).toBe(true);
+  await page.goto("/login");
+  await expect(page.getByLabel("Email")).toBeVisible();
+  expect(
+    await page.evaluate(
+      () => document.documentElement.scrollWidth <= window.innerWidth,
+    ),
+  ).toBe(true);
+});
+
+test("nested learner routes survive refresh and a new tab", async ({
+  studentPage,
+  browser,
+  baseURL,
+}) => {
+  const route = `/lesson/${curriculum.lessonId}`;
+  await studentPage.goto(route);
+  await expect(
+    studentPage.getByRole("heading", { name: /lesson pw-/i }),
+  ).toBeVisible();
+  await studentPage.reload();
+  await expect(
+    studentPage.getByRole("heading", { name: /lesson pw-/i }),
+  ).toBeVisible();
+  const tab = await browser.newPage({
+    baseURL,
+    storageState: "e2e/.auth/student.json",
+  });
+  await tab.goto(route);
+  await expect(tab.getByRole("heading", { name: /lesson pw-/i })).toBeVisible();
+  await tab.close();
+});
+
+test("API outage leaves a clear terminal message", async ({ studentPage }) => {
+  test.fail(
+    true,
+    "AF-F6-02: API outage redirects to login without explaining the failure",
+  );
+  await studentPage.route("**/api/**", (route) => route.abort());
+  await studentPage.goto(`/lesson/${curriculum.lessonId}`);
+  await expect(studentPage.getByRole("alert")).toBeVisible();
+});
+
+test("nonexistent lesson shows a not-found message", async ({
+  studentPage,
+}) => {
+  test.fail(
+    true,
+    "AF-F6-03: nonexistent lesson shows a success alert instead of not found",
+  );
+  await studentPage.unrouteAll();
+  await studentPage.goto("/lesson/00000000-0000-4000-8000-000000000000");
+  await expect(
+    studentPage.getByText(/not found|no se encontró/i),
+  ).toBeVisible();
+});
+
+test("serious and critical WCAG A/AA checks on primary screens", async ({
+  page,
+  studentPage,
+}) => {
+  await page.goto("/login");
+  const violations: unknown[] = [];
+  const append = async (
+    screen: string,
+    target: import("@playwright/test").Page,
+  ) => {
+    const findings = await seriousA11y(target);
+    for (const { id, impact, description, nodes } of findings) {
+      violations.push({
+        screen,
+        id,
+        impact,
+        description,
+        selectors: nodes.map((node) => node.target),
+      });
+    }
+  };
+  await append("login", page);
+  await studentPage.goto("/dashboard");
+  await append("dashboard", studentPage);
+  await studentPage.goto(`/lesson/${curriculum.lessonId}`);
+  await append("lesson", studentPage);
+  await studentPage.goto(`/quiz/${curriculum.lessonId}`);
+  await append("quiz", studentPage);
+  await studentPage.goto("/leaderboard");
+  await append("leaderboard", studentPage);
+  test.fail(
+    true,
+    "AF-F6-01: primary screens contain serious or critical axe violations",
+  );
+  expect(violations).toEqual([]);
+});
