@@ -18,6 +18,12 @@ export default tseslint.config(
       },
     },
   },
+  {
+    files: ["e2e/**/*.mjs"],
+    languageOptions: {
+      globals: { console: "readonly", fetch: "readonly", process: "readonly" },
+    },
+  },
   ...tseslint.configs.recommended,
   {
     files: ["**/*.{ts,tsx}"],
@@ -52,6 +58,7 @@ export default tseslint.config(
   },
   eslintPluginTailwindcss.configs.recommended,
   {
+    plugins: { tailwindcss: eslintPluginTailwindcss },
     settings: {
       tailwindcss:
         /** @type {import("eslint-plugin-tailwindcss").PluginSettings} */
