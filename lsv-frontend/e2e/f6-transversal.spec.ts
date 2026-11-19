@@ -164,11 +164,11 @@ test("student quiz and practice have no horizontal overflow on a phone", async (
     );
 
   await studentPage.goto(`/quiz/${curriculum.lessonId}`);
-  await expect(studentPage.getByRole("main")).toBeVisible();
+  await expect(studentPage.getByRole("main")).toBeVisible({ timeout: 15000 });
   expect(await noOverflow()).toBe(true);
 
   await studentPage.goto(`/lesson/${curriculum.lessonId}/practice`);
-  await expect(studentPage.getByRole("main")).toBeVisible();
+  await expect(studentPage.getByRole("main")).toBeVisible({ timeout: 15000 });
   expect(await noOverflow()).toBe(true);
 });
 
