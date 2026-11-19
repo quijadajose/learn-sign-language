@@ -58,6 +58,7 @@
   },
   "network": {
     "timeout": "La petición ha excedido el tiempo límite",
+    "timeoutMaybeApplied": "La petición ha excedido el tiempo límite. Puede que el servidor la haya completado: comprueba el resultado antes de repetirla",
     "connection": "Error de conexión",
     "connectionRetries": "Error de conexión después de múltiples intentos",
     "loadQuizzes": "Error de conexión al cargar los quizzes",
