@@ -1,5 +1,6 @@
 import { ExecutionContext, UnauthorizedException } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
+import { WsException } from '@nestjs/websockets';
 import { JwtAuthGuard } from './jwt-auth.guard.js';
 import { TokenService } from '../../../domain/ports/token.service/token.service.interface.js';
 import { UserRepositoryInterface } from '../../../domain/ports/user.repository.interface/user.repository.interface.js';
@@ -12,6 +13,7 @@ function mockContext(
   const response = { cookie };
   return {
     cookie,
+    getType: () => 'http',
     switchToHttp: () => ({
       getRequest: () => request,
       getResponse: () => response,
@@ -141,5 +143,31 @@ describe('JwtAuthGuard', () => {
     await expect(guard.canActivate(ctx)).resolves.toBe(true);
     expect(tokenService.generateToken).not.toHaveBeenCalled();
     expect(ctx.cookie).not.toHaveBeenCalled();
+  });
+
+  describe('WebSocket context', () => {
+    const wsContext = (data: Record<string, unknown>) =>
+      ({
+        getType: () => 'ws',
+        switchToWs: () => ({ getClient: () => ({ data }) }),
+        switchToHttp: () => {
+          throw new Error('switchToHttp should not be called for ws');
+        },
+        getHandler: () => ({}),
+        getClass: () => ({}),
+      }) as unknown as ExecutionContext;
+
+    it('allows a socket authenticated in handleConnection', async () => {
+      await expect(
+        guard.canActivate(wsContext({ user: { sub: 'u1', role: 'admin' } })),
+      ).resolves.toBe(true);
+      expect(tokenService.verifyToken).not.toHaveBeenCalled();
+    });
+
+    it('rejects a socket without an authenticated user', async () => {
+      await expect(guard.canActivate(wsContext({}))).rejects.toBeInstanceOf(
+        WsException,
+      );
+    });
   });
 });

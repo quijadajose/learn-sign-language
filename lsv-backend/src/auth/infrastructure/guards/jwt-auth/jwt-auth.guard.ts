@@ -6,6 +6,7 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
+import { WsException } from '@nestjs/websockets';
 import { Response } from 'express';
 import { TokenService } from '../../../domain/ports/token.service/token.service.interface.js';
 import { UserRepositoryInterface } from '../../../domain/ports/user.repository.interface/user.repository.interface.js';
@@ -37,6 +38,18 @@ export class JwtAuthGuard implements CanActivate {
 
     if (isPublic) {
       return true;
+    }
+
+    // WebSocket: el token se valida una vez al conectar (handleConnection del gateway),
+    // que deja el usuario en `client.data.user` o desconecta. Aquí solo se exige eso.
+    if (context.getType() === 'ws') {
+      const client = context
+        .switchToWs()
+        .getClient<{ data?: { user?: unknown } }>();
+      if (client?.data?.user) {
+        return true;
+      }
+      throw new WsException('errors.auth.noToken');
     }
 
     const request = context.switchToHttp().getRequest();
