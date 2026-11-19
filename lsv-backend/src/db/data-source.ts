@@ -22,6 +22,7 @@ import { Sign } from '../shared/domain/entities/sign.js';
 import { SignVariant } from '../shared/domain/entities/signVariant.js';
 import { SignRecording } from '../shared/domain/entities/signRecording.js';
 import { LessonModel } from '../shared/domain/entities/lessonModel.js';
+import { migrations } from './migrations.js';
 
 export const AppDataSource = new DataSource({
   type: 'postgres',
@@ -55,6 +56,6 @@ export const AppDataSource = new DataSource({
     SignRecording,
     LessonModel,
   ],
-  migrations: [import.meta.dirname + '/migrations/*.{ts,js}'],
+  migrations,
   synchronize: false,
 });

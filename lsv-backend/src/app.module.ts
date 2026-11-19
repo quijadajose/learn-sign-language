@@ -1,7 +1,6 @@
 import { Module } from '@nestjs/common';
 import { BullModule } from '@nestjs/bullmq';
 import { APP_FILTER, APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
-import { join } from 'path';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { validate } from './config/env.validation.js';
@@ -53,6 +52,7 @@ import {
   I18nHttpExceptionFilter,
   I18nResponseInterceptor,
 } from './i18n/index.js';
+import { migrations } from './db/migrations.js';
 
 @Module({
   imports: [
@@ -106,7 +106,7 @@ import {
           LessonModel,
         ],
         synchronize: false,
-        migrations: [join(import.meta.dirname, '/db/migrations/*.{ts,js}')],
+        migrations,
         // Default true for single-instance deploys. Set RUN_MIGRATIONS=false
         // when running migrations as a separate job (multi-replica).
         migrationsRun: configService.get<string>('RUN_MIGRATIONS') !== 'false',
