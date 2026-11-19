@@ -203,3 +203,29 @@ test("admin uploads a flag for a language", async ({ adminPage }) => {
   await adminPage.getByRole("button", { name: "Guardar Cambios" }).click();
   expect((await uploaded).status()).toBe(201);
 });
+
+test("admin deletes an empty language from the table", async ({
+  adminPage,
+}) => {
+  const name = `F4 Delete ${Date.now()}`;
+  const created = await adminPage.context().request.post("/api/languages", {
+    headers: { Origin: String(test.info().project.use.baseURL) },
+    data: { name, description: "F4 delete fixture", countryCode: "VE" },
+  });
+  expect(created.status()).toBe(201);
+
+  await adminPage.goto("/admin/languages");
+  const row = adminPage.getByRole("row").filter({ hasText: name });
+  await expect(row).toBeVisible();
+  await row.getByRole("button", { name: "Eliminar" }).click();
+  const deleted = adminPage.waitForResponse(
+    (response) =>
+      response.url().includes("/api/languages/") &&
+      response.request().method() === "DELETE",
+  );
+  await adminPage.getByRole("button", { name: "Sí, eliminar" }).click();
+  expect((await deleted).status()).toBeLessThan(300);
+  await expect(
+    adminPage.getByRole("row").filter({ hasText: name }),
+  ).toHaveCount(0);
+});
