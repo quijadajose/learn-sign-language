@@ -17,3 +17,5 @@ lsv-frontend/public/flags
 lsv-frontend/.agents/
 lsv-frontend/.claude/
 REVIEW-SCORES.md
+# Estado de scripts/deploy.sh en el servidor (INF-06)
+.deploy/

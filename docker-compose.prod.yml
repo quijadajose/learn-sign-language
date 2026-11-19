@@ -1,6 +1,8 @@
+# INF-06: las imágenes se despliegan por SHA (IMAGE_TAG), nunca por :latest.
+# scripts/deploy.sh fija IMAGE_TAG y guarda la etiqueta anterior para el rollback.
 services:
   lsv-api:
-    image: ghcr.io/quijadajose/lsv-backend:${IMAGE_TAG:-latest}
+    image: ghcr.io/quijadajose/lsv-backend:${IMAGE_TAG:?IMAGE_TAG es obligatorio (SHA del commit); usa scripts/deploy.sh}
     command: npm run start:prod
     environment:
       - SENTRY_DSN=${SENTRY_DSN}
@@ -14,14 +16,14 @@ services:
       - "3000"
 
   lsv-frontend:
-    image: ghcr.io/quijadajose/lsv-frontend:${IMAGE_TAG:-latest}
+    image: ghcr.io/quijadajose/lsv-frontend:${IMAGE_TAG:?IMAGE_TAG es obligatorio (SHA del commit); usa scripts/deploy.sh}
     expose:
       - "80"
     networks:
       - web-proxy
 
   lsv-model-trainer:
-    image: ghcr.io/quijadajose/lsv-model-trainer:${IMAGE_TAG:-latest}
+    image: ghcr.io/quijadajose/lsv-model-trainer:${IMAGE_TAG:?IMAGE_TAG es obligatorio (SHA del commit); usa scripts/deploy.sh}
     restart: unless-stopped
     depends_on:
       - lsv-valkey
