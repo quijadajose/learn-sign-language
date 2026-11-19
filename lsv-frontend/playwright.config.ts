@@ -1,4 +1,5 @@
 import { defineConfig, devices } from "@playwright/test";
+import { resolve } from "node:path";
 
 const chromiumExecutable = process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH;
 
@@ -11,9 +12,13 @@ export default defineConfig({
     baseURL: process.env.PLAYWRIGHT_BASE_URL ?? "http://127.0.0.1:4174",
     trace: "retain-on-failure",
     ...devices["Desktop Chrome"],
-    launchOptions: chromiumExecutable
-      ? { executablePath: chromiumExecutable }
-      : {},
+    launchOptions: {
+      ...(chromiumExecutable ? { executablePath: chromiumExecutable } : {}),
+      args: [
+        "--use-fake-device-for-media-stream",
+        `--use-file-for-fake-video-capture=${resolve("e2e/fixtures/hand.y4m")}`,
+      ],
+    },
   },
   webServer: process.env.PLAYWRIGHT_BASE_URL
     ? undefined

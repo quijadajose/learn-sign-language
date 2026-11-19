@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="320" height="240" viewBox="0 0 320 240">
+  <rect width="320" height="240" fill="#111827"/>
+  <g fill="#f8fafc">
+    <path d="M129 213c-9-17-18-39-25-61-4-13 14-22 22-9l17 26V75c0-17 24-17 24 0v58V53c0-17 24-17 24 0v80V63c0-17 24-17 24 0v77V82c0-16 23-16 23 0v59l14-20c10-14 29-2 20 13l-34 61c-9 16-25 26-44 26h-26c-17 0-31-3-39-8z"/>
+  </g>
+  <text x="16" y="226" fill="#94a3b8" font-family="sans-serif" font-size="10">Synthetic hand pose for local Playwright camera tests</text>
+</svg>

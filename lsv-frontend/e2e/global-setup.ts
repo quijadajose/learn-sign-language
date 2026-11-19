@@ -1,5 +1,5 @@
 import { request, type FullConfig } from "@playwright/test";
-import { mkdir } from "node:fs/promises";
+import { mkdir, writeFile } from "node:fs/promises";
 import { resolve } from "node:path";
 import { seedCurriculum } from "./seed.mjs";
 
@@ -98,16 +98,30 @@ export default async function globalSetup(config: FullConfig) {
       `Student registration failed with status ${studentRegistration.status()}`,
     );
   await admin.context.dispose();
-  await login(
+  const student = await login(
     baseURL,
     userEmail,
     userPassword,
     resolve(states, "student.json"),
-  ).then(({ context }) => context.dispose());
+  );
+  const enrollment = await student.context.post("/api/users/enroll", {
+    headers: { Authorization: `Bearer ${student.token}` },
+    data: { languageId: curriculum.languageId, regionId: curriculum.regionId },
+  });
+  if (!enrollment.ok()) {
+    throw new Error(
+      `Student enrollment failed with status ${enrollment.status()}`,
+    );
+  }
+  await student.context.dispose();
   await login(
     baseURL,
     modEmail,
     modPassword,
     resolve(states, "moderator.json"),
   ).then(({ context }) => context.dispose());
+  await writeFile(
+    resolve(states, "curriculum.json"),
+    JSON.stringify(curriculum),
+  );
 }
