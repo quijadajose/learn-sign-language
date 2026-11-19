@@ -177,3 +177,29 @@ test("admin creates a quiz whose option is an image (BE-08 path)", async ({
   // La opción con imagen guarda la URL servida por /images/quiz (el texto de la opción).
   expect(JSON.stringify(await saved.json())).toContain("/images/quiz/");
 });
+
+test("admin uploads a flag for a language", async ({ adminPage }) => {
+  // Idioma propio del test: no se toca el del currículo compartido.
+  const name = `F4 Flag ${Date.now()}`;
+  const created = await adminPage.context().request.post("/api/languages", {
+    headers: { Origin: String(test.info().project.use.baseURL) },
+    data: { name, description: "F4 flag fixture", countryCode: "VE" },
+  });
+  expect(created.status()).toBe(201);
+
+  await adminPage.goto("/admin/languages");
+  const row = adminPage.getByRole("row").filter({ hasText: name });
+  await expect(row).toBeVisible();
+  await row.getByRole("button", { name: "Editar" }).click();
+
+  const uploaded = adminPage.waitForResponse(
+    (response) =>
+      response.url().includes("/api/images/upload/languages") &&
+      response.request().method() === "POST",
+  );
+  await adminPage
+    .locator("#edit-dropzone-file")
+    .setInputFiles("e2e/fixtures/hand.png");
+  await adminPage.getByRole("button", { name: "Guardar Cambios" }).click();
+  expect((await uploaded).status()).toBe(201);
+});
