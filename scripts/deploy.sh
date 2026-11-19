@@ -49,14 +49,21 @@ running_tag() {
   [[ -n "$tag" ]] && echo "$tag"
 }
 
+# Valor de una variable del .env sin `\r` (finales CRLF) ni comillas alrededor.
+env_value() {
+  grep -m1 "^$1=" .env 2>/dev/null | cut -d= -f2- | tr -d '\r' |
+    sed -e 's/^"\(.*\)"$/\1/' -e "s/^'\(.*\)'$/\1/" || true
+}
+
 backup_db() {
   if ! compose ps -q lsv-db | grep -q .; then
     echo "lsv-db no está corriendo: se omite el backup."
     return
   fi
   local db_user db_name stamp file
-  db_user=$(grep '^DB_USERNAME=' .env | cut -d= -f2-) || die "falta DB_USERNAME en .env"
-  db_name=$(grep '^DB_DATABASE=' .env | cut -d= -f2- || true)
+  db_user=$(env_value DB_USERNAME)
+  [[ -n "$db_user" ]] || die "falta DB_USERNAME en .env"
+  db_name=$(env_value DB_DATABASE)
   db_name=${db_name:-plataforma}
   stamp=$(date +%Y%m%d-%H%M%S)
   file="$BACKUP_DIR/lsv-$stamp.sql.gz"
