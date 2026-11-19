@@ -107,11 +107,22 @@ test("nonexistent lesson shows a not-found message", async ({
   ).toBeVisible();
 });
 
-test("serious and critical WCAG A/AA checks on primary screens", async ({
+test("login has no serious or critical WCAG A/AA violations (AF-F6-01)", async ({
   page,
-  studentPage,
 }) => {
   await page.goto("/login");
+  const findings = await seriousA11y(page);
+  expect(
+    findings.map((item) => ({
+      id: item.id,
+      nodes: item.nodes.map((n) => n.target),
+    })),
+  ).toEqual([]);
+});
+
+test("dashboard, lesson, quiz and leaderboard: serious or critical WCAG A/AA checks", async ({
+  studentPage,
+}) => {
   await ensureStudentEnrolled(studentPage, curriculum);
   const violations: unknown[] = [];
   const append = async (
@@ -129,7 +140,6 @@ test("serious and critical WCAG A/AA checks on primary screens", async ({
       });
     }
   };
-  await append("login", page);
   await studentPage.goto("/dashboard");
   await append("dashboard", studentPage);
   await studentPage.goto(`/lesson/${curriculum.lessonId}`);
@@ -138,10 +148,6 @@ test("serious and critical WCAG A/AA checks on primary screens", async ({
   await append("quiz", studentPage);
   await studentPage.goto("/leaderboard");
   await append("leaderboard", studentPage);
-  test.fail(
-    true,
-    "AF-F6-01: primary screens contain serious or critical axe violations",
-  );
   expect(violations).toEqual([]);
 });
 
