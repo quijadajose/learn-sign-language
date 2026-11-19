@@ -138,3 +138,29 @@ test("password reset works end to end through the mail server", async ({
   });
   expect(reused.status()).toBe(400);
 });
+
+test("student uploads a profile picture and it survives a reload", async ({
+  studentPage,
+}) => {
+  // No hay endpoint para volver al avatar anterior, así que el alumno compartido queda con
+  // esta imagen. Ningún otro test depende del avatar, y el nombre se restaura en su propio test.
+  await studentPage.goto("/profile");
+  await studentPage.getByRole("button", { name: "Editar Perfil" }).click();
+  const avatar = studentPage.getByAltText("Profile");
+
+  const uploaded = studentPage.waitForResponse(
+    (response) =>
+      response.url().includes("/api/images/upload/user") &&
+      response.request().method() === "POST",
+  );
+  await studentPage.locator("#photo").setInputFiles("e2e/fixtures/hand.png");
+  await studentPage.getByRole("button", { name: "Guardar Cambios" }).click();
+  expect((await uploaded).status()).toBe(201);
+
+  await studentPage.reload();
+  await expect(avatar).toHaveAttribute("src", /\/images\/user\//);
+  const loaded = await avatar.evaluate(
+    (img: HTMLImageElement) => img.complete && img.naturalWidth > 0,
+  );
+  expect(loaded).toBe(true);
+});
