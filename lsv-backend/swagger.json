@@ -3,7 +3,7 @@
   "paths": {
     "/auth/register": {
       "post": {
-        "description": "Crea una nueva cuenta de usuario en el sistema\n\nRate limit: 5 solicitudes / 60 s por IP.",
+        "description": "Crea una cuenta. El email duplicado responde igual (201) para no enumerar cuentas. No emite JWT; hay que iniciar sesión.\n\nRate limit: 5 solicitudes / 60 s por IP.",
         "operationId": "AuthController_register",
         "parameters": [],
         "requestBody": {
@@ -33,7 +33,7 @@
         },
         "responses": {
           "201": {
-            "description": "Usuario registrado exitosamente",
+            "description": "Usuario registrado exitosamente (también si el email ya existía)",
             "content": {
               "application/json": {
                 "schema": {
@@ -42,54 +42,6 @@
                     "message": {
                       "type": "string",
                       "example": "User registered successfully"
-                    },
-                    "data": {
-                      "type": "object",
-                      "properties": {
-                        "user": {
-                          "type": "object",
-                          "properties": {
-                            "email": {
-                              "type": "string",
-                              "example": "email@gmail.com"
-                            },
-                            "firstName": {
-                              "type": "string",
-                              "example": "John"
-                            },
-                            "lastName": {
-                              "type": "string",
-                              "example": "Doe"
-                            },
-                            "age": {
-                              "type": "number",
-                              "example": 30
-                            },
-                            "isRightHanded": {
-                              "type": "boolean",
-                              "example": true
-                            },
-                            "role": {
-                              "type": "string",
-                              "example": "user"
-                            },
-                            "id": {
-                              "type": "string",
-                              "example": "cb00fcba-f592-4451-adb0-557d34a42623"
-                            },
-                            "createdAt": {
-                              "type": "string",
-                              "format": "date-time",
-                              "example": "2025-09-15T05:21:13.511Z"
-                            }
-                          }
-                        },
-                        "token": {
-                          "type": "string",
-                          "description": "Token JWT para autenticación",
-                          "example": "JWT-REDACTADO"
-                        }
-                      }
                     }
                   }
                 }
@@ -134,44 +86,6 @@
                     "statusCode": {
                       "type": "number",
                       "example": 400
-                    },
-                    "code": {
-                      "type": "string",
-                      "description": "Código de negocio estable",
-                      "example": "VALIDATION_ERROR"
-                    },
-                    "details": {
-                      "type": "array",
-                      "items": {
-                        "$ref": "#/components/schemas/ApiErrorDetailDto"
-                      }
-                    }
-                  },
-                  "required": [
-                    "code"
-                  ]
-                }
-              }
-            }
-          },
-          "409": {
-            "description": "El email ya está en uso",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string",
-                      "example": "Email already in use"
-                    },
-                    "error": {
-                      "type": "string",
-                      "example": "Conflict"
-                    },
-                    "statusCode": {
-                      "type": "number",
-                      "example": 409
                     },
                     "code": {
                       "type": "string",
@@ -323,6 +237,20 @@
               }
             }
           },
+          "201": {
+            "description": "",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/X-RateLimit-Limit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/X-RateLimit-Remaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/X-RateLimit-Reset"
+              }
+            }
+          },
           "400": {
             "description": "Datos de entrada inválidos",
             "content": {
@@ -437,6 +365,95 @@
         ]
       }
     },
+    "/auth/logout": {
+      "post": {
+        "description": "Invalida el JWT actual (sube tokenVersion) y borra la cookie httpOnly.",
+        "operationId": "AuthController_logout",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Sesión cerrada",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string",
+                      "example": "Logged out"
+                    }
+                  }
+                }
+              }
+            },
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/X-RateLimit-Limit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/X-RateLimit-Remaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/X-RateLimit-Reset"
+              }
+            }
+          },
+          "201": {
+            "description": "",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/X-RateLimit-Limit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/X-RateLimit-Remaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/X-RateLimit-Reset"
+              }
+            }
+          },
+          "400": {
+            "description": "Validación o petición inválida",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Demasiadas solicitudes. Esperar Retry-After segundos y reintentar.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            },
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/Retry-After"
+              }
+            }
+          },
+          "500": {
+            "description": "Error interno del servidor",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Cerrar sesión",
+        "tags": [
+          "Authentication"
+        ]
+      }
+    },
     "/auth/password/reset": {
       "post": {
         "description": "Envía un enlace de restablecimiento de contraseña al email del usuario\n\nRate limit: 5 solicitudes / 60 s por IP.",
@@ -478,6 +495,20 @@
                 }
               }
             },
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/X-RateLimit-Limit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/X-RateLimit-Remaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/X-RateLimit-Reset"
+              }
+            }
+          },
+          "201": {
+            "description": "",
             "headers": {
               "X-RateLimit-Limit": {
                 "$ref": "#/components/headers/X-RateLimit-Limit"
@@ -574,6 +605,20 @@
                 }
               }
             },
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/X-RateLimit-Limit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/X-RateLimit-Remaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/X-RateLimit-Reset"
+              }
+            }
+          },
+          "201": {
+            "description": "",
             "headers": {
               "X-RateLimit-Limit": {
                 "$ref": "#/components/headers/X-RateLimit-Limit"
@@ -880,7 +925,7 @@
         ]
       },
       "put": {
-        "description": "Permite actualizar la información del perfil del usuario actualmente autenticado",
+        "description": "Permite actualizar el perfil. Si cambia la contraseña, se invalida el JWT anterior y se emite uno nuevo en la cookie httpOnly.",
         "operationId": "UsersController_updateProfile",
         "parameters": [],
         "requestBody": {
@@ -930,7 +975,11 @@
                     "description": "Nueva contraseña"
                   }
                 },
-                "$ref": "#/components/schemas/UpdateUserDto"
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/UpdateUserDto"
+                  }
+                ]
               },
               "examples": {
                 "actualizacion-basica": {
@@ -1163,7 +1212,8 @@
                 "ASC",
                 "DESC"
               ],
-              "type": "string"
+              "type": "string",
+              "example": "DESC"
             }
           }
         ],
@@ -1718,7 +1768,8 @@
                 "ASC",
                 "DESC"
               ],
-              "type": "string"
+              "type": "string",
+              "example": "DESC"
             }
           }
         ],
@@ -1978,7 +2029,11 @@
                   "languageId": "8dc31a49-64ae-4c94-b867-d818ce9441e6",
                   "regionId": "8dc31a49-64ae-4c94-b867-d818ce9441e7"
                 },
-                "$ref": "#/components/schemas/EnrollUserInLanguageDto"
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/EnrollUserInLanguageDto"
+                  }
+                ]
               }
             }
           }
@@ -2149,7 +2204,8 @@
                 "ASC",
                 "DESC"
               ],
-              "type": "string"
+              "type": "string",
+              "example": "ASC"
             }
           }
         ],
@@ -2363,7 +2419,8 @@
                 "ASC",
                 "DESC"
               ],
-              "type": "string"
+              "type": "string",
+              "example": "DESC"
             }
           },
           {
@@ -2787,7 +2844,7 @@
     "/lesson/by-language/{languageId}": {
       "get": {
         "description": "Lista paginada de lecciones. Acepta page, limit y stageId.",
-        "operationId": "LessonController_getLessonsByLanguageAdmin",
+        "operationId": "LessonController_getLessonsByLanguage",
         "parameters": [
           {
             "name": "languageId",
@@ -5203,7 +5260,7 @@
     },
     "/user-lesson/by-user/{id}": {
       "get": {
-        "description": "Lista paginada. Requiere JWT.",
+        "description": "Lista paginada del progreso del usuario autenticado. Un admin puede consultar otro UUID.",
         "operationId": "UserLessonController_getUserLessonByUserId",
         "parameters": [
           {
@@ -5438,6 +5495,7 @@
     },
     "/user-lesson/set-lesson-completion": {
       "post": {
+        "description": "La finalización la declara el cliente: el servidor no tiene prueba de que la lección se haya completado. No usar para ranking, certificados ni nada con valor sin validación adicional (BE-23).",
         "operationId": "UserLessonController_setLessonCompletion",
         "parameters": [],
         "requestBody": {
@@ -7822,7 +7880,8 @@
                 "ASC",
                 "DESC"
               ],
-              "type": "string"
+              "type": "string",
+              "example": "ASC"
             }
           }
         ],
@@ -8389,10 +8448,8 @@
           {
             "name": "id",
             "required": true,
-            "in": "query",
-            "description": "ID del lenguaje de señas",
+            "in": "path",
             "schema": {
-              "example": "49d5adb5-50f0-40e1-aa32-ffee377d1542",
               "type": "string"
             }
           },
@@ -8443,6 +8500,15 @@
                 "ASC",
                 "DESC"
               ]
+            }
+          },
+          {
+            "name": "id",
+            "required": true,
+            "in": "query",
+            "description": "ID del lenguaje de señas",
+            "schema": {
+              "example": "49d5adb5-50f0-40e1-aa32-ffee377d1542"
             }
           }
         ],
@@ -8673,7 +8739,8 @@
                 "ASC",
                 "DESC"
               ],
-              "type": "string"
+              "type": "string",
+              "example": "ASC"
             }
           }
         ],
@@ -8825,7 +8892,7 @@
             }
           },
           "401": {
-            "description": "No autorizado - Token JWT requerido. Incluir header: Authorization: Bearer {token}",
+            "description": "No autorizado - Token JWT requerido (cookie `lsv_access` o header Authorization: Bearer)",
             "content": {
               "application/json": {
                 "schema": {
@@ -9613,6 +9680,20 @@
                 }
               }
             },
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/X-RateLimit-Limit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/X-RateLimit-Remaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/X-RateLimit-Reset"
+              }
+            }
+          },
+          "201": {
+            "description": "",
             "headers": {
               "X-RateLimit-Limit": {
                 "$ref": "#/components/headers/X-RateLimit-Limit"
@@ -10555,13 +10636,18 @@
                   "properties": {
                     "status": {
                       "type": "string",
+                      "enum": [
+                        "ok",
+                        "degraded"
+                      ],
                       "example": "ok"
                     },
                     "info": {
                       "type": "object",
                       "example": {
                         "database": {
-                          "status": "up"
+                          "status": "up",
+                          "responseTime": 12
                         }
                       },
                       "additionalProperties": {
@@ -10571,7 +10657,16 @@
                         ],
                         "properties": {
                           "status": {
-                            "type": "string"
+                            "type": "string",
+                            "enum": [
+                              "up",
+                              "degraded",
+                              "down"
+                            ]
+                          },
+                          "responseTime": {
+                            "type": "number",
+                            "description": "Time the health indicator took to respond, in ms"
                           }
                         },
                         "additionalProperties": true
@@ -10588,7 +10683,16 @@
                         ],
                         "properties": {
                           "status": {
-                            "type": "string"
+                            "type": "string",
+                            "enum": [
+                              "up",
+                              "degraded",
+                              "down"
+                            ]
+                          },
+                          "responseTime": {
+                            "type": "number",
+                            "description": "Time the health indicator took to respond, in ms"
                           }
                         },
                         "additionalProperties": true
@@ -10599,7 +10703,8 @@
                       "type": "object",
                       "example": {
                         "database": {
-                          "status": "up"
+                          "status": "up",
+                          "responseTime": 12
                         }
                       },
                       "additionalProperties": {
@@ -10609,7 +10714,16 @@
                         ],
                         "properties": {
                           "status": {
-                            "type": "string"
+                            "type": "string",
+                            "enum": [
+                              "up",
+                              "degraded",
+                              "down"
+                            ]
+                          },
+                          "responseTime": {
+                            "type": "number",
+                            "description": "Time the health indicator took to respond, in ms"
                           }
                         },
                         "additionalProperties": true
@@ -10675,13 +10789,18 @@
                   "properties": {
                     "status": {
                       "type": "string",
+                      "enum": [
+                        "error",
+                        "shutting_down"
+                      ],
                       "example": "error"
                     },
                     "info": {
                       "type": "object",
                       "example": {
                         "database": {
-                          "status": "up"
+                          "status": "up",
+                          "responseTime": 12
                         }
                       },
                       "additionalProperties": {
@@ -10691,7 +10810,16 @@
                         ],
                         "properties": {
                           "status": {
-                            "type": "string"
+                            "type": "string",
+                            "enum": [
+                              "up",
+                              "degraded",
+                              "down"
+                            ]
+                          },
+                          "responseTime": {
+                            "type": "number",
+                            "description": "Time the health indicator took to respond, in ms"
                           }
                         },
                         "additionalProperties": true
@@ -10703,7 +10831,8 @@
                       "example": {
                         "redis": {
                           "status": "down",
-                          "message": "Could not connect"
+                          "message": "Could not connect",
+                          "responseTime": 3005
                         }
                       },
                       "additionalProperties": {
@@ -10713,7 +10842,16 @@
                         ],
                         "properties": {
                           "status": {
-                            "type": "string"
+                            "type": "string",
+                            "enum": [
+                              "up",
+                              "degraded",
+                              "down"
+                            ]
+                          },
+                          "responseTime": {
+                            "type": "number",
+                            "description": "Time the health indicator took to respond, in ms"
                           }
                         },
                         "additionalProperties": true
@@ -10724,11 +10862,13 @@
                       "type": "object",
                       "example": {
                         "database": {
-                          "status": "up"
+                          "status": "up",
+                          "responseTime": 12
                         },
                         "redis": {
                           "status": "down",
-                          "message": "Could not connect"
+                          "message": "Could not connect",
+                          "responseTime": 3005
                         }
                       },
                       "additionalProperties": {
@@ -10738,7 +10878,16 @@
                         ],
                         "properties": {
                           "status": {
-                            "type": "string"
+                            "type": "string",
+                            "enum": [
+                              "up",
+                              "degraded",
+                              "down"
+                            ]
+                          },
+                          "responseTime": {
+                            "type": "number",
+                            "description": "Time the health indicator took to respond, in ms"
                           }
                         },
                         "additionalProperties": true
@@ -10776,13 +10925,18 @@
                   "properties": {
                     "status": {
                       "type": "string",
+                      "enum": [
+                        "ok",
+                        "degraded"
+                      ],
                       "example": "ok"
                     },
                     "info": {
                       "type": "object",
                       "example": {
                         "database": {
-                          "status": "up"
+                          "status": "up",
+                          "responseTime": 12
                         }
                       },
                       "additionalProperties": {
@@ -10792,7 +10946,16 @@
                         ],
                         "properties": {
                           "status": {
-                            "type": "string"
+                            "type": "string",
+                            "enum": [
+                              "up",
+                              "degraded",
+                              "down"
+                            ]
+                          },
+                          "responseTime": {
+                            "type": "number",
+                            "description": "Time the health indicator took to respond, in ms"
                           }
                         },
                         "additionalProperties": true
@@ -10809,7 +10972,16 @@
                         ],
                         "properties": {
                           "status": {
-                            "type": "string"
+                            "type": "string",
+                            "enum": [
+                              "up",
+                              "degraded",
+                              "down"
+                            ]
+                          },
+                          "responseTime": {
+                            "type": "number",
+                            "description": "Time the health indicator took to respond, in ms"
                           }
                         },
                         "additionalProperties": true
@@ -10820,7 +10992,8 @@
                       "type": "object",
                       "example": {
                         "database": {
-                          "status": "up"
+                          "status": "up",
+                          "responseTime": 12
                         }
                       },
                       "additionalProperties": {
@@ -10830,7 +11003,16 @@
                         ],
                         "properties": {
                           "status": {
-                            "type": "string"
+                            "type": "string",
+                            "enum": [
+                              "up",
+                              "degraded",
+                              "down"
+                            ]
+                          },
+                          "responseTime": {
+                            "type": "number",
+                            "description": "Time the health indicator took to respond, in ms"
                           }
                         },
                         "additionalProperties": true
@@ -10896,13 +11078,18 @@
                   "properties": {
                     "status": {
                       "type": "string",
+                      "enum": [
+                        "error",
+                        "shutting_down"
+                      ],
                       "example": "error"
                     },
                     "info": {
                       "type": "object",
                       "example": {
                         "database": {
-                          "status": "up"
+                          "status": "up",
+                          "responseTime": 12
                         }
                       },
                       "additionalProperties": {
@@ -10912,7 +11099,16 @@
                         ],
                         "properties": {
                           "status": {
-                            "type": "string"
+                            "type": "string",
+                            "enum": [
+                              "up",
+                              "degraded",
+                              "down"
+                            ]
+                          },
+                          "responseTime": {
+                            "type": "number",
+                            "description": "Time the health indicator took to respond, in ms"
                           }
                         },
                         "additionalProperties": true
@@ -10924,7 +11120,8 @@
                       "example": {
                         "redis": {
                           "status": "down",
-                          "message": "Could not connect"
+                          "message": "Could not connect",
+                          "responseTime": 3005
                         }
                       },
                       "additionalProperties": {
@@ -10934,7 +11131,16 @@
                         ],
                         "properties": {
                           "status": {
-                            "type": "string"
+                            "type": "string",
+                            "enum": [
+                              "up",
+                              "degraded",
+                              "down"
+                            ]
+                          },
+                          "responseTime": {
+                            "type": "number",
+                            "description": "Time the health indicator took to respond, in ms"
                           }
                         },
                         "additionalProperties": true
@@ -10945,11 +11151,13 @@
                       "type": "object",
                       "example": {
                         "database": {
-                          "status": "up"
+                          "status": "up",
+                          "responseTime": 12
                         },
                         "redis": {
                           "status": "down",
-                          "message": "Could not connect"
+                          "message": "Could not connect",
+                          "responseTime": 3005
                         }
                       },
                       "additionalProperties": {
@@ -10959,7 +11167,16 @@
                         ],
                         "properties": {
                           "status": {
-                            "type": "string"
+                            "type": "string",
+                            "enum": [
+                              "up",
+                              "degraded",
+                              "down"
+                            ]
+                          },
+                          "responseTime": {
+                            "type": "number",
+                            "description": "Time the health indicator took to respond, in ms"
                           }
                         },
                         "additionalProperties": true
@@ -10987,7 +11204,7 @@
     },
     "/health/database": {
       "get": {
-        "description": "Comprueba la conexión con la base de datos PostgreSQL",
+        "description": "Comprueba la conexión con PostgreSQL. Requiere JWT de administrador.",
         "operationId": "HealthController_checkDatabase",
         "parameters": [],
         "responses": {
@@ -11000,13 +11217,18 @@
                   "properties": {
                     "status": {
                       "type": "string",
+                      "enum": [
+                        "ok",
+                        "degraded"
+                      ],
                       "example": "ok"
                     },
                     "info": {
                       "type": "object",
                       "example": {
                         "database": {
-                          "status": "up"
+                          "status": "up",
+                          "responseTime": 12
                         }
                       },
                       "additionalProperties": {
@@ -11016,7 +11238,16 @@
                         ],
                         "properties": {
                           "status": {
-                            "type": "string"
+                            "type": "string",
+                            "enum": [
+                              "up",
+                              "degraded",
+                              "down"
+                            ]
+                          },
+                          "responseTime": {
+                            "type": "number",
+                            "description": "Time the health indicator took to respond, in ms"
                           }
                         },
                         "additionalProperties": true
@@ -11033,7 +11264,16 @@
                         ],
                         "properties": {
                           "status": {
-                            "type": "string"
+                            "type": "string",
+                            "enum": [
+                              "up",
+                              "degraded",
+                              "down"
+                            ]
+                          },
+                          "responseTime": {
+                            "type": "number",
+                            "description": "Time the health indicator took to respond, in ms"
                           }
                         },
                         "additionalProperties": true
@@ -11044,7 +11284,8 @@
                       "type": "object",
                       "example": {
                         "database": {
-                          "status": "up"
+                          "status": "up",
+                          "responseTime": 12
                         }
                       },
                       "additionalProperties": {
@@ -11054,7 +11295,16 @@
                         ],
                         "properties": {
                           "status": {
-                            "type": "string"
+                            "type": "string",
+                            "enum": [
+                              "up",
+                              "degraded",
+                              "down"
+                            ]
+                          },
+                          "responseTime": {
+                            "type": "number",
+                            "description": "Time the health indicator took to respond, in ms"
                           }
                         },
                         "additionalProperties": true
@@ -11120,13 +11370,18 @@
                   "properties": {
                     "status": {
                       "type": "string",
+                      "enum": [
+                        "error",
+                        "shutting_down"
+                      ],
                       "example": "error"
                     },
                     "info": {
                       "type": "object",
                       "example": {
                         "database": {
-                          "status": "up"
+                          "status": "up",
+                          "responseTime": 12
                         }
                       },
                       "additionalProperties": {
@@ -11136,7 +11391,16 @@
                         ],
                         "properties": {
                           "status": {
-                            "type": "string"
+                            "type": "string",
+                            "enum": [
+                              "up",
+                              "degraded",
+                              "down"
+                            ]
+                          },
+                          "responseTime": {
+                            "type": "number",
+                            "description": "Time the health indicator took to respond, in ms"
                           }
                         },
                         "additionalProperties": true
@@ -11148,7 +11412,8 @@
                       "example": {
                         "redis": {
                           "status": "down",
-                          "message": "Could not connect"
+                          "message": "Could not connect",
+                          "responseTime": 3005
                         }
                       },
                       "additionalProperties": {
@@ -11158,7 +11423,16 @@
                         ],
                         "properties": {
                           "status": {
-                            "type": "string"
+                            "type": "string",
+                            "enum": [
+                              "up",
+                              "degraded",
+                              "down"
+                            ]
+                          },
+                          "responseTime": {
+                            "type": "number",
+                            "description": "Time the health indicator took to respond, in ms"
                           }
                         },
                         "additionalProperties": true
@@ -11169,11 +11443,13 @@
                       "type": "object",
                       "example": {
                         "database": {
-                          "status": "up"
+                          "status": "up",
+                          "responseTime": 12
                         },
                         "redis": {
                           "status": "down",
-                          "message": "Could not connect"
+                          "message": "Could not connect",
+                          "responseTime": 3005
                         }
                       },
                       "additionalProperties": {
@@ -11183,7 +11459,16 @@
                         ],
                         "properties": {
                           "status": {
-                            "type": "string"
+                            "type": "string",
+                            "enum": [
+                              "up",
+                              "degraded",
+                              "down"
+                            ]
+                          },
+                          "responseTime": {
+                            "type": "number",
+                            "description": "Time the health indicator took to respond, in ms"
                           }
                         },
                         "additionalProperties": true
@@ -11221,13 +11506,18 @@
                   "properties": {
                     "status": {
                       "type": "string",
+                      "enum": [
+                        "ok",
+                        "degraded"
+                      ],
                       "example": "ok"
                     },
                     "info": {
                       "type": "object",
                       "example": {
                         "database": {
-                          "status": "up"
+                          "status": "up",
+                          "responseTime": 12
                         }
                       },
                       "additionalProperties": {
@@ -11237,7 +11527,16 @@
                         ],
                         "properties": {
                           "status": {
-                            "type": "string"
+                            "type": "string",
+                            "enum": [
+                              "up",
+                              "degraded",
+                              "down"
+                            ]
+                          },
+                          "responseTime": {
+                            "type": "number",
+                            "description": "Time the health indicator took to respond, in ms"
                           }
                         },
                         "additionalProperties": true
@@ -11254,7 +11553,16 @@
                         ],
                         "properties": {
                           "status": {
-                            "type": "string"
+                            "type": "string",
+                            "enum": [
+                              "up",
+                              "degraded",
+                              "down"
+                            ]
+                          },
+                          "responseTime": {
+                            "type": "number",
+                            "description": "Time the health indicator took to respond, in ms"
                           }
                         },
                         "additionalProperties": true
@@ -11265,7 +11573,8 @@
                       "type": "object",
                       "example": {
                         "database": {
-                          "status": "up"
+                          "status": "up",
+                          "responseTime": 12
                         }
                       },
                       "additionalProperties": {
@@ -11275,7 +11584,16 @@
                         ],
                         "properties": {
                           "status": {
-                            "type": "string"
+                            "type": "string",
+                            "enum": [
+                              "up",
+                              "degraded",
+                              "down"
+                            ]
+                          },
+                          "responseTime": {
+                            "type": "number",
+                            "description": "Time the health indicator took to respond, in ms"
                           }
                         },
                         "additionalProperties": true
@@ -11341,13 +11659,18 @@
                   "properties": {
                     "status": {
                       "type": "string",
+                      "enum": [
+                        "error",
+                        "shutting_down"
+                      ],
                       "example": "error"
                     },
                     "info": {
                       "type": "object",
                       "example": {
                         "database": {
-                          "status": "up"
+                          "status": "up",
+                          "responseTime": 12
                         }
                       },
                       "additionalProperties": {
@@ -11357,7 +11680,16 @@
                         ],
                         "properties": {
                           "status": {
-                            "type": "string"
+                            "type": "string",
+                            "enum": [
+                              "up",
+                              "degraded",
+                              "down"
+                            ]
+                          },
+                          "responseTime": {
+                            "type": "number",
+                            "description": "Time the health indicator took to respond, in ms"
                           }
                         },
                         "additionalProperties": true
@@ -11369,7 +11701,8 @@
                       "example": {
                         "redis": {
                           "status": "down",
-                          "message": "Could not connect"
+                          "message": "Could not connect",
+                          "responseTime": 3005
                         }
                       },
                       "additionalProperties": {
@@ -11379,7 +11712,16 @@
                         ],
                         "properties": {
                           "status": {
-                            "type": "string"
+                            "type": "string",
+                            "enum": [
+                              "up",
+                              "degraded",
+                              "down"
+                            ]
+                          },
+                          "responseTime": {
+                            "type": "number",
+                            "description": "Time the health indicator took to respond, in ms"
                           }
                         },
                         "additionalProperties": true
@@ -11390,11 +11732,13 @@
                       "type": "object",
                       "example": {
                         "database": {
-                          "status": "up"
+                          "status": "up",
+                          "responseTime": 12
                         },
                         "redis": {
                           "status": "down",
-                          "message": "Could not connect"
+                          "message": "Could not connect",
+                          "responseTime": 3005
                         }
                       },
                       "additionalProperties": {
@@ -11404,7 +11748,16 @@
                         ],
                         "properties": {
                           "status": {
-                            "type": "string"
+                            "type": "string",
+                            "enum": [
+                              "up",
+                              "degraded",
+                              "down"
+                            ]
+                          },
+                          "responseTime": {
+                            "type": "number",
+                            "description": "Time the health indicator took to respond, in ms"
                           }
                         },
                         "additionalProperties": true
@@ -11432,7 +11785,7 @@
     },
     "/health/valkey": {
       "get": {
-        "description": "Comprueba la conexión con el servidor Valkey",
+        "description": "Comprueba la conexión con Valkey. Requiere JWT de administrador.",
         "operationId": "HealthController_checkValkey",
         "parameters": [],
         "responses": {
@@ -11445,13 +11798,18 @@
                   "properties": {
                     "status": {
                       "type": "string",
+                      "enum": [
+                        "ok",
+                        "degraded"
+                      ],
                       "example": "ok"
                     },
                     "info": {
                       "type": "object",
                       "example": {
                         "database": {
-                          "status": "up"
+                          "status": "up",
+                          "responseTime": 12
                         }
                       },
                       "additionalProperties": {
@@ -11461,7 +11819,16 @@
                         ],
                         "properties": {
                           "status": {
-                            "type": "string"
+                            "type": "string",
+                            "enum": [
+                              "up",
+                              "degraded",
+                              "down"
+                            ]
+                          },
+                          "responseTime": {
+                            "type": "number",
+                            "description": "Time the health indicator took to respond, in ms"
                           }
                         },
                         "additionalProperties": true
@@ -11478,7 +11845,16 @@
                         ],
                         "properties": {
                           "status": {
-                            "type": "string"
+                            "type": "string",
+                            "enum": [
+                              "up",
+                              "degraded",
+                              "down"
+                            ]
+                          },
+                          "responseTime": {
+                            "type": "number",
+                            "description": "Time the health indicator took to respond, in ms"
                           }
                         },
                         "additionalProperties": true
@@ -11489,7 +11865,8 @@
                       "type": "object",
                       "example": {
                         "database": {
-                          "status": "up"
+                          "status": "up",
+                          "responseTime": 12
                         }
                       },
                       "additionalProperties": {
@@ -11499,7 +11876,16 @@
                         ],
                         "properties": {
                           "status": {
-                            "type": "string"
+                            "type": "string",
+                            "enum": [
+                              "up",
+                              "degraded",
+                              "down"
+                            ]
+                          },
+                          "responseTime": {
+                            "type": "number",
+                            "description": "Time the health indicator took to respond, in ms"
                           }
                         },
                         "additionalProperties": true
@@ -11565,13 +11951,18 @@
                   "properties": {
                     "status": {
                       "type": "string",
+                      "enum": [
+                        "error",
+                        "shutting_down"
+                      ],
                       "example": "error"
                     },
                     "info": {
                       "type": "object",
                       "example": {
                         "database": {
-                          "status": "up"
+                          "status": "up",
+                          "responseTime": 12
                         }
                       },
                       "additionalProperties": {
@@ -11581,7 +11972,16 @@
                         ],
                         "properties": {
                           "status": {
-                            "type": "string"
+                            "type": "string",
+                            "enum": [
+                              "up",
+                              "degraded",
+                              "down"
+                            ]
+                          },
+                          "responseTime": {
+                            "type": "number",
+                            "description": "Time the health indicator took to respond, in ms"
                           }
                         },
                         "additionalProperties": true
@@ -11593,7 +11993,8 @@
                       "example": {
                         "redis": {
                           "status": "down",
-                          "message": "Could not connect"
+                          "message": "Could not connect",
+                          "responseTime": 3005
                         }
                       },
                       "additionalProperties": {
@@ -11603,7 +12004,16 @@
                         ],
                         "properties": {
                           "status": {
-                            "type": "string"
+                            "type": "string",
+                            "enum": [
+                              "up",
+                              "degraded",
+                              "down"
+                            ]
+                          },
+                          "responseTime": {
+                            "type": "number",
+                            "description": "Time the health indicator took to respond, in ms"
                           }
                         },
                         "additionalProperties": true
@@ -11614,11 +12024,13 @@
                       "type": "object",
                       "example": {
                         "database": {
-                          "status": "up"
+                          "status": "up",
+                          "responseTime": 12
                         },
                         "redis": {
                           "status": "down",
-                          "message": "Could not connect"
+                          "message": "Could not connect",
+                          "responseTime": 3005
                         }
                       },
                       "additionalProperties": {
@@ -11628,7 +12040,16 @@
                         ],
                         "properties": {
                           "status": {
-                            "type": "string"
+                            "type": "string",
+                            "enum": [
+                              "up",
+                              "degraded",
+                              "down"
+                            ]
+                          },
+                          "responseTime": {
+                            "type": "number",
+                            "description": "Time the health indicator took to respond, in ms"
                           }
                         },
                         "additionalProperties": true
@@ -11666,13 +12087,18 @@
                   "properties": {
                     "status": {
                       "type": "string",
+                      "enum": [
+                        "ok",
+                        "degraded"
+                      ],
                       "example": "ok"
                     },
                     "info": {
                       "type": "object",
                       "example": {
                         "database": {
-                          "status": "up"
+                          "status": "up",
+                          "responseTime": 12
                         }
                       },
                       "additionalProperties": {
@@ -11682,7 +12108,16 @@
                         ],
                         "properties": {
                           "status": {
-                            "type": "string"
+                            "type": "string",
+                            "enum": [
+                              "up",
+                              "degraded",
+                              "down"
+                            ]
+                          },
+                          "responseTime": {
+                            "type": "number",
+                            "description": "Time the health indicator took to respond, in ms"
                           }
                         },
                         "additionalProperties": true
@@ -11699,7 +12134,16 @@
                         ],
                         "properties": {
                           "status": {
-                            "type": "string"
+                            "type": "string",
+                            "enum": [
+                              "up",
+                              "degraded",
+                              "down"
+                            ]
+                          },
+                          "responseTime": {
+                            "type": "number",
+                            "description": "Time the health indicator took to respond, in ms"
                           }
                         },
                         "additionalProperties": true
@@ -11710,7 +12154,8 @@
                       "type": "object",
                       "example": {
                         "database": {
-                          "status": "up"
+                          "status": "up",
+                          "responseTime": 12
                         }
                       },
                       "additionalProperties": {
@@ -11720,7 +12165,16 @@
                         ],
                         "properties": {
                           "status": {
-                            "type": "string"
+                            "type": "string",
+                            "enum": [
+                              "up",
+                              "degraded",
+                              "down"
+                            ]
+                          },
+                          "responseTime": {
+                            "type": "number",
+                            "description": "Time the health indicator took to respond, in ms"
                           }
                         },
                         "additionalProperties": true
@@ -11786,13 +12240,18 @@
                   "properties": {
                     "status": {
                       "type": "string",
+                      "enum": [
+                        "error",
+                        "shutting_down"
+                      ],
                       "example": "error"
                     },
                     "info": {
                       "type": "object",
                       "example": {
                         "database": {
-                          "status": "up"
+                          "status": "up",
+                          "responseTime": 12
                         }
                       },
                       "additionalProperties": {
@@ -11802,7 +12261,16 @@
                         ],
                         "properties": {
                           "status": {
-                            "type": "string"
+                            "type": "string",
+                            "enum": [
+                              "up",
+                              "degraded",
+                              "down"
+                            ]
+                          },
+                          "responseTime": {
+                            "type": "number",
+                            "description": "Time the health indicator took to respond, in ms"
                           }
                         },
                         "additionalProperties": true
@@ -11814,7 +12282,8 @@
                       "example": {
                         "redis": {
                           "status": "down",
-                          "message": "Could not connect"
+                          "message": "Could not connect",
+                          "responseTime": 3005
                         }
                       },
                       "additionalProperties": {
@@ -11824,7 +12293,16 @@
                         ],
                         "properties": {
                           "status": {
-                            "type": "string"
+                            "type": "string",
+                            "enum": [
+                              "up",
+                              "degraded",
+                              "down"
+                            ]
+                          },
+                          "responseTime": {
+                            "type": "number",
+                            "description": "Time the health indicator took to respond, in ms"
                           }
                         },
                         "additionalProperties": true
@@ -11835,11 +12313,13 @@
                       "type": "object",
                       "example": {
                         "database": {
-                          "status": "up"
+                          "status": "up",
+                          "responseTime": 12
                         },
                         "redis": {
                           "status": "down",
-                          "message": "Could not connect"
+                          "message": "Could not connect",
+                          "responseTime": 3005
                         }
                       },
                       "additionalProperties": {
@@ -11849,7 +12329,16 @@
                         ],
                         "properties": {
                           "status": {
-                            "type": "string"
+                            "type": "string",
+                            "enum": [
+                              "up",
+                              "degraded",
+                              "down"
+                            ]
+                          },
+                          "responseTime": {
+                            "type": "number",
+                            "description": "Time the health indicator took to respond, in ms"
                           }
                         },
                         "additionalProperties": true
@@ -11890,13 +12379,18 @@
                   "properties": {
                     "status": {
                       "type": "string",
+                      "enum": [
+                        "ok",
+                        "degraded"
+                      ],
                       "example": "ok"
                     },
                     "info": {
                       "type": "object",
                       "example": {
                         "database": {
-                          "status": "up"
+                          "status": "up",
+                          "responseTime": 12
                         }
                       },
                       "additionalProperties": {
@@ -11906,7 +12400,16 @@
                         ],
                         "properties": {
                           "status": {
-                            "type": "string"
+                            "type": "string",
+                            "enum": [
+                              "up",
+                              "degraded",
+                              "down"
+                            ]
+                          },
+                          "responseTime": {
+                            "type": "number",
+                            "description": "Time the health indicator took to respond, in ms"
                           }
                         },
                         "additionalProperties": true
@@ -11923,7 +12426,16 @@
                         ],
                         "properties": {
                           "status": {
-                            "type": "string"
+                            "type": "string",
+                            "enum": [
+                              "up",
+                              "degraded",
+                              "down"
+                            ]
+                          },
+                          "responseTime": {
+                            "type": "number",
+                            "description": "Time the health indicator took to respond, in ms"
                           }
                         },
                         "additionalProperties": true
@@ -11934,7 +12446,8 @@
                       "type": "object",
                       "example": {
                         "database": {
-                          "status": "up"
+                          "status": "up",
+                          "responseTime": 12
                         }
                       },
                       "additionalProperties": {
@@ -11944,7 +12457,16 @@
                         ],
                         "properties": {
                           "status": {
-                            "type": "string"
+                            "type": "string",
+                            "enum": [
+                              "up",
+                              "degraded",
+                              "down"
+                            ]
+                          },
+                          "responseTime": {
+                            "type": "number",
+                            "description": "Time the health indicator took to respond, in ms"
                           }
                         },
                         "additionalProperties": true
@@ -12010,13 +12532,18 @@
                   "properties": {
                     "status": {
                       "type": "string",
+                      "enum": [
+                        "error",
+                        "shutting_down"
+                      ],
                       "example": "error"
                     },
                     "info": {
                       "type": "object",
                       "example": {
                         "database": {
-                          "status": "up"
+                          "status": "up",
+                          "responseTime": 12
                         }
                       },
                       "additionalProperties": {
@@ -12026,7 +12553,16 @@
                         ],
                         "properties": {
                           "status": {
-                            "type": "string"
+                            "type": "string",
+                            "enum": [
+                              "up",
+                              "degraded",
+                              "down"
+                            ]
+                          },
+                          "responseTime": {
+                            "type": "number",
+                            "description": "Time the health indicator took to respond, in ms"
                           }
                         },
                         "additionalProperties": true
@@ -12038,7 +12574,8 @@
                       "example": {
                         "redis": {
                           "status": "down",
-                          "message": "Could not connect"
+                          "message": "Could not connect",
+                          "responseTime": 3005
                         }
                       },
                       "additionalProperties": {
@@ -12048,7 +12585,16 @@
                         ],
                         "properties": {
                           "status": {
-                            "type": "string"
+                            "type": "string",
+                            "enum": [
+                              "up",
+                              "degraded",
+                              "down"
+                            ]
+                          },
+                          "responseTime": {
+                            "type": "number",
+                            "description": "Time the health indicator took to respond, in ms"
                           }
                         },
                         "additionalProperties": true
@@ -12059,11 +12605,13 @@
                       "type": "object",
                       "example": {
                         "database": {
-                          "status": "up"
+                          "status": "up",
+                          "responseTime": 12
                         },
                         "redis": {
                           "status": "down",
-                          "message": "Could not connect"
+                          "message": "Could not connect",
+                          "responseTime": 3005
                         }
                       },
                       "additionalProperties": {
@@ -12073,7 +12621,16 @@
                         ],
                         "properties": {
                           "status": {
-                            "type": "string"
+                            "type": "string",
+                            "enum": [
+                              "up",
+                              "degraded",
+                              "down"
+                            ]
+                          },
+                          "responseTime": {
+                            "type": "number",
+                            "description": "Time the health indicator took to respond, in ms"
                           }
                         },
                         "additionalProperties": true
@@ -12111,13 +12668,18 @@
                   "properties": {
                     "status": {
                       "type": "string",
+                      "enum": [
+                        "ok",
+                        "degraded"
+                      ],
                       "example": "ok"
                     },
                     "info": {
                       "type": "object",
                       "example": {
                         "database": {
-                          "status": "up"
+                          "status": "up",
+                          "responseTime": 12
                         }
                       },
                       "additionalProperties": {
@@ -12127,7 +12689,16 @@
                         ],
                         "properties": {
                           "status": {
-                            "type": "string"
+                            "type": "string",
+                            "enum": [
+                              "up",
+                              "degraded",
+                              "down"
+                            ]
+                          },
+                          "responseTime": {
+                            "type": "number",
+                            "description": "Time the health indicator took to respond, in ms"
                           }
                         },
                         "additionalProperties": true
@@ -12144,7 +12715,16 @@
                         ],
                         "properties": {
                           "status": {
-                            "type": "string"
+                            "type": "string",
+                            "enum": [
+                              "up",
+                              "degraded",
+                              "down"
+                            ]
+                          },
+                          "responseTime": {
+                            "type": "number",
+                            "description": "Time the health indicator took to respond, in ms"
                           }
                         },
                         "additionalProperties": true
@@ -12155,7 +12735,8 @@
                       "type": "object",
                       "example": {
                         "database": {
-                          "status": "up"
+                          "status": "up",
+                          "responseTime": 12
                         }
                       },
                       "additionalProperties": {
@@ -12165,7 +12746,16 @@
                         ],
                         "properties": {
                           "status": {
-                            "type": "string"
+                            "type": "string",
+                            "enum": [
+                              "up",
+                              "degraded",
+                              "down"
+                            ]
+                          },
+                          "responseTime": {
+                            "type": "number",
+                            "description": "Time the health indicator took to respond, in ms"
                           }
                         },
                         "additionalProperties": true
@@ -12231,13 +12821,18 @@
                   "properties": {
                     "status": {
                       "type": "string",
+                      "enum": [
+                        "error",
+                        "shutting_down"
+                      ],
                       "example": "error"
                     },
                     "info": {
                       "type": "object",
                       "example": {
                         "database": {
-                          "status": "up"
+                          "status": "up",
+                          "responseTime": 12
                         }
                       },
                       "additionalProperties": {
@@ -12247,7 +12842,16 @@
                         ],
                         "properties": {
                           "status": {
-                            "type": "string"
+                            "type": "string",
+                            "enum": [
+                              "up",
+                              "degraded",
+                              "down"
+                            ]
+                          },
+                          "responseTime": {
+                            "type": "number",
+                            "description": "Time the health indicator took to respond, in ms"
                           }
                         },
                         "additionalProperties": true
@@ -12259,7 +12863,8 @@
                       "example": {
                         "redis": {
                           "status": "down",
-                          "message": "Could not connect"
+                          "message": "Could not connect",
+                          "responseTime": 3005
                         }
                       },
                       "additionalProperties": {
@@ -12269,7 +12874,16 @@
                         ],
                         "properties": {
                           "status": {
-                            "type": "string"
+                            "type": "string",
+                            "enum": [
+                              "up",
+                              "degraded",
+                              "down"
+                            ]
+                          },
+                          "responseTime": {
+                            "type": "number",
+                            "description": "Time the health indicator took to respond, in ms"
                           }
                         },
                         "additionalProperties": true
@@ -12280,11 +12894,13 @@
                       "type": "object",
                       "example": {
                         "database": {
-                          "status": "up"
+                          "status": "up",
+                          "responseTime": 12
                         },
                         "redis": {
                           "status": "down",
-                          "message": "Could not connect"
+                          "message": "Could not connect",
+                          "responseTime": 3005
                         }
                       },
                       "additionalProperties": {
@@ -12294,7 +12910,16 @@
                         ],
                         "properties": {
                           "status": {
-                            "type": "string"
+                            "type": "string",
+                            "enum": [
+                              "up",
+                              "degraded",
+                              "down"
+                            ]
+                          },
+                          "responseTime": {
+                            "type": "number",
+                            "description": "Time the health indicator took to respond, in ms"
                           }
                         },
                         "additionalProperties": true
@@ -12335,13 +12960,18 @@
                   "properties": {
                     "status": {
                       "type": "string",
+                      "enum": [
+                        "ok",
+                        "degraded"
+                      ],
                       "example": "ok"
                     },
                     "info": {
                       "type": "object",
                       "example": {
                         "database": {
-                          "status": "up"
+                          "status": "up",
+                          "responseTime": 12
                         }
                       },
                       "additionalProperties": {
@@ -12351,7 +12981,16 @@
                         ],
                         "properties": {
                           "status": {
-                            "type": "string"
+                            "type": "string",
+                            "enum": [
+                              "up",
+                              "degraded",
+                              "down"
+                            ]
+                          },
+                          "responseTime": {
+                            "type": "number",
+                            "description": "Time the health indicator took to respond, in ms"
                           }
                         },
                         "additionalProperties": true
@@ -12368,7 +13007,16 @@
                         ],
                         "properties": {
                           "status": {
-                            "type": "string"
+                            "type": "string",
+                            "enum": [
+                              "up",
+                              "degraded",
+                              "down"
+                            ]
+                          },
+                          "responseTime": {
+                            "type": "number",
+                            "description": "Time the health indicator took to respond, in ms"
                           }
                         },
                         "additionalProperties": true
@@ -12379,7 +13027,8 @@
                       "type": "object",
                       "example": {
                         "database": {
-                          "status": "up"
+                          "status": "up",
+                          "responseTime": 12
                         }
                       },
                       "additionalProperties": {
@@ -12389,7 +13038,16 @@
                         ],
                         "properties": {
                           "status": {
-                            "type": "string"
+                            "type": "string",
+                            "enum": [
+                              "up",
+                              "degraded",
+                              "down"
+                            ]
+                          },
+                          "responseTime": {
+                            "type": "number",
+                            "description": "Time the health indicator took to respond, in ms"
                           }
                         },
                         "additionalProperties": true
@@ -12455,13 +13113,18 @@
                   "properties": {
                     "status": {
                       "type": "string",
+                      "enum": [
+                        "error",
+                        "shutting_down"
+                      ],
                       "example": "error"
                     },
                     "info": {
                       "type": "object",
                       "example": {
                         "database": {
-                          "status": "up"
+                          "status": "up",
+                          "responseTime": 12
                         }
                       },
                       "additionalProperties": {
@@ -12471,7 +13134,16 @@
                         ],
                         "properties": {
                           "status": {
-                            "type": "string"
+                            "type": "string",
+                            "enum": [
+                              "up",
+                              "degraded",
+                              "down"
+                            ]
+                          },
+                          "responseTime": {
+                            "type": "number",
+                            "description": "Time the health indicator took to respond, in ms"
                           }
                         },
                         "additionalProperties": true
@@ -12483,7 +13155,8 @@
                       "example": {
                         "redis": {
                           "status": "down",
-                          "message": "Could not connect"
+                          "message": "Could not connect",
+                          "responseTime": 3005
                         }
                       },
                       "additionalProperties": {
@@ -12493,7 +13166,16 @@
                         ],
                         "properties": {
                           "status": {
-                            "type": "string"
+                            "type": "string",
+                            "enum": [
+                              "up",
+                              "degraded",
+                              "down"
+                            ]
+                          },
+                          "responseTime": {
+                            "type": "number",
+                            "description": "Time the health indicator took to respond, in ms"
                           }
                         },
                         "additionalProperties": true
@@ -12504,11 +13186,13 @@
                       "type": "object",
                       "example": {
                         "database": {
-                          "status": "up"
+                          "status": "up",
+                          "responseTime": 12
                         },
                         "redis": {
                           "status": "down",
-                          "message": "Could not connect"
+                          "message": "Could not connect",
+                          "responseTime": 3005
                         }
                       },
                       "additionalProperties": {
@@ -12518,7 +13202,16 @@
                         ],
                         "properties": {
                           "status": {
-                            "type": "string"
+                            "type": "string",
+                            "enum": [
+                              "up",
+                              "degraded",
+                              "down"
+                            ]
+                          },
+                          "responseTime": {
+                            "type": "number",
+                            "description": "Time the health indicator took to respond, in ms"
                           }
                         },
                         "additionalProperties": true
@@ -12556,13 +13249,18 @@
                   "properties": {
                     "status": {
                       "type": "string",
+                      "enum": [
+                        "ok",
+                        "degraded"
+                      ],
                       "example": "ok"
                     },
                     "info": {
                       "type": "object",
                       "example": {
                         "database": {
-                          "status": "up"
+                          "status": "up",
+                          "responseTime": 12
                         }
                       },
                       "additionalProperties": {
@@ -12572,7 +13270,16 @@
                         ],
                         "properties": {
                           "status": {
-                            "type": "string"
+                            "type": "string",
+                            "enum": [
+                              "up",
+                              "degraded",
+                              "down"
+                            ]
+                          },
+                          "responseTime": {
+                            "type": "number",
+                            "description": "Time the health indicator took to respond, in ms"
                           }
                         },
                         "additionalProperties": true
@@ -12589,7 +13296,16 @@
                         ],
                         "properties": {
                           "status": {
-                            "type": "string"
+                            "type": "string",
+                            "enum": [
+                              "up",
+                              "degraded",
+                              "down"
+                            ]
+                          },
+                          "responseTime": {
+                            "type": "number",
+                            "description": "Time the health indicator took to respond, in ms"
                           }
                         },
                         "additionalProperties": true
@@ -12600,7 +13316,8 @@
                       "type": "object",
                       "example": {
                         "database": {
-                          "status": "up"
+                          "status": "up",
+                          "responseTime": 12
                         }
                       },
                       "additionalProperties": {
@@ -12610,7 +13327,16 @@
                         ],
                         "properties": {
                           "status": {
-                            "type": "string"
+                            "type": "string",
+                            "enum": [
+                              "up",
+                              "degraded",
+                              "down"
+                            ]
+                          },
+                          "responseTime": {
+                            "type": "number",
+                            "description": "Time the health indicator took to respond, in ms"
                           }
                         },
                         "additionalProperties": true
@@ -12676,13 +13402,18 @@
                   "properties": {
                     "status": {
                       "type": "string",
+                      "enum": [
+                        "error",
+                        "shutting_down"
+                      ],
                       "example": "error"
                     },
                     "info": {
                       "type": "object",
                       "example": {
                         "database": {
-                          "status": "up"
+                          "status": "up",
+                          "responseTime": 12
                         }
                       },
                       "additionalProperties": {
@@ -12692,7 +13423,16 @@
                         ],
                         "properties": {
                           "status": {
-                            "type": "string"
+                            "type": "string",
+                            "enum": [
+                              "up",
+                              "degraded",
+                              "down"
+                            ]
+                          },
+                          "responseTime": {
+                            "type": "number",
+                            "description": "Time the health indicator took to respond, in ms"
                           }
                         },
                         "additionalProperties": true
@@ -12704,7 +13444,8 @@
                       "example": {
                         "redis": {
                           "status": "down",
-                          "message": "Could not connect"
+                          "message": "Could not connect",
+                          "responseTime": 3005
                         }
                       },
                       "additionalProperties": {
@@ -12714,7 +13455,16 @@
                         ],
                         "properties": {
                           "status": {
-                            "type": "string"
+                            "type": "string",
+                            "enum": [
+                              "up",
+                              "degraded",
+                              "down"
+                            ]
+                          },
+                          "responseTime": {
+                            "type": "number",
+                            "description": "Time the health indicator took to respond, in ms"
                           }
                         },
                         "additionalProperties": true
@@ -12725,11 +13475,13 @@
                       "type": "object",
                       "example": {
                         "database": {
-                          "status": "up"
+                          "status": "up",
+                          "responseTime": 12
                         },
                         "redis": {
                           "status": "down",
-                          "message": "Could not connect"
+                          "message": "Could not connect",
+                          "responseTime": 3005
                         }
                       },
                       "additionalProperties": {
@@ -12739,7 +13491,16 @@
                         ],
                         "properties": {
                           "status": {
-                            "type": "string"
+                            "type": "string",
+                            "enum": [
+                              "up",
+                              "degraded",
+                              "down"
+                            ]
+                          },
+                          "responseTime": {
+                            "type": "number",
+                            "description": "Time the health indicator took to respond, in ms"
                           }
                         },
                         "additionalProperties": true
@@ -12885,7 +13646,7 @@
           },
           {
             "name": "regionId",
-            "required": true,
+            "required": false,
             "in": "query",
             "schema": {
               "type": "string"
@@ -13148,7 +13909,7 @@
         "parameters": [
           {
             "name": "regionId",
-            "required": true,
+            "required": false,
             "in": "query",
             "schema": {
               "type": "string"
@@ -13238,7 +13999,7 @@
           },
           {
             "name": "regionId",
-            "required": true,
+            "required": false,
             "in": "query",
             "schema": {
               "type": "string"
@@ -13603,7 +14364,11 @@
             "in": "query",
             "schema": {
               "example": "DESC",
-              "type": "string"
+              "type": "string",
+              "enum": [
+                "ASC",
+                "DESC"
+              ]
             }
           }
         ],
@@ -14263,7 +15028,8 @@
                 "md",
                 "lg"
               ],
-              "type": "string"
+              "type": "string",
+              "example": "original"
             }
           }
         ],
@@ -14500,6 +15266,7 @@
         "properties": {
           "email": {
             "type": "string",
+            "format": "email",
             "description": "Dirección de correo electrónico del usuario",
             "example": "email@gmail.com"
           },
@@ -14510,6 +15277,7 @@
           },
           "password": {
             "type": "string",
+            "minLength": 8,
             "description": "Contraseña del usuario (opcional si se usa Google OAuth)",
             "example": "hashedPassword"
           },
@@ -14525,9 +15293,9 @@
           },
           "age": {
             "type": "number",
+            "minimum": 0,
             "description": "Edad del usuario",
-            "example": 30,
-            "minimum": 0
+            "example": 30
           },
           "isRightHanded": {
             "type": "boolean",
@@ -14552,9 +15320,9 @@
         "properties": {
           "email": {
             "type": "string",
+            "format": "email",
             "description": "Correo electrónico del usuario",
-            "example": "email@gmail.com",
-            "format": "email"
+            "example": "email@gmail.com"
           },
           "password": {
             "type": "string",
@@ -14591,9 +15359,9 @@
           },
           "newPassword": {
             "type": "string",
+            "minLength": 8,
             "description": "Nueva contraseña (mínimo 8 caracteres)",
-            "example": "NuevaClaveSegura1",
-            "minLength": 8
+            "example": "NuevaClaveSegura1"
           }
         },
         "required": [
@@ -14606,17 +15374,8 @@
         "properties": {
           "email": {
             "type": "string",
-            "example": "email@gmail.com",
-            "format": "email"
-          },
-          "googleId": {
-            "type": "string",
-            "example": "google123456789"
-          },
-          "hashPassword": {
-            "type": "string",
-            "description": "Hash actual (interno)",
-            "example": "hashedPassword"
+            "format": "email",
+            "example": "email@gmail.com"
           },
           "oldPassword": {
             "type": "string",
@@ -14624,6 +15383,7 @@
           },
           "newPassword": {
             "type": "string",
+            "minLength": 8,
             "description": "Nueva contraseña"
           },
           "firstName": {
@@ -14636,16 +15396,12 @@
           },
           "age": {
             "type": "number",
-            "example": 30,
-            "minimum": 0
+            "minimum": 0,
+            "example": 30
           },
           "isRightHanded": {
             "type": "boolean",
             "example": true
-          },
-          "role": {
-            "type": "string",
-            "example": "user"
           }
         }
       },
@@ -14654,14 +15410,14 @@
         "properties": {
           "languageId": {
             "type": "string",
-            "description": "ID del lenguaje a inscribir",
             "format": "uuid",
+            "description": "ID del lenguaje a inscribir",
             "example": "8dc31a49-64ae-4c94-b867-d818ce9441e6"
           },
           "regionId": {
             "type": "string",
-            "description": "ID de la región (opcional)",
             "format": "uuid",
+            "description": "ID de la región (opcional)",
             "example": "c0a8012e-0000-4000-8000-000000000001"
           }
         },
@@ -15268,6 +16024,7 @@
             "example": "¿Cuál es la seña de hola?"
           },
           "options": {
+            "minItems": 1,
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/OptionDto"
@@ -15288,6 +16045,7 @@
             "example": "8dc31a49-64ae-4c94-b867-d818ce9441e6"
           },
           "questions": {
+            "minItems": 1,
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/QuestionDto"
@@ -15388,6 +16146,8 @@
         "type": "object",
         "properties": {
           "answers": {
+            "minItems": 1,
+            "maxItems": 100,
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/AnswerDto"
@@ -15469,6 +16229,7 @@
           },
           "isCorrect": {
             "type": "boolean",
+            "default": false,
             "example": false
           }
         },
@@ -15937,11 +16698,11 @@
             "format": "uuid"
           },
           "scope": {
-            "type": "string",
             "enum": [
               "language",
               "region"
             ],
+            "type": "string",
             "example": "language"
           },
           "targetId": {
