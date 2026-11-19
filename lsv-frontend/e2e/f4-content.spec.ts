@@ -1,4 +1,5 @@
 import { expect, test } from "./fixtures/roles";
+import { readFile } from "node:fs/promises";
 
 test("admin creates and edits a language in the content panel", async ({
   adminPage,
@@ -63,4 +64,32 @@ test("admin can open the content workspace and inspect its setup guidance", asyn
   await expect(
     adminPage.getByText(/Gestión|Etapas|Regiones|Lecciones/).first(),
   ).toBeVisible();
+});
+
+test("admin creates a stage from the language workspace", async ({
+  adminPage,
+}) => {
+  const curriculum = JSON.parse(
+    await readFile("e2e/.auth/curriculum.json", "utf8"),
+  ) as { languageId: string };
+  const stageName = `F4 Stage ${Date.now()}`;
+  await adminPage.goto(`/admin/languages/${curriculum.languageId}`);
+  await adminPage.getByText("Etapas", { exact: true }).first().click();
+  await expect(adminPage).toHaveURL(/\/admin\/stages/);
+
+  // Sin etapas el botón es el del estado vacío; con etapas, "Añadir etapa".
+  await adminPage
+    .getByRole("button", { name: /Crear etapa personalizada|Añadir etapa/ })
+    .first()
+    .click();
+  await adminPage.locator("#name").fill(stageName);
+  await adminPage.locator("#description").fill("F4 stage fixture");
+  const created = adminPage.waitForResponse(
+    (response) =>
+      response.url().endsWith("/api/stage") &&
+      response.request().method() === "POST",
+  );
+  await adminPage.getByRole("button", { name: "Crear Etapa" }).click();
+  expect((await created).status()).toBe(201);
+  await expect(adminPage.getByText(stageName, { exact: true })).toBeVisible();
 });
