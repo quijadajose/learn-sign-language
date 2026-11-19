@@ -68,7 +68,9 @@
     "loadRegions": "Error de conexión al cargar las regiones",
     "loadVariants": "Error de conexión al cargar las variantes",
     "deleteVariant": "Error de conexión al eliminar la variante",
-    "loadModerators": "Error de conexión al cargar moderadores"
+    "loadModerators": "Error de conexión al cargar moderadores",
+    "serviceUnavailable": "El servicio no responde. Revisa tu conexión e inténtalo de nuevo.",
+    "retry": "Reintentar"
   },
   "feedback": {
     "regionalVariantUpdated": "Variante regional actualizada exitosamente",
