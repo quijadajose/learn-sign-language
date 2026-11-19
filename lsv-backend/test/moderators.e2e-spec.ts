@@ -8,6 +8,7 @@ import {
   findUserIdByEmail,
   getAdminToken,
   getUserToken,
+  accessTokenFromAuthResponse,
 } from './test-utils.js';
 
 describe('Moderators (e2e)', () => {
@@ -131,6 +132,63 @@ describe('Moderators (e2e)', () => {
         .delete(`/admin/moderators/${permissionId}`)
         .set('Authorization', `Bearer ${userToken}`)
         .expect(403);
+    });
+  });
+
+  /**
+   * BE-03: el rol `moderator` lo da el primer permiso y lo quita el último. Los guards
+   * leen el rol de la BD en cada request, así que el mismo token cambia de acceso.
+   */
+  describe('Role sync with permissions (BE-03)', () => {
+    it('promotes on the first permission and demotes on the last, without re-login', async () => {
+      const email = 'role-sync@example.com';
+      const password = 'password123';
+      await request(app.getHttpServer())
+        .post('/auth/register')
+        .send({
+          email,
+          password,
+          firstName: 'Role',
+          lastName: 'Sync',
+          age: 25,
+          isRightHanded: true,
+        })
+        .expect(201);
+      const userId = await findUserIdByEmail(dataSource, email);
+      const login = await request(app.getHttpServer())
+        .post('/auth/login')
+        .send({ email, password })
+        .expect(200);
+      const token = accessTokenFromAuthResponse(login);
+      const roleOf = async () =>
+        (
+          await dataSource
+            .getRepository('User')
+            .findOne({ where: { id: userId } })
+        )?.['role'];
+      const createSign = (name: string) =>
+        request(app.getHttpServer())
+          .post('/sign-record/sign')
+          .set('Authorization', `Bearer ${token}`)
+          .send({ name, languageId, detectionType: 'static' });
+
+      expect(await roleOf()).toBe('user');
+      await createSign('BE03 antes').expect(403);
+
+      const assigned = await request(app.getHttpServer())
+        .post('/admin/moderators')
+        .set('Authorization', `Bearer ${adminToken}`)
+        .send({ userId, scope: 'language', targetId: languageId })
+        .expect(201);
+      expect(await roleOf()).toBe('moderator');
+      await createSign('BE03 con permiso').expect(201);
+
+      await request(app.getHttpServer())
+        .delete(`/admin/moderators/${assigned.body.id}`)
+        .set('Authorization', `Bearer ${adminToken}`)
+        .expect(200);
+      expect(await roleOf()).toBe('user');
+      await createSign('BE03 revocado').expect(403);
     });
   });
 });
