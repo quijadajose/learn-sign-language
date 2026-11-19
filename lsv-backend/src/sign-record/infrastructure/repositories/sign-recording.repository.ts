@@ -114,10 +114,20 @@ export class TypeOrmSignRecordingRepository implements SignRecordingRepositoryIn
     return query;
   }
 
-  async findValidatedForLessonTraining(
+  async findValidatedLessonTrainingPage(
     lessonId: string,
-    regionId?: string,
+    regionId: string | undefined,
+    afterId: string | undefined,
+    limit: number,
   ): Promise<SignRecording[]> {
+    const query = this.buildLessonTrainingQuery(lessonId, regionId);
+    if (afterId) {
+      query.andWhere('recording.id > :afterId', { afterId });
+    }
+    return query.orderBy('recording.id', 'ASC').take(limit).getMany();
+  }
+
+  private buildLessonTrainingQuery(lessonId: string, regionId?: string) {
     const query = this.repository
       .createQueryBuilder('recording')
       .leftJoinAndSelect('recording.sign', 'sign')
@@ -131,7 +141,7 @@ export class TypeOrmSignRecordingRepository implements SignRecordingRepositoryIn
       query.andWhere('recording.regionId IS NULL');
     }
 
-    return query.getMany();
+    return query;
   }
 
   async findBySignAndRegion(

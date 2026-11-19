@@ -21,9 +21,12 @@ export interface SignRecordingRepositoryInterface {
     afterId: string | undefined,
     limit: number,
   ): Promise<SignRecording[]>;
-  findValidatedForLessonTraining(
+  /** BE-11: página (keyset por id) de grabaciones validadas de una lección + globales. */
+  findValidatedLessonTrainingPage(
     lessonId: string,
-    regionId?: string,
+    regionId: string | undefined,
+    afterId: string | undefined,
+    limit: number,
   ): Promise<SignRecording[]>;
   findBySignAndRegion(
     signId: string,
