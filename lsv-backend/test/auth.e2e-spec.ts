@@ -9,10 +9,16 @@ import {
   cookieHeaderFrom,
 } from './test-utils.js';
 import { OAuthCodeStore } from '../src/auth/infrastructure/oauth-code.store.js';
+import {
+  FakeMailTransporter,
+  extractResetToken,
+} from './fake-mail-transporter.js';
 
 describe('Authentication (e2e)', () => {
   let app: INestApplication;
   let dataSource: DataSource;
+  // Sin SMTP real: los correos quedan en memoria para poder inspeccionarlos.
+  const fakeMail = new FakeMailTransporter();
 
   const testUser = {
     email: 'test-e2e@example.com',
@@ -35,7 +41,10 @@ describe('Authentication (e2e)', () => {
   beforeAll(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
       imports: [AppModule],
-    }).compile();
+    })
+      .overrideProvider('MAIL_TRANSPORTER')
+      .useValue(fakeMail)
+      .compile();
 
     app = moduleFixture.createNestApplication();
 
@@ -55,6 +64,7 @@ describe('Authentication (e2e)', () => {
   beforeEach(async () => {
     // Limpiamos la base de datos antes de cada test
     await cleanDatabase(dataSource);
+    fakeMail.clear();
   });
 
   afterAll(async () => {
@@ -295,30 +305,61 @@ describe('Authentication (e2e)', () => {
     const resetMessage =
       'Si el correo existe, se ha enviado un enlace de restablecimiento.';
 
-    it('Should return the same message for an unknown email', async () => {
+    it('Should return the same message for an unknown email and send nothing', async () => {
       const response = await request(app.getHttpServer())
         .post('/auth/password/reset')
         .send({ email: 'missing-user@example.com' });
 
       expect([200, 201]).toContain(response.status);
       expect(response.body.message).toBe(resetMessage);
+      // El envío es en segundo plano: se da margen antes de afirmar que no hubo correo.
+      await new Promise((resolve) => setTimeout(resolve, 200));
+      expect(fakeMail.sent).toHaveLength(0);
     });
 
-    it('Should return the same message for an existing email', async () => {
+    it('Should email a working, single-use reset link to an existing user', async () => {
+      const email = 'reset-known@example.com';
       await request(app.getHttpServer())
         .post('/auth/register')
-        .send({
-          ...testUser,
-          email: 'reset-known@example.com',
-        })
+        .send({ ...testUser, email })
         .expect(201);
 
       const response = await request(app.getHttpServer())
         .post('/auth/password/reset')
-        .send({ email: 'reset-known@example.com' });
-
+        .send({ email });
       expect([200, 201]).toContain(response.status);
       expect(response.body.message).toBe(resetMessage);
+
+      const resetMail = await fakeMail.waitFor((m) => m.to === email);
+      expect(resetMail.subject).toContain('Restablecer');
+      expect(resetMail.html).toContain(
+        `${process.env.FRONTEND_URL}/reset-password#token=`,
+      );
+      const token = extractResetToken(resetMail.html);
+
+      await request(app.getHttpServer())
+        .post('/auth/password/reset/confirm')
+        .send({ token, newPassword: 'brandNewPass1' })
+        .expect(200);
+
+      // La contraseña nueva sirve y la vieja ya no.
+      await loginToken(email, 'brandNewPass1');
+      await request(app.getHttpServer())
+        .post('/auth/login')
+        .send({ email, password: testUser.password })
+        .expect(401);
+
+      // Aviso de contraseña cambiada.
+      const changedMail = await fakeMail.waitFor(
+        (m) => m.to === email && m.subject.includes('Actualizada'),
+      );
+      expect(changedMail.html).not.toContain('reset-password#token=');
+
+      // BE-12: el enlace es de un solo uso.
+      await request(app.getHttpServer())
+        .post('/auth/password/reset/confirm')
+        .send({ token, newPassword: 'anotherPass1' })
+        .expect(400);
     });
   });
 
