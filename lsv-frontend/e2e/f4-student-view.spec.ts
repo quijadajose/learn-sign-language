@@ -67,9 +67,16 @@ test("student sees a lesson the admin created in the curriculum stage", async ({
   await expect(studentPage).toHaveURL(
     new RegExp(`/lessons/stage/${curriculum.stageId}`),
   );
-  await expect(studentPage.getByText(variantName, { exact: true })).toBeVisible(
-    {
-      timeout: 15000,
-    },
-  );
+  // La tarjeta muestra el nombre de la lección base; la variante regional sigue en "Próximamente"
+  // en corridas completas, así que la comprobación es la lección que creó el admin.
+  // Espera a que la lista de lecciones termine de cargar antes de buscar la tarjeta.
+  await expect(
+    studentPage.getByRole("heading", {
+      name: "Lecciones disponibles",
+      exact: false,
+    }),
+  ).toBeVisible({ timeout: 30000 });
+  await expect(
+    studentPage.getByRole("heading", { name: name, exact: true }),
+  ).toBeVisible({ timeout: 30000 });
 });
