@@ -1,66 +1,11 @@
 import { expect, test } from "./fixtures/roles";
 import { readFile } from "node:fs/promises";
-import type { APIRequestContext } from "@playwright/test";
+import { createScoredStudent } from "./fixtures/students";
 
 type Curriculum = { quizId: string };
 type AdminQuiz = {
   questions: { id: string; options: { id: string; isCorrect: boolean }[] }[];
 };
-
-const RATE_LIMIT_WAIT_MS = 13_000;
-
-/** Repite la petición si la API limita (5 por minuto en registro y login). */
-async function withRateLimit<T extends { status(): number }>(
-  request: () => Promise<T>,
-): Promise<T> {
-  let response = await request();
-  for (let attempt = 0; attempt < 5 && response.status() === 429; attempt++) {
-    await new Promise((resolve) => setTimeout(resolve, RATE_LIMIT_WAIT_MS));
-    response = await request();
-  }
-  return response;
-}
-
-async function scoredStudent(
-  browser: import("@playwright/test").Browser,
-  baseURL: string,
-  quizId: string,
-  answers: { questionId: string; optionId: string }[],
-): Promise<string> {
-  const context = await browser.newContext({ baseURL });
-  const request: APIRequestContext = context.request;
-  const email = `pw-page-${Date.now()}-${Math.random().toString(36).slice(2, 7)}@example.com`;
-  const password = "Paging-password-9085";
-  const registered = await withRateLimit(() =>
-    request.post("/api/auth/register", {
-      headers: { Origin: baseURL },
-      data: {
-        email,
-        password,
-        firstName: "Page",
-        lastName: "Student",
-        age: 25,
-        isRightHanded: true,
-      },
-    }),
-  );
-  expect(registered.status()).toBe(201);
-  const login = await withRateLimit(() =>
-    request.post("/api/auth/login", {
-      headers: { Origin: baseURL },
-      data: { email, password },
-    }),
-  );
-  expect(login.status()).toBe(200);
-  const userId = (await login.json()).data.user.id as string;
-  const submitted = await request.post(`/api/quiz/${quizId}/submissions`, {
-    headers: { Origin: baseURL },
-    data: { answers },
-  });
-  expect(submitted.status()).toBe(201);
-  await context.close();
-  return userId;
-}
 
 test("leaderboard pages do not repeat users and keep the score order", async ({
   adminPage,
@@ -81,8 +26,24 @@ test("leaderboard pages do not repeat users and keep the score order", async ({
     optionId: question.options.find((option) => option.isCorrect)!.id,
   }));
 
-  const first = await scoredStudent(browser, baseURL!, quizId, answers);
-  const second = await scoredStudent(browser, baseURL!, quizId, answers);
+  const first = (
+    await createScoredStudent(
+      browser,
+      baseURL!,
+      quizId,
+      [answers],
+      `Page${Math.random().toString(36).slice(2, 8)}`,
+    )
+  ).userId;
+  const second = (
+    await createScoredStudent(
+      browser,
+      baseURL!,
+      quizId,
+      [answers],
+      `Page${Math.random().toString(36).slice(2, 8)}`,
+    )
+  ).userId;
 
   const page = async (n: number, limit: number) =>
     (await (
