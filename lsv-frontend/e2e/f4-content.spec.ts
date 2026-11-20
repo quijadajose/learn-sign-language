@@ -136,35 +136,64 @@ test("admin creates a region with an ISO division", async ({ adminPage }) => {
   const curriculum = JSON.parse(
     await readFile("e2e/.auth/curriculum.json", "utf8"),
   ) as { languageId: string; languageName: string };
-  // Visitar el espacio de trabajo deja el idioma seleccionado para el formulario de regiones.
-  await adminPage.goto(`/admin/languages/${curriculum.languageId}`);
-  await adminPage.goto("/admin/regions");
-  await adminPage
-    .getByRole("button", { name: /Crear Nueva Región|Crear primera región/ })
-    .first()
-    .click();
+  // El código ISO de la división es único en toda la base: en corridas sin limpiar, una división
+  // ya usada devuelve 409. El selector pide al menos 2 caracteres; se prueba con varias búsquedas
+  // y, por cada una, sus opciones hasta que una se cree (201).
+  const QUERIES = ["an", "ar", "er", "or", "al", "ca", "ta", "la"];
+  const MAX_OPTIONS_PER_QUERY = 3;
+  let status = 0;
+  let attempts = 0;
+  for (const query of QUERIES) {
+    for (
+      let index = 0;
+      index < MAX_OPTIONS_PER_QUERY && status !== 201;
+      index++
+    ) {
+      attempts++;
+      // Visitar el espacio de trabajo deja el idioma seleccionado para el formulario de regiones.
+      await adminPage.goto(`/admin/languages/${curriculum.languageId}`);
+      await adminPage.goto("/admin/regions");
+      await adminPage
+        .getByRole("button", {
+          name: /Crear Nueva Región|Crear primera región/,
+        })
+        .first()
+        .click();
 
-  // Las divisiones dependen del país del idioma elegido: se selecciona el idioma en el formulario.
-  await adminPage
-    .locator("#create-language input")
-    .fill(curriculum.languageName);
-  await adminPage
-    .getByText(curriculum.languageName, { exact: true })
-    .last()
-    .click();
-  // #create-division es el contenedor de react-select; el texto va en su input interno.
-  const divisionInput = adminPage.locator("#create-division input");
-  await divisionInput.fill("Alaska");
-  await adminPage.getByText("Alaska", { exact: false }).last().click();
-  await adminPage.locator("#create-description").fill("F4 region fixture");
+      // Las divisiones dependen del país del idioma elegido: se selecciona el idioma en el formulario.
+      await adminPage
+        .locator("#create-language input")
+        .fill(curriculum.languageName);
+      await adminPage
+        .getByText(curriculum.languageName, { exact: true })
+        .last()
+        .click();
+      // #create-division es el contenedor de react-select; el texto va en su input interno.
+      await adminPage.locator("#create-division input").fill(query);
+      const options = adminPage.locator(".react-select__option");
+      const found = await options
+        .nth(index)
+        .waitFor({ state: "visible", timeout: 5000 })
+        .then(() => true)
+        .catch(() => false);
+      if (!found) break;
+      await options.nth(index).click();
+      await adminPage.locator("#create-description").fill("F4 region fixture");
 
-  const created = adminPage.waitForResponse(
-    (response) =>
-      response.url().endsWith("/api/region") &&
-      response.request().method() === "POST",
-  );
-  await adminPage.getByRole("button", { name: "Crear Región" }).click();
-  expect((await created).status()).toBe(201);
+      const created = adminPage.waitForResponse(
+        (response) =>
+          response.url().endsWith("/api/region") &&
+          response.request().method() === "POST",
+      );
+      await adminPage.getByRole("button", { name: "Crear Región" }).click();
+      status = (await created).status();
+      if (status !== 201) {
+        expect(status).toBe(409);
+      }
+    }
+    if (status === 201) break;
+  }
+  expect(status, `sin división libre tras ${attempts} intentos`).toBe(201);
   await expect(
     adminPage.getByText("Región creada exitosamente", { exact: true }),
   ).toBeVisible();
