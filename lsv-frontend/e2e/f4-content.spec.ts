@@ -94,6 +94,44 @@ test("admin creates a stage from the language workspace", async ({
   await expect(adminPage.getByText(stageName, { exact: true })).toBeVisible();
 });
 
+test("admin sees an API-created stage in the list and renames it (AF-F4-01)", async ({
+  adminPage,
+  baseURL,
+}) => {
+  const curriculum = JSON.parse(
+    await readFile("e2e/.auth/curriculum.json", "utf8"),
+  ) as { languageId: string };
+  const admin = adminPage.context().request;
+  const stageName = `F4 Edit ${Date.now()}`;
+  const created = await admin.post("/api/stage", {
+    headers: { Origin: baseURL! },
+    data: {
+      name: stageName,
+      description: "F4 edit fixture",
+      languageId: curriculum.languageId,
+    },
+  });
+  expect(created.status()).toBe(201);
+
+  await adminPage.goto(`/admin/languages/${curriculum.languageId}`);
+  await adminPage.getByText("Etapas", { exact: true }).first().click();
+  await expect(adminPage).toHaveURL(/\/admin\/stages/);
+  const row = adminPage.getByRole("row", { name: stageName });
+  await expect(row).toBeVisible({ timeout: 15000 });
+
+  const renamed = `${stageName} (editada)`;
+  await row.getByRole("button", { name: "Editar", exact: true }).click();
+  await adminPage.locator("#edit-name").fill(renamed);
+  const saved = adminPage.waitForResponse(
+    (response) =>
+      response.url().includes("/api/stage/") &&
+      response.request().method() === "PUT",
+  );
+  await adminPage.getByRole("button", { name: "Guardar Cambios" }).click();
+  expect((await saved).ok()).toBe(true);
+  await expect(adminPage.getByText(renamed, { exact: true })).toBeVisible();
+});
+
 test("admin creates a region with an ISO division", async ({ adminPage }) => {
   const curriculum = JSON.parse(
     await readFile("e2e/.auth/curriculum.json", "utf8"),
