@@ -63,7 +63,11 @@ test("student sees a lesson the admin created in the curriculum stage", async ({
     name: `Progreso en ${curriculum.languageName}`,
   });
   // Si el alumno aún no está inscrito (prueba aislada), se inscribe como en F2.
-  if (!(await progress.isVisible({ timeout: 5000 }).catch(() => false))) {
+  const alreadyEnrolled = await progress
+    .waitFor({ state: "visible", timeout: 15000 })
+    .then(() => true)
+    .catch(() => false);
+  if (!alreadyEnrolled) {
     await selectLanguageCard(studentPage, curriculum.languageName);
     await studentPage.getByRole("button", { name: "Siguiente" }).click();
     const enrolled = studentPage.waitForResponse(
