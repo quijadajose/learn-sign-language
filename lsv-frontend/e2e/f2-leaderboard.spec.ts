@@ -74,7 +74,7 @@ test("leaderboard pages show distinct students across pages", async ({
   // La paginación de la UI tiene que cruzar de página: hacen falta más de una página.
   test.setTimeout(10 * 60_000);
   const admin = adminPage.context().request;
-  const { correct } = await quizAnswers(admin, curriculum.quizId);
+  const { wrong } = await quizAnswers(admin, curriculum.quizId);
   const countOf = async () =>
     (await (await admin.get("/api/leaderboard?page=1&limit=1")).json())
       .total as number;
@@ -82,11 +82,13 @@ test("leaderboard pages show distinct students across pages", async ({
   const needed = PAGE_SIZE + 1 - (await countOf());
   const suffix = Date.now().toString(36);
   for (let i = 0; i < Math.max(0, needed); i++) {
+    // Puntaje 0: así el alumno compartido (100) sigue arriba del ranking global y su
+    // fila no se pierde en la página 1 por empates.
     await createScoredStudent(
       browser,
       baseURL!,
       curriculum.quizId,
-      [correct],
+      [wrong],
       `Pager${suffix}${i}`,
     );
   }
