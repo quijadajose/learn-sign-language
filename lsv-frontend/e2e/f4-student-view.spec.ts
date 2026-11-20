@@ -1,5 +1,6 @@
 import { expect, test } from "./fixtures/roles";
 import { readFile } from "node:fs/promises";
+import { selectLanguageCard } from "./fixtures/language-picker";
 
 type Curriculum = {
   languageId: string;
@@ -58,11 +59,24 @@ test("student sees a lesson the admin created in the curriculum stage", async ({
     localStorage.setItem("selectedLanguageId", JSON.stringify(languageId));
   }, curriculum.languageId);
   await studentPage.reload();
-  await expect(
-    studentPage.getByRole("heading", {
-      name: `Progreso en ${curriculum.languageName}`,
-    }),
-  ).toBeVisible({ timeout: 15000 });
+  const progress = studentPage.getByRole("heading", {
+    name: `Progreso en ${curriculum.languageName}`,
+  });
+  // Si el alumno aún no está inscrito (prueba aislada), se inscribe como en F2.
+  if (!(await progress.isVisible({ timeout: 5000 }).catch(() => false))) {
+    await selectLanguageCard(studentPage, curriculum.languageName);
+    await studentPage.getByRole("button", { name: "Siguiente" }).click();
+    const enrolled = studentPage.waitForResponse(
+      (response) =>
+        response.url().endsWith("/api/users/enroll") &&
+        response.request().method() === "POST",
+    );
+    await studentPage
+      .getByText(curriculum.regionName, { exact: true })
+      .dispatchEvent("click");
+    expect((await enrolled).ok()).toBe(true);
+  }
+  await expect(progress).toBeVisible({ timeout: 15000 });
   await studentPage.getByRole("button", { name: "Ver Lecciones" }).click();
   await expect(studentPage).toHaveURL(
     new RegExp(`/lessons/stage/${curriculum.stageId}`),
@@ -76,7 +90,8 @@ test("student sees a lesson the admin created in the curriculum stage", async ({
       exact: false,
     }),
   ).toBeVisible({ timeout: 30000 });
+  // La lista muestra la variante ("<nombre> (variante)") o la lección base: basta con que contenga el nombre.
   await expect(
-    studentPage.getByRole("heading", { name: name, exact: true }),
+    studentPage.getByRole("heading", { name: name }).first(),
   ).toBeVisible({ timeout: 30000 });
 });
