@@ -180,11 +180,15 @@ test("a stalled lesson request ends with the timeout message after 10 s", async 
   ) as { lessonId: string };
   // Reloj falso: el timeout por defecto (10 s) se dispara sin esperar en tiempo real.
   await studentPage.clock.install();
-  await studentPage.route(`**/api/lesson/${curriculum.lessonId}**`, () => {
-    // Respuesta que nunca llega: la petición queda pendiente hasta el timeout.
-  });
+  // La vista del alumno pide /users/lesson/<id> (getUserLesson); esa es la petición que se congela.
+  await studentPage.route(
+    `**/api/users/lesson/${curriculum.lessonId}**`,
+    () => {
+      // Respuesta que nunca llega: la petición queda pendiente hasta el timeout.
+    },
+  );
   const stalled = studentPage.waitForRequest((request) =>
-    request.url().includes(`/lesson/${curriculum.lessonId}`),
+    request.url().includes(`/api/users/lesson/${curriculum.lessonId}`),
   );
   await studentPage.goto(`/lesson/${curriculum.lessonId}`);
   // Solo se avanza el reloj cuando la petición ya está pendiente.
@@ -193,7 +197,8 @@ test("a stalled lesson request ends with the timeout message after 10 s", async 
   await expect(
     studentPage
       .getByRole("alert")
-      .getByText(/no responde|not responding|tiempo límite|timed out/i),
+      .getByText(/no responde|not responding|tiempo límite|timed out/i)
+      .first(),
   ).toBeVisible({ timeout: 10000 });
 });
 
