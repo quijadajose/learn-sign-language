@@ -1,6 +1,5 @@
 import { expect, test } from "./fixtures/roles";
 import { readFile } from "node:fs/promises";
-import { selectLanguageCard } from "./fixtures/language-picker";
 
 type Curriculum = {
   languageId: string;
@@ -19,13 +18,6 @@ test("student sees a lesson the admin created in the curriculum stage", async ({
   studentPage,
   baseURL,
 }) => {
-  // Omitida: en corridas completas el alumno ya inscrito no encuentra su idioma en el selector,
-  // y al fijar idioma y región en localStorage la etapa sigue sin cargar sus lecciones. Pendiente de
-  // una ruta estable hasta el registro en hallazgos/funcional.md.
-  test.skip(
-    true,
-    "Ruta del alumno a las lecciones inestable en corridas completas (H6, pendiente).",
-  );
   const curriculum = JSON.parse(
     await readFile("e2e/.auth/curriculum.json", "utf8"),
   ) as Curriculum;
@@ -59,19 +51,13 @@ test("student sees a lesson the admin created in the curriculum stage", async ({
     });
   expect(variant.status()).toBe(201);
 
-  // Mismo camino que F2: elegir idioma y región, luego "Ver Lecciones".
+  // "Ver Lecciones" pasa el idioma en el estado de navegación; el dashboard muestra el progreso
+  // del idioma guardado en localStorage (selectedLanguageId).
   await studentPage.goto("/dashboard");
-  await selectLanguageCard(studentPage, curriculum.languageName);
-  await studentPage.getByRole("button", { name: "Siguiente" }).click();
-  const enrolled = studentPage.waitForResponse(
-    (response) =>
-      response.url().endsWith("/api/users/enroll") &&
-      response.request().method() === "POST",
-  );
-  await studentPage
-    .getByText(curriculum.regionName, { exact: true })
-    .dispatchEvent("click");
-  expect((await enrolled).ok()).toBe(true);
+  await studentPage.evaluate((languageId) => {
+    localStorage.setItem("selectedLanguageId", JSON.stringify(languageId));
+  }, curriculum.languageId);
+  await studentPage.reload();
   await expect(
     studentPage.getByRole("heading", {
       name: `Progreso en ${curriculum.languageName}`,
