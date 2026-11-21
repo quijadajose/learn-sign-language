@@ -364,6 +364,38 @@ test("admin deletes an empty language from the table", async ({
   ).toHaveCount(0);
 });
 
+test("admin sees how much content deleting a language removes (AF-F4-02)", async ({
+  adminPage,
+}) => {
+  const origin = String(test.info().project.use.baseURL);
+  const name = `F4 Impact ${Date.now()}`;
+  const language = await adminPage.context().request.post("/api/languages", {
+    headers: { Origin: origin },
+    data: { name, description: "F4 impact fixture", countryCode: "VE" },
+  });
+  expect(language.status()).toBe(201);
+  const { id: languageId } = (await language.json()) as { id: string };
+  const stage = await adminPage.context().request.post("/api/stage", {
+    headers: { Origin: origin },
+    data: { name: `${name} stage`, description: "F4 impact stage", languageId },
+  });
+  expect(stage.status()).toBe(201);
+
+  await adminPage.goto("/admin/languages");
+  const row = adminPage.getByRole("row").filter({ hasText: name });
+  await expect(row).toBeVisible();
+  await row.getByRole("button", { name: "Eliminar" }).click();
+
+  const dialog = adminPage.getByRole("dialog");
+  await expect(dialog.getByText("Etapas que se eliminarán: 1")).toBeVisible();
+  await expect(dialog.getByText("Lecciones que se eliminarán: 0")).toBeVisible();
+  await expect(dialog.getByText("Quizzes que se eliminarán: 0")).toBeVisible();
+
+  // Solo se comprueba el aviso: se cancela y el idioma sigue en la tabla.
+  await dialog.getByRole("button", { name: "Cancelar" }).click();
+  await expect(row).toBeVisible();
+});
+
 test("admin inserts an image into a lesson with the Quill editor", async ({
   adminPage,
 }) => {

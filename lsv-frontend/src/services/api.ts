@@ -541,6 +541,9 @@ export const adminApi = {
   deleteLanguage: (languageId: string) =>
     ApiService.delete(`/languages/${languageId}`),
 
+  getLanguageDeletionImpact: (languageId: string) =>
+    ApiService.get(`/languages/${languageId}/deletion-impact`),
+
   uploadLanguageImage: (file: File, languageId: string) => {
     return ApiService.upload("/images/upload/languages", file, {
       id: languageId,

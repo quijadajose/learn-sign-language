@@ -7,6 +7,14 @@ export interface Language {
   updatedAt: string;
 }
 
+/** Contenido que se perdería al borrar un idioma (GET /languages/:id/deletion-impact). */
+export interface LanguageDeletionImpact {
+  stages: number;
+  lessons: number;
+  quizzes: number;
+  signs: number;
+}
+
 export interface Country {
   code: string;
   name: string;

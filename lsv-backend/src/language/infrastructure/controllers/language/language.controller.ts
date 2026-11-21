@@ -12,6 +12,7 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { CreateLanguageDto as LanguageDto } from '../../../domain/dto/create-language/create-language.js';
+import { LanguageDeletionImpact } from '../../../domain/ports/language.repository.interface/language.repository.interface.js';
 import { LanguageService } from '../../../application/services/language/language-admin.service.js';
 import { StageService } from '../../../../stage/application/services/stage/stage.service.js';
 import { Roles } from '../../../../auth/infrastructure/decorators/roles.decorator.js';
@@ -80,6 +81,15 @@ export class LanguageController {
     @Body() updateLanguageDto: LanguageDto,
   ): Promise<Language> {
     return this.languageService.updateLanguage(id, updateLanguageDto);
+  }
+
+  @UseGuards(RolesGuard)
+  @Roles('admin')
+  @Get(':id/deletion-impact')
+  async getDeletionImpact(
+    @Param('id', ParseUUIDPipe) id: string,
+  ): Promise<LanguageDeletionImpact> {
+    return this.languageService.getDeletionImpact(id);
   }
 
   @UseGuards(RolesGuard)
