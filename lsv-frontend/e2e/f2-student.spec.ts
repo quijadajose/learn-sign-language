@@ -109,12 +109,10 @@ test("leaderboard language filter shows the student under its language", async (
   await studentPage.goto("/leaderboard");
   const selector = studentPage.locator("#leaderboard-language");
   await expect(selector).toHaveValue("global");
+  // El idioma del alumno tiene que estar en el filtro aunque haya muchos idiomas (AF-H2-02).
   await expect(
-    studentPage.getByRole("heading", {
-      name: curriculum.studentName,
-      exact: true,
-    }),
-  ).toBeVisible();
+    selector.locator(`option[value="${curriculum.languageId}"]`),
+  ).toHaveCount(1);
 
   const byLanguage = studentPage.waitForResponse(
     (response) =>
@@ -124,11 +122,18 @@ test("leaderboard language filter shows the student under its language", async (
   await selector.selectOption(curriculum.languageId);
   expect((await byLanguage).ok()).toBe(true);
   await expect(selector).toHaveValue(curriculum.languageId);
-  await expect(
-    studentPage.getByRole("heading", {
-      name: curriculum.studentName,
-      exact: true,
-    }),
-  ).toBeVisible();
+  // El ranking del idioma puede tener varias páginas (otros alumnos puntúan en el mismo quiz):
+  // se avanza hasta encontrar al alumno.
+  const studentRow = studentPage.getByRole("heading", {
+    name: curriculum.studentName,
+    exact: true,
+  });
+  for (let page = 1; page <= 10; page++) {
+    if (await studentRow.isVisible()) break;
+    const next = studentPage.getByRole("button", { name: "Siguiente" });
+    if (!(await next.isEnabled())) break;
+    await next.click();
+  }
+  await expect(studentRow).toBeVisible();
   await context.close();
 });
