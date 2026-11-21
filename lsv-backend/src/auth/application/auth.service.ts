@@ -139,6 +139,12 @@ export class AuthService {
       throw new BadRequestException('errors.auth.invalidOrExpiredToken');
     }
 
+    // BE-12: el token de reset es de un solo uso. Cualquier cambio que suba
+    // tokenVersion (cambio de contraseña, revocación) invalida el enlace.
+    if ((payload.tokenVersion ?? 0) !== (user.tokenVersion ?? 0)) {
+      throw new BadRequestException('errors.auth.invalidOrExpiredToken');
+    }
+
     const passwordHash = await this.hashService.hash(newPassword);
     await this.updateUserUseCase.execute(userId, { passwordHash });
 
