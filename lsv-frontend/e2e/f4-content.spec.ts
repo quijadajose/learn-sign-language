@@ -287,17 +287,21 @@ test("admin edits one quiz option and removes another", async ({
     optionInputs.evaluateAll((els) =>
       els.map((el) => (el as HTMLInputElement).value),
     );
-  await expect.poll(optionValues).toEqual(["Opción A", "Opción B", "Opción C"]);
+  // El orden de las opciones no está garantizado por la API (AF-F4-03): se compara sin orden
+  // y cada opción se localiza por su texto.
+  const sorted = async () => (await optionValues()).slice().sort();
+  await expect.poll(sorted).toEqual(["Opción A", "Opción B", "Opción C"]);
 
-  await optionInputs.nth(0).fill("Opción A editada");
+  const indexOf = async (text: string) => (await optionValues()).indexOf(text);
+  await optionInputs.nth(await indexOf("Opción A")).fill("Opción A editada");
   // Quitar "Opción B": el botón de borrar de su fila (sólo aparece con más de 2 opciones).
   await optionInputs
-    .nth(1)
+    .nth(await indexOf("Opción B"))
     .locator("xpath=ancestor::div[.//button][1]")
     .getByRole("button")
     .last()
     .click();
-  await expect.poll(optionValues).toEqual(["Opción A editada", "Opción C"]);
+  await expect.poll(sorted).toEqual(["Opción A editada", "Opción C"]);
 
   const updated = adminPage.waitForResponse(
     (response) =>
@@ -309,7 +313,7 @@ test("admin edits one quiz option and removes another", async ({
 
   // Al reabrir, la opción editada está y la borrada ya no.
   await heading.locator("xpath=following::button[1]").click();
-  await expect.poll(optionValues).toEqual(["Opción A editada", "Opción C"]);
+  await expect.poll(sorted).toEqual(["Opción A editada", "Opción C"]);
 });
 
 test("admin uploads a flag for a language", async ({ adminPage }) => {
