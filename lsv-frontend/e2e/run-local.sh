@@ -27,9 +27,9 @@ cd "$BACKEND_DIR"
 npm run test:e2e:down >/dev/null 2>&1 || true
 npm run test:e2e:up
 
-if [[ ! -f dist/main.js ]] || [[ -n "$(find src -newer dist/main.js -print -quit)" ]]; then
+if [[ ! -f dist-e2e/main.js ]] || [[ -n "$(find src -newer dist-e2e/main.js -print -quit)" ]]; then
   echo "run-local: compilando la API de test..."
-  npm run build
+  npm run build:e2e
 fi
 
 cd "$FRONTEND_DIR"
