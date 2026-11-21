@@ -12,6 +12,7 @@ import { UpdateLanguagesUseCase } from '../../use-cases/update-languages-use-cas
 import { DeleteLanguagesUseCase } from '../../use-cases/delete-languages-use-case/delete-languages-use-case.js';
 import { GetStagesFromLanguageUseCase } from '../../../../stage/application/use-cases/get-stages-from-language-use-case/get-stages-from-language-use-case.js';
 import { Stages } from '../../../../shared/domain/entities/stage.js';
+import { LanguageDeletionImpact } from '../../../domain/ports/language.repository.interface/language.repository.interface.js';
 
 @Injectable()
 export class LanguageService {
@@ -44,6 +45,9 @@ export class LanguageService {
   }
   async removeLanguage(id: string): Promise<void> {
     return this.removeLanguageUseCase.execute(id);
+  }
+  async getDeletionImpact(id: string): Promise<LanguageDeletionImpact> {
+    return this.removeLanguageUseCase.impact(id);
   }
   async getStagesByLanguage(
     id: string,
