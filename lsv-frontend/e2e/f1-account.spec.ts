@@ -163,4 +163,14 @@ test("student uploads a profile picture and it survives a reload", async ({
     (img: HTMLImageElement) => img.complete && img.naturalWidth > 0,
   );
   expect(loaded).toBe(true);
+
+  // La cabecera del panel (botón de ajustes de usuario) carga la misma imagen.
+  const headerAvatar = studentPage
+    .getByRole("button", { name: /User settings|Configuración de usuario/ })
+    .locator("img");
+  await expect(headerAvatar).toHaveAttribute("src", /\/images\/user\//);
+  const headerLoaded = await headerAvatar.evaluate(
+    (img: HTMLImageElement) => img.complete && img.naturalWidth > 0,
+  );
+  expect(headerLoaded).toBe(true);
 });
