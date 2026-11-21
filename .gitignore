@@ -21,3 +21,6 @@ REVIEW-SCORES.md
 .deploy/
 # Exportación generada por la API en desarrollo (no se versiona)
 lsv-backend/swagger.json
+
+# Documentos de auditoría: se quedan en disco, no se versionan
+docs/auditorias/
