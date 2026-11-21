@@ -45,7 +45,8 @@ test("a repeated quiz counts only its best attempt on the leaderboard", async ({
     baseURL!,
     curriculum.quizId,
     [wrong, correct, correct],
-    "Best",
+    // Nombre único por corrida: la paginación compara nombres visibles (AF-H2-01).
+    `Best${Date.now().toString(36)}`,
   );
   const [worst, best, repeat] = scores;
   expect(best).toBeGreaterThan(worst);
