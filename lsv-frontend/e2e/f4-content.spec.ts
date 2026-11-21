@@ -245,6 +245,73 @@ test("admin creates a quiz whose option is an image (BE-08 path)", async ({
   expect(JSON.stringify(await saved.json())).toContain("/images/quiz/");
 });
 
+test("admin edits one quiz option and removes another", async ({
+  adminPage,
+  baseURL,
+}) => {
+  const curriculum = JSON.parse(
+    await readFile("e2e/.auth/curriculum.json", "utf8"),
+  ) as { lessonId: string };
+  const question = `F4 option edit ${Date.now()}`;
+  const created = await adminPage.context().request.post("/api/quiz", {
+    headers: { Origin: baseURL! },
+    data: {
+      lessonId: curriculum.lessonId,
+      questions: [
+        {
+          text: question,
+          options: [
+            { text: "Opción A", isCorrect: true },
+            { text: "Opción B", isCorrect: false },
+            { text: "Opción C", isCorrect: false },
+          ],
+        },
+      ],
+    },
+  });
+  expect(created.status()).toBe(201);
+  const quizId = (await created.json()).id as string;
+
+  await adminPage.goto(`/admin/lessons/${curriculum.lessonId}/quizzes`);
+  // La tarjeta del quiz: su título, y después sus botones en orden (editar, borrar).
+  const heading = adminPage.getByRole("heading", {
+    name: `Quiz #${quizId.slice(-8)}`,
+  });
+  await expect(heading).toBeVisible();
+  await heading.locator("xpath=following::button[1]").click();
+
+  const modal = adminPage.getByRole("dialog");
+  await expect(modal.getByText("Editar Quiz")).toBeVisible();
+  const optionInputs = modal.getByPlaceholder("Texto de la opción...");
+  const optionValues = () =>
+    optionInputs.evaluateAll((els) =>
+      els.map((el) => (el as HTMLInputElement).value),
+    );
+  await expect.poll(optionValues).toEqual(["Opción A", "Opción B", "Opción C"]);
+
+  await optionInputs.nth(0).fill("Opción A editada");
+  // Quitar "Opción B": el botón de borrar de su fila (sólo aparece con más de 2 opciones).
+  await optionInputs
+    .nth(1)
+    .locator("xpath=ancestor::div[.//button][1]")
+    .getByRole("button")
+    .last()
+    .click();
+  await expect.poll(optionValues).toEqual(["Opción A editada", "Opción C"]);
+
+  const updated = adminPage.waitForResponse(
+    (response) =>
+      response.url().includes(`/api/quiz/${quizId}`) &&
+      response.request().method() !== "GET",
+  );
+  await modal.getByRole("button", { name: "Actualizar Quiz" }).click();
+  expect((await updated).ok()).toBe(true);
+
+  // Al reabrir, la opción editada está y la borrada ya no.
+  await heading.locator("xpath=following::button[1]").click();
+  await expect.poll(optionValues).toEqual(["Opción A editada", "Opción C"]);
+});
+
 test("admin uploads a flag for a language", async ({ adminPage }) => {
   // Idioma propio del test: no se toca el del currículo compartido.
   const name = `F4 Flag ${Date.now()}`;
