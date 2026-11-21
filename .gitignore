@@ -19,3 +19,5 @@ lsv-frontend/.agents/
 REVIEW-SCORES.md
 # Estado de scripts/deploy.sh en el servidor (INF-06)
 .deploy/
+# Exportación generada por la API en desarrollo (no se versiona)
+lsv-backend/swagger.json
