@@ -9,19 +9,36 @@ type Curriculum = {
 
 /**
  * H7 (UI): el moderador graba una seña con la cámara falsa y guarda los landmarks.
- * La cámara falsa (hand.y4m) puede no producir landmarks: si la captura queda vacía,
- * el test se marca como omitido con el motivo, sin inventar datos.
+ *
+ * El clip NO se versiona: debe mostrar a una persona con cuerpo y mano visibles
+ * (la seña necesita ambos para que MediaPipe detecte pose y manos). Se indica con
+ * SIGN_RECORDING_Y4M, por ejemplo: SIGN_RECORDING_Y4M=/ruta/local/clip.y4m
+ * Lo que se guarda en la base son los landmarks, no el video.
  */
+const signRecordingVideo = process.env.SIGN_RECORDING_Y4M;
+
+test.use({
+  launchOptions: {
+    ...(process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH
+      ? { executablePath: process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH }
+      : {}),
+    args: [
+      "--use-fake-device-for-media-stream",
+      `--use-file-for-fake-video-capture=${signRecordingVideo ?? "e2e/fixtures/hand.y4m"}`,
+    ],
+  },
+});
+
 test("moderator records a sign with the fake camera and saves the landmarks", async ({
   moderatorPage,
 }) => {
-  // Omitida: en todos los intentos la cámara falsa dejó la captura en 0 muestras (sin landmarks),
-  // así que no hay nada que confirmar. Se reactiva con una grabación con mano detectable.
   test.skip(
-    true,
-    "La cámara falsa no produce landmarks (0 muestras): no verificable con el fixture actual.",
+    !signRecordingVideo,
+    "Falta SIGN_RECORDING_Y4M: ruta local a un .y4m con persona y mano visibles (no se versiona).",
   );
-  test.setTimeout(90_000);
+  // MediaPipe (pose heavy + manos) en Chromium headless tarda ~3-6 s por frame:
+  // 12 frames necesitan más de un minuto.
+  test.setTimeout(240_000);
   const curriculum = JSON.parse(
     await readFile("e2e/.auth/curriculum.json", "utf8"),
   ) as Curriculum;
@@ -56,13 +73,14 @@ test("moderator records a sign with the fake camera and saves the landmarks", as
   await moderatorPage
     .getByRole("button", { name: "Empezar Nueva Captura" })
     .click();
-  await moderatorPage.waitForTimeout(3000);
-  await moderatorPage.getByRole("button", { name: "Detener Captura" }).click();
 
+  // La captura estática pasa sola a revisión al juntar 12 frames con mano.
   const confirm = moderatorPage.getByRole("button", {
     name: "Confirmar y Enviar",
   });
-  await expect(confirm).toBeVisible();
+  await expect(confirm).toBeVisible({ timeout: 180_000 });
+  await expect(moderatorPage.getByText(/Replay \d+\/12 frames/)).toBeVisible();
+
   const saved = moderatorPage.waitForResponse(
     (response) =>
       response.url().endsWith("/api/sign-record/landmarks") &&
