@@ -20,7 +20,10 @@
     "test:e2e:local": "bash e2e/run-local.sh",
     "doctor": "react-doctor --verbose -y",
     "doctor:json": "react-doctor --json -y --json-out /tmp/react-doctor-report.json",
-    "doctor:ci": "react-doctor -y --blocking error --no-warnings"
+    "doctor:ci": "react-doctor -y --blocking error --no-warnings",
+    "test:e2e": "node --env-file=../.env.test ./node_modules/@playwright/test/cli.js test",
+    "test:e2e:seed": "node --env-file=../.env.test ./e2e/seed.mjs",
+    "test:e2e:local": "bash e2e/run-local.sh"
   },
   "dependencies": {
     "@formity/react": "^3.0.0",

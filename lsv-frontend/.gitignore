@@ -33,3 +33,37 @@ public/mediapipe/models
 *.njsproj
 *.sln
 *.sw?
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+node_modules
+dist
+dist-ssr
+*.local
+
+# Copied from node_modules/@mediapipe/tasks-vision/wasm at Vite startup
+public/mediapipe/wasm
+
+# Editor directories and files
+.vscode/*
+!.vscode/extensions.json
+.idea
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# e2e: sesiones de prueba y resultados (no se versionan)
+e2e/.auth
+test-results
+playwright-report
+# modelos MediaPipe descargados
+public/mediapipe/models

@@ -6,7 +6,7 @@ import eslintPluginTailwindcss from "eslint-plugin-tailwindcss";
 import tseslint from "typescript-eslint";
 
 export default tseslint.config(
-  { ignores: ["dist", "**/*.generated.ts", "public/mediapipe/**"] },
+  { ignores: ["dist", "**/*.generated.ts", "public/mediapipe/**", "e2e/**"] },
   js.configs.recommended,
   {
     files: ["public/**/*.js"],
