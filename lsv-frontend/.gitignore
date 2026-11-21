@@ -11,6 +11,10 @@ node_modules
 test-results
 playwright-report
 e2e/.auth
+# Videos de grabación de seña: no se versionan (en la base solo van los landmarks)
+e2e/fixtures/*.mp4
+e2e/fixtures/*.webm
+e2e/fixtures/sign-*.y4m
 dist
 dist-ssr
 *.local
