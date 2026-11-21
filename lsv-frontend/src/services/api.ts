@@ -635,7 +635,8 @@ export const languageApi = {
     return response;
   },
 
-  getAllLanguages: () => ApiService.get("/languages"),
+  getAllLanguages: (page: number = 1, limit: number = 100) =>
+    ApiService.get(ApiService.buildUrl("/languages", { page, limit })),
 
   enrollInLanguage: (languageId: string, regionId?: string) =>
     ApiService.post("/users/enroll", { languageId, regionId }),
