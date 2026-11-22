@@ -41,7 +41,7 @@ export function LeaderboardEntryRow({ entry, rank }: LeaderboardEntryRowProps) {
           </div>
         )}
         {rank > 3 && (
-          <span className="text-lg font-black italic text-gray-500 transition-colors group-hover:text-gray-600 dark:text-gray-400">
+          <span className="text-lg font-black text-gray-500 italic transition-colors group-hover:text-gray-600 dark:text-gray-400">
             #{rank}
           </span>
         )}
@@ -52,13 +52,15 @@ export function LeaderboardEntryRow({ entry, rank }: LeaderboardEntryRowProps) {
           src={`${BACKEND_BASE_URL}/images/user/${encodeURIComponent(entry.userId)}?size=sm&v=${Date.now()}`}
           alt={entry.firstName}
           className={`size-full rounded-2xl object-cover shadow-inner ring-2 ${
-            isTop3 ? "ring-indigo-500/50" : "ring-gray-100 dark:ring-gray-700/40"
+            isTop3
+              ? "ring-indigo-500/50"
+              : "ring-gray-100 dark:ring-gray-700/40"
           }`}
           onError={(e) => {
             e.currentTarget.src = "/user.svg";
           }}
         />
-        <div className="absolute -bottom-1 -right-1 size-3.5 rounded-full border-2 border-white bg-green-500 dark:border-gray-800" />
+        <div className="absolute -right-1 -bottom-1 size-3.5 rounded-full border-2 border-white bg-green-500 dark:border-gray-800" />
       </div>
 
       <div className="min-w-0 flex-1">
@@ -72,7 +74,7 @@ export function LeaderboardEntryRow({ entry, rank }: LeaderboardEntryRowProps) {
           {entry.totalScore.toLocaleString()}
           <HiLightningBolt className="size-4 animate-pulse text-yellow-400" />
         </span>
-        <span className="text-[10px] font-bold uppercase tracking-tighter text-gray-400 dark:text-gray-500">
+        <span className="text-[10px] font-bold tracking-tighter text-gray-600 uppercase dark:text-gray-400">
           Puntos XP
         </span>
       </div>

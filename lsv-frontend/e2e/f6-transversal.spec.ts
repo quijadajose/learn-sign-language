@@ -136,14 +136,6 @@ for (const screen of studentScreens) {
     const path =
       typeof screen.path === "function" ? screen.path() : screen.path;
     await studentPage.goto(path);
-    if (screen.name === "leaderboard") {
-      // AF-F6-04: el ranking usa texto gris claro sobre fondo claro (color-contrast). No se amplía
-      // el arreglo de AF-F6-01: se marca solo esta pantalla, después de la preparación.
-      test.fail(
-        true,
-        "AF-F6-04: contraste insuficiente en el ranking (text-gray-400)",
-      );
-    }
     const findings = await seriousA11y(studentPage);
     expect(
       findings.map(({ id, impact, description, nodes }) => ({
