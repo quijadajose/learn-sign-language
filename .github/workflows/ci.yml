@@ -17,8 +17,8 @@ jobs:
     name: ML feature contract sync
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
         with:
           node-version: "24"
       - run: node scripts/sync-ml-feature-contract.mjs --check
@@ -30,8 +30,8 @@ jobs:
       run:
         working-directory: lsv-backend
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
         with:
           node-version: "24"
           cache: npm
@@ -51,7 +51,7 @@ jobs:
         working-directory: lsv-backend
     services:
       postgres:
-        image: postgres:18.3-alpine
+        image: postgres:18.7-alpine3.23
         env:
           POSTGRES_USER: user
           POSTGRES_PASSWORD: password
@@ -64,8 +64,8 @@ jobs:
           --health-timeout 5s
           --health-retries 5
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
         with:
           node-version: "24"
           cache: npm
@@ -126,8 +126,8 @@ jobs:
       run:
         working-directory: lsv-frontend
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
         with:
           node-version: "24"
           cache: npm
@@ -144,8 +144,8 @@ jobs:
       run:
         working-directory: lsv-model-trainer
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
         with:
           python-version: "3.11"
       - name: Install test and lint dependencies
@@ -171,8 +171,8 @@ jobs:
       run:
         working-directory: lsv-model-trainer
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
         with:
           python-version: "3.11"
           cache: pip

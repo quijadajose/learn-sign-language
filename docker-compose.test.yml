@@ -12,7 +12,7 @@ name: lsv-test
 
 services:
   lsv-db-test:
-    image: postgres:18.3-alpine
+    image: postgres:18.7-alpine3.23
     environment:
       POSTGRES_USER: ${DB_USERNAME:?DB_USERNAME es obligatorio en .env.test}
       POSTGRES_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD es obligatorio en .env.test}
@@ -28,7 +28,7 @@ services:
       retries: 30
 
   lsv-valkey-test:
-    image: valkey/valkey:8.0-alpine
+    image: valkey/valkey:8.1.12-alpine
     command: valkey-server --save "" --appendonly no --loglevel warning --requirepass ${VALKEY_PASSWORD:?VALKEY_PASSWORD es obligatorio en .env.test}
     ports:
       - "127.0.0.1:${VALKEY_PORT:-6380}:6379"
@@ -43,7 +43,7 @@ services:
   # H3: servidor SMTP de pruebas. Atrapa los correos (no los envía) y expone su API
   # HTTP para que los e2e lean el enlace de reset. Solo en 127.0.0.1.
   lsv-mailpit-test:
-    image: axllent/mailpit:v1.21
+    image: axllent/mailpit:v1.34.0
     environment:
       MP_SMTP_AUTH_ACCEPT_ANY: "1"
       MP_SMTP_AUTH_ALLOW_INSECURE: "1"

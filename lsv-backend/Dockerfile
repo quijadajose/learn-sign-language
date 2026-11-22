@@ -21,6 +21,10 @@ RUN npm run build
 # INF-08: solo runtime y dependencias de producción; sin src, test ni devDependencies; no como root.
 FROM node:24.18.1-alpine3.23 AS production
 
+# npm empaquetado en la imagen trae tar 7.5.15 (CVE-2026-59873, crítico): se actualiza npm.
+RUN npm install -g npm@12.2.3 && npm cache clean --force \
+  && apk upgrade --no-cache
+
 ARG NODE_ENV=production
 ENV NODE_ENV=${NODE_ENV}
 
