@@ -116,7 +116,15 @@ test("admin sees an API-created stage in the list and renames it (AF-F4-01)", as
   await adminPage.goto(`/admin/languages/${curriculum.languageId}`);
   await adminPage.getByText("Etapas", { exact: true }).first().click();
   await expect(adminPage).toHaveURL(/\/admin\/stages/);
+  // La lista está ordenada por nombre y pagina; con más etapas en la base, la nueva puede no estar en la
+  // primera página. Se avanza hasta encontrarla.
   const row = adminPage.getByRole("row", { name: stageName });
+  for (let page = 1; page <= 20; page++) {
+    if (await row.isVisible()) break;
+    const next = adminPage.getByRole("button", { name: "Siguiente" });
+    if ((await next.count()) === 0 || !(await next.isEnabled())) break;
+    await next.click();
+  }
   await expect(row).toBeVisible({ timeout: 15000 });
 
   const renamed = `${stageName} (editada)`;
