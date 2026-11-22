@@ -328,21 +328,17 @@ describe('Matriz de autorización por rol (S1, e2e)', () => {
     expect(failures).toEqual([]);
   }, 300_000);
 
-  // AS-S1-01 (hallazgo abierto): `it.failing` documenta el problema. Cuando se corrija,
-  // este test pasa y hay que cambiarlo a `it`.
-  it.failing(
-    'AS-S1-01: un moderador de A no lee la región del idioma B',
-    async () => {
-      const res = await request(app.getHttpServer())
-        .get(`/region/${curriculumB.regionId}`)
-        .set(
-          'Authorization',
-          `Bearer ${await login(actors.find((x) => x.name === 'moderador-A')!.email!)}`,
-        );
-      expect([401, 403]).toContain(res.status);
-    },
-    60_000,
-  );
+  // Regiones: catálogo público (decisión del dueño). Cualquier usuario autenticado puede
+  // leer una región de cualquier idioma; el test fija ese comportamiento.
+  it('regiones: cualquier usuario autenticado lee el catálogo (decisión: público)', async () => {
+    const res = await request(app.getHttpServer())
+      .get(`/region/${curriculumB.regionId}`)
+      .set(
+        'Authorization',
+        `Bearer ${await login(actors.find((x) => x.name === 'moderador-A')!.email!)}`,
+      );
+    expect(res.status).toBe(200);
+  }, 60_000);
 
   it('recursos reales: permiso por idioma con IDs de dos idiomas', async () => {
     const a = curriculumA;
