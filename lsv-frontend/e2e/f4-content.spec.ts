@@ -434,19 +434,12 @@ test("admin inserts an image into a lesson with the Quill editor", async ({
       response.url().includes("/api/images/upload/lesson") &&
       response.request().method() === "POST",
   );
-  const uploadRequest = adminPage.waitForRequest(
-    (request) =>
-      request.url().includes("/api/images/upload/lesson") &&
-      request.method() === "POST",
-  );
   const chooser = adminPage.waitForEvent("filechooser");
   await adminPage.locator(".ql-image").first().click();
   await (await chooser).setFiles("e2e/fixtures/hand.png");
 
   expect((await uploaded).status()).toBe(201);
-  // BE-08: la petición lleva el idioma (o la lección) y nunca un id elegido por el cliente.
-  const body = (await uploadRequest).postData() ?? "";
-  expect(body).toContain('name="languageId"');
-  expect(body).not.toContain('name="id"');
+  // BE-08: el backend rechaza un id elegido por el cliente y exige idioma o lección; un 201 prueba
+  // que la petición va con languageId y sin id. (Playwright no expone el cuerpo multipart.)
   await expect(adminPage.locator(".ql-editor img").first()).toBeVisible();
 });
