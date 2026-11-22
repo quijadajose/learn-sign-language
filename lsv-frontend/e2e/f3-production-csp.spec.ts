@@ -38,9 +38,14 @@ test("Sign Studio loads MediaPipe WASM and models under the production CSP", asy
     (response) => response.url().endsWith("pose_landmarker_heavy.task"),
     { timeout: 20000 },
   );
+  const hand = studentPage.waitForResponse(
+    (response) => response.url().endsWith("hand_landmarker.task"),
+    { timeout: 20000 },
+  );
   await studentPage.goto("/admin/sign-studio");
 
   expect((await wasm).status()).toBe(200);
   expect((await pose).status()).toBe(200);
+  expect((await hand).status()).toBe(200);
   expect(violations).toEqual([]);
 });
