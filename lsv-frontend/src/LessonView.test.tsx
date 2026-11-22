@@ -1,5 +1,5 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
-import { fireEvent, render, screen } from "@testing-library/react";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import "./i18n";
 import LessonView from "./LessonView";
@@ -52,6 +52,10 @@ function renderLesson() {
 }
 
 describe("LessonView", () => {
+  afterEach(() => {
+    cleanup();
+  });
+
   beforeEach(() => {
     getUserLesson.mockReset();
     startLesson.mockReset();
@@ -110,5 +114,23 @@ describe("LessonView", () => {
 
     await screen.findByText("Saludos");
     expect(screen.queryByRole("button", { name: /Practiquemos/ })).toBeNull();
+  });
+
+  it("shows a not-found state with a link back to the dashboard when the lesson does not exist (AF-F6-03)", async () => {
+    getUserLesson.mockResolvedValue({
+      success: false,
+      status: 404,
+      message: "Lección no encontrada",
+    });
+
+    renderLesson();
+
+    await screen.findByText("Lección no encontrada");
+    expect(screen.queryByText("Saludos")).toBeNull();
+    const dashboardLink = screen.getByRole("link", {
+      name: /Volver al dashboard/,
+    });
+    expect(dashboardLink.getAttribute("href")).toBe("/dashboard");
+    expect(startLesson).not.toHaveBeenCalled();
   });
 });
