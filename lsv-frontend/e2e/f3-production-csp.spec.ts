@@ -39,19 +39,15 @@ test("Sign Studio loads MediaPipe WASM and models under the production CSP", asy
       response.url().endsWith(".wasm"),
     { timeout: 20000 },
   );
-  const pose = studentPage.waitForResponse(
-    (response) => response.url().endsWith("pose_landmarker_heavy.task"),
-    { timeout: 20000 },
-  );
-  const hand = studentPage.waitForResponse(
-    (response) => response.url().endsWith("hand_landmarker.task"),
-    { timeout: 20000 },
-  );
   await studentPage.goto("/admin/sign-studio");
   await expect(studentPage.getByRole("main")).toBeVisible({ timeout: 15000 });
 
   expect((await wasm).status()).toBe(200);
-  expect((await pose).status()).toBe(200);
-  expect((await hand).status()).toBe(200);
+  // Los modelos .task no se piden al cargar Sign Studio (solo al usar la cámara o la práctica
+  // con un modelo entrenado), así que se comprueba que nginx los sirve con 200.
+  for (const file of ["pose_landmarker_heavy.task", "hand_landmarker.task"]) {
+    const served = await studentPage.request.get(`/mediapipe/models/${file}`);
+    expect(served.status(), file).toBe(200);
+  }
   expect(violations).toEqual([]);
 });
