@@ -83,12 +83,25 @@ test("student studies a regional curriculum and earns best quiz score", async ({
   await page.getByRole("button", { name: /submit|enviar/i }).click();
   await expect(page.getByText(/100\.00/)).toBeVisible();
 
+  // El ranking global puede tener muchas páginas en una base que no se limpió: se filtra
+  // por el idioma del alumno y se avanza hasta encontrarlo (igual que en el test de filtro).
   await page.goto("/leaderboard");
-  await expect(page.locator("#leaderboard-language")).toHaveValue("global");
-  await expect(page.getByText(studentName, { exact: true })).toBeVisible();
-  const studentRow = page
-    .getByRole("heading", { name: studentName, exact: true })
-    .locator("../..");
+  const selector = page.locator("#leaderboard-language");
+  await expect(selector).toHaveValue("global");
+  await selector.selectOption(curriculum.languageId);
+  await expect(selector).toHaveValue(curriculum.languageId);
+  const studentHeading = page.getByRole("heading", {
+    name: studentName,
+    exact: true,
+  });
+  for (let pageIndex = 1; pageIndex <= 10; pageIndex++) {
+    if (await studentHeading.isVisible()) break;
+    const next = page.getByRole("button", { name: "Siguiente" });
+    if (!(await next.isEnabled())) break;
+    await next.click();
+  }
+  await expect(studentHeading).toBeVisible();
+  const studentRow = studentHeading.locator("../..");
   await expect(studentRow.getByText("100", { exact: true })).toBeVisible();
   await context.close();
 });
