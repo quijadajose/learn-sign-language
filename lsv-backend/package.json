@@ -6,8 +6,8 @@
   "private": true,
   "license": "UNLICENSED",
   "scripts": {
-    "build": "nest build",
-    "build:e2e": "nest build --path tsconfig.e2e.json",
+    "build": "nest build && node scripts/fix-esm-require.mjs dist",
+    "build:e2e": "nest build --path tsconfig.e2e.json && node scripts/fix-esm-require.mjs dist-e2e",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
     "start": "nest start",
     "start:dev": "nest start --watch",
