@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 
 function valuesEqual<T>(a: T, b: T): boolean {
   if (Object.is(a, b)) return true;
@@ -34,6 +34,14 @@ export function useLocalStorage<T>(key: string, initialValue: T) {
   }, [initialValue, key]);
 
   const [storedValue, setStoredValue] = useState<T>(readValue);
+  // Último valor conocido. Permite calcular el siguiente valor fuera del
+  // updater de React, donde no deben ocurrir efectos secundarios.
+  const latestRef = useRef<T>(storedValue);
+
+  const commit = useCallback((next: T) => {
+    latestRef.current = next;
+    setStoredValue(next);
+  }, []);
 
   const setValue = useCallback(
     (value: T | ((val: T) => T)) => {
@@ -44,12 +52,9 @@ export function useLocalStorage<T>(key: string, initialValue: T) {
       }
 
       try {
-        setStoredValue((prev) => {
-          const newValue = value instanceof Function ? value(prev) : value;
-          if (valuesEqual(prev, newValue)) {
-            return prev;
-          }
-
+        const prev = latestRef.current;
+        const newValue = value instanceof Function ? value(prev) : value;
+        if (!valuesEqual(prev, newValue)) {
           if (newValue === null || newValue === undefined) {
             window.localStorage.removeItem(key);
           } else if (typeof newValue === "string") {
@@ -57,24 +62,23 @@ export function useLocalStorage<T>(key: string, initialValue: T) {
           } else {
             window.localStorage.setItem(key, JSON.stringify(newValue));
           }
-
-          return newValue;
-        });
+          commit(newValue);
+        }
 
         window.dispatchEvent(new Event("local-storage"));
       } catch (error) {
         console.warn(`Error setting localStorage key “${key}”:`, error);
       }
     },
-    [key],
+    [key, commit],
   );
 
   useEffect(() => {
     const handleStorageChange = () => {
-      setStoredValue((prev) => {
-        const next = readValue();
-        return valuesEqual(prev, next) ? prev : next;
-      });
+      const next = readValue();
+      if (!valuesEqual(latestRef.current, next)) {
+        commit(next);
+      }
     };
 
     window.addEventListener("storage", handleStorageChange);
@@ -84,7 +88,7 @@ export function useLocalStorage<T>(key: string, initialValue: T) {
       window.removeEventListener("storage", handleStorageChange);
       window.removeEventListener("local-storage", handleStorageChange);
     };
-  }, [readValue]);
+  }, [readValue, commit]);
 
   return [storedValue, setValue] as const;
 }

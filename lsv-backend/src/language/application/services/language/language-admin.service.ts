@@ -1,17 +1,18 @@
 import { Injectable } from '@nestjs/common';
-import { CreateLanguageUseCase } from '../../use-cases/create-language-use-case/create-language-use-case';
-import { CreateLanguageDto } from '../../../domain/dto/create-language/create-language';
-import { Language } from 'src/shared/domain/entities/language';
-import { GetLanguageUseCase } from '../../use-cases/get-language-use-case/get-language-use-case';
-import { ListLanguagesUseCase } from '../../use-cases/list-languages-use-case/list-languages-use-case';
+import { CreateLanguageUseCase } from '../../use-cases/create-language-use-case/create-language-use-case.js';
+import { CreateLanguageDto } from '../../../domain/dto/create-language/create-language.js';
+import { Language } from '../../../../shared/domain/entities/language.js';
+import { GetLanguageUseCase } from '../../use-cases/get-language-use-case/get-language-use-case.js';
+import { ListLanguagesUseCase } from '../../use-cases/list-languages-use-case/list-languages-use-case.js';
 import {
   PaginatedResponseDto,
   PaginationDto,
-} from 'src/shared/domain/dto/PaginationDto';
-import { UpdateLanguagesUseCase } from '../../use-cases/update-languages-use-case/update-languages-use-case';
-import { DeleteLanguagesUseCase } from '../../use-cases/delete-languages-use-case/delete-languages-use-case';
-import { GetStagesFromLanguageUseCase } from '../../../../stage/application/use-cases/get-stages-from-language-use-case/get-stages-from-language-use-case';
-import { Stages } from 'src/shared/domain/entities/stage';
+} from '../../../../shared/domain/dto/PaginationDto.js';
+import { UpdateLanguagesUseCase } from '../../use-cases/update-languages-use-case/update-languages-use-case.js';
+import { DeleteLanguagesUseCase } from '../../use-cases/delete-languages-use-case/delete-languages-use-case.js';
+import { GetStagesFromLanguageUseCase } from '../../../../stage/application/use-cases/get-stages-from-language-use-case/get-stages-from-language-use-case.js';
+import { Stages } from '../../../../shared/domain/entities/stage.js';
+import { LanguageDeletionImpact } from '../../../domain/ports/language.repository.interface/language.repository.interface.js';
 
 @Injectable()
 export class LanguageService {
@@ -44,6 +45,9 @@ export class LanguageService {
   }
   async removeLanguage(id: string): Promise<void> {
     return this.removeLanguageUseCase.execute(id);
+  }
+  async getDeletionImpact(id: string): Promise<LanguageDeletionImpact> {
+    return this.removeLanguageUseCase.impact(id);
   }
   async getStagesByLanguage(
     id: string,

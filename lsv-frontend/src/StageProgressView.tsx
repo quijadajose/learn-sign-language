@@ -1,3 +1,4 @@
+import i18next from "i18next";
 import { Spinner, Alert } from "flowbite-react";
 import { useEffect, useState } from "react";
 import { HiExclamationCircle } from "react-icons/hi";
@@ -66,7 +67,7 @@ export default function StageProgressView({ language }: Props) {
 
     (async () => {
       if (!isAuthenticated) {
-        setError("No estás autenticado.");
+        setError(i18next.t("common:feedback.notAuthenticated"));
         setLoading(false);
         return;
       }

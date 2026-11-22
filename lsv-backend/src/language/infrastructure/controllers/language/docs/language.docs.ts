@@ -7,7 +7,7 @@ import {
   ApiQuery,
   ApiTags,
 } from '@nestjs/swagger';
-import { LanguageResponseDto } from 'src/shared/infrastructure/openapi/resource-responses';
+import { LanguageResponseDto } from '../../../../../shared/infrastructure/openapi/resource-responses.js';
 
 export const DocLanguage = () => applyDecorators(ApiTags('Languages'));
 

@@ -1,12 +1,12 @@
-import { CreateLessonDto } from 'src/lesson/domain/dto/create-lesson/create-lesson-dto';
+import { CreateLessonDto } from '../../dto/create-lesson/create-lesson-dto.js';
 import {
   PaginationDto,
   PaginatedResponseDto,
-} from 'src/shared/domain/dto/PaginationDto';
-import { Lesson } from 'src/shared/domain/entities/lesson';
-import { Quiz } from 'src/shared/domain/entities/quiz';
-import { LessonVariant } from 'src/shared/domain/entities/lessonVariant';
-import { CreateLessonVariantDto } from 'src/lesson/domain/dto/create-lesson-variant/create-lesson-variant-dto';
+} from '../../../../shared/domain/dto/PaginationDto.js';
+import { Lesson } from '../../../../shared/domain/entities/lesson.js';
+import { Quiz } from '../../../../shared/domain/entities/quiz.js';
+import { LessonVariant } from '../../../../shared/domain/entities/lessonVariant.js';
+import { CreateLessonVariantDto } from '../../dto/create-lesson-variant/create-lesson-variant-dto.js';
 
 export interface LessonRepositoryInterface {
   findById(id: string): Promise<Lesson | null>;

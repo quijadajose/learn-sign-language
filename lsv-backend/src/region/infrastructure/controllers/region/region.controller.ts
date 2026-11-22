@@ -11,20 +11,20 @@ import {
   Query,
   UseGuards,
 } from '@nestjs/common';
-import { Roles } from 'src/auth/infrastructure/decorators/roles.decorator';
-import { RolesGuard } from 'src/auth/infrastructure/guards/roles/roles.guard';
-import { RequireResourcePermission } from 'src/permissions/infrastructure/decorators/require-resource-permission.decorator';
-import { PermissionScope } from 'src/shared/domain/entities/moderatorPermission';
-import { ResourceAccessGuard } from 'src/permissions/infrastructure/guards/resource-access/resource-access.guard';
-import { CreateRegionDto } from 'src/region/domain/create-region.dto';
-import { GetRegionsQueryDto } from 'src/region/domain/dto/get-regions-query.dto';
-import { RegionService } from 'src/region/application/services/region/region.service';
-import { Region } from 'src/shared/domain/entities/region';
-import { LanguageService } from 'src/language/application/services/language/language-admin.service';
-import { CountryDivisionService } from 'src/shared/application/services/country-division.service';
-import { CountryWithDivisionsDto } from 'src/shared/domain/dto/country-with-divisions.dto';
-import { SearchCountriesDto } from 'src/shared/domain/dto/search-countries.dto';
-import { Country } from 'src/shared/domain/entities/iso-3166-2/countries';
+import { Roles } from '../../../../auth/infrastructure/decorators/roles.decorator.js';
+import { RolesGuard } from '../../../../auth/infrastructure/guards/roles/roles.guard.js';
+import { RequireResourcePermission } from '../../../../permissions/infrastructure/decorators/require-resource-permission.decorator.js';
+import { PermissionScope } from '../../../../shared/domain/entities/moderatorPermission.js';
+import { ResourceAccessGuard } from '../../../../permissions/infrastructure/guards/resource-access/resource-access.guard.js';
+import { CreateRegionDto } from '../../../domain/create-region.dto.js';
+import { GetRegionsQueryDto } from '../../../domain/dto/get-regions-query.dto.js';
+import { RegionService } from '../../../application/services/region/region.service.js';
+import { Region } from '../../../../shared/domain/entities/region.js';
+import { LanguageService } from '../../../../language/application/services/language/language-admin.service.js';
+import { CountryDivisionService } from '../../../../shared/application/services/country-division.service.js';
+import { CountryWithDivisionsDto } from '../../../../shared/domain/dto/country-with-divisions.dto.js';
+import { SearchCountriesDto } from '../../../../shared/domain/dto/search-countries.dto.js';
+import { Country } from '../../../../shared/domain/entities/iso-3166-2/countries.js';
 import {
   DocAssignLanguageToRegions,
   DocCreateRegion,
@@ -35,7 +35,7 @@ import {
   DocListRegions,
   DocRegion,
   DocUpdateRegion,
-} from './docs/region.docs';
+} from './docs/region.docs.js';
 
 @DocRegion()
 @Controller('region')

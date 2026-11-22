@@ -7,7 +7,7 @@ import {
   ApiBody,
   ApiQuery,
 } from '@nestjs/swagger';
-import { PaginationDto } from 'src/shared/domain/dto/PaginationDto';
+import { PaginationDto } from '../../../../shared/domain/dto/PaginationDto.js';
 import {
   BulkSignsResultDto,
   LessonModelResponseDto,
@@ -15,7 +15,7 @@ import {
   SignResponseDto,
   SuccessFlagDto,
   TrainingQueuedResponseDto,
-} from 'src/shared/infrastructure/openapi/resource-responses';
+} from '../../../../shared/infrastructure/openapi/resource-responses.js';
 
 export const DocSignRecord = () => applyDecorators(ApiTags('SignRecord'));
 export const DocSignRecordInternal = () =>

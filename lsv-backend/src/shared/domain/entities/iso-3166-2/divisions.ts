@@ -1,5 +1,5 @@
-import { Column, Entity, ManyToOne, PrimaryColumn } from 'typeorm';
-import { Country } from './countries';
+import { Column, Entity, ManyToOne, PrimaryColumn, Relation } from 'typeorm';
+import { Country } from './countries.js';
 
 @Entity()
 export class Division {
@@ -12,5 +12,5 @@ export class Division {
   @ManyToOne(() => Country, (country) => country.divisions, {
     onDelete: 'CASCADE',
   })
-  country: Country;
+  country: Relation<Country>;
 }

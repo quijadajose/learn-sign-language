@@ -1,18 +1,33 @@
 import { Inject, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { randomUUID } from 'crypto';
-import { LessonVariantRepositoryInterface } from 'src/sign-record/domain/ports/lesson-variant.repository.interface';
-import { LessonModelRepositoryInterface } from 'src/sign-record/domain/ports/lesson-model.repository.interface';
-import { SignRepositoryInterface } from 'src/sign-record/domain/ports/sign.repository.interface';
-import { SignRecordingRepositoryInterface } from 'src/sign-record/domain/ports/sign-recording.repository.interface';
-import { FileStoragePort } from 'src/sign-record/domain/ports/file-storage.port';
-import { TrainingQueuePort } from 'src/sign-record/domain/ports/training-queue.port';
-import { SignRecording } from 'src/shared/domain/entities/signRecording';
+import { LessonVariantRepositoryInterface } from '../../../domain/ports/lesson-variant.repository.interface.js';
+import { LessonModelRepositoryInterface } from '../../../domain/ports/lesson-model.repository.interface.js';
+import { SignRepositoryInterface } from '../../../domain/ports/sign.repository.interface.js';
+import { SignRecordingRepositoryInterface } from '../../../domain/ports/sign-recording.repository.interface.js';
+import { FileStoragePort } from '../../../domain/ports/file-storage.port.js';
+import { TrainingQueuePort } from '../../../domain/ports/training-queue.port.js';
+import { SignRecording } from '../../../../shared/domain/entities/signRecording.js';
 import {
-  mergeValidatedWithLandmarkFallback,
-  recordingsToTrainingSamples,
-  splitRecordingsForDualTraining,
-} from 'src/sign-record/domain/utils/training-data';
-import { featureMetadataForModelType } from 'src/sign-record/domain/utils/landmark-validation';
+  isDynamicRecording,
+  landmarkFallbacksForUncoveredSigns,
+  recordingToTrainingSample,
+} from '../../../domain/utils/training-data.js';
+import { featureMetadataForModelType } from '../../../domain/utils/landmark-validation.js';
+import {
+  assertRecordingWithinFrameLimit,
+  assertSampleCountWithinLimits,
+} from '../../../domain/utils/training-limits.js';
+import { pageByKeyset } from '../../../domain/utils/keyset-paging.js';
+
+/** Grabaciones leídas de la BD por página (BE-11). */
+const TRAINING_PAGE_SIZE = 200;
+
+type LessonTrainingSource = {
+  lessonId: string;
+  regionId?: string;
+  /** Landmarks legacy de señas sin grabación validada (como mucho una por seña). */
+  fallbacks: SignRecording[];
+};
 
 @Injectable()
 export class TriggerTrainingUseCase {
@@ -39,56 +54,64 @@ export class TriggerTrainingUseCase {
         lessonVariantId,
       );
 
-    if (!lessonVariant) throw new NotFoundException('Lesson variant not found');
+    if (!lessonVariant)
+      throw new NotFoundException('errors.lesson.variantNotFound');
 
-    const signs = await this.signRepository.findForTraining(
-      lessonVariant.baseLesson.id,
-    );
+    const lessonId = lessonVariant.baseLesson.id;
+    const regionId = lessonVariant.region?.id;
 
-    const validatedRecordings =
-      await this.signRecordingRepository.findValidatedForLessonTraining(
-        lessonVariant.baseLesson.id,
-        lessonVariant.region?.id,
-      );
-
-    const recordings = mergeValidatedWithLandmarkFallback(
-      validatedRecordings,
-      signs,
-      lessonVariant.region?.id,
-    );
-
-    if (recordings.length === 0) {
-      throw new NotFoundException(
-        'No hay grabaciones validadas para entrenar esta lección',
-      );
+    // BE-11: antes de encolar se recorren las grabaciones por páginas para validar
+    // límites y saber qué señas están cubiertas; solo se retienen ids y contadores.
+    let staticCount = 0;
+    let dynamicCount = 0;
+    const coveredSignIds = new Set<string>();
+    for await (const recording of this.pageRecordings(lessonId, regionId)) {
+      assertRecordingWithinFrameLimit(recording);
+      if (recording.sign?.id) coveredSignIds.add(recording.sign.id);
+      if (isDynamicRecording(recording)) dynamicCount += 1;
+      else staticCount += 1;
     }
 
-    const { staticRecordings, dynamicRecordings, globalStaticForDynamic } =
-      splitRecordingsForDualTraining(recordings);
+    const signs = await this.signRepository.findForTraining(lessonId);
+    const fallbacks = landmarkFallbacksForUncoveredSigns(
+      coveredSignIds,
+      signs,
+      regionId,
+    );
+    for (const fallback of fallbacks) {
+      assertRecordingWithinFrameLimit(fallback);
+      if (isDynamicRecording(fallback)) dynamicCount += 1;
+      else staticCount += 1;
+    }
 
+    if (staticCount + dynamicCount === 0) {
+      throw new NotFoundException('errors.model.noValidatedRecordings');
+    }
+
+    assertSampleCountWithinLimits(staticCount);
+    assertSampleCountWithinLimits(dynamicCount);
+
+    const source: LessonTrainingSource = { lessonId, regionId, fallbacks };
     const jobs: { modelId: string; modelType: 'static' | 'dynamic' }[] = [];
     const baseName = lessonVariant.baseLesson.name;
 
     try {
-      if (staticRecordings.length > 0) {
+      if (staticCount > 0) {
         jobs.push(
           await this.dispatchVariantJob({
             lessonVariantId,
-            lessonId: lessonVariant.baseLesson.id,
-            recordings: staticRecordings,
+            source,
             modelType: 'static',
             modelName: `${baseName} [Estático]`,
           }),
         );
       }
 
-      if (dynamicRecordings.length > 0) {
+      if (dynamicCount > 0) {
         jobs.push(
           await this.dispatchVariantJob({
             lessonVariantId,
-            lessonId: lessonVariant.baseLesson.id,
-            recordings: dynamicRecordings,
-            globalStaticNoise: globalStaticForDynamic,
+            source,
             modelType: 'dynamic',
             modelName: `${baseName} [Dinámico]`,
           }),
@@ -100,27 +123,53 @@ export class TriggerTrainingUseCase {
     }
 
     if (jobs.length === 0) {
-      throw new NotFoundException(
-        'No hay grabaciones estáticas ni dinámicas para entrenar',
-      );
+      throw new NotFoundException('errors.model.noStaticOrDynamicRecordings');
     }
 
     return { jobs, jobId: jobs[0]?.modelId, status: 'QUEUED' };
   }
 
+  /** Recorre las grabaciones validadas por páginas (keyset por id). */
+  private pageRecordings(
+    lessonId: string,
+    regionId?: string,
+  ): AsyncGenerator<SignRecording> {
+    return pageByKeyset(
+      (afterId, limit) =>
+        this.signRecordingRepository.findValidatedLessonTrainingPage(
+          lessonId,
+          regionId,
+          afterId,
+          limit,
+        ),
+      TRAINING_PAGE_SIZE,
+    );
+  }
+
+  /** Grabaciones validadas (paginadas) seguidas de los fallbacks legacy, filtradas. */
+  private async *trainingSamples(
+    source: LessonTrainingSource,
+    include: (recording: SignRecording) => boolean,
+  ) {
+    for await (const recording of this.pageRecordings(
+      source.lessonId,
+      source.regionId,
+    )) {
+      if (include(recording)) yield recordingToTrainingSample(recording);
+    }
+    for (const fallback of source.fallbacks) {
+      if (include(fallback)) yield recordingToTrainingSample(fallback);
+    }
+  }
+
   private async dispatchVariantJob(params: {
     lessonVariantId: string;
-    lessonId: string;
-    recordings: SignRecording[];
-    globalStaticNoise?: SignRecording[];
+    source: LessonTrainingSource;
     modelType: 'static' | 'dynamic';
     modelName: string;
   }) {
     const modelId = randomUUID();
-    const trainingData = recordingsToTrainingSamples(params.recordings);
-    const globalStaticNoise = params.globalStaticNoise
-      ? recordingsToTrainingSamples(params.globalStaticNoise)
-      : [];
+    const isDynamicJob = params.modelType === 'dynamic';
 
     const trainingDataDir = this.fileStoragePort.sharedPath('training_data');
     await this.fileStoragePort.makeDirectory(trainingDataDir);
@@ -129,16 +178,26 @@ export class TriggerTrainingUseCase {
       'training_data',
       `${modelId}.json`,
     );
-    await this.fileStoragePort.saveJson(dataPath, {
+    // BE-11: el dataset se escribe en streaming, muestra a muestra.
+    await this.fileStoragePort.saveTrainingDataset(dataPath, {
       modelType: params.modelType,
-      samples: trainingData,
-      globalStaticNoise,
+      samples: this.trainingSamples(
+        params.source,
+        (rec) => isDynamicRecording(rec) === isDynamicJob,
+      ),
+      // Solo el modelo dinámico usa como ruido las señas estáticas globales.
+      globalStaticNoise: isDynamicJob
+        ? this.trainingSamples(
+            params.source,
+            (rec) => !isDynamicRecording(rec) && Boolean(rec.sign?.isGlobal),
+          )
+        : undefined,
     });
 
     const model = this.lessonModelRepository.create({
       id: modelId,
       lessonVariant: { id: params.lessonVariantId },
-      lesson: { id: params.lessonId },
+      lesson: { id: params.source.lessonId },
       name: params.modelName,
       status: 'PENDING',
       progress: 0,

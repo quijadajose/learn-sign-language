@@ -11,6 +11,7 @@ import type {
   SignRecordingDto,
 } from "../types/signRecord";
 import type { SignDetectionType } from "../utils/signDetection";
+import i18next from "i18next";
 
 let handlingTokenExpiration = false;
 let sessionActive = false;
@@ -99,13 +100,31 @@ export interface RequestConfig {
   retries?: number;
 }
 
-export interface UploadConfig extends RequestConfig {
-  onProgress?: (progress: number) => void;
-}
+/** FE-11: fetch no expone progreso de subida; por eso UploadConfig no ofrece onProgress. */
+export type UploadConfig = RequestConfig;
+
+/** FE-03: límite por defecto para llamadas normales (listados, CRUD ligero). */
+export const DEFAULT_REQUEST_TIMEOUT_MS = 10_000;
+
+/**
+ * FE-03: límite para operaciones pesadas (subidas, landmarks de varios MB,
+ * alta masiva de señas y disparo de entrenamiento, que escribe el dataset
+ * antes de responder). Con 10 s el usuario veía un error aunque el servidor
+ * ya hubiera guardado la grabación o creado el job, y lo repetía.
+ */
+export const HEAVY_REQUEST_TIMEOUT_MS = 60_000;
+
+const isAbortError = (error: unknown): boolean =>
+  typeof error === "object" &&
+  error !== null &&
+  (error as { name?: unknown }).name === "AbortError";
+
+/** FE-13: mismo límite que el backend (5 MB) para no subir archivos que serán rechazados. */
+const MAX_UPLOAD_BYTES = 5 * 1024 * 1024;
 
 export class ApiService {
   private static baseURL = BACKEND_BASE_URL;
-  private static defaultTimeout = 10000;
+  private static defaultTimeout = DEFAULT_REQUEST_TIMEOUT_MS;
   private static defaultRetries = 3;
 
   private static getLocaleHeaders(): Record<string, string> {
@@ -177,6 +196,8 @@ export class ApiService {
         };
       }
     } catch (error) {
+      // FE-03: un timeout durante la lectura del cuerpo lo traduce makeRequest.
+      if (isAbortError(error)) throw error;
       return {
         message: i18n.t("api.unexpected"),
         success: false,
@@ -219,45 +240,56 @@ export class ApiService {
     }
 
     for (let attempt = 0; attempt <= maxRetries; attempt++) {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), timeout);
       try {
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), timeout);
-
         const response = await fetch(url, {
           ...requestConfig,
           signal: controller.signal,
         });
 
-        clearTimeout(timeoutId);
+        // FE-03: el temporizador sigue activo mientras se lee el cuerpo; si se
+        // limpiaba tras los headers, una respuesta atascada dejaba la UI colgada.
         return await this.handleResponse<T>(response, endpoint);
       } catch (error) {
-        if (attempt === maxRetries) {
-          if (error instanceof Error && error.name === "AbortError") {
-            return {
-              message: "La petición ha excedido el tiempo límite",
-              success: false,
-            };
-          }
-          return {
-            message: "Error de conexión",
-            success: false,
-          };
-        }
+        clearTimeout(timeoutId);
         // Do not retry aborts/timeouts — the server may have already committed.
-        if (error instanceof Error && error.name === "AbortError") {
+        if (isAbortError(error)) {
+          return this.timeoutResponse<T>(method);
+        }
+        if (attempt === maxRetries) {
           return {
-            message: "La petición ha excedido el tiempo límite",
+            message: i18next.t("common:network.connection"),
             success: false,
           };
         }
         await new Promise((resolve) =>
           setTimeout(resolve, 1000 * (attempt + 1)),
         );
+      } finally {
+        clearTimeout(timeoutId);
       }
     }
 
     return {
-      message: "Error de conexión después de múltiples intentos",
+      message: i18next.t("common:network.connectionRetries"),
+      success: false,
+    };
+  }
+
+  /**
+   * FE-03: en métodos que modifican datos el servidor puede haber completado
+   * la operación; se avisa para que el usuario compruebe antes de repetirla.
+   */
+  private static timeoutResponse<T>(method: string): ApiResponse<T> {
+    const upper = method.toUpperCase();
+    const idempotentRead = upper === "GET" || upper === "HEAD";
+    return {
+      message: i18next.t(
+        idempotentRead
+          ? "common:network.timeout"
+          : "common:network.timeoutMaybeApplied",
+      ),
       success: false,
     };
   }
@@ -306,6 +338,9 @@ export class ApiService {
     additionalData: Record<string, string | Blob> = {},
     config: UploadConfig = {},
   ): Promise<ApiResponse<T>> {
+    if (file.size > MAX_UPLOAD_BYTES) {
+      throw new Error(i18next.t("common:feedback.fileTooLarge"));
+    }
     const formData = new FormData();
     formData.append("file", file);
 
@@ -313,13 +348,11 @@ export class ApiService {
       formData.append(key, value);
     });
 
-    const { onProgress, ...requestConfig } = config;
-    void onProgress;
-
     return this.makeRequest<T>(endpoint, "POST", formData, {
-      ...requestConfig,
+      timeout: HEAVY_REQUEST_TIMEOUT_MS, // FE-03: las subidas no caben en los 10 s por defecto
+      ...config,
       headers: {
-        ...requestConfig.headers,
+        ...config.headers,
       },
     });
   }
@@ -484,12 +517,9 @@ export const quizApi = {
 
   deleteQuiz: (quizId: string) => ApiService.delete(`/quiz/${quizId}`),
 
-  uploadQuizImage: (file: File, id: string, format?: string) =>
-    ApiService.upload(
-      "/images/upload/quiz",
-      file,
-      format ? { id, format } : { id },
-    ),
+  // BE-08: el id de la imagen lo genera el servidor; el permiso sale del idioma de la lección.
+  uploadQuizImage: (file: File, lessonId: string) =>
+    ApiService.upload("/images/upload/quiz", file, { lessonId }),
 };
 
 export const adminApi = {
@@ -511,14 +541,18 @@ export const adminApi = {
   deleteLanguage: (languageId: string) =>
     ApiService.delete(`/languages/${languageId}`),
 
+  getLanguageDeletionImpact: (languageId: string) =>
+    ApiService.get(`/languages/${languageId}/deletion-impact`),
+
   uploadLanguageImage: (file: File, languageId: string) => {
     return ApiService.upload("/images/upload/languages", file, {
       id: languageId,
     });
   },
 
-  uploadLessonImage: (file: File, id: string) =>
-    ApiService.upload("/images/upload/lesson", file, { id }),
+  // BE-08: el id de la imagen lo genera el servidor; el permiso sale del idioma.
+  uploadLessonImage: (file: File, languageId: string) =>
+    ApiService.upload("/images/upload/lesson", file, { languageId }),
 
   getLessonsByLanguage: (
     languageId: string,
@@ -601,7 +635,8 @@ export const languageApi = {
     return response;
   },
 
-  getAllLanguages: () => ApiService.get("/languages"),
+  getAllLanguages: (page: number = 1, limit: number = 100) =>
+    ApiService.get(ApiService.buildUrl("/languages", { page, limit })),
 
   enrollInLanguage: (languageId: string, regionId?: string) =>
     ApiService.post("/users/enroll", { languageId, regionId }),
@@ -775,14 +810,22 @@ export const moderatorApi = {
 
 export const signRecordApi = {
   saveLandmarks: (data: SaveLandmarksPayload) =>
-    ApiService.post<{ id: string }>("/sign-record/landmarks", data),
+    // FE-03: payloads de varios MB; 10 s provocaba errores con la grabación ya guardada.
+    ApiService.post<{ id: string }>("/sign-record/landmarks", data, {
+      timeout: HEAVY_REQUEST_TIMEOUT_MS,
+      retries: 0,
+    }),
 
   triggerCustomTraining: (filters: CustomTrainingFilters) =>
     ApiService.post<{
       jobId?: string;
       jobs?: Array<{ jobId?: string; modelType?: SignDetectionType }>;
       message?: string;
-    }>("/sign-record/train/custom", filters),
+    }>("/sign-record/train/custom", filters, {
+      // FE-03: el backend escribe el dataset antes de responder.
+      timeout: HEAVY_REQUEST_TIMEOUT_MS,
+      retries: 0,
+    }),
 
   getLessonSigns: (lessonId: string, regionId?: string) => {
     const url = ApiService.buildUrl(`/sign-record/lesson/${lessonId}/signs`, {
@@ -828,11 +871,12 @@ export const signRecordApi = {
     lessonId: string,
     signs: { name: string; detectionType?: SignDetectionType }[],
   ) =>
-    ApiService.post<BulkCreateSignsResultDto>("/sign-record/signs", {
-      languageId,
-      lessonId,
-      signs,
-    }),
+    ApiService.post<BulkCreateSignsResultDto>(
+      "/sign-record/signs",
+      { languageId, lessonId, signs },
+      // FE-03: alta masiva; una lista larga puede superar los 10 s.
+      { timeout: HEAVY_REQUEST_TIMEOUT_MS, retries: 0 },
+    ),
 
   updateSign: (
     id: string,

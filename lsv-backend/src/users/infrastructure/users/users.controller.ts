@@ -10,30 +10,28 @@ import {
   Query,
   Req,
   Res,
-  UseGuards,
 } from '@nestjs/common';
 import { Response } from 'express';
-import { AuthGuard } from '@nestjs/passport';
-import { AuthService } from 'src/auth/application/auth.service';
-import { UpdateUserDto } from 'src/auth/domain/dto/update-user/update-user';
-import { LanguageService } from 'src/language/application/services/language/language-admin.service';
-import { LessonService } from 'src/lesson/application/services/lesson/lesson.service';
+import { AuthService } from '../../../auth/application/auth.service.js';
+import { UpdateUserDto } from '../../../auth/domain/dto/update-user/update-user.js';
+import { LanguageService } from '../../../language/application/services/language/language-admin.service.js';
+import { LessonService } from '../../../lesson/application/services/lesson/lesson.service.js';
 import {
   PaginatedResponseDto,
   PaginationDto,
-} from 'src/shared/domain/dto/PaginationDto';
-import { Language } from 'src/shared/domain/entities/language';
-import { Lesson } from 'src/shared/domain/entities/lesson';
-import { UserLanguage } from 'src/shared/domain/entities/userLanguage';
-import { UserRegion } from 'src/shared/domain/entities/userRegion';
+} from '../../../shared/domain/dto/PaginationDto.js';
+import { Language } from '../../../shared/domain/entities/language.js';
+import { Lesson } from '../../../shared/domain/entities/lesson.js';
+import { UserLanguage } from '../../../shared/domain/entities/userLanguage.js';
+import { UserRegion } from '../../../shared/domain/entities/userRegion.js';
 import {
   UserLanguageWithRegions,
   UsersService,
-} from 'src/users/application/users/users.service';
-import { StageProgressRow } from 'src/stage/domain/ports/stage.repository.interface/stage.repository.interface';
-import { attachAuthCookie } from 'src/shared/infrastructure/auth-cookie';
-import { EnrollUserInLanguageDto } from './enroll-user-in-language.dto';
-import { GetUserRegionsQueryDto } from './get-user-regions-query.dto';
+} from '../../application/users/users.service.js';
+import { StageProgressRow } from '../../../stage/domain/ports/stage.repository.interface/stage.repository.interface.js';
+import { attachAuthCookie } from '../../../shared/infrastructure/auth-cookie.js';
+import { EnrollUserInLanguageDto } from './enroll-user-in-language.dto.js';
+import { GetUserRegionsQueryDto } from './get-user-regions-query.dto.js';
 import {
   DocEnroll,
   DocEnrollRegion,
@@ -48,7 +46,7 @@ import {
   DocUpdateProfile,
   DocUserProfile,
   DocUsers,
-} from './docs/users.docs';
+} from './docs/users.docs.js';
 
 @DocUsers()
 @Controller('users')
@@ -61,14 +59,12 @@ export class UsersController {
   ) {}
 
   @Get('me')
-  @UseGuards(AuthGuard('jwt'))
   @DocUserProfile()
   async profile(@Req() req) {
     return this.authService.getUserProfile(req.user.sub);
   }
 
   @Put('me')
-  @UseGuards(AuthGuard('jwt'))
   @DocUpdateProfile()
   async updateProfile(
     @Req() req,
@@ -85,7 +81,6 @@ export class UsersController {
     return user;
   }
 
-  @UseGuards(AuthGuard('jwt'))
   @Get('languages')
   @DocListLanguages()
   async listLanguages(
@@ -100,14 +95,12 @@ export class UsersController {
     return this.languageService.getLanguage(id);
   }
 
-  @UseGuards(AuthGuard('jwt'))
   @Get('lesson/:id')
   @DocGetLessonById()
   async getLessonById(@Param('id', ParseUUIDPipe) id: string): Promise<Lesson> {
     return this.lessonAdminService.getLessonById(id);
   }
 
-  @UseGuards(AuthGuard('jwt'))
   @Get('enrolled-languages')
   @DocFindUserLanguages()
   findUserLanguages(
@@ -117,7 +110,6 @@ export class UsersController {
     return this.usersService.findUserLanguages(req.user.sub, pagination);
   }
 
-  @UseGuards(AuthGuard('jwt'))
   @Post('enroll')
   @DocEnroll()
   async enroll(
@@ -139,7 +131,6 @@ export class UsersController {
     return userLanguage;
   }
 
-  @UseGuards(AuthGuard('jwt'))
   @Get('stages-progress/:languageId')
   @DocGetStagesProgress()
   getStagesProgress(
@@ -151,7 +142,6 @@ export class UsersController {
     return this.usersService.getStagesProgress(userId, languageId, pagination);
   }
 
-  @UseGuards(AuthGuard('jwt'))
   @Get('enrolled-regions')
   @DocFindUserRegions()
   findUserRegions(
@@ -165,7 +155,6 @@ export class UsersController {
     );
   }
 
-  @UseGuards(AuthGuard('jwt'))
   @Post('enroll-region')
   @DocEnrollRegion()
   enrollRegion(
@@ -175,7 +164,6 @@ export class UsersController {
     return this.usersService.enrollUserInRegion(req.user.sub, regionId);
   }
 
-  @UseGuards(AuthGuard('jwt'))
   @Delete('enrolled-languages/:languageId')
   @DocUnenrollFromLanguage()
   async unenrollFromLanguage(
@@ -186,7 +174,6 @@ export class UsersController {
     return { message: 'Te has desinscrito del idioma exitosamente.' };
   }
 
-  @UseGuards(AuthGuard('jwt'))
   @Delete('enrolled-regions/:regionId')
   @DocUnenrollFromRegion()
   async unenrollFromRegion(

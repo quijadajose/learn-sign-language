@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import {
   Button,
   Select,
@@ -71,14 +71,19 @@ export function AddSignModal(props: AddSignModalProps) {
   const [paintType, setPaintType] = useState<SignDetectionType>("dynamic");
   const [draftName, setDraftName] = useState("");
 
-  useEffect(() => {
+  // Al cerrar el modal se limpia el borrador. Se ajusta durante el render (patrón
+  // de React para cambios de props) en lugar de en un efecto, para evitar un
+  // render extra con estado viejo.
+  const [prevShow, setPrevShow] = useState(show);
+  if (show !== prevShow) {
+    setPrevShow(show);
     if (!show) {
       setMode("single");
       setBulkDrafts([]);
       setPaintType("dynamic");
       setDraftName("");
     }
-  }, [show]);
+  }
 
   const bulkSummary = useMemo(
     () => summarizeBulkDrafts(bulkDrafts),
@@ -241,7 +246,7 @@ export function AddSignModal(props: AddSignModalProps) {
                     const isDynamic = draft.detectionType === "dynamic";
                     return (
                       <div
-                        key={`${draft.name}-${index}`}
+                        key={draft.name.toLocaleLowerCase("es")}
                         className="relative inline-flex"
                       >
                         <button

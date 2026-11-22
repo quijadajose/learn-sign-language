@@ -128,5 +128,22 @@ class TempPathResolveTests(unittest.TestCase):
             assert_safe_job_paths(str(base), str(data), str(base / "models" / "m1"))
 
 
+class AllowMirrorTests(unittest.TestCase):
+    def _sample(self, **extra):
+        return {"signName": "A", "landmarks": [[0.0] * FEATURES_COUNT], **extra}
+
+    def test_defaults_to_true(self):
+        cleaned = validate_training_samples([self._sample()])
+        self.assertIs(cleaned[0]["allowMirror"], True)
+
+    def test_keeps_explicit_false(self):
+        cleaned = validate_training_samples([self._sample(allowMirror=False)])
+        self.assertIs(cleaned[0]["allowMirror"], False)
+
+    def test_rejects_non_boolean(self):
+        with self.assertRaises(ValueError):
+            validate_training_samples([self._sample(allowMirror="no")])
+
+
 if __name__ == "__main__":
     unittest.main()

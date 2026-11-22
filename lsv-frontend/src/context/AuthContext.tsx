@@ -5,6 +5,8 @@ export interface AuthContextType {
   user: UserData | null;
   isAuthenticated: boolean;
   isHydrating: boolean;
+  /** True when /users/me could not be answered (network, timeout, 5xx): the session is unknown, not expired (AF-F6-02). */
+  sessionUnavailable: boolean;
   login: (userData: UserData) => void;
   logout: () => void;
   updateUser: (userData: UserData) => void;

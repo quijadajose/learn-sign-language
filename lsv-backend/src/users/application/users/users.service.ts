@@ -1,22 +1,22 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { LessonRepositoryInterface } from 'src/lesson/domain/ports/lesson.repository.interface/lesson.repository.interface';
-import { UserLanguage } from 'src/shared/domain/entities/userLanguage';
-import { UserRegion } from 'src/shared/domain/entities/userRegion';
+import { LessonRepositoryInterface } from '../../../lesson/domain/ports/lesson.repository.interface/lesson.repository.interface.js';
+import { UserLanguage } from '../../../shared/domain/entities/userLanguage.js';
+import { UserRegion } from '../../../shared/domain/entities/userRegion.js';
 import {
   PaginatedResponseDto,
   PaginationDto,
-} from 'src/shared/domain/dto/PaginationDto';
-import { EnrollUserInLanguageUseCase } from '../use-cases/enroll-user-in-language/enroll-user-in-language.use-case';
-import { EnrollUserInRegionUseCase } from '../use-cases/enroll-user-in-region/enroll-user-in-region.use-case';
-import { GetUserLanguagesUseCase } from '../use-cases/get-user-languages/get-user-languages.use-case';
-import { GetUserRegionsUseCase } from '../use-cases/get-user-regions/get-user-regions.use-case';
-import { UnenrollUserFromLanguageUseCase } from '../use-cases/unenroll-user-from-language/unenroll-user-from-language.use-case';
-import { UnenrollUserFromRegionUseCase } from '../use-cases/unenroll-user-from-region/unenroll-user-from-region.use-case';
+} from '../../../shared/domain/dto/PaginationDto.js';
+import { EnrollUserInLanguageUseCase } from '../use-cases/enroll-user-in-language/enroll-user-in-language.use-case.js';
+import { EnrollUserInRegionUseCase } from '../use-cases/enroll-user-in-region/enroll-user-in-region.use-case.js';
+import { GetUserLanguagesUseCase } from '../use-cases/get-user-languages/get-user-languages.use-case.js';
+import { GetUserRegionsUseCase } from '../use-cases/get-user-regions/get-user-regions.use-case.js';
+import { UnenrollUserFromLanguageUseCase } from '../use-cases/unenroll-user-from-language/unenroll-user-from-language.use-case.js';
+import { UnenrollUserFromRegionUseCase } from '../use-cases/unenroll-user-from-region/unenroll-user-from-region.use-case.js';
 import {
   StageProgressRow,
   StageRepositoryInterface,
-} from 'src/stage/domain/ports/stage.repository.interface/stage.repository.interface';
-import { UserRegionRepositoryInterface } from 'src/users/domain/ports/user-region.repository.interface';
+} from '../../../stage/domain/ports/stage.repository.interface/stage.repository.interface.js';
+import { UserRegionRepositoryInterface } from '../../domain/ports/user-region.repository.interface.js';
 
 export interface UserLanguageWithRegions extends UserLanguage {
   enrolledRegions?: UserRegion[];

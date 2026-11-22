@@ -1,13 +1,13 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { RegionRepositoryInterface } from 'src/region/domain/region.repository.interface';
-import { Region } from 'src/shared/domain/entities/region';
-import { CreateRegionDto } from 'src/region/domain/create-region.dto';
+import { RegionRepositoryInterface } from '../../../domain/region.repository.interface.js';
+import { Region } from '../../../../shared/domain/entities/region.js';
+import { CreateRegionDto } from '../../../domain/create-region.dto.js';
 import {
   PaginationDto,
   PaginatedResponseDto,
-} from 'src/shared/domain/dto/PaginationDto';
+} from '../../../../shared/domain/dto/PaginationDto.js';
 
 @Injectable()
 export class RegionRepository implements RegionRepositoryInterface {

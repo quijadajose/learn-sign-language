@@ -1,11 +1,11 @@
 import { applyDecorators } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
-import { CreateQuizVariantDto } from 'src/quiz/domain/dto/create-quiz-variant-dto';
-import { DocOp } from 'src/shared/infrastructure/openapi/doc-op';
+import { CreateQuizVariantDto } from '../../domain/dto/create-quiz-variant-dto.js';
+import { DocOp } from '../../../shared/infrastructure/openapi/doc-op.js';
 import {
   MessageResponseDto,
   QuizVariantResponseDto,
-} from 'src/shared/infrastructure/openapi/resource-responses';
+} from '../../../shared/infrastructure/openapi/resource-responses.js';
 
 export const DocQuizVariant = () => applyDecorators(ApiTags('QuizVariant'));
 

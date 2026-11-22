@@ -1,10 +1,10 @@
 import { NestFactory } from '@nestjs/core';
-import { AppModule } from './app.module';
+import { AppModule } from './app.module.js';
 import { ConfigService } from '@nestjs/config';
 import {
   buildOpenApiDocument,
   persistOpenApiDocument,
-} from './shared/infrastructure/openapi/openapi';
+} from './shared/infrastructure/openapi/openapi.js';
 
 async function generate() {
   const app = await NestFactory.create(AppModule, { logger: ['error'] });

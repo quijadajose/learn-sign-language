@@ -1,4 +1,4 @@
-import { resolveSupersedeScope } from './model-scope';
+import { resolveSupersedeScope } from './model-scope.js';
 
 describe('resolveSupersedeScope', () => {
   it('prefers lessonVariantId over lessonId', () => {

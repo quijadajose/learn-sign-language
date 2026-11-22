@@ -5,10 +5,11 @@ import {
   Index,
   ManyToOne,
   PrimaryGeneratedColumn,
+  Relation,
 } from 'typeorm';
-import { User } from './user';
-import { Quiz } from './quiz';
-import { QuizVariant } from './quizVariant';
+import { User } from './user.js';
+import { Quiz } from './quiz.js';
+import { QuizVariant } from './quizVariant.js';
 
 @Entity()
 @Index('IDX_quiz_submission_userId_quizId', ['user', 'quiz'])
@@ -17,19 +18,19 @@ export class QuizSubmission {
   id: string;
 
   @ManyToOne(() => User, (user) => user.quizSubmissions)
-  user: User;
+  user: Relation<User>;
 
   @ManyToOne(() => Quiz, (quiz) => quiz.submissions, {
     nullable: true,
     onDelete: 'CASCADE',
   })
-  quiz?: Quiz;
+  quiz?: Relation<Quiz>;
 
   @ManyToOne(() => QuizVariant, (quizVariant) => quizVariant.submissions, {
     nullable: true,
     onDelete: 'CASCADE',
   })
-  quizVariant?: QuizVariant;
+  quizVariant?: Relation<QuizVariant>;
 
   @Column({ type: 'json', nullable: true, default: null })
   answers: JSON;

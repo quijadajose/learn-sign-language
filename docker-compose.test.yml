@@ -1,0 +1,52 @@
+# Base de datos y Valkey solo para los tests e2e.
+#
+# Es un proyecto aparte (`lsv-test`): no comparte red, volúmenes ni puertos con el
+# stack de desarrollo, así que `cleanDatabase` nunca toca los datos de `lsv-db`.
+# Los datos viven en tmpfs: cada `up` empieza con una base vacía.
+#
+#   docker compose -f docker-compose.test.yml --env-file .env.test up -d --wait
+#   docker compose -f docker-compose.test.yml --env-file .env.test down
+#
+# Desde lsv-backend: `npm run test:e2e:up`, `npm run test:e2e`, `npm run test:e2e:down`.
+name: lsv-test
+
+services:
+  lsv-db-test:
+    image: postgres:18.3-alpine
+    environment:
+      POSTGRES_USER: ${DB_USERNAME:?DB_USERNAME es obligatorio en .env.test}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD es obligatorio en .env.test}
+      POSTGRES_DB: ${DB_DATABASE:?DB_DATABASE es obligatorio en .env.test}
+    ports:
+      - "127.0.0.1:${DB_PORT:-5433}:5432"
+    tmpfs:
+      - /var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USERNAME} -d ${DB_DATABASE}"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
+
+  lsv-valkey-test:
+    image: valkey/valkey:8.0-alpine
+    command: valkey-server --save "" --appendonly no --loglevel warning --requirepass ${VALKEY_PASSWORD:?VALKEY_PASSWORD es obligatorio en .env.test}
+    ports:
+      - "127.0.0.1:${VALKEY_PORT:-6380}:6379"
+    tmpfs:
+      - /data
+    healthcheck:
+      test: ["CMD-SHELL", "valkey-cli -a \"${VALKEY_PASSWORD}\" --no-auth-warning ping | grep -q PONG"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
+
+  # H3: servidor SMTP de pruebas. Atrapa los correos (no los envía) y expone su API
+  # HTTP para que los e2e lean el enlace de reset. Solo en 127.0.0.1.
+  lsv-mailpit-test:
+    image: axllent/mailpit:v1.21
+    environment:
+      MP_SMTP_AUTH_ACCEPT_ANY: "1"
+      MP_SMTP_AUTH_ALLOW_INSECURE: "1"
+    ports:
+      - "127.0.0.1:1025:1025"
+      - "127.0.0.1:8025:8025"

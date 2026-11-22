@@ -1,4 +1,5 @@
-import { useState, useEffect, useCallback } from "react";
+import i18next from "i18next";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { z } from "zod";
 import { useNavigate } from "react-router-dom";
 import { stageApi, adminApi } from "../../services/api";
@@ -18,6 +19,10 @@ export function useStageManagement() {
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [languageId, setLanguageId] = useState<string | null>(null);
+  // Idioma cuya lista de etapas toca mostrar. Respuestas de otro idioma se descartan (AF-F4-01).
+  const activeLanguageRef = useRef<string | null>(null);
+  // Mientras la carga inicial corre, el respaldo de selección no debe elegir otro idioma.
+  const initializingRef = useRef(false);
   const [languageName, setLanguageName] = useState<string | null>(null);
   const [languages, setLanguages] = useState<Language[]>([]);
   const [languagesLoading, setLanguagesLoading] = useState<boolean>(false);
@@ -75,6 +80,8 @@ export function useStageManagement() {
           order,
           sort,
         );
+
+        if (activeLanguageRef.current !== langId) return;
 
         if (response.success) {
           const responseData = response.data;
@@ -245,6 +252,7 @@ export function useStageManagement() {
     async (newLanguageId: string, options?: { silent?: boolean }) => {
       if (newLanguageId === languageId) return;
 
+      activeLanguageRef.current = newLanguageId;
       setLanguageId(newLanguageId);
       setSelectedLanguageIdByHook(newLanguageId);
       setError(null);
@@ -272,8 +280,8 @@ export function useStageManagement() {
 
   useEffect(() => {
     if (!isAuthenticated) {
-      setError("No estás autenticado. Redirigiendo al login...");
-      addToast("error", "No estás autenticado. Redirigiendo al login...");
+      setError(i18next.t("common:feedback.notAuthenticatedRedirect"));
+      addToast("error", i18next.t("common:feedback.notAuthenticatedRedirect"));
       setLoading(false);
       const timer = setTimeout(() => navigate("/login"), 3000);
       return () => clearTimeout(timer);
@@ -282,6 +290,7 @@ export function useStageManagement() {
     let cancelled = false;
 
     const initialize = async () => {
+      initializingRef.current = true;
       setLoading(true);
       setError(null);
 
@@ -311,6 +320,7 @@ export function useStageManagement() {
         }
 
         if (cancelled) return;
+        activeLanguageRef.current = currentLangId;
         setLanguageId(currentLangId);
         await Promise.all([
           fetchStages(currentLangId, 1, pageSize, orderBy, sortOrder),
@@ -323,6 +333,7 @@ export function useStageManagement() {
           console.error("Error during initialization:", err);
         }
       } finally {
+        initializingRef.current = false;
         setLoading(false);
       }
     };
@@ -338,7 +349,13 @@ export function useStageManagement() {
 
   // Safety net: languages loaded but selection missing (e.g. race on first paint).
   useEffect(() => {
-    if (loading || languagesLoading || languageId || languages.length === 0) {
+    if (
+      initializingRef.current ||
+      loading ||
+      languagesLoading ||
+      languageId ||
+      languages.length === 0
+    ) {
       return;
     }
     void handleLanguageChange(languages[0].id, { silent: true });

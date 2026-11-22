@@ -5,16 +5,16 @@ import {
   BadRequestException,
   Inject,
 } from '@nestjs/common';
-import { withI18nParams } from 'src/i18n';
-import { RegionRepositoryInterface } from 'src/region/domain/region.repository.interface';
-import { CreateRegionDto } from 'src/region/domain/create-region.dto';
-import { Region } from 'src/shared/domain/entities/region';
+import { withI18nParams } from '../../../../i18n/index.js';
+import { RegionRepositoryInterface } from '../../../domain/region.repository.interface.js';
+import { CreateRegionDto } from '../../../domain/create-region.dto.js';
+import { Region } from '../../../../shared/domain/entities/region.js';
 import {
   PaginationDto,
   PaginatedResponseDto,
-} from 'src/shared/domain/dto/PaginationDto';
-import { LanguageService } from 'src/language/application/services/language/language-admin.service';
-import { CountryDivisionService } from 'src/shared/application/services/country-division.service';
+} from '../../../../shared/domain/dto/PaginationDto.js';
+import { LanguageService } from '../../../../language/application/services/language/language-admin.service.js';
+import { CountryDivisionService } from '../../../../shared/application/services/country-division.service.js';
 
 @Injectable()
 export class RegionService {
@@ -101,6 +101,14 @@ export class RegionService {
     const existingRegion = await this.regionRepository.findById(id);
     if (!existingRegion) {
       throw new NotFoundException('errors.region.notFound');
+    }
+
+    // BE-06: la región no cambia de idioma en un PUT.
+    if (
+      updateRegionDto.languageId &&
+      updateRegionDto.languageId !== existingRegion.languageId
+    ) {
+      throw new BadRequestException('errors.region.languageImmutable');
     }
 
     if (updateRegionDto.code !== existingRegion.code) {

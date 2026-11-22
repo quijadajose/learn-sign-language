@@ -1,14 +1,14 @@
 import { Injectable } from '@nestjs/common';
-import { GetStagesFromLanguageUseCase } from '../../use-cases/get-stages-from-language-use-case/get-stages-from-language-use-case';
+import { GetStagesFromLanguageUseCase } from '../../use-cases/get-stages-from-language-use-case/get-stages-from-language-use-case.js';
 import {
   PaginationDto,
   PaginatedResponseDto,
-} from 'src/shared/domain/dto/PaginationDto';
-import { StageDto } from '../../../../shared/domain/dto/create-stage/create-stage-dto';
-import { CreateStageUseCase } from '../../use-cases/create-stage-use-case/create-stage-use-case';
-import { UpdateStageUseCase } from '../../use-cases/update-stage-use-case/update-stage-use-case';
-import { DeleteStageUseCase } from '../../use-cases/delete-stage-use-case/delete-stage-use-case';
-import { Stages } from 'src/shared/domain/entities/stage';
+} from '../../../../shared/domain/dto/PaginationDto.js';
+import { StageDto } from '../../../../shared/domain/dto/create-stage/create-stage-dto.js';
+import { CreateStageUseCase } from '../../use-cases/create-stage-use-case/create-stage-use-case.js';
+import { UpdateStageUseCase } from '../../use-cases/update-stage-use-case/update-stage-use-case.js';
+import { DeleteStageUseCase } from '../../use-cases/delete-stage-use-case/delete-stage-use-case.js';
+import { Stages } from '../../../../shared/domain/entities/stage.js';
 
 @Injectable()
 export class StageService {

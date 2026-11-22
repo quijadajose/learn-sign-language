@@ -3,12 +3,12 @@ import { ApiTags } from '@nestjs/swagger';
 import {
   SetLessonCompletionDto,
   StartLessonDto,
-} from 'src/user-lesson/domain/dto/user-lesson.dto';
-import { DocOp } from 'src/shared/infrastructure/openapi/doc-op';
+} from '../../../../domain/dto/user-lesson.dto.js';
+import { DocOp } from '../../../../../shared/infrastructure/openapi/doc-op.js';
 import {
   PaginatedUserLessonResponseDto,
   UserLessonResponseDto,
-} from 'src/shared/infrastructure/openapi/resource-responses';
+} from '../../../../../shared/infrastructure/openapi/resource-responses.js';
 
 export const DocUserLesson = () => applyDecorators(ApiTags('UserLesson'));
 
@@ -31,6 +31,8 @@ export const DocStartLesson = () =>
 export const DocSetLessonCompletion = () =>
   DocOp({
     summary: 'Marcar lección como completada o no',
+    description:
+      'La finalización la declara el cliente: el servidor no tiene prueba de que la lección se haya completado. No usar para ranking, certificados ni nada con valor sin validación adicional (BE-23).',
     body: SetLessonCompletionDto,
     status: 201,
     okType: UserLessonResponseDto,

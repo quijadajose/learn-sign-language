@@ -6,7 +6,7 @@ import eslintPluginTailwindcss from "eslint-plugin-tailwindcss";
 import tseslint from "typescript-eslint";
 
 export default tseslint.config(
-  { ignores: ["dist", "**/*.generated.ts", "public/mediapipe/**"] },
+  { ignores: ["dist", "**/*.generated.ts", "public/mediapipe/**", "e2e/**"] },
   js.configs.recommended,
   {
     files: ["public/**/*.js"],
@@ -16,6 +16,12 @@ export default tseslint.config(
         localStorage: "readonly",
         window: "readonly",
       },
+    },
+  },
+  {
+    files: ["e2e/**/*.mjs"],
+    languageOptions: {
+      globals: { console: "readonly", fetch: "readonly", process: "readonly" },
     },
   },
   ...tseslint.configs.recommended,
@@ -52,6 +58,7 @@ export default tseslint.config(
   },
   eslintPluginTailwindcss.configs.recommended,
   {
+    plugins: { tailwindcss: eslintPluginTailwindcss },
     settings: {
       tailwindcss:
         /** @type {import("eslint-plugin-tailwindcss").PluginSettings} */

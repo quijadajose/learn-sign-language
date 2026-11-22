@@ -263,10 +263,8 @@ export function useQuizVariantManagement() {
     setUploadingImage(uploadKey);
 
     try {
-      const imageId = crypto.randomUUID();
-      const format = file.name.split(".").pop() || "png";
-
-      const response = await quizApi.uploadQuizImage(file, imageId, format);
+      if (!lessonId) return;
+      const response = await quizApi.uploadQuizImage(file, lessonId);
 
       if (response.success && response.data && response.data.length > 0) {
         const imageUrl = response.data[0];

@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { isUUID } from 'class-validator';
 import { InjectRepository } from '@nestjs/typeorm';
 import {
@@ -8,11 +8,14 @@ import {
   IsNull,
   FindOptionsWhere,
 } from 'typeorm';
-import { SignRecording } from '../../../shared/domain/entities/signRecording';
-import { Sign } from '../../../shared/domain/entities/sign';
-import { SignVariant } from '../../../shared/domain/entities/signVariant';
-import { Region } from '../../../shared/domain/entities/region';
-import { SignRecordingRepositoryInterface } from '../../domain/ports/sign-recording.repository.interface';
+import { SignRecording } from '../../../shared/domain/entities/signRecording.js';
+import { Sign } from '../../../shared/domain/entities/sign.js';
+import { SignVariant } from '../../../shared/domain/entities/signVariant.js';
+import { Region } from '../../../shared/domain/entities/region.js';
+import {
+  SignRecordingRepositoryInterface,
+  TrainingRecordingFilters,
+} from '../../domain/ports/sign-recording.repository.interface.js';
 
 @Injectable()
 export class TypeOrmSignRecordingRepository implements SignRecordingRepositoryInterface {
@@ -38,14 +41,25 @@ export class TypeOrmSignRecordingRepository implements SignRecordingRepositoryIn
     return this.repository.remove(recording);
   }
 
-  async findForTraining(filters: {
-    languageId?: string;
-    regionId?: string;
-    stageId?: string;
-    stageIds?: string[];
-    signIds?: string[];
-    lessonId?: string;
-  }): Promise<SignRecording[]> {
+  async findForTraining(
+    filters: TrainingRecordingFilters,
+  ): Promise<SignRecording[]> {
+    return this.buildTrainingQuery(filters).getMany();
+  }
+
+  async findTrainingPage(
+    filters: TrainingRecordingFilters,
+    afterId: string | undefined,
+    limit: number,
+  ): Promise<SignRecording[]> {
+    const query = this.buildTrainingQuery(filters);
+    if (afterId) {
+      query.andWhere('recording.id > :afterId', { afterId });
+    }
+    return query.orderBy('recording.id', 'ASC').take(limit).getMany();
+  }
+
+  private buildTrainingQuery(filters: TrainingRecordingFilters) {
     const query = this.repository
       .createQueryBuilder('recording')
       .leftJoinAndSelect('recording.sign', 'sign')
@@ -97,13 +111,23 @@ export class TypeOrmSignRecordingRepository implements SignRecordingRepositoryIn
       isValidated: true,
     });
 
-    return query.getMany();
+    return query;
   }
 
-  async findValidatedForLessonTraining(
+  async findValidatedLessonTrainingPage(
     lessonId: string,
-    regionId?: string,
+    regionId: string | undefined,
+    afterId: string | undefined,
+    limit: number,
   ): Promise<SignRecording[]> {
+    const query = this.buildLessonTrainingQuery(lessonId, regionId);
+    if (afterId) {
+      query.andWhere('recording.id > :afterId', { afterId });
+    }
+    return query.orderBy('recording.id', 'ASC').take(limit).getMany();
+  }
+
+  private buildLessonTrainingQuery(lessonId: string, regionId?: string) {
     const query = this.repository
       .createQueryBuilder('recording')
       .leftJoinAndSelect('recording.sign', 'sign')
@@ -117,7 +141,7 @@ export class TypeOrmSignRecordingRepository implements SignRecordingRepositoryIn
       query.andWhere('recording.regionId IS NULL');
     }
 
-    return query.getMany();
+    return query;
   }
 
   async findBySignAndRegion(
@@ -148,6 +172,24 @@ export class TypeOrmSignRecordingRepository implements SignRecordingRepositoryIn
     await queryRunner.startTransaction();
 
     try {
+      // BE-06: la región debe ser del mismo idioma que la seña.
+      if (regionId) {
+        const sign = await queryRunner.manager.findOne(Sign, {
+          where: { id: recording.sign.id },
+          relations: { language: true },
+        });
+        const region = await queryRunner.manager.findOne(Region, {
+          where: { id: regionId },
+          relations: { language: true },
+        });
+        if (!region) {
+          throw new BadRequestException('errors.region.notFound');
+        }
+        if (region.language?.id !== sign?.language?.id) {
+          throw new BadRequestException('errors.sign.regionLanguageMismatch');
+        }
+      }
+
       const savedRecording = await queryRunner.manager.save(
         SignRecording,
         recording,

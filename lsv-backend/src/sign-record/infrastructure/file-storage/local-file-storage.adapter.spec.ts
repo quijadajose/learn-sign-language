@@ -2,7 +2,7 @@ import { ConfigService } from '@nestjs/config';
 import * as fs from 'fs/promises';
 import * as os from 'os';
 import * as path from 'path';
-import { LocalFileStorageAdapter } from './local-file-storage.adapter';
+import { LocalFileStorageAdapter } from './local-file-storage.adapter.js';
 
 describe('LocalFileStorageAdapter', () => {
   let tmpDir: string;
@@ -59,5 +59,85 @@ describe('LocalFileStorageAdapter', () => {
     await expect(
       adapter.sha256File(adapter.sharedPath('missing.json')),
     ).resolves.toBeNull();
+  });
+
+  describe('saveTrainingDataset (BE-11)', () => {
+    async function* gen<T>(items: T[]): AsyncGenerator<T> {
+      for (const item of items) yield item;
+    }
+
+    it('writes the same JSON as a materialized dataset, without leaving tmp files', async () => {
+      const samples = [
+        {
+          signName: 'hola',
+          detectionType: 'static' as const,
+          isGlobal: false,
+          landmarks: [[1, 2]],
+        },
+        {
+          signName: 'adios',
+          detectionType: 'static' as const,
+          isGlobal: true,
+          landmarks: [[3]],
+        },
+      ];
+      const noise = [
+        {
+          signName: 'ruido',
+          detectionType: 'static' as const,
+          isGlobal: true,
+          landmarks: [[0.5]],
+        },
+      ];
+      const target = path.join(tmpDir, 'train_x.json');
+
+      await adapter.saveTrainingDataset(target, {
+        modelType: 'dynamic',
+        samples: gen(samples),
+        globalStaticNoise: gen(noise),
+      });
+
+      const written = JSON.parse(await fs.readFile(target, 'utf8'));
+      expect(written).toEqual({
+        modelType: 'dynamic',
+        samples,
+        globalStaticNoise: noise,
+      });
+      await expect(fs.access(`${target}.tmp`)).rejects.toThrow();
+    });
+
+    it('writes empty arrays when there are no samples or noise', async () => {
+      const target = path.join(tmpDir, 'train_empty.json');
+      await adapter.saveTrainingDataset(target, {
+        modelType: 'static',
+        samples: gen([]),
+      });
+      expect(JSON.parse(await fs.readFile(target, 'utf8'))).toEqual({
+        modelType: 'static',
+        samples: [],
+        globalStaticNoise: [],
+      });
+    });
+
+    it('removes the tmp file and does not create the target when the source fails', async () => {
+      const target = path.join(tmpDir, 'train_fail.json');
+      async function* failing() {
+        yield {
+          signName: 'ok',
+          detectionType: 'static' as const,
+          isGlobal: false,
+          landmarks: [],
+        };
+        throw new Error('db down');
+      }
+      await expect(
+        adapter.saveTrainingDataset(target, {
+          modelType: 'static',
+          samples: failing(),
+        }),
+      ).rejects.toThrow('db down');
+      await expect(fs.access(target)).rejects.toThrow();
+      await expect(fs.access(`${target}.tmp`)).rejects.toThrow();
+    });
   });
 });

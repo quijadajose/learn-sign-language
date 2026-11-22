@@ -2,7 +2,7 @@ import {
   canonicalJobJson,
   signTrainingJob,
   verifyTrainingJobHmac,
-} from './sign-training-job';
+} from './sign-training-job.js';
 
 describe('sign-training-job', () => {
   const secret = 'test-hmac-secret';

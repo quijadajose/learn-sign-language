@@ -1,16 +1,16 @@
 import { Controller, Get, Param, Query } from '@nestjs/common';
-import { CountryDivisionService } from '../../application/services/country-division.service';
-import { SearchDivisionsDto } from '../../domain/dto/search-divisions.dto';
-import { PaginatedResponseDto } from '../../domain/dto/paginated-response.dto';
-import { Division } from '../../domain/entities/iso-3166-2/divisions';
-import { Country } from '../../domain/entities/iso-3166-2/countries';
+import { CountryDivisionService } from '../../application/services/country-division.service.js';
+import { SearchDivisionsDto } from '../../domain/dto/search-divisions.dto.js';
+import { PaginatedResponseDto } from '../../domain/dto/paginated-response.dto.js';
+import { Division } from '../../domain/entities/iso-3166-2/divisions.js';
+import { Country } from '../../domain/entities/iso-3166-2/countries.js';
 import {
   DocCountryDivision,
   DocGetAllCountries,
   DocGetAllDivisions,
   DocGetDivisionsByCountry,
   DocSearchDivisions,
-} from './docs/country-division.docs';
+} from './docs/country-division.docs.js';
 
 @DocCountryDivision()
 @Controller('country-division')

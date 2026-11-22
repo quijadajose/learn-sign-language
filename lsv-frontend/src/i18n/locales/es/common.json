@@ -55,5 +55,36 @@
       "privacy": "Privacidad",
       "terms": "Términos"
     }
+  },
+  "network": {
+    "timeout": "La petición ha excedido el tiempo límite",
+    "timeoutMaybeApplied": "La petición ha excedido el tiempo límite. Puede que el servidor la haya completado: comprueba el resultado antes de repetirla",
+    "connection": "Error de conexión",
+    "connectionRetries": "Error de conexión después de múltiples intentos",
+    "loadQuizzes": "Error de conexión al cargar los quizzes",
+    "loadQuiz": "Error de conexión al cargar el quiz",
+    "loadImage": "Error de conexión al cargar la imagen",
+    "uploadImage": "Error de conexión al subir la imagen",
+    "loadRegions": "Error de conexión al cargar las regiones",
+    "loadVariants": "Error de conexión al cargar las variantes",
+    "deleteVariant": "Error de conexión al eliminar la variante",
+    "loadModerators": "Error de conexión al cargar moderadores",
+    "serviceUnavailable": "El servicio no responde. Revisa tu conexión e inténtalo de nuevo.",
+    "retry": "Reintentar"
+  },
+  "feedback": {
+    "regionalVariantUpdated": "Variante regional actualizada exitosamente",
+    "regionalVariantCreated": "Variante regional creada exitosamente",
+    "variantDeleted": "Variante eliminada exitosamente",
+    "permissionAssigned": "Permiso asignado exitosamente",
+    "lessonsMissingData": "Faltan datos para cargar las lecciones.",
+    "lessonsNoLanguage": "No se ha proporcionado un idioma para cargar las lecciones.",
+    "notAuthenticatedRedirect": "No estás autenticado. Redirigiendo al login...",
+    "notAuthenticated": "No estás autenticado.",
+    "notAuthenticatedRelogin": "No estás autenticado. Vuelve a iniciar sesión.",
+    "fieldsRequired": "Completa los campos requeridos",
+    "languagePanelLoadError": "Error al cargar el panel del lenguaje",
+    "languageNoPermission": "No tienes permiso para este lenguaje",
+    "fileTooLarge": "El archivo supera el tamaño máximo de 5 MB"
   }
 }

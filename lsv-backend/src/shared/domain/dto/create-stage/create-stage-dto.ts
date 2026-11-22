@@ -1,10 +1,10 @@
-import { IsNotEmpty, IsOptional, IsString } from 'class-validator';
+import { IsNotEmpty, IsOptional, IsString, IsUUID } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 export class StageDto {
   @ApiPropertyOptional({ format: 'uuid' })
   @IsOptional()
-  @IsString()
+  @IsUUID()
   id?: string;
 
   @ApiProperty({ example: 'Nivel 1' })
@@ -19,6 +19,6 @@ export class StageDto {
 
   @ApiProperty({ format: 'uuid' })
   @IsNotEmpty()
-  @IsString()
+  @IsUUID()
   languageId: string;
 }

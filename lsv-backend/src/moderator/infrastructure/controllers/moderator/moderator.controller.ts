@@ -10,22 +10,22 @@
   ParseUUIDPipe,
   Inject,
 } from '@nestjs/common';
-import { Roles } from 'src/auth/infrastructure/decorators/roles.decorator';
-import { RolesGuard } from 'src/auth/infrastructure/guards/roles/roles.guard';
-import { ModeratorPermissionService } from 'src/moderator/application/services/moderator-permission/moderator-permission.service';
-import { GetModeratorsDto } from 'src/moderator/domain/dto/get-moderators.dto';
-import { PaginatedResponseDto } from 'src/shared/domain/dto/PaginationDto';
-import { ModeratorListItem } from 'src/moderator/domain/dto/moderator-list-response.dto';
-import { AssignPermissionDto } from 'src/moderator/domain/dto/assign-permission.dto';
-import { ModeratorPermission } from 'src/shared/domain/entities/moderatorPermission';
-import { UserRepositoryInterface } from 'src/auth/domain/ports/user.repository.interface/user.repository.interface';
+import { Roles } from '../../../../auth/infrastructure/decorators/roles.decorator.js';
+import { RolesGuard } from '../../../../auth/infrastructure/guards/roles/roles.guard.js';
+import { ModeratorPermissionService } from '../../../application/services/moderator-permission/moderator-permission.service.js';
+import { GetModeratorsDto } from '../../../domain/dto/get-moderators.dto.js';
+import { PaginatedResponseDto } from '../../../../shared/domain/dto/PaginationDto.js';
+import { ModeratorListItem } from '../../../domain/dto/moderator-list-response.dto.js';
+import { AssignPermissionDto } from '../../../domain/dto/assign-permission.dto.js';
+import { ModeratorPermission } from '../../../../shared/domain/entities/moderatorPermission.js';
+import { UserRepositoryInterface } from '../../../../auth/domain/ports/user.repository.interface/user.repository.interface.js';
 import {
   DocAssignPermission,
   DocListModerators,
   DocModerator,
   DocRevokePermission,
   DocSearchUsers,
-} from './docs/moderator.docs';
+} from './docs/moderator.docs.js';
 
 @DocModerator()
 @Controller('admin/moderators')

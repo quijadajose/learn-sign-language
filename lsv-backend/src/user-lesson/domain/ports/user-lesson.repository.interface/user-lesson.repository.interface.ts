@@ -1,8 +1,8 @@
 import {
   PaginatedResponseDto,
   PaginationDto,
-} from 'src/shared/domain/dto/PaginationDto';
-import { UserLesson } from 'src/shared/domain/entities/userLesson';
+} from '../../../../shared/domain/dto/PaginationDto.js';
+import { UserLesson } from '../../../../shared/domain/entities/userLesson.js';
 
 export interface UserLessonRepositoryInterface {
   getUserLessonByUserId(

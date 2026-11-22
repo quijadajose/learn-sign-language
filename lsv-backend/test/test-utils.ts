@@ -8,9 +8,9 @@ import { Request, Response } from 'express';
 import {
   FEATURES_COUNT,
   HAND_FEATURE_START,
-} from 'src/sign-record/domain/utils/landmark-validation';
-import { createSharedModelsAuthMiddleware } from 'src/shared/infrastructure/middleware/shared-models-auth.middleware';
-import { resolveLocale, translate } from 'src/i18n';
+} from '../src/sign-record/domain/utils/landmark-validation.js';
+import { createSharedModelsAuthMiddleware } from '../src/shared/infrastructure/middleware/shared-models-auth.middleware.js';
+import { resolveLocale, translate } from '../src/i18n/index.js';
 
 /**
  * Limpia todas las tablas de la base de datos de pruebas.
@@ -167,15 +167,16 @@ export async function getModeratorToken(
     })
     .expect(201);
 
-  // RolesGuard lee `role` del JWT. Asignar el permiso no promociona al usuario;
-  // sin esto el token seguiría siendo `user` y fallaría @Roles('moderator').
-  const repo = dataSource.getRepository('User');
-  const user = await repo.findOne({ where: { id: userId } });
-  if (!user) {
-    throw new Error(`Moderator user ${userId} not found after assign`);
+  // BE-03: asignar el primer permiso promociona al usuario a `moderator`.
+  // No se toca la BD a mano: si la promoción falla, todas las suites lo notan.
+  const user = await dataSource
+    .getRepository('User')
+    .findOne({ where: { id: userId } });
+  if (user?.['role'] !== 'moderator') {
+    throw new Error(
+      `BE-03: assigning a permission did not promote ${userId} (role=${user?.['role']})`,
+    );
   }
-  user['role'] = 'moderator';
-  await repo.save(user);
 
   // 3. Login
   const response = await request(app.getHttpServer())

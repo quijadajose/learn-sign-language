@@ -1,11 +1,20 @@
 import { BadRequestException } from '@nestjs/common';
-import { CreateSignsBulkUseCase } from './create-signs-bulk.use-case';
-import type { SignRepositoryInterface } from 'src/sign-record/domain/ports/sign.repository.interface';
-import type { Sign } from 'src/shared/domain/entities/sign';
+import { CreateSignsBulkUseCase } from './create-signs-bulk.use-case.js';
+import type { SignRepositoryInterface } from '../../../domain/ports/sign.repository.interface.js';
+import type { Sign } from '../../../../shared/domain/entities/sign.js';
+import type { LessonRepositoryInterface } from '../../../domain/ports/lesson.repository.interface.js';
 
 describe('CreateSignsBulkUseCase', () => {
   const languageId = '11111111-1111-1111-1111-111111111111';
   const lessonId = '22222222-2222-2222-2222-222222222222';
+
+  // BE-06: la lección del spec pertenece al mismo idioma que las señas.
+  const lessonRepo = {
+    findById: jest.fn(async () => ({
+      id: lessonId,
+      language: { id: languageId },
+    })),
+  } as unknown as LessonRepositoryInterface;
 
   function makeRepo(existing: Partial<Sign>[] = []): SignRepositoryInterface {
     const saved: Sign[] = [];
@@ -27,7 +36,7 @@ describe('CreateSignsBulkUseCase', () => {
 
   it('creates missing signs and skips duplicates already in lesson', async () => {
     const repo = makeRepo([{ name: 'A' } as Sign]);
-    const useCase = new CreateSignsBulkUseCase(repo);
+    const useCase = new CreateSignsBulkUseCase(repo, lessonRepo);
 
     const result = await useCase.execute({
       languageId,
@@ -48,7 +57,7 @@ describe('CreateSignsBulkUseCase', () => {
 
   it('skips duplicates inside the same request', async () => {
     const repo = makeRepo();
-    const useCase = new CreateSignsBulkUseCase(repo);
+    const useCase = new CreateSignsBulkUseCase(repo, lessonRepo);
 
     const result = await useCase.execute({
       languageId,
@@ -64,7 +73,7 @@ describe('CreateSignsBulkUseCase', () => {
 
   it('requires lessonId', async () => {
     const repo = makeRepo();
-    const useCase = new CreateSignsBulkUseCase(repo);
+    const useCase = new CreateSignsBulkUseCase(repo, lessonRepo);
 
     await expect(
       useCase.execute({

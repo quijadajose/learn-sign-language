@@ -1,13 +1,20 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { LanguageRepositoryInterface } from 'src/language/domain/ports/language.repository.interface/language.repository.interface';
+import {
+  LanguageDeletionImpact,
+  LanguageRepositoryInterface,
+} from '../../../domain/ports/language.repository.interface/language.repository.interface.js';
 import {
   PaginatedResponseDto,
   PaginationDto,
-} from 'src/shared/domain/dto/PaginationDto';
-import { Language } from 'src/shared/domain/entities/language';
+} from '../../../../shared/domain/dto/PaginationDto.js';
+import { Language } from '../../../../shared/domain/entities/language.js';
+import { Stages } from '../../../../shared/domain/entities/stage.js';
+import { Lesson } from '../../../../shared/domain/entities/lesson.js';
+import { Quiz } from '../../../../shared/domain/entities/quiz.js';
+import { Sign } from '../../../../shared/domain/entities/sign.js';
 import { FindManyOptions, Repository } from 'typeorm';
-import { pickSafeOrderBy } from 'src/shared/infrastructure/safe-order-by';
+import { pickSafeOrderBy } from '../../../../shared/infrastructure/safe-order-by.js';
 
 @Injectable()
 export class LanguageRepository implements LanguageRepositoryInterface {
@@ -66,6 +73,17 @@ export class LanguageRepository implements LanguageRepositoryInterface {
 
   async deleteById(id: string): Promise<void> {
     await this.languageRepository.delete(id);
+  }
+
+  async countDeletionImpact(id: string): Promise<LanguageDeletionImpact> {
+    const manager = this.languageRepository.manager;
+    const [stages, lessons, quizzes, signs] = await Promise.all([
+      manager.count(Stages, { where: { language: { id } } }),
+      manager.count(Lesson, { where: { language: { id } } }),
+      manager.count(Quiz, { where: { lesson: { language: { id } } } }),
+      manager.count(Sign, { where: { language: { id } } }),
+    ]);
+    return { stages, lessons, quizzes, signs };
   }
   async update(id: string, language: Partial<Language>): Promise<Language> {
     await this.languageRepository.update(id, language);

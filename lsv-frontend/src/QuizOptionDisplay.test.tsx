@@ -1,7 +1,8 @@
 import { describe, expect, it } from "vitest";
 import { render, screen } from "@testing-library/react";
 import "./i18n";
-import { optionLetter, QuizOptionDisplay } from "./QuizOptionDisplay";
+import { QuizOptionDisplay } from "./QuizOptionDisplay";
+import { optionLetter } from "./utils/optionLetter";
 
 describe("QuizOptionDisplay", () => {
   it("uses a unique sign-image alt instead of a generic label", () => {

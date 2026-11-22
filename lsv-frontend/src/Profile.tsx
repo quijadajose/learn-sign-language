@@ -1,3 +1,4 @@
+import i18next from "i18next";
 import React, { useEffect, useState } from "react";
 import { Card, Spinner } from "flowbite-react";
 import { BACKEND_BASE_URL } from "./config";
@@ -26,7 +27,7 @@ export const ResponsiveProfileForm = () => {
 
   useEffect(() => {
     if (!isAuthenticated) {
-      setError("No estás autenticado. Vuelve a iniciar sesión.");
+      setError(i18next.t("common:feedback.notAuthenticatedRelogin"));
       addToast("error", "No estás autenticado. Redirigiendo al login...");
       const redirectId = setTimeout(() => navigate("/login"), 3000);
       return () => clearTimeout(redirectId);

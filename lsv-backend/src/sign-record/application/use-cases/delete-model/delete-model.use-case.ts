@@ -1,6 +1,6 @@
 import { Inject, Injectable, Logger, NotFoundException } from '@nestjs/common';
-import { LessonModelRepositoryInterface } from 'src/sign-record/domain/ports/lesson-model.repository.interface';
-import { FileStoragePort } from 'src/sign-record/domain/ports/file-storage.port';
+import { LessonModelRepositoryInterface } from '../../../domain/ports/lesson-model.repository.interface.js';
+import { FileStoragePort } from '../../../domain/ports/file-storage.port.js';
 
 @Injectable()
 export class DeleteModelUseCase {
@@ -15,7 +15,7 @@ export class DeleteModelUseCase {
 
   async execute(id: string) {
     const model = await this.lessonModelRepository.findById(id);
-    if (!model) throw new NotFoundException('Modelo no encontrado');
+    if (!model) throw new NotFoundException('errors.model.notFound');
 
     await this.removeArtifacts(id);
     await this.lessonModelRepository.remove(model);

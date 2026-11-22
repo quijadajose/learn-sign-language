@@ -1,5 +1,10 @@
 import { useEffect, useState } from "react";
-import { useParams, useNavigate, useSearchParams } from "react-router-dom";
+import {
+  Link,
+  useParams,
+  useNavigate,
+  useSearchParams,
+} from "react-router-dom";
 import { Card, Button, Alert } from "flowbite-react";
 import { useTranslation } from "react-i18next";
 import { useAuth } from "./context/AuthContext";
@@ -66,6 +71,7 @@ export default function LessonView() {
   );
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [notFound, setNotFound] = useState(false);
   const [canPractice, setCanPractice] = useState(false);
   const { isAuthenticated } = useAuth();
   const addToast = useToast();
@@ -81,6 +87,7 @@ export default function LessonView() {
       }
 
       setLoading(true);
+      setNotFound(false);
       setCanPractice(false);
       const regionId = searchParams.get("regionId");
 
@@ -117,10 +124,13 @@ export default function LessonView() {
               lessonData = unwrapApiData<Lesson>(lessonResponse.data);
               setLesson(lessonData as Lesson);
               setLessonVariant(null);
+            } else if (lessonResponse.status === 404) {
+              // AF-F6-03: la lección no existe; se muestra el estado de no encontrada.
+              setNotFound(true);
+              setError(lessonResponse.message || t("lesson.notFound"));
+              return;
             } else {
-              throw new Error(
-                lessonResponse.message || t("lesson.loadError"),
-              );
+              throw new Error(lessonResponse.message || t("lesson.loadError"));
             }
           }
         } else {
@@ -130,10 +140,13 @@ export default function LessonView() {
             lessonData = unwrapApiData<Lesson>(lessonResponse.data);
             setLesson(lessonData as Lesson);
             setLessonVariant(null);
+          } else if (lessonResponse.status === 404) {
+            // AF-F6-03: la lección no existe; se muestra el estado de no encontrada.
+            setNotFound(true);
+            setError(lessonResponse.message || t("lesson.notFound"));
+            return;
           } else {
-            throw new Error(
-              lessonResponse.message || t("lesson.loadError"),
-            );
+            throw new Error(lessonResponse.message || t("lesson.loadError"));
           }
         }
 
@@ -191,11 +204,16 @@ export default function LessonView() {
         <Alert color="failure" icon={HiExclamationCircle}>
           {error}
         </Alert>
-        <div className="mt-4">
+        <div className="mt-4 flex flex-wrap gap-2">
           <Button color="gray" onClick={handleGoBack}>
             <HiArrowLeft className="mr-2 size-4" />
             {backLabel}
           </Button>
+          {notFound && (
+            <Button as={Link} to="/dashboard" color="light">
+              {t("lesson.backToDashboard")}
+            </Button>
+          )}
         </div>
       </div>
     );

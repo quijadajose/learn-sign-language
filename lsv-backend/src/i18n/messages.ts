@@ -10,6 +10,8 @@ export const messages: Record<AppLocale, MessageTree> = {
     errors: {
       auth: {
         invalidCredentials: 'Credenciales inválidas',
+        invalidOAuthState:
+          'La sesión de inicio con Google no es válida o expiró. Vuelve a intentarlo.',
         invalidOrExpiredToken: 'Token inválido o expirado',
         tokenExpired: 'El token ha expirado',
         invalidToken: 'Token inválido',
@@ -38,6 +40,8 @@ export const messages: Record<AppLocale, MessageTree> = {
         notFound: 'Lección no encontrada',
         alreadyInUse: 'La lección ya está en uso',
         idRequired: 'lessonId es obligatorio',
+        stageLanguageMismatch: 'La etapa no pertenece al idioma de la lección',
+        languageImmutable: 'El idioma de una lección no se puede cambiar',
         variantNotFound: 'Variante de lección no encontrada',
         baseVariantExists:
           'Ya existe una variante base para esta lección. Solo puede haber una variante base por lección.',
@@ -45,10 +49,12 @@ export const messages: Record<AppLocale, MessageTree> = {
           'Ya existe una variante para esta región en esta lección.',
       },
       stage: {
+        languageImmutable: 'El idioma de una etapa no se puede cambiar',
         notFound: 'Etapa no encontrada',
         alreadyInUse: 'La etapa ya está en uso',
       },
       region: {
+        languageImmutable: 'El idioma de una región no se puede cambiar',
         notFound: 'Región no encontrada',
         notEnrolled: 'No estás inscrito en esta región.',
         alreadyExists: 'Ya existe una región con este código',
@@ -60,6 +66,7 @@ export const messages: Record<AppLocale, MessageTree> = {
           'No hay idiomas disponibles para asignar a regiones',
       },
       quiz: {
+        languageImmutable: 'El idioma de un quiz no se puede cambiar',
         notFound: 'Quiz no encontrado',
         userIdMissing: 'Falta el ID de usuario en la solicitud.',
         userAndQuizRequired: 'Se requieren el ID de usuario y el ID del quiz.',
@@ -69,6 +76,10 @@ export const messages: Record<AppLocale, MessageTree> = {
           'Variante de quiz o de lección no encontrada',
       },
       sign: {
+        regionLanguageMismatch:
+          'El idioma de la seña no coincide con el de la región',
+        lessonLanguageMismatch:
+          'El idioma de la seña no coincide con el de la lección',
         notFound: 'Seña no encontrada',
         nameRequired: 'El nombre es obligatorio',
         languageIdRequired: 'languageId es obligatorio',
@@ -83,6 +94,9 @@ export const messages: Record<AppLocale, MessageTree> = {
         notFound: 'Modelo no encontrado',
         lessonModelNotFound: 'Modelo de lección no encontrado',
         insufficientTrainingData: 'No hay datos suficientes para entrenar',
+        tooManySamples: 'Hay demasiadas grabaciones para un solo entrenamiento',
+        tooManyFrames:
+          'Una grabación tiene demasiados fotogramas para entrenar',
         noTrainedModel: 'No se encontró un modelo entrenado para esta lección',
         noValidatedRecordings:
           'No hay grabaciones validadas para entrenar esta lección',
@@ -92,6 +106,7 @@ export const messages: Record<AppLocale, MessageTree> = {
           'No hay grabaciones válidas para entrenar modelos estáticos o dinámicos',
         invalidTrainerPayload: 'Resultado del entrenador inválido: {details}',
         hashMismatch: 'El hash SHA-256 de model.json no coincide',
+        binHashMismatch: 'El hash SHA-256 de los pesos (.bin) no coincide',
         untrustedModelUrl: 'URL de modelo no permitida',
       },
       landmarks: {
@@ -107,6 +122,10 @@ export const messages: Record<AppLocale, MessageTree> = {
         noImageReceived: 'No se recibió ninguna imagen',
         noImageBuffer: 'No hay buffer de imagen disponible',
         invalidFolder: 'Nombre de carpeta de carga inválido',
+        idRequired: 'Falta el id del recurso de la imagen',
+        languageRequired:
+          'Indica el idioma (languageId) o la lección (lessonId) de la imagen',
+        lessonLanguageMismatch: 'La lección no pertenece a ese idioma',
         invalidDirectory: 'Directorio de carga inválido',
         invalidFolderAllowed:
           'Carpeta de carga inválida. Permitidas: {folders}',
@@ -148,6 +167,7 @@ export const messages: Record<AppLocale, MessageTree> = {
       },
       common: {
         forbidden: 'Prohibido',
+        invalidId: 'El identificador no es válido',
         forbiddenResource: 'Recurso prohibido',
         unauthorized: 'No autorizado',
         tooManyRequests: 'Demasiadas solicitudes',
@@ -175,6 +195,8 @@ export const messages: Record<AppLocale, MessageTree> = {
     errors: {
       auth: {
         invalidCredentials: 'Invalid credentials',
+        invalidOAuthState:
+          'The Google sign-in session is invalid or expired. Please try again.',
         invalidOrExpiredToken: 'Invalid or expired token',
         tokenExpired: 'Token has expired',
         invalidToken: 'Invalid token',
@@ -203,6 +225,9 @@ export const messages: Record<AppLocale, MessageTree> = {
         notFound: 'Lesson not found',
         alreadyInUse: 'Lesson already in use',
         idRequired: 'lessonId is required',
+        stageLanguageMismatch:
+          'The stage does not belong to the lesson language',
+        languageImmutable: 'A lesson language cannot be changed',
         variantNotFound: 'Lesson variant not found',
         baseVariantExists:
           'A base variant already exists for this lesson. Only one base variant is allowed per lesson.',
@@ -210,10 +235,12 @@ export const messages: Record<AppLocale, MessageTree> = {
           'A variant already exists for this region in this lesson.',
       },
       stage: {
+        languageImmutable: 'A stage language cannot be changed',
         notFound: 'Stage not found',
         alreadyInUse: 'Stage already in use',
       },
       region: {
+        languageImmutable: 'A region language cannot be changed',
         notFound: 'Region not found',
         notEnrolled: 'You are not enrolled in this region.',
         alreadyExists: 'A region with this code already exists',
@@ -224,6 +251,7 @@ export const messages: Record<AppLocale, MessageTree> = {
         noLanguagesToAssign: 'No languages available to assign to regions',
       },
       quiz: {
+        languageImmutable: 'A quiz language cannot be changed',
         notFound: 'Quiz not found',
         userIdMissing: 'User ID is missing from the request.',
         userAndQuizRequired: 'User ID and Quiz ID are required.',
@@ -233,6 +261,10 @@ export const messages: Record<AppLocale, MessageTree> = {
           'Quiz variant or lesson variant not found',
       },
       sign: {
+        regionLanguageMismatch:
+          'The sign language does not match the region language',
+        lessonLanguageMismatch:
+          'The sign language does not match the lesson language',
         notFound: 'Sign not found',
         nameRequired: 'Name is required',
         languageIdRequired: 'languageId is required',
@@ -247,6 +279,8 @@ export const messages: Record<AppLocale, MessageTree> = {
         notFound: 'Model not found',
         lessonModelNotFound: 'Lesson model not found',
         insufficientTrainingData: 'Not enough data to train',
+        tooManySamples: 'Too many recordings for a single training job',
+        tooManyFrames: 'A recording has too many frames to train',
         noTrainedModel: 'No trained model was found for this lesson',
         noValidatedRecordings:
           'There are no validated recordings to train this lesson',
@@ -256,6 +290,7 @@ export const messages: Record<AppLocale, MessageTree> = {
           'There are no valid recordings to train static or dynamic models',
         invalidTrainerPayload: 'Invalid trainer result payload: {details}',
         hashMismatch: 'model.json SHA-256 does not match',
+        binHashMismatch: 'Weight shard (.bin) SHA-256 does not match',
         untrustedModelUrl: 'Untrusted model URL',
       },
       landmarks: {
@@ -271,6 +306,10 @@ export const messages: Record<AppLocale, MessageTree> = {
         noImageReceived: 'No image received',
         noImageBuffer: 'No image buffer available',
         invalidFolder: 'Invalid upload folder name',
+        idRequired: 'The image resource id is required',
+        languageRequired:
+          'Provide the language (languageId) or lesson (lessonId) of the image',
+        lessonLanguageMismatch: 'The lesson does not belong to that language',
         invalidDirectory: 'Invalid upload directory',
         invalidFolderAllowed: 'Invalid upload folder. Allowed: {folders}',
         unsupportedFormat: 'Unsupported image format. Use PNG, JPEG or WebP',
@@ -309,6 +348,7 @@ export const messages: Record<AppLocale, MessageTree> = {
       },
       common: {
         forbidden: 'Forbidden',
+        invalidId: 'The identifier is not valid',
         forbiddenResource: 'Forbidden resource',
         unauthorized: 'Unauthorized',
         tooManyRequests: 'Too Many Requests',

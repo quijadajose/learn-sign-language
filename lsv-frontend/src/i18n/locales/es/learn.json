@@ -7,7 +7,8 @@
     "contentHeading": "Contenido de la lección",
     "practiceTitle": "¿Listo para el reto?",
     "practiceBody": "Pon a prueba lo aprendido usando tu cámara para reconocer las señas de esta lección con nuestra IA.",
-    "practiceCta": "Practiquemos"
+    "practiceCta": "Practiquemos",
+    "backToDashboard": "Volver al dashboard"
   },
   "quiz": {
     "loading": "Cargando quiz...",

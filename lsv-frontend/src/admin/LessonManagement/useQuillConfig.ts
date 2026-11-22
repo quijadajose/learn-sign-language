@@ -1,6 +1,7 @@
-import { useCallback, useMemo } from "react";
+import { useCallback, useEffect, useMemo, useRef } from "react";
 import { BACKEND_BASE_URL } from "../../config";
 import { adminApi } from "../../services/api";
+import i18next from "i18next";
 
 export interface QuillConfig {
   modules: Record<string, unknown>;
@@ -9,7 +10,14 @@ export interface QuillConfig {
 
 export function useQuillConfig(
   addToast: (type: "success" | "error", message: string) => void,
+  languageId: string,
 ) {
+  // Ref: el handler de Quill se crea una sola vez y debe leer el idioma actual.
+  const languageIdRef = useRef(languageId);
+  useEffect(() => {
+    languageIdRef.current = languageId;
+  }, [languageId]);
+
   const imageHandler = useCallback(function (this: {
     quill: import("quill").default;
   }) {
@@ -22,9 +30,14 @@ export function useQuillConfig(
       const file = input.files?.[0];
       if (file) {
         try {
+          const currentLanguageId = languageIdRef.current;
+          if (!currentLanguageId) {
+            addToast("error", i18next.t("common:network.uploadImage"));
+            return;
+          }
           const response = await adminApi.uploadLessonImage(
             file,
-            crypto.randomUUID(),
+            currentLanguageId,
           );
           if (
             response.success &&
@@ -43,7 +56,7 @@ export function useQuillConfig(
             addToast("error", response.message || "Error al subir la imagen");
           }
         } catch (error) {
-          addToast("error", "Error de conexión al subir la imagen");
+          addToast("error", i18next.t("common:network.uploadImage"));
         }
       }
     };

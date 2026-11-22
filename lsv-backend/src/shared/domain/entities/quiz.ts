@@ -5,10 +5,11 @@ import {
   ManyToOne,
   OneToMany,
   PrimaryGeneratedColumn,
+  Relation,
 } from 'typeorm';
-import { Lesson } from './lesson';
-import { QuizSubmission } from './quizSubmission';
-import { Question } from './question';
+import { Lesson } from './lesson.js';
+import { QuizSubmission } from './quizSubmission.js';
+import { Question } from './question.js';
 
 @Entity()
 @Index('IDX_quiz_lessonId', ['lesson'])
@@ -18,15 +19,15 @@ export class Quiz {
   id: string;
 
   @ManyToOne(() => Lesson, (lesson) => lesson.quizzes, { onDelete: 'CASCADE' })
-  lesson: Lesson;
+  lesson: Relation<Lesson>;
 
   @OneToMany(() => QuizSubmission, (submission) => submission.quiz, {
     onDelete: 'CASCADE',
   })
-  submissions: QuizSubmission[];
+  submissions: Relation<QuizSubmission[]>;
 
   @OneToMany(() => Question, (question) => question.quiz, {
     onDelete: 'CASCADE',
   })
-  questions: Question[];
+  questions: Relation<Question[]>;
 }

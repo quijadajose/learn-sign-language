@@ -1,8 +1,11 @@
-import { PaginationDto } from 'src/shared/domain/dto/PaginationDto';
-import { LessonModel } from 'src/shared/domain/entities/lessonModel';
+import { PaginationDto } from '../../../shared/domain/dto/PaginationDto.js';
+import { LessonModel } from '../../../shared/domain/entities/lessonModel.js';
 
 export interface LessonModelRepositoryInterface {
-  findAll(pagination: PaginationDto): Promise<LessonModel[]>;
+  findAll(
+    pagination: PaginationDto,
+    languageIds?: string[],
+  ): Promise<LessonModel[]>;
   findByLessonVariantId(lessonVariantId: string): Promise<LessonModel | null>;
   findReadyForLesson(
     lessonId: string,
@@ -17,9 +20,12 @@ export interface LessonModelRepositoryInterface {
   findPendingOrTraining(): Promise<LessonModel[]>;
   findById(id: string): Promise<LessonModel | null>;
   create(
-    data: Partial<Omit<LessonModel, 'lesson' | 'lessonVariant'>> & {
+    data: Partial<
+      Omit<LessonModel, 'lesson' | 'lessonVariant' | 'language'>
+    > & {
       lesson?: { id: string };
       lessonVariant?: { id: string };
+      language?: { id: string };
     },
   ): LessonModel;
   save(model: LessonModel): Promise<LessonModel>;

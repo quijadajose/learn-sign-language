@@ -1,6 +1,6 @@
 import { plainToInstance } from 'class-transformer';
 import { validateSync } from 'class-validator';
-import { EnvConfig } from './env-config';
+import { EnvConfig } from './env-config.js';
 
 export function validate(config: Record<string, unknown>) {
   console.log('Validating config. NODE_ENV:', config.NODE_ENV);

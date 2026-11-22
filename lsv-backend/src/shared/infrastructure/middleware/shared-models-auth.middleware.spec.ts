@@ -1,7 +1,7 @@
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import { Request, Response } from 'express';
-import { createSharedModelsAuthMiddleware } from './shared-models-auth.middleware';
+import { createSharedModelsAuthMiddleware } from './shared-models-auth.middleware.js';
 
 function mockReq(
   overrides: Partial<Request> & {

@@ -10,9 +10,9 @@
     "dynamicFeaturesCount": { "const": 340 },
     "fixedDynamicSequenceLength": { "const": 30 },
     "featuresSchemaStatic": { "const": "static-v2" },
-    "featuresSchemaDynamic": { "const": "dynamic-v3" },
+    "featuresSchemaDynamic": { "const": "dynamic-v4" },
     "legacyFeaturesSchemaStatic": { "const": ["static-v1"] },
-    "legacyFeaturesSchemaDynamic": { "const": ["dynamic-v1", "dynamic-v2"] },
+    "legacyFeaturesSchemaDynamic": { "const": ["dynamic-v1", "dynamic-v2", "dynamic-v3"] },
     "modelPoseLandmarks": {
       "$comment": "MediaPipe pose landmarks the models actually see. Excludes 17-22 (coarse hand points already covered by the 126-dim hand blocks) and 25-32 (knees, ankles, heels, feet: outside a waist-up framing, so MediaPipe extrapolates them).",
       "const": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 23, 24]

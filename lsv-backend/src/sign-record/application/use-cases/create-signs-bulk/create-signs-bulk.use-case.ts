@@ -1,7 +1,8 @@
 import { Inject, Injectable, BadRequestException } from '@nestjs/common';
-import { SignRepositoryInterface } from 'src/sign-record/domain/ports/sign.repository.interface';
-import { CreateSignsBulkDto } from 'src/sign-record/domain/dto/sign-record.dto';
-import { Sign } from 'src/shared/domain/entities/sign';
+import { SignRepositoryInterface } from '../../../domain/ports/sign.repository.interface.js';
+import { CreateSignsBulkDto } from '../../../domain/dto/sign-record.dto.js';
+import { Sign } from '../../../../shared/domain/entities/sign.js';
+import { LessonRepositoryInterface } from '../../../domain/ports/lesson.repository.interface.js';
 
 export type BulkCreateSkipped = {
   name: string;
@@ -18,17 +19,27 @@ export class CreateSignsBulkUseCase {
   constructor(
     @Inject('SignRepositoryInterface')
     private readonly signRepository: SignRepositoryInterface,
+    @Inject('LessonRepositoryInterface')
+    private readonly lessonRepository: LessonRepositoryInterface,
   ) {}
 
   async execute(data: CreateSignsBulkDto): Promise<BulkCreateResult> {
     if (!data.languageId) {
-      throw new BadRequestException('languageId is required');
+      throw new BadRequestException('errors.sign.languageIdRequired');
     }
     if (!data.lessonId) {
-      throw new BadRequestException('lessonId is required');
+      throw new BadRequestException('errors.lesson.idRequired');
+    }
+    // BE-06: la lección debe ser del mismo idioma que las señas.
+    const lesson = await this.lessonRepository.findById(data.lessonId);
+    if (!lesson) {
+      throw new BadRequestException('errors.lesson.notFound');
+    }
+    if (lesson.language?.id !== data.languageId) {
+      throw new BadRequestException('errors.sign.lessonLanguageMismatch');
     }
     if (!Array.isArray(data.signs) || data.signs.length === 0) {
-      throw new BadRequestException('signs must not be empty');
+      throw new BadRequestException('errors.sign.signsEmpty');
     }
 
     const existing = await this.signRepository.findForLessonWithRecordingsCount(

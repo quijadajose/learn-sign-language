@@ -49,6 +49,8 @@ const QuillEditor = forwardRef<QuillEditorRef, QuillEditorProps>(
   ) => {
     const quillRef = useRef<ReactQuill>(null);
     const lastQuillHtmlRef = useRef<string | null>(null);
+    // FE-12: la versión saneada de la última salida de Quill se calcula una sola vez, al recibirla.
+    const lastSanitizedRef = useRef<string | null>(null);
 
     useImperativeHandle(ref, () => ({
       getEditor: () => quillRef.current?.getEditor(),
@@ -58,7 +60,7 @@ const QuillEditor = forwardRef<QuillEditorRef, QuillEditorProps>(
 
     const editorValue = useMemo(() => {
       const last = lastQuillHtmlRef.current;
-      if (last !== null && sanitizeLessonHtml(last) === safeValue) {
+      if (last !== null && lastSanitizedRef.current === safeValue) {
         return last;
       }
       return safeValue;
@@ -66,10 +68,11 @@ const QuillEditor = forwardRef<QuillEditorRef, QuillEditorProps>(
 
     const handleChange = useCallback(
       (next: string, _delta: unknown, source: string) => {
+        const sanitized = sanitizeLessonHtml(next);
         lastQuillHtmlRef.current = next;
+        lastSanitizedRef.current = sanitized;
         // Ignore programmatic setContents from react-quill's controlled updates.
         if (source !== "user") return;
-        const sanitized = sanitizeLessonHtml(next);
         if (sanitized === value) return;
         onChange?.(sanitized);
       },

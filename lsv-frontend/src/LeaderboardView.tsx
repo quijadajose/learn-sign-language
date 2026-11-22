@@ -42,11 +42,20 @@ const LeaderboardView: React.FC = () => {
   const [sortOrder, setSortOrder] = useState<"ASC" | "DESC">("DESC");
 
   const fetchLanguages = useCallback(async () => {
+    // El backend pagina con un máximo de 100 por página: se piden todas las páginas
+    // para que el filtro ofrezca todos los idiomas (AF-H2-02).
+    const pageSize = 100;
+    const maxPages = 50;
     try {
-      const response = await languageApi.getAllLanguages();
-      if (response.success) {
-        setLanguages(unwrapApiList<Language>(response.data));
+      const all: Language[] = [];
+      for (let page = 1; page <= maxPages; page++) {
+        const response = await languageApi.getAllLanguages(page, pageSize);
+        if (!response.success) break;
+        const batch = unwrapApiList<Language>(response.data);
+        all.push(...batch);
+        if (batch.length < pageSize) break;
       }
+      setLanguages(all);
     } catch (err) {
       console.error("Error fetching languages:", err);
     }

@@ -10,6 +10,7 @@ import { useAuth } from "./context/AuthContext";
 import { MAIN_CONTENT_ID } from "./components/SkipLink";
 import { useLocalStorage } from "./hooks/useLocalStorage";
 import { useToast } from "./components/ToastProvider";
+import { consumeUrlHash } from "./utils/urlHash";
 
 function handleGoogleLogin() {
   window.location.href = `${BACKEND_BASE_URL}/auth/google`;
@@ -31,7 +32,12 @@ function Login() {
   const { login, isAuthenticated, isHydrating } = useAuth();
   const addToast = useToast();
   const [searchParams] = useSearchParams();
-  const oauthCode = readOauthCode(searchParams);
+  // FE-06: se lee una sola vez y luego se borra el fragmento de la URL.
+  const [oauthCode] = useState(() => readOauthCode(searchParams));
+  useEffect(() => {
+    if (oauthCode) consumeUrlHash();
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- solo al montar
+  }, []);
   const [rememberedEmail, setRememberedEmail] = useLocalStorage<string | null>(
     "rememberedEmail",
     null,
@@ -103,10 +109,7 @@ function Login() {
         addToast("success", t("login.success"));
         navigate("/dashboard");
       } else {
-        addToast(
-          "error",
-          response.message || t("login.invalidCredentials"),
-        );
+        addToast("error", response.message || t("login.invalidCredentials"));
       }
     } finally {
       setIsSubmitting(false);
@@ -122,16 +125,12 @@ function Login() {
         to="/"
         className="mb-6 flex items-center text-2xl font-semibold text-gray-900 dark:text-white"
       >
-        <img
-          className="mr-2 size-8 dark:invert"
-          src="/logo.svg"
-          alt=""
-        />
+        <img className="mr-2 size-8 dark:invert" src="/logo.svg" alt="" />
         {t("common:appName")}
       </Link>
-      <div className="w-full rounded-lg bg-white shadow dark:border dark:border-gray-700 dark:bg-gray-800 sm:max-w-md xl:p-0">
+      <div className="w-full rounded-lg bg-white shadow sm:max-w-md xl:p-0 dark:border dark:border-gray-700 dark:bg-gray-800">
         <div className="space-y-4 p-6 sm:p-8 md:space-y-6">
-          <h1 className="text-xl font-bold leading-tight tracking-tight text-gray-900 dark:text-white md:text-2xl">
+          <h1 className="text-xl leading-tight font-bold tracking-tight text-gray-900 md:text-2xl dark:text-white">
             {t("login.title")}
           </h1>
           <form className="space-y-4 md:space-y-6" onSubmit={handleLogin}>
@@ -197,7 +196,7 @@ function Login() {
               {t("login.noAccount")}{" "}
               <Link
                 to="/register"
-                className="font-medium text-blue-600 hover:underline dark:text-blue-400"
+                className="font-medium text-blue-700 underline dark:text-blue-400"
               >
                 {t("login.register")}
               </Link>
@@ -229,11 +228,14 @@ function Login() {
               {t("login.withGoogle")}
             </Button>
           </form>
-          <div className="mt-4 flex justify-center gap-4 border-t pt-4 text-xs text-gray-400 dark:border-gray-700">
-            <Link to="/privacy-policy" className="hover:underline">
+          <div className="mt-4 flex justify-center gap-4 border-t pt-4 text-xs text-gray-600 dark:border-gray-700 dark:text-gray-400">
+            <Link to="/privacy-policy" className="underline hover:no-underline">
               {t("legal.privacy")}
             </Link>
-            <Link to="/terms-of-service" className="hover:underline">
+            <Link
+              to="/terms-of-service"
+              className="underline hover:no-underline"
+            >
               {t("legal.terms")}
             </Link>
           </div>

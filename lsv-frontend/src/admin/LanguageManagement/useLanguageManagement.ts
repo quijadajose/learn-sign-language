@@ -7,6 +7,7 @@ import {
   Country,
   CountryOption,
   Language,
+  LanguageDeletionImpact,
   LanguageForm,
   LanguageFormErrors,
   LanguageFormTouched,
@@ -42,6 +43,9 @@ export function useLanguageManagement() {
     null,
   );
   const [isDeleting, setIsDeleting] = useState(false);
+  const [deletionImpact, setDeletionImpact] =
+    useState<LanguageDeletionImpact | null>(null);
+  const [loadingImpact, setLoadingImpact] = useState(false);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [addForm, setAddForm] = useState<LanguageForm>(emptyForm);
   const [addFormErrors, setAddFormErrors] = useState<LanguageFormErrors>({});
@@ -298,14 +302,29 @@ export function useLanguageManagement() {
     setEditSelectedFile(null);
   };
 
-  const handleDeleteClick = (language: Language) => {
+  const handleDeleteClick = async (language: Language) => {
     setDeletingLanguage(language);
+    setDeletionImpact(null);
+    setLoadingImpact(true);
     setIsDeleteModalOpen(true);
+    try {
+      const response = await adminApi.getLanguageDeletionImpact(language.id);
+      if (!response.success) {
+        throw new Error(response.message || "Error al calcular el contenido");
+      }
+      setDeletionImpact(response.data as LanguageDeletionImpact);
+    } catch (err) {
+      console.error("Error loading deletion impact:", err);
+      setDeletionImpact(null);
+    } finally {
+      setLoadingImpact(false);
+    }
   };
 
   const handleCancelDelete = () => {
     setIsDeleteModalOpen(false);
     setDeletingLanguage(null);
+    setDeletionImpact(null);
   };
 
   const handleDeleteSubmit = async () => {
@@ -519,6 +538,8 @@ export function useLanguageManagement() {
     isDeleteModalOpen,
     deletingLanguage,
     isDeleting,
+    deletionImpact,
+    loadingImpact,
     isAddModalOpen,
     addForm,
     setAddForm: (form: LanguageForm) => {

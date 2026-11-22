@@ -55,5 +55,36 @@
       "privacy": "Privacy",
       "terms": "Terms"
     }
+  },
+  "network": {
+    "timeout": "The request timed out",
+    "timeoutMaybeApplied": "The request timed out. The server may have completed it: check the result before trying again",
+    "connection": "Connection error",
+    "connectionRetries": "Connection error after several attempts",
+    "loadQuizzes": "Connection error while loading quizzes",
+    "loadQuiz": "Connection error while loading the quiz",
+    "loadImage": "Connection error while loading the image",
+    "uploadImage": "Connection error while uploading the image",
+    "loadRegions": "Connection error while loading regions",
+    "loadVariants": "Connection error while loading variants",
+    "deleteVariant": "Connection error while deleting the variant",
+    "loadModerators": "Connection error while loading moderators",
+    "serviceUnavailable": "The service is not responding. Check your connection and try again.",
+    "retry": "Try again"
+  },
+  "feedback": {
+    "regionalVariantUpdated": "Regional variant updated successfully",
+    "regionalVariantCreated": "Regional variant created successfully",
+    "variantDeleted": "Variant deleted successfully",
+    "permissionAssigned": "Permission assigned successfully",
+    "lessonsMissingData": "Missing data to load the lessons.",
+    "lessonsNoLanguage": "No language was provided to load the lessons.",
+    "notAuthenticatedRedirect": "You are not signed in. Redirecting to login...",
+    "notAuthenticated": "You are not signed in.",
+    "notAuthenticatedRelogin": "You are not signed in. Please sign in again.",
+    "fieldsRequired": "Please fill in the required fields.",
+    "languagePanelLoadError": "Failed to load the language panel.",
+    "languageNoPermission": "You do not have permission for this language.",
+    "fileTooLarge": "The file exceeds the 5 MB size limit."
   }
 }

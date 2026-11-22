@@ -6,6 +6,7 @@ import { useTranslation } from "react-i18next";
 import { authApi } from "./services/api";
 import { useToast } from "./components/ToastProvider";
 import { MAIN_CONTENT_ID } from "./components/SkipLink";
+import { consumeUrlHash } from "./utils/urlHash";
 
 /** Prefer hash (`#token=`) so the reset token is not sent in Referer / query logs. */
 function readResetToken(searchParams: URLSearchParams): string | null {
@@ -15,7 +16,13 @@ function readResetToken(searchParams: URLSearchParams): string | null {
       const fromHashParams = new URLSearchParams(hash).get("token");
       if (fromHashParams) return fromHashParams;
       if (hash.startsWith("token=")) {
-        return decodeURIComponent(hash.slice("token=".length));
+        const raw = hash.slice("token=".length);
+        try {
+          return decodeURIComponent(raw);
+        } catch {
+          // Escape malformado (p. ej. "%" suelto): usar el valor tal cual.
+          return raw;
+        }
       }
     }
   }
@@ -26,7 +33,12 @@ function readResetToken(searchParams: URLSearchParams): string | null {
 function ResetPassword() {
   const { t } = useTranslation(["auth", "common"]);
   const [searchParams] = useSearchParams();
-  const token = readResetToken(searchParams);
+  // FE-06: se lee una sola vez y luego se borra el fragmento de la URL.
+  const [token] = useState(() => readResetToken(searchParams));
+  useEffect(() => {
+    if (token) consumeUrlHash();
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- solo al montar
+  }, []);
   const addToast = useToast();
   const navigate = useNavigate();
   const [newPassword, setNewPassword] = useState("");

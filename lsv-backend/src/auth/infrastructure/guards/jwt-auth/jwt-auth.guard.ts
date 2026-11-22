@@ -6,18 +6,19 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
+import { WsException } from '@nestjs/websockets';
 import { Response } from 'express';
-import { TokenService } from 'src/auth/domain/ports/token.service/token.service.interface';
-import { UserRepositoryInterface } from 'src/auth/domain/ports/user.repository.interface/user.repository.interface';
+import { TokenService } from '../../../domain/ports/token.service/token.service.interface.js';
+import { UserRepositoryInterface } from '../../../domain/ports/user.repository.interface/user.repository.interface.js';
 import {
   attachAuthCookie,
   shouldSlideAccessToken,
-} from 'src/shared/infrastructure/auth-cookie';
-import { User } from 'src/shared/domain/entities/user';
+} from '../../../../shared/infrastructure/auth-cookie.js';
+import { User } from '../../../../shared/domain/entities/user.js';
 import {
   extractAccessToken,
   requestUsedBearerToken,
-} from 'src/shared/infrastructure/extract-access-token';
+} from '../../../../shared/infrastructure/extract-access-token.js';
 
 @Injectable()
 export class JwtAuthGuard implements CanActivate {
@@ -39,6 +40,18 @@ export class JwtAuthGuard implements CanActivate {
       return true;
     }
 
+    // WebSocket: el token se valida una vez al conectar (handleConnection del gateway),
+    // que deja el usuario en `client.data.user` o desconecta. Aquí solo se exige eso.
+    if (context.getType() === 'ws') {
+      const client = context
+        .switchToWs()
+        .getClient<{ data?: { user?: unknown } }>();
+      if (client?.data?.user) {
+        return true;
+      }
+      throw new WsException('errors.auth.noToken');
+    }
+
     const request = context.switchToHttp().getRequest();
     const token = extractAccessToken(request);
 
@@ -57,6 +70,8 @@ export class JwtAuthGuard implements CanActivate {
       ) {
         throw new UnauthorizedException('errors.auth.invalidToken');
       }
+      // BE-30: se reutiliza en JwtStrategy para no volver a consultar la BD.
+      request.resolvedAuthState = authState;
       request.user = {
         sub: payload.sub,
         email: payload.email,

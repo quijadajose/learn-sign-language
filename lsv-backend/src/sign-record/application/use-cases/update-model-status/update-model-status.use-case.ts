@@ -1,7 +1,7 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { LessonModel } from 'src/shared/domain/entities/lessonModel';
-import { LessonModelRepositoryInterface } from 'src/sign-record/domain/ports/lesson-model.repository.interface';
-import { SignRecordNotificationPort } from 'src/sign-record/domain/ports/sign-record.notification.port';
+import { LessonModel } from '../../../../shared/domain/entities/lessonModel.js';
+import { LessonModelRepositoryInterface } from '../../../domain/ports/lesson-model.repository.interface.js';
+import { SignRecordNotificationPort } from '../../../domain/ports/sign-record.notification.port.js';
 
 @Injectable()
 export class UpdateModelStatusUseCase {
@@ -23,8 +23,18 @@ export class UpdateModelStatusUseCase {
     }
     await this.lessonModelRepository.update(id, updateData);
 
-    this.notificationPort.emitStatusChange(id, status);
+    const languageId = await this.findLanguageId(id);
+    this.notificationPort.emitStatusChange(id, languageId, status);
 
     return { success: true };
+  }
+
+  private async findLanguageId(id: string): Promise<string | null> {
+    try {
+      const model = await this.lessonModelRepository.findById(id);
+      return model?.lesson?.language?.id ?? null;
+    } catch {
+      return null;
+    }
   }
 }

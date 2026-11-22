@@ -1,8 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { Lesson } from 'src/shared/domain/entities/lesson';
-import { LessonRepositoryInterface } from '../../domain/ports/lesson.repository.interface';
+import { Lesson } from '../../../shared/domain/entities/lesson.js';
+import { LessonRepositoryInterface } from '../../domain/ports/lesson.repository.interface.js';
 
 @Injectable()
 export class TypeOrmLessonRepository implements LessonRepositoryInterface {
@@ -12,6 +12,10 @@ export class TypeOrmLessonRepository implements LessonRepositoryInterface {
   ) {}
 
   async findById(id: string): Promise<Lesson | null> {
-    return this.repository.findOne({ where: { id } });
+    // BE-06: se carga el idioma para validar que la seña y la lección son del mismo idioma.
+    return this.repository.findOne({
+      where: { id },
+      relations: { language: true },
+    });
   }
 }

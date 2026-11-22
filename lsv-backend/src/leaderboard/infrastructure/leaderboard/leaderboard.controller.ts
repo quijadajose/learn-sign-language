@@ -1,29 +1,20 @@
-import {
-  Controller,
-  Get,
-  Param,
-  ParseUUIDPipe,
-  Query,
-  UseGuards,
-} from '@nestjs/common';
-import { LeaderboardService } from 'src/leaderboard/application/service/leaderboard/leaderboard.service';
+import { Controller, Get, Param, ParseUUIDPipe, Query } from '@nestjs/common';
+import { LeaderboardService } from '../../application/service/leaderboard/leaderboard.service.js';
 import {
   PaginationDto,
   PaginatedResponseDto,
-} from 'src/shared/domain/dto/PaginationDto';
-import { LeaderboardDto } from 'src/leaderboard/domain/dto/leaderboard/leaderboard';
-import { AuthGuard } from '@nestjs/passport';
+} from '../../../shared/domain/dto/PaginationDto.js';
+import { LeaderboardDto } from '../../domain/dto/leaderboard/leaderboard.js';
 import {
   DocGetGeneralLeaderboard,
   DocGetLeaderboardByLanguage,
   DocLeaderboard,
-} from './docs/leaderboard.docs';
+} from './docs/leaderboard.docs.js';
 
 @DocLeaderboard()
 @Controller('leaderboard')
 export class LeaderboardController {
   constructor(private readonly leaderboardService: LeaderboardService) {}
-  @UseGuards(AuthGuard('jwt'))
   @Get('/')
   @DocGetGeneralLeaderboard()
   async getGeneralLeaderboard(
@@ -31,7 +22,6 @@ export class LeaderboardController {
   ): Promise<PaginatedResponseDto<LeaderboardDto>> {
     return this.leaderboardService.getLeaderboard(pagination);
   }
-  @UseGuards(AuthGuard('jwt'))
   @Get('language/:id')
   @DocGetLeaderboardByLanguage()
   async getLeaderboardByLanguage(

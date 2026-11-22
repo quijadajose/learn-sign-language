@@ -1,5 +1,4 @@
 import { useState, useEffect, useRef, useCallback } from "react";
-import { z } from "zod";
 import { useNavigate } from "react-router-dom";
 import { usePermissions } from "../../hooks/usePermissions";
 import { useLocalStorage } from "../../hooks/useLocalStorage";
@@ -23,6 +22,11 @@ import {
   VariantFormState,
 } from "./types";
 import { useQuillConfig } from "./useQuillConfig";
+import i18next from "i18next";
+import {
+  isVariantFormComplete,
+  pickInitialLanguageId,
+} from "./lessonManagementUtils";
 
 export function useLessonManagement() {
   const navigate = useNavigate();
@@ -68,7 +72,7 @@ export function useLessonManagement() {
   }, []);
 
   const { quillModules, quillEditModules, quillFormats, quillConfig } =
-    useQuillConfig(addToast);
+    useQuillConfig(addToast, selectedLanguageId);
 
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [editLoading, setEditLoading] = useState(false);
@@ -182,7 +186,7 @@ export function useLessonManagement() {
           addToast("error", response.message || "Error al cargar las regiones");
         }
       } catch (err) {
-        addToast("error", "Error de conexión al cargar las regiones");
+        addToast("error", i18next.t("common:network.loadRegions"));
       }
     },
     [addToast],
@@ -388,7 +392,7 @@ export function useLessonManagement() {
       !editForm.languageId ||
       !editForm.stageId
     ) {
-      setError("Completa los campos requeridos");
+      setError(i18next.t("common:feedback.fieldsRequired"));
       return;
     }
     try {
@@ -441,22 +445,14 @@ export function useLessonManagement() {
       isInitialized.current = true;
 
       const fetchedLangs = await fetchLanguages();
-      let langId = selectedLanguageId;
+      const langId = selectedLanguageId;
 
-      const isUuid = (val: string | null): boolean =>
-        !!val && z.string().uuid().safeParse(val).success;
-
-      if (
-        (!langId || !isUuid(langId)) &&
-        fetchedLangs &&
-        fetchedLangs.length > 0
-      ) {
-        langId = fetchedLangs[0].id;
-        setSelectedLanguageId(langId);
-      }
-
-      if (langId && isUuid(langId)) {
-        setSelectedLanguageId(langId);
+      const nextLanguageId = pickInitialLanguageId(
+        langId,
+        (fetchedLangs ?? []).map((lang) => lang.id),
+      );
+      if (nextLanguageId) {
+        setSelectedLanguageId(nextLanguageId);
       }
     };
 
@@ -536,7 +532,7 @@ export function useLessonManagement() {
       !createForm.languageId ||
       !createForm.stageId
     ) {
-      setError("Completa los campos requeridos");
+      setError(i18next.t("common:feedback.fieldsRequired"));
       return;
     }
     try {
@@ -590,20 +586,14 @@ export function useLessonManagement() {
         addToast("error", response.message || "Error al cargar las variantes");
       }
     } catch (err) {
-      addToast("error", "Error de conexión al cargar las variantes");
+      addToast("error", i18next.t("common:network.loadVariants"));
     } finally {
       setVariantsLoading(false);
     }
   };
 
   const handleCreateVariant = async () => {
-    if (
-      !selectedLessonIdRef.current ||
-      !variantForm.name.trim() ||
-      !variantForm.description.trim() ||
-      !variantForm.content.trim() ||
-      !variantForm.regionId
-    ) {
+    if (!selectedLessonIdRef.current || !isVariantFormComplete(variantForm)) {
       addToast("error", "Todos los campos son obligatorios");
       return;
     }
@@ -632,8 +622,8 @@ export function useLessonManagement() {
         addToast(
           "success",
           editingVariantId
-            ? "Variante regional actualizada exitosamente"
-            : "Variante regional creada exitosamente",
+            ? i18next.t("common:feedback.regionalVariantUpdated")
+            : i18next.t("common:feedback.regionalVariantCreated"),
         );
         setIsCreateVariantModalOpen(false);
         setEditingVariantId(null);
@@ -688,13 +678,13 @@ export function useLessonManagement() {
       );
 
       if (response.success) {
-        addToast("success", "Variante eliminada exitosamente");
+        addToast("success", i18next.t("common:feedback.variantDeleted"));
         loadLessonVariants(selectedLessonIdRef.current);
       } else {
         addToast("error", response.message || "Error al eliminar la variante");
       }
     } catch (err) {
-      addToast("error", "Error de conexión al eliminar la variante");
+      addToast("error", i18next.t("common:network.deleteVariant"));
     }
   };
 

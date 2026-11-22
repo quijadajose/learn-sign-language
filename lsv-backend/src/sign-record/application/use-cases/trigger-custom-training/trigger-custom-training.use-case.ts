@@ -6,17 +6,34 @@ import {
 } from '@nestjs/common';
 import { isUUID } from 'class-validator';
 import { randomUUID } from 'crypto';
-import { SignRecording } from 'src/shared/domain/entities/signRecording';
-import { SignRecordingRepositoryInterface } from 'src/sign-record/domain/ports/sign-recording.repository.interface';
-import { LessonModelRepositoryInterface } from 'src/sign-record/domain/ports/lesson-model.repository.interface';
-import { FileStoragePort } from 'src/sign-record/domain/ports/file-storage.port';
-import { TrainingQueuePort } from 'src/sign-record/domain/ports/training-queue.port';
-import { TriggerCustomTrainingDto } from 'src/sign-record/domain/dto/sign-record.dto';
+import { SignRecording } from '../../../../shared/domain/entities/signRecording.js';
 import {
-  recordingsToTrainingSamples,
-  splitRecordingsForDualTraining,
-} from 'src/sign-record/domain/utils/training-data';
-import { featureMetadataForModelType } from 'src/sign-record/domain/utils/landmark-validation';
+  SignRecordingRepositoryInterface,
+  TrainingRecordingFilters,
+} from '../../../domain/ports/sign-recording.repository.interface.js';
+import { LessonModelRepositoryInterface } from '../../../domain/ports/lesson-model.repository.interface.js';
+import { FileStoragePort } from '../../../domain/ports/file-storage.port.js';
+import { TrainingQueuePort } from '../../../domain/ports/training-queue.port.js';
+import { TriggerCustomTrainingDto } from '../../../domain/dto/sign-record.dto.js';
+import {
+  isDynamicRecording,
+  recordingToTrainingSample,
+} from '../../../domain/utils/training-data.js';
+import { featureMetadataForModelType } from '../../../domain/utils/landmark-validation.js';
+import {
+  assertRecordingWithinFrameLimit,
+  assertSampleCountWithinLimits,
+} from '../../../domain/utils/training-limits.js';
+import { pageByKeyset } from '../../../domain/utils/keyset-paging.js';
+
+/** Grabaciones leídas de la BD por página (BE-11). */
+const TRAINING_PAGE_SIZE = 200;
+
+type TrainingSetSummary = {
+  total: number;
+  staticCount: number;
+  dynamicCount: number;
+};
 
 @Injectable()
 export class TriggerCustomTrainingUseCase {
@@ -34,24 +51,24 @@ export class TriggerCustomTrainingUseCase {
   ) {}
 
   async execute(filters: TriggerCustomTrainingDto) {
-    const recordings =
-      await this.signRecordingRepository.findForTraining(filters);
+    // BE-11: primero se cuentan y validan los límites leyendo por páginas;
+    // después cada job escribe su dataset en streaming.
+    const summary = await this.summarizeTrainingSet(filters);
 
-    if (recordings.length === 0) {
-      throw new BadRequestException('No hay datos suficientes para entrenar');
+    if (summary.total === 0) {
+      throw new BadRequestException('errors.model.insufficientTrainingData');
     }
 
-    const { staticRecordings, dynamicRecordings, globalStaticForDynamic } =
-      splitRecordingsForDualTraining(recordings);
+    assertSampleCountWithinLimits(summary.staticCount);
+    assertSampleCountWithinLimits(summary.dynamicCount);
 
     const baseModelName = this.resolveModelName(filters);
     const jobs: { modelId: string; modelType: 'static' | 'dynamic' }[] = [];
 
     try {
-      if (staticRecordings.length > 0) {
+      if (summary.staticCount > 0) {
         jobs.push(
           await this.dispatchJob({
-            recordings: staticRecordings,
             modelType: 'static',
             modelName: `${baseModelName} [Estático]`,
             filters,
@@ -59,11 +76,9 @@ export class TriggerCustomTrainingUseCase {
         );
       }
 
-      if (dynamicRecordings.length > 0) {
+      if (summary.dynamicCount > 0) {
         jobs.push(
           await this.dispatchJob({
-            recordings: dynamicRecordings,
-            globalStaticNoise: globalStaticForDynamic,
             modelType: 'dynamic',
             modelName: `${baseModelName} [Dinámico]`,
             filters,
@@ -76,9 +91,7 @@ export class TriggerCustomTrainingUseCase {
     }
 
     if (jobs.length === 0) {
-      throw new BadRequestException(
-        'No hay grabaciones válidas para entrenar modelos estáticos o dinámicos',
-      );
+      throw new BadRequestException('errors.model.noValidRecordingsForDual');
     }
 
     return {
@@ -111,18 +124,55 @@ export class TriggerCustomTrainingUseCase {
     return modelName;
   }
 
+  /** Recorre las grabaciones por páginas (keyset por id); nunca carga el conjunto completo. */
+  private async *pageRecordings(
+    filters: TrainingRecordingFilters,
+  ): AsyncGenerator<SignRecording> {
+    yield* pageByKeyset(
+      (afterId, limit) =>
+        this.signRecordingRepository.findTrainingPage(filters, afterId, limit),
+      TRAINING_PAGE_SIZE,
+    );
+  }
+
+  private async summarizeTrainingSet(
+    filters: TrainingRecordingFilters,
+  ): Promise<TrainingSetSummary> {
+    const summary: TrainingSetSummary = {
+      total: 0,
+      staticCount: 0,
+      dynamicCount: 0,
+    };
+    for await (const recording of this.pageRecordings(filters)) {
+      assertRecordingWithinFrameLimit(recording);
+      summary.total += 1;
+      if (isDynamicRecording(recording)) {
+        summary.dynamicCount += 1;
+      } else {
+        summary.staticCount += 1;
+      }
+    }
+    return summary;
+  }
+
+  private async *trainingSamples(
+    filters: TrainingRecordingFilters,
+    include: (recording: SignRecording) => boolean,
+  ) {
+    for await (const recording of this.pageRecordings(filters)) {
+      if (include(recording)) {
+        yield recordingToTrainingSample(recording);
+      }
+    }
+  }
+
   private async dispatchJob(params: {
-    recordings: SignRecording[];
-    globalStaticNoise?: SignRecording[];
     modelType: 'static' | 'dynamic';
     modelName: string;
     filters: TriggerCustomTrainingDto;
   }) {
     const modelId = randomUUID();
-    const trainingData = recordingsToTrainingSamples(params.recordings);
-    const globalStaticNoise = params.globalStaticNoise
-      ? recordingsToTrainingSamples(params.globalStaticNoise)
-      : [];
+    const isDynamicJob = params.modelType === 'dynamic';
 
     const trainingDataDir = this.fileStoragePort.sharedPath('training_data');
     const modelsDir = this.fileStoragePort.sharedPath('models');
@@ -134,10 +184,19 @@ export class TriggerCustomTrainingUseCase {
     await this.fileStoragePort.makeDirectory(trainingDataDir);
     await this.fileStoragePort.makeDirectory(modelsDir);
 
-    await this.fileStoragePort.saveJson(dataPath, {
+    await this.fileStoragePort.saveTrainingDataset(dataPath, {
       modelType: params.modelType,
-      samples: trainingData,
-      globalStaticNoise,
+      samples: this.trainingSamples(
+        params.filters,
+        (rec) => isDynamicRecording(rec) === isDynamicJob,
+      ),
+      // Solo el modelo dinámico usa como ruido las señas estáticas globales.
+      globalStaticNoise: isDynamicJob
+        ? this.trainingSamples(
+            params.filters,
+            (rec) => !isDynamicRecording(rec) && rec.sign.isGlobal,
+          )
+        : undefined,
     });
 
     const newModel = this.lessonModelRepository.create({
@@ -149,6 +208,10 @@ export class TriggerCustomTrainingUseCase {
       ...featureMetadataForModelType(params.modelType),
       ...(params.filters.lessonId
         ? { lesson: { id: params.filters.lessonId } }
+        : {}),
+      // BE-10: el idioma autorizado por el guard; sin él el modelo solo lo gestiona un admin.
+      ...(params.filters.languageId
+        ? { language: { id: params.filters.languageId } }
         : {}),
     });
     await this.lessonModelRepository.save(newModel);

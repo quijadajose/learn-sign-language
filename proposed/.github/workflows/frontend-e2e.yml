@@ -1,0 +1,148 @@
+name: Frontend Playwright e2e
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  frontend-e2e:
+    name: Frontend e2e (Playwright)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    services:
+      postgres:
+        image: postgres:18.3-alpine
+        env:
+          POSTGRES_USER: user
+          POSTGRES_PASSWORD: password
+          POSTGRES_DB: plataforma
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U user -d plataforma"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: npm
+          cache-dependency-path: |
+            lsv-backend/package-lock.json
+            lsv-frontend/package-lock.json
+
+      - name: Start Valkey
+        run: |
+          docker run -d --name lsv-valkey \
+            -p 6379:6379 \
+            valkey/valkey:8.0-alpine \
+            valkey-server --requirepass password
+          for i in $(seq 1 30); do
+            if docker exec lsv-valkey valkey-cli -a password ping 2>/dev/null | grep -q PONG; then
+              exit 0
+            fi
+            sleep 1
+          done
+          echo "Valkey failed to become ready" >&2
+          exit 1
+
+      - name: Install backend dependencies
+        working-directory: lsv-backend
+        run: npm ci
+
+      - name: Build backend
+        working-directory: lsv-backend
+        run: npm run build
+
+      - name: Start backend against test services
+        working-directory: lsv-backend
+        env:
+          NODE_ENV: test
+          API_PORT: "3000"
+          FRONTEND_URL: http://127.0.0.1:4174
+          JWT_SECRET: ci-only-jwt-secret-not-for-production-2026
+          TRAINER_JOB_SECRET: ci-only-trainer-secret-not-for-production
+          API_ADMIN_EMAIL: admin@example.com
+          API_ADMIN_PASSWORD: password
+          DB_HOST: 127.0.0.1
+          DB_PORT: "5432"
+          DB_USERNAME: user
+          DB_PASSWORD: password
+          DB_DATABASE: plataforma
+          VALKEY_HOST: 127.0.0.1
+          VALKEY_PORT: "6379"
+          VALKEY_PASSWORD: password
+          GOOGLE_CLIENT_ID: test-google-client-id
+          GOOGLE_CLIENT_SECRET: test-google-client-secret
+          GOOGLE_CALLBACK_URL: http://127.0.0.1:3000/auth/google/callback
+          EMAIL_HOST: 127.0.0.1
+          EMAIL_PORT: "587"
+          EMAIL_USER: test@example.com
+          EMAIL_PASSWORD: test-only
+          EMAIL_SECURE: "false"
+        run: |
+          nohup node dist/main.js > "$RUNNER_TEMP/lsv-backend.log" 2>&1 &
+          for i in $(seq 1 60); do
+            if curl --fail --silent http://127.0.0.1:3000/health/api >/dev/null; then
+              exit 0
+            fi
+            sleep 2
+          done
+          cat "$RUNNER_TEMP/lsv-backend.log"
+          echo "Backend did not become ready" >&2
+          exit 1
+
+      - name: Install frontend dependencies
+        working-directory: lsv-frontend
+        run: npm ci
+
+      - name: Build frontend
+        working-directory: lsv-frontend
+        run: npm run build
+
+      - name: Install Playwright Chromium
+        working-directory: lsv-frontend
+        run: npx playwright install --with-deps chromium
+
+      - name: Serve production build
+        working-directory: lsv-frontend
+        env:
+          VITE_API_PROXY_TARGET: http://127.0.0.1:3000
+        run: |
+          nohup npm run preview -- --host 127.0.0.1 --port 4174 \
+            > "$RUNNER_TEMP/lsv-frontend-preview.log" 2>&1 &
+          for i in $(seq 1 30); do
+            if curl --fail --silent http://127.0.0.1:4174/ >/dev/null; then
+              exit 0
+            fi
+            sleep 1
+          done
+          cat "$RUNNER_TEMP/lsv-frontend-preview.log"
+          echo "Frontend preview did not become ready" >&2
+          exit 1
+
+      - name: Run frontend e2e suite
+        working-directory: lsv-frontend
+        env:
+          PLAYWRIGHT_BASE_URL: http://127.0.0.1:4174
+          PLAYWRIGHT_API_URL: http://127.0.0.1:3000
+          API_ADMIN_EMAIL: admin@example.com
+          API_ADMIN_PASSWORD: password
+          API_USER_EMAIL: user@example.com
+          API_USER_PASSWORD: password
+        run: npm run test:e2e
+
+      - name: Upload Playwright traces and videos on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-playwright-failures
+          path: lsv-frontend/test-results/
+          if-no-files-found: ignore
+          retention-days: 7

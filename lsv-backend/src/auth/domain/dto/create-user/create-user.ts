@@ -58,6 +58,7 @@ export class CreateUserDto {
     minimum: 0,
   })
   @IsInt()
+  // BE-18: sin edad mínima en la app; solo se exige un número no negativo.
   @Min(0)
   age: number;
 

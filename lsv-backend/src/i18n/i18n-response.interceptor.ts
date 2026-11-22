@@ -7,7 +7,7 @@ import {
 import { Request } from 'express';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
-import { resolveLocale, translate, type I18nParams } from './translate';
+import { resolveLocale, translate, type I18nParams } from './translate.js';
 
 /**
  * Localizes `{ message }` on successful JSON envelopes using Accept-Language.
@@ -16,6 +16,10 @@ import { resolveLocale, translate, type I18nParams } from './translate';
 @Injectable()
 export class I18nResponseInterceptor implements NestInterceptor {
   intercept(context: ExecutionContext, next: CallHandler): Observable<unknown> {
+    // En WebSocket no hay request HTTP (ni Accept-Language): se deja pasar tal cual.
+    if (context.getType() !== 'http') {
+      return next.handle();
+    }
     const request = context.switchToHttp().getRequest<Request>();
     const locale = resolveLocale(request.headers['accept-language']);
 

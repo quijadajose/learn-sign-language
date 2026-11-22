@@ -5,9 +5,10 @@ import {
   Index,
   ManyToOne,
   PrimaryGeneratedColumn,
+  Relation,
 } from 'typeorm';
-import { Sign } from './sign';
-import { Region } from './region';
+import { Sign } from './sign.js';
+import { Region } from './region.js';
 
 @Entity()
 @Index('IDX_sign_recording_signId_regionId', ['sign', 'region'])
@@ -33,13 +34,13 @@ export class SignRecording {
   @ManyToOne(() => Sign, {
     onDelete: 'CASCADE',
   })
-  sign: Sign;
+  sign: Relation<Sign>;
 
   @ManyToOne(() => Region, {
     nullable: true,
     onDelete: 'CASCADE',
   })
-  region: Region;
+  region: Relation<Region>;
 
   @CreateDateColumn()
   createdAt: Date;

@@ -4,6 +4,15 @@ on:
   push:
     branches:
       - main
+  # INF-06: redeploy manual. Con `tag` se despliega una imagen ya publicada (rollback)
+  # sin CI ni build; sin `tag` se hace el flujo completo sobre la rama elegida.
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "SHA completo (40 caracteres) de imágenes ya publicadas en GHCR. Vacío = CI + build + deploy de la rama elegida."
+        required: false
+        default: ""
+        type: string
 
 env:
   REGISTRY: ghcr.io
@@ -13,89 +22,15 @@ env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: 'true'
 
 jobs:
-  smoke:
-    name: E2E smoke before deploy
-    runs-on: ubuntu-latest
-    timeout-minutes: 15
-    defaults:
-      run:
-        working-directory: lsv-backend
-    services:
-      postgres:
-        image: postgres:18.3-alpine
-        env:
-          POSTGRES_USER: user
-          POSTGRES_PASSWORD: password
-          POSTGRES_DB: plataforma
-        ports:
-          - 5432:5432
-        options: >-
-          --health-cmd "pg_isready -U user -d plataforma"
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: "24"
-          cache: npm
-          cache-dependency-path: lsv-backend/package-lock.json
-      - name: Start Valkey
-        run: |
-          docker run -d --name lsv-valkey \
-            -p 6379:6379 \
-            valkey/valkey:8.0-alpine \
-            valkey-server --requirepass password
-          for i in $(seq 1 30); do
-            if docker exec lsv-valkey valkey-cli -a password ping 2>/dev/null | grep -q PONG; then
-              exit 0
-            fi
-            sleep 1
-          done
-          echo "Valkey failed to become ready" >&2
-          exit 1
-      - run: npm ci
-      - name: Run e2e smoke
-        run: |
-          node ./node_modules/jest/bin/jest.js \
-            --config ./test/jest-e2e.json \
-            --runInBand \
-            --testPathPatterns=auth.e2e-spec \
-            --testPathPatterns=health.e2e-spec \
-            --testPathPatterns=sign-record.e2e-spec \
-            --testPathPatterns=quizzes.e2e-spec \
-            --testPathPatterns=user-lesson.e2e-spec \
-            --testPathPatterns=moderators.e2e-spec \
-            --testPathPatterns=critical-flows.e2e-spec
-        env:
-          NODE_ENV: test
-          FRONTEND_URL: http://localhost:8080
-          API_PORT: "3000"
-          JWT_SECRET: ci-test-jwt-secret-not-for-prod
-          API_ADMIN_EMAIL: admin@example.com
-          API_ADMIN_PASSWORD: password
-          API_USER_EMAIL: user@example.com
-          API_USER_PASSWORD: password
-          DB_HOST: 127.0.0.1
-          DB_PORT: "5432"
-          DB_USERNAME: user
-          DB_PASSWORD: password
-          DB_DATABASE: plataforma
-          VALKEY_HOST: 127.0.0.1
-          VALKEY_PORT: "6379"
-          VALKEY_PASSWORD: password
-          GOOGLE_CLIENT_ID: test-google-client-id
-          GOOGLE_CLIENT_SECRET: test-google-client-secret
-          GOOGLE_CALLBACK_URL: http://localhost:3000/auth/google/callback
-          EMAIL_HOST: localhost
-          EMAIL_PORT: "587"
-          EMAIL_USER: test@example.com
-          EMAIL_PASSWORD: test
-          EMAIL_SECURE: "false"
+  # INF-06: el deploy solo sale si pasa toda la CI (lint, unit, e2e completo,
+  # frontend, trainer y contrato ML).
+  ci:
+    if: github.event_name == 'push' || inputs.tag == ''
+    uses: ./.github/workflows/ci.yml
 
   build:
-    needs: smoke
+    needs: ci
+    if: github.event_name == 'push' || inputs.tag == ''
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -112,13 +47,16 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      # INF-06: el SHA es la etiqueta que se despliega; latest queda solo como referencia.
       - name: Build and push Backend
         uses: docker/build-push-action@v7
         with:
           context: ./lsv-backend
           target: production
           push: true
-          tags: ${{ env.REGISTRY }}/${{ env.BACKEND_IMAGE }}:latest
+          tags: |
+            ${{ env.REGISTRY }}/${{ env.BACKEND_IMAGE }}:latest
+            ${{ env.REGISTRY }}/${{ env.BACKEND_IMAGE }}:${{ github.sha }}
 
       - name: Build and push Frontend
         uses: docker/build-push-action@v7
@@ -127,42 +65,72 @@ jobs:
           push: true
           build-args: |
             VITE_SENTRY_DSN=${{ secrets.VITE_SENTRY_DSN }}
-          tags: ${{ env.REGISTRY }}/${{ env.FRONTEND_IMAGE }}:latest
+          tags: |
+            ${{ env.REGISTRY }}/${{ env.FRONTEND_IMAGE }}:latest
+            ${{ env.REGISTRY }}/${{ env.FRONTEND_IMAGE }}:${{ github.sha }}
 
       - name: Build and push Model Trainer
         uses: docker/build-push-action@v7
         with:
           context: ./lsv-model-trainer
           push: true
-          tags: ${{ env.REGISTRY }}/${{ env.TRAINER_IMAGE }}:latest
+          tags: |
+            ${{ env.REGISTRY }}/${{ env.TRAINER_IMAGE }}:latest
+            ${{ env.REGISTRY }}/${{ env.TRAINER_IMAGE }}:${{ github.sha }}
 
   deploy:
     needs: build
+    # build se salta solo en un redeploy manual con `tag`; si falló o se saltó
+    # por un fallo de CI, no se despliega.
+    if: >-
+      ${{ !cancelled() && (
+        needs.build.result == 'success' ||
+        (github.event_name == 'workflow_dispatch' && inputs.tag != '' && needs.build.result == 'skipped')
+      ) }}
     runs-on: ubuntu-latest
+    # Nunca dos deploys a la vez sobre el mismo servidor.
+    concurrency:
+      group: lsv-production-deploy
+      cancel-in-progress: false
+    env:
+      IMAGE_TAG: ${{ inputs.tag || github.sha }}
     steps:
+      - name: Validate image tag
+        run: |
+          if ! [[ "$IMAGE_TAG" =~ ^[0-9a-f]{40}$ ]]; then
+            echo "IMAGE_TAG inválido: se espera el SHA completo de 40 caracteres" >&2
+            exit 1
+          fi
+          echo "Desplegando $IMAGE_TAG" >> "$GITHUB_STEP_SUMMARY"
+
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      # INF-06: actions de terceros fijadas por SHA (v0.1.7 y v1.0.3).
       - name: Copy docker-compose files to server
-        uses: appleboy/scp-action@v0.1.7
+        uses: appleboy/scp-action@917f8b81dfc1ccd331fef9e2d61bdc6c8be94634 # v0.1.7
         with:
           host: ${{ secrets.SSH_HOST }}
           username: ${{ secrets.SSH_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
-          source: "docker-compose.yml,docker-compose.prod.yml,Caddyfile"
+          source: "docker-compose.yml,docker-compose.prod.yml,Caddyfile,scripts/deploy.sh"
           target: "~/apps/lsv"
 
       - name: Deploy to Server via SSH
-        uses: appleboy/ssh-action@v1.0.3
+        uses: appleboy/ssh-action@029f5b4aeeeb58fdfe1410a5d17f967dacf36262 # v1.0.3
         with:
           host: ${{ secrets.SSH_HOST }}
           username: ${{ secrets.SSH_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
+          envs: IMAGE_TAG
           script: |
+            set -eu
             cd ~/apps/lsv
 
-            echo ${{ secrets.GITHUB_TOKEN }} | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+            # INF-07: el token no aparece en la línea de comandos ni en el historial.
+            # Para despliegues fuera de Actions conviene un PAT de solo lectura (read:packages).
+            echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u "${{ github.actor }}" --password-stdin
 
-            docker compose -f docker-compose.yml -f docker-compose.prod.yml pull
-
-            docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --remove-orphans
+            # INF-06: pull de la etiqueta, backup de la BD, up y registro de la
+            # etiqueta anterior para el rollback (docs/deploy-rollback.md).
+            bash scripts/deploy.sh deploy "$IMAGE_TAG"

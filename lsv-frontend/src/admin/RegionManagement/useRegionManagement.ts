@@ -1,3 +1,4 @@
+import i18next from "i18next";
 import { useState, useEffect, useCallback, useRef } from "react";
 import { SingleValue } from "react-select";
 import {
@@ -19,7 +20,12 @@ import {
   RegionForm,
   ToastMessage,
 } from "./types";
-import { groupRegionsByCountryAndLanguage } from "./utils";
+import {
+  filterRegionsByLanguage,
+  groupRegionsByCountryAndLanguage,
+  hasBaseRegionForLanguage,
+  toggleSetItem,
+} from "./utils";
 const emptyRegionForm: RegionForm = {
   name: "",
   code: "",
@@ -230,12 +236,7 @@ export function useRegionManagement() {
   };
 
   const languageHasBaseRegion = (languageId: string | null | undefined) =>
-    Boolean(
-      languageId &&
-        regions.some(
-          (region) => region.language?.id === languageId && region.isDefault,
-        ),
-    );
+    hasBaseRegionForLanguage(regions, languageId);
 
   const handleLanguageSelectChange = async (
     selectedOption: SingleValue<LanguageOption>,
@@ -368,7 +369,7 @@ export function useRegionManagement() {
 
       setRegions(allRegions);
     } catch (err) {
-      const errorMessage = "Error de conexión al cargar las regiones";
+      const errorMessage = i18next.t("common:network.loadRegions");
       setError(errorMessage);
       addToast("error", errorMessage);
     } finally {
@@ -377,27 +378,11 @@ export function useRegionManagement() {
   }, [isAdmin, selectedLanguageId, addToast]);
 
   const toggleCountry = (countryCode: string) => {
-    setExpandedCountries((prev) => {
-      const newSet = new Set(prev);
-      if (newSet.has(countryCode)) {
-        newSet.delete(countryCode);
-      } else {
-        newSet.add(countryCode);
-      }
-      return newSet;
-    });
+    setExpandedCountries((prev) => toggleSetItem(prev, countryCode));
   };
 
   const toggleLanguage = (languageKey: string) => {
-    setExpandedLanguages((prev) => {
-      const newSet = new Set(prev);
-      if (newSet.has(languageKey)) {
-        newSet.delete(languageKey);
-      } else {
-        newSet.add(languageKey);
-      }
-      return newSet;
-    });
+    setExpandedLanguages((prev) => toggleSetItem(prev, languageKey));
   };
 
   useEffect(() => {
@@ -557,14 +542,10 @@ export function useRegionManagement() {
     try {
       setEditLoading(true);
       const languageId = selectedRegion.language?.id;
-      const hasOtherBase = Boolean(
-        languageId &&
-          regions.some(
-            (region) =>
-              region.language?.id === languageId &&
-              region.isDefault &&
-              region.id !== selectedRegion.id,
-          ),
+      const hasOtherBase = hasBaseRegionForLanguage(
+        regions,
+        languageId,
+        selectedRegion.id,
       );
       const regionData = {
         ...editForm,
@@ -729,9 +710,7 @@ export function useRegionManagement() {
     allLanguages[0] ??
     null;
 
-  const focusedRegions = selectedLanguageId
-    ? regions.filter((region) => region.language?.id === selectedLanguageId)
-    : regions;
+  const focusedRegions = filterRegionsByLanguage(regions, selectedLanguageId);
 
   const focusedGroupedRegions = groupRegionsByCountryAndLanguage(
     focusedRegions,
@@ -771,15 +750,10 @@ export function useRegionManagement() {
   const createLanguageHasBaseRegion = languageHasBaseRegion(createLanguageId);
 
   const editLanguageId = selectedRegion?.language?.id ?? null;
-  const editLanguageHasOtherBase = Boolean(
-    editLanguageId &&
-      selectedRegion &&
-      regions.some(
-        (region) =>
-          region.language?.id === editLanguageId &&
-          region.isDefault &&
-          region.id !== selectedRegion.id,
-      ),
+  const editLanguageHasOtherBase = hasBaseRegionForLanguage(
+    regions,
+    editLanguageId,
+    selectedRegion?.id,
   );
 
   return {

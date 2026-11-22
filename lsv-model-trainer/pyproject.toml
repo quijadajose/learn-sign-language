@@ -19,3 +19,10 @@ files = [
   "job_hmac.py",
   "main.py",
 ]
+
+# TR-08: modo estricto progresivo. Se amplía módulo por módulo.
+[[tool.mypy.overrides]]
+module = ["utils", "validation"]
+disallow_untyped_defs = true
+disallow_any_generics = true
+warn_return_any = true

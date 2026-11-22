@@ -1,4 +1,5 @@
-import { useState, useEffect, useRef } from "react";
+import i18next from "i18next";
+import { useState, useEffect, useLayoutEffect, useRef } from "react";
 import { useLocalStorage } from "./hooks/useLocalStorage";
 import { useToast } from "./components/ToastProvider";
 import { languageApi, regionApi } from "./services/api";
@@ -67,10 +68,14 @@ export function useLanguageSelection(onLanguageSelected: (lang: Language) => voi
   const loadRegionsRef = useRef<
     (languageId: string) => Promise<"empty" | Region | null>
   >(async () => null);
-  selectedLanguageIdRef.current = selectedLanguageId;
-  selectedRegionIdRef.current = selectedRegionId;
-  setSelectedLanguageIdRef.current = setSelectedLanguageId;
-  setSelectedRegionIdRef.current = setSelectedRegionId;
+  // Se sincronizan antes de los efectos (useLayoutEffect) para que el efecto de
+  // inicialización siempre lea valores actuales, sin mutar refs durante render.
+  useLayoutEffect(() => {
+    selectedLanguageIdRef.current = selectedLanguageId;
+    selectedRegionIdRef.current = selectedRegionId;
+    setSelectedLanguageIdRef.current = setSelectedLanguageId;
+    setSelectedRegionIdRef.current = setSelectedRegionId;
+  });
 
   useEffect(() => {
     let active = true;
@@ -78,7 +83,7 @@ export function useLanguageSelection(onLanguageSelected: (lang: Language) => voi
     const initialize = async () => {
       if (!isAuthenticated) {
         if (active) {
-          setError("No estás autenticado.");
+          setError(i18next.t("common:feedback.notAuthenticated"));
           setLoading(false);
         }
         return;
@@ -143,7 +148,6 @@ export function useLanguageSelection(onLanguageSelected: (lang: Language) => voi
                 "success",
                 `Continuando con ${selectedLanguage.name} - ${selectedRegion.name}.`,
               );
-              setLoading(false);
               return;
             }
           }
@@ -183,14 +187,12 @@ export function useLanguageSelection(onLanguageSelected: (lang: Language) => voi
             if (!active) return;
             setShowRegionSelection(true);
             setTitle("Selecciona tu región:");
-            setLoading(false);
             return;
           } else {
             // Múltiples idiomas inscritos: mostrar selector solo si no hay idioma válido seleccionado
             setTitle("Continuar aprendiendo:");
             setLanguages(enrolledData.data.map((el) => el.language));
             setTotalPages(1);
-            setLoading(false);
             return;
           }
         }
@@ -304,7 +306,9 @@ export function useLanguageSelection(onLanguageSelected: (lang: Language) => voi
       setLoading(false);
     }
   };
-  loadRegionsRef.current = loadRegions;
+  useLayoutEffect(() => {
+    loadRegionsRef.current = loadRegions;
+  });
 
   const enrollLanguage = async (
     selected: Language,
@@ -351,7 +355,7 @@ export function useLanguageSelection(onLanguageSelected: (lang: Language) => voi
     }
 
     if (!isAuthenticated) {
-      addToast("error", "No estás autenticado.");
+      addToast("error", i18next.t("common:feedback.notAuthenticated"));
       return;
     }
 

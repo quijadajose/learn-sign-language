@@ -44,6 +44,8 @@ export default function LanguageManagement() {
     isDeleteModalOpen,
     deletingLanguage,
     isDeleting,
+    deletionImpact,
+    loadingImpact,
     isAddModalOpen,
     addForm,
     setAddForm,
@@ -202,6 +204,8 @@ export default function LanguageManagement() {
         show={isDeleteModalOpen}
         deletingLanguage={deletingLanguage}
         isDeleting={isDeleting}
+        deletionImpact={deletionImpact}
+        loadingImpact={loadingImpact}
         onClose={handleCancelDelete}
         onConfirm={handleDeleteSubmit}
       />

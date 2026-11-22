@@ -177,7 +177,7 @@ describe("selectPoseLandmarks", () => {
   });
 });
 
-describe("buildDynamicInferenceSequence (dynamic-v3)", () => {
+describe("buildDynamicInferenceSequence (dynamic-v4)", () => {
   it("produce secuencias 340D con longitud fija", () => {
     const frames = Array.from({ length: 12 }, (_, i) => makeMovingFlat(0.2, i));
     const out = buildDynamicInferenceSequence(frames, 30);
@@ -186,7 +186,21 @@ describe("buildDynamicInferenceSequence (dynamic-v3)", () => {
     expect(out![0]).toHaveLength(DYNAMIC_FEATURES_COUNT);
   });
 
-  it("aplica deltas antes del resample (primer frame de velocidad ~0)", () => {
+  it("los deltas no dependen de los fps de captura", () => {
+    // El mismo gesto capturado con el doble de frames (más fps) tiene que dar
+    // el mismo vector: los deltas se miden sobre la secuencia remuestreada.
+    const slow = Array.from({ length: 6 }, (_, i) => makeMovingFlat(0.2, i * 2));
+    const fast = Array.from({ length: 11 }, (_, i) => makeMovingFlat(0.2, i));
+    const a = buildDynamicInferenceSequence(slow, 30)!;
+    const b = buildDynamicInferenceSequence(fast, 30)!;
+    for (let t = 0; t < 30; t++) {
+      for (let f = 0; f < DYNAMIC_FEATURES_COUNT; f++) {
+        expect(Math.abs(a[t][f] - b[t][f])).toBeLessThan(1e-9);
+      }
+    }
+  });
+
+  it("primer frame de velocidad en cero", () => {
     const a = selectPoseLandmarks(makeFlat(0.3));
     const b = selectPoseLandmarks(makeMovingFlat(0.3, 1));
     const withVelocity = appendVelocityToSequence([a, b]);

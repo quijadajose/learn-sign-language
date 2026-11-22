@@ -1,5 +1,5 @@
 import { Inject, Injectable, NotFoundException } from '@nestjs/common';
-import { SignRepositoryInterface } from 'src/sign-record/domain/ports/sign.repository.interface';
+import { SignRepositoryInterface } from '../../../domain/ports/sign.repository.interface.js';
 
 @Injectable()
 export class DeleteSignUseCase {
@@ -10,7 +10,7 @@ export class DeleteSignUseCase {
 
   async execute(id: string) {
     const sign = await this.signRepository.findById(id);
-    if (!sign) throw new NotFoundException('Sign not found');
+    if (!sign) throw new NotFoundException('errors.sign.notFound');
 
     return this.signRepository.remove(sign);
   }

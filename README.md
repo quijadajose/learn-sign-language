@@ -81,11 +81,12 @@ Husky ejecuta lint/tests del paquete tocado en cada commit.
 ## Producción
 
 ```bash
-docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
+bash scripts/deploy.sh deploy <sha-del-commit>
 ```
 
-Incluye `lsv-api`, `lsv-frontend` y `lsv-model-trainer` (imágenes GHCR).  
-El deploy a producción está automatizado con GitHub Actions al hacer push a `main`.
+Incluye `lsv-api`, `lsv-frontend` y `lsv-model-trainer` (imágenes GHCR etiquetadas con el SHA del commit).  
+El deploy a producción está automatizado con GitHub Actions al hacer push a `main`, después de pasar la CI completa.
+Para desplegar un SHA concreto o hacer rollback, ver [docs/deploy-rollback.md](docs/deploy-rollback.md).
 
 CI en PRs: [`.github/workflows/ci.yml`](.github/workflows/ci.yml) (lint/test backend, frontend y trainer).
 

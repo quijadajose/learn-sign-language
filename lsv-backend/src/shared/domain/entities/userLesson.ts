@@ -6,9 +6,10 @@ import {
   JoinColumn,
   ManyToOne,
   PrimaryGeneratedColumn,
+  Relation,
 } from 'typeorm';
-import { User } from './user';
-import { Lesson } from './lesson';
+import { User } from './user.js';
+import { Lesson } from './lesson.js';
 
 @Entity()
 @Index('UQ_user_lesson_userId_lessonId', ['user', 'lesson'], { unique: true })
@@ -27,11 +28,11 @@ export class UserLesson {
 
   @ManyToOne(() => User, (user) => user.userLessons, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'userId' })
-  user: User;
+  user: Relation<User>;
 
   @ManyToOne(() => Lesson, (lesson) => lesson.userLessons, {
     onDelete: 'CASCADE',
   })
   @JoinColumn({ name: 'lessonId' })
-  lesson: Lesson;
+  lesson: Relation<Lesson>;
 }
