@@ -120,36 +120,34 @@ test("login has no serious or critical WCAG A/AA violations (AF-F6-01)", async (
   ).toEqual([]);
 });
 
-test("dashboard, lesson, quiz and leaderboard: serious or critical WCAG A/AA checks", async ({
-  studentPage,
-}) => {
-  await ensureStudentEnrolled(studentPage, curriculum);
-  const violations: unknown[] = [];
-  const append = async (
-    screen: string,
-    target: import("@playwright/test").Page,
-  ) => {
-    const findings = await seriousA11y(target);
-    for (const { id, impact, description, nodes } of findings) {
-      violations.push({
-        screen,
+// AF-F6-01 y AF-H12: un test por pantalla. Si una pantalla falla, solo ese test falla.
+const studentScreens = [
+  { name: "dashboard", path: "/dashboard" },
+  { name: "lesson", path: () => `/lesson/${curriculum.lessonId}` },
+  { name: "quiz", path: () => `/quiz/${curriculum.lessonId}` },
+  { name: "leaderboard", path: "/leaderboard" },
+] as const;
+
+for (const screen of studentScreens) {
+  test(`${screen.name} has no serious or critical WCAG A/AA violations`, async ({
+    studentPage,
+  }) => {
+    await ensureStudentEnrolled(studentPage, curriculum);
+    const path =
+      typeof screen.path === "function" ? screen.path() : screen.path;
+    await studentPage.goto(path);
+    const findings = await seriousA11y(studentPage);
+    expect(
+      findings.map(({ id, impact, description, nodes }) => ({
+        screen: screen.name,
         id,
         impact,
         description,
         selectors: nodes.map((node) => node.target),
-      });
-    }
-  };
-  await studentPage.goto("/dashboard");
-  await append("dashboard", studentPage);
-  await studentPage.goto(`/lesson/${curriculum.lessonId}`);
-  await append("lesson", studentPage);
-  await studentPage.goto(`/quiz/${curriculum.lessonId}`);
-  await append("quiz", studentPage);
-  await studentPage.goto("/leaderboard");
-  await append("leaderboard", studentPage);
-  expect(violations).toEqual([]);
-});
+      })),
+    ).toEqual([]);
+  });
+}
 
 test("student quiz and practice have no horizontal overflow on a phone", async ({
   studentPage,
