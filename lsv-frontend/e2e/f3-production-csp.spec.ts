@@ -1,5 +1,10 @@
 import { expect, test } from "./fixtures/roles";
 
+// El build de producción va en PLAYWRIGHT_PROD_BASE_URL; sin esto, el test corre contra el dev server.
+test.use({
+  baseURL: process.env.PLAYWRIGHT_PROD_BASE_URL ?? "http://127.0.0.1:4174",
+});
+
 const CSP_OR_WASM = /Content Security Policy|WebAssembly|wasm/i;
 
 /**
@@ -43,6 +48,14 @@ test("Sign Studio loads MediaPipe WASM and models under the production CSP", asy
     { timeout: 20000 },
   );
   await studentPage.goto("/admin/sign-studio");
+  // AF-H9-01 y AF-H9-02 (hallazgos/funcional.md): la CSP de nginx no permite compilar WebAssembly
+  // y, en rutas anidadas, los módulos JS de Vite no cargan (base "./"): la página queda en blanco.
+  // Se marca después de la preparación para que un fallo de preparación siga contando como fallo.
+  test.fail(
+    true,
+    "AF-H9-01/AF-H9-02: CSP sin 'wasm-unsafe-eval' y assets relativos en rutas anidadas (producción)",
+  );
+  await expect(studentPage.getByRole("main")).toBeVisible({ timeout: 15000 });
 
   expect((await wasm).status()).toBe(200);
   expect((await pose).status()).toBe(200);
