@@ -21,8 +21,11 @@ Acepta argumentos de Playwright, por ejemplo `npm run test:e2e:local -- e2e/f2-s
 aplica la CSP de nginx. Pasos (con la API de test ya en marcha):
 
 1. `docker build --target production -t lsv-frontend-e2e lsv-frontend`
-2. `docker run -d --name lsv-frontend-e2e --network host -v "$PWD/e2e/nginx.e2e.conf:/etc/nginx/conf.d/default.conf:ro" lsv-frontend-e2e`
-   (usa la red del host porque el firewall puede bloquear el puente de Docker hacia el 3001.)
+2. Con `--network host` nginx debe alcanzar la API en `127.0.0.1:3001` (no `host.docker.internal`), así que
+   se monta una copia de `e2e/nginx.e2e.conf` con ese destino y el puerto 80 (el que usa la URL de abajo):
+   `sed 's#host.docker.internal:3001#127.0.0.1:3001#' e2e/nginx.e2e.conf > /tmp/nginx.host.conf`
+   `docker run -d --name lsv-frontend-e2e --network host -v /tmp/nginx.host.conf:/etc/nginx/conf.d/default.conf:ro lsv-frontend-e2e`
+   (con red del host el puente de Docker no hace falta; en esta máquina el puente bloqueaba el puerto 3001.)
 3. Levantar la API con `PLAYWRIGHT_FRONTEND_URL=http://127.0.0.1 bash e2e/start-test-api.sh`
 4. `PLAYWRIGHT_BASE_URL=http://127.0.0.1 PLAYWRIGHT_PROD_BASE_URL=http://127.0.0.1 npm run test:e2e -- e2e/f3-production-csp.spec.ts`
 5. Al terminar: `docker rm -f lsv-frontend-e2e`
