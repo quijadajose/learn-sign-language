@@ -392,7 +392,9 @@ test("admin sees how much content deleting a language removes (AF-F4-02)", async
 
   const dialog = adminPage.getByRole("dialog");
   await expect(dialog.getByText("Etapas que se eliminarán: 1")).toBeVisible();
-  await expect(dialog.getByText("Lecciones que se eliminarán: 0")).toBeVisible();
+  await expect(
+    dialog.getByText("Lecciones que se eliminarán: 0"),
+  ).toBeVisible();
   await expect(dialog.getByText("Quizzes que se eliminarán: 0")).toBeVisible();
 
   // Solo se comprueba el aviso: se cancela y el idioma sigue en la tabla.
@@ -432,10 +434,19 @@ test("admin inserts an image into a lesson with the Quill editor", async ({
       response.url().includes("/api/images/upload/lesson") &&
       response.request().method() === "POST",
   );
+  const uploadRequest = adminPage.waitForRequest(
+    (request) =>
+      request.url().includes("/api/images/upload/lesson") &&
+      request.method() === "POST",
+  );
   const chooser = adminPage.waitForEvent("filechooser");
   await adminPage.locator(".ql-image").first().click();
   await (await chooser).setFiles("e2e/fixtures/hand.png");
 
   expect((await uploaded).status()).toBe(201);
+  // BE-08: la petición lleva el idioma (o la lección) y nunca un id elegido por el cliente.
+  const body = (await uploadRequest).postData() ?? "";
+  expect(body).toContain('name="languageId"');
+  expect(body).not.toContain('name="id"');
   await expect(adminPage.locator(".ql-editor img").first()).toBeVisible();
 });
