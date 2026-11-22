@@ -1,7 +1,7 @@
 tensorflow==2.18.0
 numpy==2.0.2
 scikit-learn==1.5.2
-bullmq==3.0.4
+bullmq==3.5.0
 redis==7.4.1
 tensorflowjs==4.22.0
 # Dependencias transitivas de tensorflowjs (vía tensorflow-decision-forests) que
@@ -10,3 +10,9 @@ tensorflowjs==4.22.0
 ydf==0.13.0
 # tensorflowjs todavía importa pkg_resources.
 setuptools<80
+# CVE corregidos en transitivas: msgpack fijado a 1.2.3 (CVE-2026-114613). bullmq 3.5.0 fija msgpack==1.2.3;
+# las 3.0.x fijaban 1.2.1 (vulnerable) y las 3.6.x exigen redis 8.
+msgpack==1.2.3
+# Pendientes (no se pueden corregir todavía):
+# - wheel: wheel>=0.46 exige packaging>=24 y tensorflowjs 4.22.0 exige packaging<24. Queda wheel 0.45.1 (CVE-2026-24049).
+# - setuptools: la corrección es >=83, pero tensorflowjs todavía importa pkg_resources, que setuptools 83+ quitó.
