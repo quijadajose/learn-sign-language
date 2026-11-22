@@ -1,4 +1,4 @@
-FROM node:24-alpine3.22 AS development
+FROM node:24.18.1-alpine3.23 AS development
 
 WORKDIR /src/app
 
@@ -10,6 +10,8 @@ COPY src ./src
 COPY test ./test
 COPY nest-cli.json ./
 COPY tsconfig*.json ./
+# El build termina con scripts/fix-esm-require.mjs (ver package.json).
+COPY scripts ./scripts
 
 RUN npm run build
 
@@ -17,7 +19,7 @@ RUN npm run build
 ## PRODUCTION ##
 ################
 # INF-08: solo runtime y dependencias de producción; sin src, test ni devDependencies; no como root.
-FROM node:24-alpine3.22 AS production
+FROM node:24.18.1-alpine3.23 AS production
 
 ARG NODE_ENV=production
 ENV NODE_ENV=${NODE_ENV}
