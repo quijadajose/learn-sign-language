@@ -48,13 +48,6 @@ test("Sign Studio loads MediaPipe WASM and models under the production CSP", asy
     { timeout: 20000 },
   );
   await studentPage.goto("/admin/sign-studio");
-  // AF-H9-01 y AF-H9-02 (hallazgos/funcional.md): la CSP de nginx no permite compilar WebAssembly
-  // y, en rutas anidadas, los módulos JS de Vite no cargan (base "./"): la página queda en blanco.
-  // Se marca después de la preparación para que un fallo de preparación siga contando como fallo.
-  test.fail(
-    true,
-    "AF-H9-01/AF-H9-02: CSP sin 'wasm-unsafe-eval' y assets relativos en rutas anidadas (producción)",
-  );
   await expect(studentPage.getByRole("main")).toBeVisible({ timeout: 15000 });
 
   expect((await wasm).status()).toBe(200);
