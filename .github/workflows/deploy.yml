@@ -82,11 +82,13 @@ jobs:
     needs: build
     # build se salta solo en un redeploy manual con `tag`; si falló o se saltó
     # por un fallo de CI, no se despliega.
+    # Solo desde main: un despliegue de producción no puede lanzarse desde una rama cualquiera.
     if: >-
-      ${{ !cancelled() && (
+      ${{ github.ref == 'refs/heads/main' && !cancelled() && (
         needs.build.result == 'success' ||
         (github.event_name == 'workflow_dispatch' && inputs.tag != '' && needs.build.result == 'skipped')
       ) }}
+    environment: production
     runs-on: ubuntu-latest
     # Nunca dos deploys a la vez sobre el mismo servidor.
     concurrency:

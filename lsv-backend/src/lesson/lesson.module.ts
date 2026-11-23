@@ -8,6 +8,7 @@ import { Lesson } from '../shared/domain/entities/lesson.js';
 import { QuizSubmission } from '../shared/domain/entities/quizSubmission.js';
 import { Stages } from '../shared/domain/entities/stage.js';
 import { LessonVariant } from '../shared/domain/entities/lessonVariant.js';
+import { UserLanguage } from '../shared/domain/entities/userLanguage.js';
 import { Region } from '../shared/domain/entities/region.js';
 import { LessonService } from './application/services/lesson/lesson.service.js';
 import { CreateLessonUseCase } from './application/use-cases/create-lesson-use-case/create-lesson-use-case.js';
@@ -38,6 +39,7 @@ import { RegionRepository } from './infrastructure/typeorm/region.repository/reg
       QuizSubmission,
       LessonVariant,
       Region,
+      UserLanguage,
     ]),
     forwardRef(() => LanguageModule),
     forwardRef(() => QuizModule),

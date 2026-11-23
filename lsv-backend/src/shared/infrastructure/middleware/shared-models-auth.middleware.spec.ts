@@ -20,20 +20,17 @@ function mockReq(
   } as unknown as Request;
 }
 
-function mockRes(): Response & { statusCode: number; body: unknown } {
+function mockRes() {
   const res = {
     statusCode: 200,
-    body: undefined as unknown,
-    status(code: number) {
+    status: jest.fn(function (this: typeof res, code: number) {
       this.statusCode = code;
       return this;
-    },
-    json(payload: unknown) {
-      this.body = payload;
-      return this;
-    },
+    }),
+    json: jest.fn().mockReturnThis(),
+    sendStatus: jest.fn().mockReturnThis(),
   };
-  return res as unknown as Response & { statusCode: number; body: unknown };
+  return res as unknown as Response & { statusCode: number };
 }
 
 describe('createSharedModelsAuthMiddleware', () => {
@@ -43,27 +40,33 @@ describe('createSharedModelsAuthMiddleware', () => {
   const jwtService = {
     verify: jest.fn(),
   } as unknown as JwtService;
+  const loadAuthState = jest.fn();
 
   const middleware = createSharedModelsAuthMiddleware(
     configService,
     jwtService,
+    loadAuthState,
   );
 
   beforeEach(() => {
     jest.clearAllMocks();
-    (jwtService.verify as jest.Mock).mockReturnValue({ sub: 'u1' });
+    (jwtService.verify as jest.Mock).mockReturnValue({
+      sub: 'u1',
+      tokenVersion: 3,
+    });
+    loadAuthState.mockResolvedValue({ tokenVersion: 3 });
   });
 
-  it('skips non-model paths', () => {
+  it('skips non-model paths', async () => {
     const next = jest.fn();
-    middleware(mockReq({ path: '/training_data/x' }), mockRes(), next);
+    await middleware(mockReq({ path: '/training_data/x' }), mockRes(), next);
     expect(next).toHaveBeenCalled();
     expect(jwtService.verify).not.toHaveBeenCalled();
   });
 
-  it('accepts a valid Bearer token', () => {
+  it('accepts a valid Bearer token whose tokenVersion matches the user', async () => {
     const next = jest.fn();
-    middleware(
+    await middleware(
       mockReq({ headers: { authorization: 'Bearer jwt-token' } }),
       mockRes(),
       next,
@@ -71,12 +74,13 @@ describe('createSharedModelsAuthMiddleware', () => {
     expect(jwtService.verify).toHaveBeenCalledWith('jwt-token', {
       secret: 'test-secret',
     });
+    expect(loadAuthState).toHaveBeenCalledWith('u1');
     expect(next).toHaveBeenCalled();
   });
 
-  it('accepts a valid access cookie', () => {
+  it('accepts a valid access cookie', async () => {
     const next = jest.fn();
-    middleware(
+    await middleware(
       mockReq({ headers: { cookie: 'lsv_access=jwt-token' } }),
       mockRes(),
       next,
@@ -87,11 +91,11 @@ describe('createSharedModelsAuthMiddleware', () => {
     expect(next).toHaveBeenCalled();
   });
 
-  it('rejects a reset-purpose JWT', () => {
+  it('rejects a token revoked by logout (stale tokenVersion)', async () => {
     const next = jest.fn();
     const res = mockRes();
-    (jwtService.verify as jest.Mock).mockReturnValue({ purpose: 'reset' });
-    middleware(
+    loadAuthState.mockResolvedValue({ tokenVersion: 4 });
+    await middleware(
       mockReq({ headers: { authorization: 'Bearer jwt-token' } }),
       res,
       next,
@@ -100,19 +104,28 @@ describe('createSharedModelsAuthMiddleware', () => {
     expect(res.statusCode).toBe(401);
   });
 
-  it('rejects ?access_token= even if the JWT is valid', () => {
+  it('rejects a token whose user no longer exists', async () => {
     const next = jest.fn();
     const res = mockRes();
-    middleware(mockReq({ query: { access_token: 'jwt-token' } }), res, next);
-    expect(jwtService.verify).not.toHaveBeenCalled();
+    loadAuthState.mockResolvedValue(null);
+    await middleware(
+      mockReq({ headers: { authorization: 'Bearer jwt-token' } }),
+      res,
+      next,
+    );
     expect(next).not.toHaveBeenCalled();
     expect(res.statusCode).toBe(401);
   });
 
-  it('rejects missing Authorization', () => {
+  it('rejects a reset-purpose JWT', async () => {
     const next = jest.fn();
     const res = mockRes();
-    middleware(mockReq(), res, next);
+    (jwtService.verify as jest.Mock).mockReturnValue({ purpose: 'reset' });
+    await middleware(
+      mockReq({ headers: { authorization: 'Bearer jwt-token' } }),
+      res,
+      next,
+    );
     expect(next).not.toHaveBeenCalled();
     expect(res.statusCode).toBe(401);
   });

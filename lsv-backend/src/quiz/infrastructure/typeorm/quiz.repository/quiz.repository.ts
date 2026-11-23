@@ -1,4 +1,8 @@
-import { NotFoundException, BadRequestException } from '@nestjs/common';
+import {
+  NotFoundException,
+  BadRequestException,
+  ForbiddenException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { LeaderboardDto } from '../../../../leaderboard/domain/dto/leaderboard/leaderboard.js';
 import { QuizDto } from '../../../domain/dto/quiz/quiz-dto.js';
@@ -16,6 +20,9 @@ import { QuizSubmission } from '../../../../shared/domain/entities/quizSubmissio
 import { User } from '../../../../shared/domain/entities/user.js';
 import { FindManyOptions, Repository, SelectQueryBuilder } from 'typeorm';
 import { pickSafeOrderBy } from '../../../../shared/infrastructure/safe-order-by.js';
+
+/** Intentos máximos de un alumno por quiz (la nota completa se mantiene). */
+const MAX_QUIZ_ATTEMPTS = 3;
 
 export class QuizRepository implements QuizRepositoryInterface {
   constructor(
@@ -292,6 +299,25 @@ export class QuizRepository implements QuizRepositoryInterface {
     correctOptions.forEach((option) => {
       correctAnswersMap.set(option.question.id, option.id);
     });
+
+    // Intentos limitados: evita deducir la respuesta correcta repitiendo envíos.
+    const previousAttempts = await this.submissionRepository.count({
+      where: { user: { id: user.id }, quiz: { id: quiz.id } },
+    });
+    if (previousAttempts >= MAX_QUIZ_ATTEMPTS) {
+      throw new ForbiddenException('errors.quiz.attemptLimitReached');
+    }
+
+    // Envío completo obligatorio: no se puede puntuar una sola pregunta aislada.
+    const submittedQuestionIds = new Set(
+      submissionDto.answers.map((answer) => answer.questionId),
+    );
+    const allAnswered = [...correctAnswersMap.keys()].every((questionId) =>
+      submittedQuestionIds.has(questionId),
+    );
+    if (!allAnswered) {
+      throw new BadRequestException('errors.quiz.incompleteSubmission');
+    }
 
     // Cada pregunta puntúa una sola vez: se ignoran respuestas repetidas
     // o de preguntas que no pertenecen al quiz (no tienen entrada en el mapa).

@@ -1,4 +1,9 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  ForbiddenException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { QuizVariant } from '../../../../shared/domain/entities/quizVariant.js';
@@ -8,6 +13,9 @@ import { QuizSubmission } from '../../../../shared/domain/entities/quizSubmissio
 import { User } from '../../../../shared/domain/entities/user.js';
 import { LessonVariant } from '../../../../shared/domain/entities/lessonVariant.js';
 import { Submission } from '../../../domain/dto/submission/submission.dto.js';
+
+/** Intentos máximos de un alumno por quiz variante. */
+const MAX_QUIZ_ATTEMPTS = 3;
 
 @Injectable()
 export class QuizVariantRepository {
@@ -180,6 +188,23 @@ export class QuizVariantRepository {
     correctOptions.forEach((option) => {
       correctAnswersMap.set(option.questionVariant.id, option.id);
     });
+
+    // Intentos limitados y envío completo (mismas reglas que el quiz base).
+    const previousAttempts = await this.submissionRepository.count({
+      where: { user: { id: user.id }, quizVariant: { id: quizVariant.id } },
+    });
+    if (previousAttempts >= MAX_QUIZ_ATTEMPTS) {
+      throw new ForbiddenException('errors.quiz.attemptLimitReached');
+    }
+    const submittedQuestionIds = new Set(
+      submission.answers.map((answer) => answer.questionId),
+    );
+    const allAnswered = [...correctAnswersMap.keys()].every((questionId) =>
+      submittedQuestionIds.has(questionId),
+    );
+    if (!allAnswered) {
+      throw new BadRequestException('errors.quiz.incompleteSubmission');
+    }
 
     // BE-02: cada pregunta puntúa una sola vez; se ignoran respuestas repetidas
     // o de preguntas que no pertenecen a esta variante.
