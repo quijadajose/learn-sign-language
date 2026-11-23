@@ -1,4 +1,11 @@
-import { Injectable, NotFoundException, Inject } from '@nestjs/common';
+import { InjectDataSource } from '@nestjs/typeorm';
+import { DataSource } from 'typeorm';
+import {
+  ForbiddenException,
+  Injectable,
+  NotFoundException,
+  Inject,
+} from '@nestjs/common';
 import { GetUserLessonByUserIdUseCase } from '../../use-cases/get-user-lesson-by-user-id-use-case/get-user-lesson-by-user-id-use-case.js';
 import {
   PaginatedResponseDto,
@@ -21,6 +28,8 @@ export class UserLessonService {
     private readonly getLessonByIdUseCase: GetLessonByIdUseCase,
     @Inject(GetRegionalLessonUseCase)
     private readonly getRegionalLessonUseCase: GetRegionalLessonUseCase,
+    @InjectDataSource()
+    private readonly dataSource: DataSource,
   ) {}
   getUserLessonByUserId(
     userId: string,
@@ -28,11 +37,34 @@ export class UserLessonService {
   ): Promise<PaginatedResponseDto<UserLesson>> {
     return this.getUserLessonByUserIdUseCase.execute(userId, paginationDto);
   }
+  /** Alumnos solo pueden iniciar o completar lecciones de un idioma en el que estén inscritos. */
+  private async assertEnrolledForLesson(userId: string, lessonId: string) {
+    const user = await this.findUserUseCase.findById(userId);
+    if (!user) {
+      throw new NotFoundException('errors.user.notFound');
+    }
+    if (user.role === 'admin' || user.role === 'moderator') return;
+    const rows = await this.dataSource.query(
+      `SELECT ul."userId" FROM user_language ul
+         WHERE ul."userId" = $1 AND ul."languageId" IN (
+           SELECT l."languageId" FROM lesson l WHERE l.id = $2
+           UNION ALL
+           SELECT r."languageId" FROM lesson_variant lv
+             JOIN region r ON r.id = lv."regionId" WHERE lv.id = $2
+         ) LIMIT 1`,
+      [userId, lessonId],
+    );
+    if (rows.length === 0) {
+      throw new ForbiddenException('errors.lesson.notEnrolledInLanguage');
+    }
+  }
+
   async startLesson(userId: string, lessonId: string, regionId?: string) {
     const user = await this.findUserUseCase.findById(userId);
     if (!user) {
       throw new NotFoundException('errors.user.notFound');
     }
+    await this.assertEnrolledForLesson(userId, lessonId);
 
     let baseLessonId = lessonId;
 
@@ -58,6 +90,7 @@ export class UserLessonService {
     lessonId: string,
     isCompleted: boolean,
   ) {
+    await this.assertEnrolledForLesson(userId, lessonId);
     let baseLessonId = lessonId;
 
     try {

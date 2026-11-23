@@ -67,6 +67,12 @@ describe('User Lessons (e2e)', () => {
       .send({ email: testUser.email, password: testUser.password });
     userToken = accessTokenFromAuthResponse(loginRes);
     userId = loginRes.body.data.user.id;
+    // Las lecciones solo se inician/completan si el alumno está inscrito en el idioma.
+    await request(app.getHttpServer())
+      .post('/users/enroll')
+      .set('Authorization', `Bearer ${userToken}`)
+      .send({ languageId: langRes.body.id })
+      .expect(201);
   }, 60000);
 
   afterAll(async () => {

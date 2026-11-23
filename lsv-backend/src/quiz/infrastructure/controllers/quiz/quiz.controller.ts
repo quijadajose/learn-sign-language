@@ -94,7 +94,11 @@ export class QuizController {
 
   @Get('/:quizId')
   @DocGetQuizById()
-  async getQuizById(@Param('quizId', ParseUUIDPipe) quizId: string) {
+  async getQuizById(
+    @Req() req,
+    @Param('quizId', ParseUUIDPipe) quizId: string,
+  ) {
+    await this.quizService.assertCanTakeQuiz(req.user, quizId);
     return this.quizService.getQuizById(quizId);
   }
 

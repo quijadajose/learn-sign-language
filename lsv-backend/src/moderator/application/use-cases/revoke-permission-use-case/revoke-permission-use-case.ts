@@ -1,3 +1,4 @@
+import { withUserLock } from '../../user-lock.js';
 import { Injectable, NotFoundException, Inject } from '@nestjs/common';
 import { ModeratorPermissionRepositoryInterface } from '../../../domain/ports/moderator-permission.repository.interface.js';
 import { UserRepositoryInterface } from '../../../../auth/domain/ports/user.repository.interface/user.repository.interface.js';
@@ -12,6 +13,17 @@ export class RevokePermissionUseCase {
   ) {}
 
   async execute(permissionId: string): Promise<void> {
+    const permission =
+      await this.moderatorPermissionRepository.findById(permissionId);
+    if (!permission) {
+      throw new NotFoundException('errors.permission.notFound');
+    }
+    return withUserLock(permission.userId, () =>
+      this.executeUnlocked(permissionId),
+    );
+  }
+
+  private async executeUnlocked(permissionId: string): Promise<void> {
     const permission =
       await this.moderatorPermissionRepository.findById(permissionId);
     if (!permission) {
