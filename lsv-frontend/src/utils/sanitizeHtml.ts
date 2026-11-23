@@ -3,7 +3,6 @@ import type { Config } from "dompurify";
 
 /** Allowlist for Quill lesson HTML (no scripts, event handlers, or javascript: URLs). */
 const LESSON_HTML_CONFIG: Config = {
-  USE_PROFILES: { html: true },
   ALLOWED_TAGS: [
     "p",
     "br",
