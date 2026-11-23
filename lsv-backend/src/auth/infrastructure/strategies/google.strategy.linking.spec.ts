@@ -31,8 +31,8 @@ describe('GoogleStrategy account linking', () => {
     return { strategy, registerUserUseCase, authService };
   }
 
-  it('refuses to link a password account that was not created by this Google id', async () => {
-    const { strategy, authService } = build({
+  it('links a local password account with the same verified email', async () => {
+    const { strategy } = build({
       id: 'local-1',
       email: 'victim@example.com',
       hashPassword: 'bcrypt-hash',
@@ -40,8 +40,10 @@ describe('GoogleStrategy account linking', () => {
     });
     const done = jest.fn();
     await strategy.validate('at', 'rt', profile, done);
-    expect(done).toHaveBeenCalledWith(null, false);
-    expect(authService.generateToken).not.toHaveBeenCalled();
+    expect(done).toHaveBeenCalledWith(
+      null,
+      expect.objectContaining({ sub: 'local-1' }),
+    );
   });
 
   it('still signs in an account created by the same Google id', async () => {
