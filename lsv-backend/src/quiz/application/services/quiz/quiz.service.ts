@@ -1,10 +1,13 @@
 import {
   BadRequestException,
+  ForbiddenException,
   Inject,
   Injectable,
   NotFoundException,
   Query,
 } from '@nestjs/common';
+import { InjectDataSource } from '@nestjs/typeorm';
+import { DataSource } from 'typeorm';
 import { QuizDto } from '../../../domain/dto/quiz/quiz-dto.js';
 import { CreateQuizWithQuestionsAndOptionsUseCase } from '../../use-cases/create-quiz-with-questions-and-options-use-case/create-quiz-with-questions-and-options-use-case.js';
 import { PaginationDto } from '../../../../shared/domain/dto/PaginationDto.js';
@@ -37,6 +40,8 @@ export class QuizService {
     private readonly quizRepository: QuizRepositoryInterface,
     @Inject('QuizVariantRepositoryInterface')
     private readonly quizVariantRepository: QuizVariantRepositoryInterface,
+    @InjectDataSource()
+    private readonly dataSource: DataSource,
   ) {}
   createQuiz(quizDto: QuizDto) {
     return this.createQuizWithQuestionsAndOptionsUseCase.execute(quizDto);
@@ -47,6 +52,46 @@ export class QuizService {
   ) {
     return this.listQuizzesUseCase.execute(languageId, pagination);
   }
+  /** Idioma de un quiz base (vía su lección) o de una variante (vía su región). */
+  private async languageIdForQuizOrVariant(
+    quizId: string,
+  ): Promise<string | null> {
+    const base = await this.dataSource.query(
+      `SELECT l."languageId" AS "languageId" FROM quiz q
+         JOIN lesson l ON l.id = q."lessonId" WHERE q.id = $1`,
+      [quizId],
+    );
+    if (base.length > 0) return base[0].languageId;
+    const variant = await this.dataSource.query(
+      `SELECT r."languageId" AS "languageId" FROM quiz_variant qv
+         JOIN lesson_variant lv ON lv.id = qv."lessonVariantId"
+         JOIN region r ON r.id = lv."regionId" WHERE qv.id = $1`,
+      [quizId],
+    );
+    return variant.length > 0 ? variant[0].languageId : null;
+  }
+
+  /** Solo admins/moderadores o alumnos inscritos en el idioma pueden ver o responder el quiz. */
+  async assertCanTakeQuiz(
+    user: { id?: string; sub?: string; role?: string } | undefined,
+    quizId: string,
+  ): Promise<void> {
+    if (!user) {
+      throw new ForbiddenException('errors.permission.unauthenticated');
+    }
+    if (user.role === 'admin' || user.role === 'moderator') return;
+    const languageId = await this.languageIdForQuizOrVariant(quizId);
+    if (!languageId) return; // el quiz no existe: la ruta responde 404
+    const userId = user.sub || user.id;
+    const rows = await this.dataSource.query(
+      `SELECT 1 FROM user_language WHERE "userId" = $1 AND "languageId" = $2 LIMIT 1`,
+      [userId, languageId],
+    );
+    if (rows.length === 0) {
+      throw new ForbiddenException('errors.quiz.notEnrolledInLanguage');
+    }
+  }
+
   getQuizById(quizId: string) {
     return this.getQuizByIdUseCase.execute(quizId);
   }
@@ -63,6 +108,7 @@ export class QuizService {
     if (!user) {
       throw new NotFoundException('errors.user.notFound');
     }
+    await this.assertCanTakeQuiz(user, quizId);
 
     // Primero intentar obtener un quiz normal
     let quiz: Quiz | null = null;

@@ -1,3 +1,4 @@
+import { withUserLock } from '../../user-lock.js';
 import {
   Injectable,
   BadRequestException,
@@ -29,6 +30,12 @@ export class AssignPermissionUseCase {
   ) {}
 
   async execute(dto: AssignPermissionDto): Promise<ModeratorPermission> {
+    return withUserLock(dto.userId, () => this.executeUnlocked(dto));
+  }
+
+  private async executeUnlocked(
+    dto: AssignPermissionDto,
+  ): Promise<ModeratorPermission> {
     // Verificar que el usuario existe
     const user = await this.userRepository.findById(dto.userId);
     if (!user) {

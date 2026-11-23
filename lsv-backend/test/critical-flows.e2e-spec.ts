@@ -69,6 +69,12 @@ describe('Critical student flows (e2e)', () => {
     userToken = accessTokenFromAuthResponse(login);
     userId = login.body.data.user.id;
     userCookie = cookieHeaderFrom(login);
+    // El alumno debe estar inscrito en el idioma para ver y responder quizzes.
+    await request(app.getHttpServer())
+      .post('/users/enroll')
+      .set('Authorization', `Bearer ${userToken}`)
+      .send({ languageId: curriculum.languageId })
+      .expect(201);
 
     const quizRes = await request(app.getHttpServer())
       .post('/quiz')
