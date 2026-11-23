@@ -177,6 +177,10 @@ def assert_safe_job_paths(
             f"Invalid paths detected (must be under {base_dir}): "
             f"data_path={data_path}, output_path={output_path}"
         )
+    # El backend siempre usa un destino nuevo (model_<uuid>). Un destino que ya existe
+    # sería reemplazado y borrado: se rechaza.
+    if os.path.lexists(output_path):
+        raise ValueError(f"output_path already exists and cannot be replaced: {output_path}")
     return data_path, output_path
 
 
@@ -223,6 +227,12 @@ def validate_training_samples(
     """
     if not isinstance(samples, list):
         raise ValueError(f"Training payload '{label}' must be a list")
+    # El tope cuenta TODAS las entradas, también las vacías (evita inflar memoria).
+    if len(samples) > MAX_SAMPLES:
+        raise ValueError(
+            f"Training payload exceeds {MAX_SAMPLES} samples "
+            "(TRAINER_MAX_SAMPLES)"
+        )
 
     cleaned: list[dict[str, Any]] = []
     for i, item in enumerate(samples):

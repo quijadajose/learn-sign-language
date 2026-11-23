@@ -19,6 +19,7 @@ from trainer_logic import clear_keras_session, train_model
 from validation import (
     TrainingCancelledError,
     assert_safe_job_paths,
+    is_safe_path,
     normalize_training_payload,
 )
 
@@ -434,9 +435,11 @@ async def process_job(job, token):
 def _discard_training_payload(job_data: dict) -> None:
     """TR-04: borra el dataset del job (no espera al barrido del backend)."""
     try:
-        data_path, _ = assert_safe_job_paths(
-            DATA_BASE_DIR, job_data.get("dataPath"), job_data.get("outputPath")
-        )
+        # Solo se valida el dataset: el outputPath ya existe tras el entrenamiento,
+        # así que no debe pasar por la comprobación de destino nuevo.
+        data_path = job_data.get("dataPath")
+        if not is_safe_path(DATA_BASE_DIR, data_path):
+            raise ValueError("dataPath outside the training data directory")
         Path(data_path).unlink(missing_ok=True)
     except Exception:
         logger.warning("No se pudo borrar el dataset de entrenamiento", exc_info=True)

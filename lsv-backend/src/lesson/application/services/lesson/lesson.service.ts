@@ -1,3 +1,7 @@
+import { ForbiddenException } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { UserLanguage } from '../../../../shared/domain/entities/userLanguage.js';
 import { Injectable, Inject, forwardRef } from '@nestjs/common';
 import { QuizVariantService } from '../../../../quiz/application/services/quiz-variant.service.js';
 import { CreateLessonUseCase } from '../../use-cases/create-lesson-use-case/create-lesson-use-case.js';
@@ -44,6 +48,8 @@ export class LessonService {
     private readonly getRegionalLessonUseCase: GetRegionalLessonUseCase,
     @Inject(forwardRef(() => QuizVariantService))
     private readonly quizVariantService: QuizVariantService,
+    @InjectRepository(UserLanguage)
+    private readonly userLanguageRepository: Repository<UserLanguage>,
   ) {}
   async createLesson(createLessonDto: CreateLessonDto) {
     return await this.createLessonUseCase.execute(createLessonDto);
@@ -62,6 +68,26 @@ export class LessonService {
       stageId,
     );
   }
+  /** Solo admins/moderadores o alumnos inscritos en el idioma pueden ver sus lecciones. */
+  async assertCanViewLanguageLessons(
+    user: { sub?: string; id?: string; role?: string } | undefined,
+    languageId: string,
+  ): Promise<void> {
+    if (!user) {
+      throw new ForbiddenException('errors.permission.unauthenticated');
+    }
+    if (user.role === 'admin' || user.role === 'moderator') {
+      return;
+    }
+    const userId = user.sub || user.id;
+    const enrolled = await this.userLanguageRepository.count({
+      where: { userId, languageId },
+    });
+    if (enrolled === 0) {
+      throw new ForbiddenException('errors.lesson.notEnrolledInLanguage');
+    }
+  }
+
   async getLessonById(id: string) {
     return await this.getLessonByIdUseCase.execute(id);
   }

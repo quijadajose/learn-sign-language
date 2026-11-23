@@ -231,7 +231,10 @@ export class SeederService implements OnModuleInit {
 
   async onModuleInit() {
     await this.seedCountriesAndDivisions();
-    await this.seedAdminUser();
+    // Nunca se crea un admin desde variables de entorno en producción.
+    if ((this.configService.get<string>('NODE_ENV') || '') !== 'production') {
+      await this.seedAdminUser();
+    }
 
     const nodeEnv = this.configService.get<string>('NODE_ENV') || 'development';
     if (nodeEnv !== 'development') {

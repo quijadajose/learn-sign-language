@@ -115,7 +115,13 @@ export class ImagesController {
     @Query('size') size: 'original' | 'sm' | 'md' | 'lg' = 'original',
     @Res({ passthrough: true }) res: Response,
   ): StreamableFile {
-    if (!ALLOWED_UPLOAD_FOLDERS.has(folder) || !isUUID(filename)) {
+    // size entra en el nombre del fichero: solo se aceptan los valores conocidos.
+    const ALLOWED_SIZES = new Set(['original', 'sm', 'md', 'lg']);
+    if (
+      !ALLOWED_UPLOAD_FOLDERS.has(folder) ||
+      !isUUID(filename) ||
+      !ALLOWED_SIZES.has(String(size))
+    ) {
       throw new NotFoundException('errors.image.notFound');
     }
     const basePath = join(process.cwd(), 'uploads');

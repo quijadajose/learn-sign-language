@@ -24,6 +24,9 @@ async function bootstrap() {
   app.set('trust proxy', 1);
   const configService = app.get(ConfigService);
   const jwtService = app.get(JwtService);
+  const userRepository = app.get<{
+    findAuthStateById(id: string): Promise<{ tokenVersion: number } | null>;
+  }>('UserRepositoryInterface');
   const logger = new Logger('Bootstrap');
 
   app.use(securityHeaders);
@@ -57,7 +60,9 @@ async function bootstrap() {
   // JWT obligatorio para TFJS bajo /shared/models
   app.use(
     '/shared',
-    createSharedModelsAuthMiddleware(configService, jwtService),
+    createSharedModelsAuthMiddleware(configService, jwtService, (userId) =>
+      userRepository.findAuthStateById(userId),
+    ),
   );
 
   // BE-09: solo se sirven los modelos. training_data (landmarks biométricos)

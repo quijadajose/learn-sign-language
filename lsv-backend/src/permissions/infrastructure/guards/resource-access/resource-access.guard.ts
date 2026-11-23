@@ -66,8 +66,11 @@ export class ResourceAccessGuard implements CanActivate {
 
     // Verificar permisos según el scope
     if (scope === PermissionScope.LANGUAGE) {
-      // Si se permite acceso a moderadores de región (para contenido como Lessons o Quizzes)
-      const hasPermission = metadata.allowRegionModerators
+      // allowRegionModerators solo amplía LECTURA a moderadores de región.
+      // Las escrituras sobre recursos base del idioma requieren permiso de idioma.
+      const isReadOnly = request.method === 'GET' || request.method === 'HEAD';
+      const regionReadAllowed = metadata.allowRegionModerators && isReadOnly;
+      const hasPermission = regionReadAllowed
         ? await this.moderatorPermissionRepository.checkUserPermissionForLanguage(
             user.sub || user.id,
             resourceId,
@@ -88,7 +91,7 @@ export class ResourceAccessGuard implements CanActivate {
         typeof body.languageId === 'string' &&
         body.languageId !== resourceId
       ) {
-        const targetAllowed = metadata.allowRegionModerators
+        const targetAllowed = regionReadAllowed
           ? await this.moderatorPermissionRepository.checkUserPermissionForLanguage(
               user.sub || user.id,
               body.languageId,

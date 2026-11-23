@@ -144,6 +144,10 @@ function expectation(route: Route, actor: Actor): Expectation {
   if (route.resourceScoped && actor.role !== 'admin') return 'scoped';
   if (OWNERSHIP_ROUTES.has(route.path) && actor.role !== 'admin')
     return 'scoped';
+  // Lecciones de un idioma: solo alumnos inscritos en ese idioma (o moderadores/admin).
+  // El actor alumno de esta matriz no está inscrito, así que debe recibir 403.
+  if (route.path === '/lesson/by-language/:languageId' && actor.role === 'user')
+    return 'deny';
   if (!route.roles) return 'allow';
   if (!route.roles.includes(actor.role)) return 'deny';
   return 'allow';

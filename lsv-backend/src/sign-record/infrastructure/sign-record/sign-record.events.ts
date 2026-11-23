@@ -97,8 +97,12 @@ export class SignRecordEvents extends QueueEventsHost {
             accuracy?: number;
           })
         : {};
-    const modelId =
-      progressPayload.modelId || (await this.getModelIdFromJob(jobId));
+    // Igual que en completed: el modelo lo fija el job; el mensaje no puede cambiarlo.
+    const jobModelId = await this.getModelIdFromJob(jobId);
+    if (progressPayload.modelId && progressPayload.modelId !== jobModelId) {
+      return;
+    }
+    const modelId = jobModelId;
     if (isUUID(modelId)) {
       await this.signRecordService.reportProgress(modelId, {
         progress: Number(progressPayload.progress ?? 0),
@@ -139,10 +143,17 @@ export class SignRecordEvents extends QueueEventsHost {
       parsedData && typeof parsedData === 'object'
         ? (parsedData as Record<string, unknown>)
         : {};
-    const modelId =
-      (typeof resultPayload.modelId === 'string'
-        ? resultPayload.modelId
-        : null) || (await this.getModelIdFromJob(jobId));
+    // El modelo lo fija el job, no el mensaje: un resultado que nombre otro modelo se rechaza.
+    const jobModelId = await this.getModelIdFromJob(jobId);
+    const claimedModelId =
+      typeof resultPayload.modelId === 'string' ? resultPayload.modelId : null;
+    if (claimedModelId && claimedModelId !== jobModelId) {
+      this.logger.error(
+        `Result for job ${jobId} names model ${claimedModelId} but the job belongs to ${jobModelId}; rejected`,
+      );
+      return;
+    }
+    const modelId = jobModelId;
     this.logger.log(`Saving results for model ${modelId}`);
     if (isUUID(modelId)) {
       await this.signRecordService.saveModelResults(modelId, resultPayload);

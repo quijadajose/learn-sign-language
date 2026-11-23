@@ -2,6 +2,7 @@ import {
   BadRequestException,
   NotFoundException,
   ConflictException,
+  ForbiddenException,
   Inject,
   forwardRef,
 } from '@nestjs/common';
@@ -109,6 +110,7 @@ export class LessonRepository implements LessonRepositoryInterface {
       where: { id },
       relations: {
         stage: true,
+        language: true,
       },
     });
   }
@@ -576,6 +578,7 @@ export class LessonRepository implements LessonRepositoryInterface {
   ): Promise<LessonVariant> {
     const lesson = await this.lessonRepository.findOne({
       where: { id: lessonId },
+      relations: { language: true },
     });
     if (!lesson) {
       throw new NotFoundException('errors.lesson.notFound');
@@ -586,6 +589,11 @@ export class LessonRepository implements LessonRepositoryInterface {
     );
     if (!region) {
       throw new NotFoundException('errors.region.notFound');
+    }
+
+    // Una variante regional solo puede pertenecer a una lección del mismo idioma que la región.
+    if (lesson.language?.id !== region.languageId) {
+      throw new ForbiddenException('errors.lesson.regionLanguageMismatch');
     }
 
     if (createVariantDto.isBase) {

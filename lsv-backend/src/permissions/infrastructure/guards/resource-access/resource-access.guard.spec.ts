@@ -28,11 +28,12 @@ describe('ResourceAccessGuard', () => {
   const makeContext = (
     user: unknown,
     body: Record<string, unknown> = {},
+    method = 'POST',
   ): ExecutionContext =>
     ({
       getHandler: () => ({}),
       switchToHttp: () => ({
-        getRequest: () => ({ user, params: {}, body, query: {} }),
+        getRequest: () => ({ user, params: {}, body, query: {}, method }),
       }),
     }) as unknown as ExecutionContext;
 
@@ -73,17 +74,55 @@ describe('ResourceAccessGuard', () => {
       allowRegionModerators: true,
     });
     resolver.resolveResourceId.mockResolvedValue('lang-1');
-    permissions.checkUserPermissionForLanguage.mockResolvedValue(true);
+    permissions.findByUserIdAndLanguageId.mockResolvedValue({ id: 'p1' });
 
     await expect(
       guard.canActivate(
         makeContext({ role: 'moderator', sub: 'm1' }, { languageId: 'lang-1' }),
       ),
     ).resolves.toBe(true);
-    expect(permissions.checkUserPermissionForLanguage).toHaveBeenCalledWith(
+    expect(permissions.findByUserIdAndLanguageId).toHaveBeenCalledWith(
       'm1',
       'lang-1',
     );
+  });
+
+  it('lets a region-only moderator read language lessons (GET)', async () => {
+    reflector.get.mockReturnValue({
+      scope: PermissionScope.LANGUAGE,
+      source: { body: 'languageId' },
+      allowRegionModerators: true,
+    });
+    resolver.resolveResourceId.mockResolvedValue('lang-1');
+    permissions.checkUserPermissionForLanguage.mockResolvedValue(true);
+
+    await expect(
+      guard.canActivate(
+        makeContext({ role: 'moderator', sub: 'm1' }, {}, 'GET'),
+      ),
+    ).resolves.toBe(true);
+  });
+
+  it('forbids a region-only moderator from writing base lessons of the language', async () => {
+    reflector.get.mockReturnValue({
+      scope: PermissionScope.LANGUAGE,
+      source: { body: 'languageId' },
+      allowRegionModerators: true,
+    });
+    resolver.resolveResourceId.mockResolvedValue('lang-1');
+    // Sólo tiene permiso sobre una región del idioma, no sobre el idioma.
+    permissions.checkUserPermissionForLanguage.mockResolvedValue(true);
+    permissions.findByUserIdAndLanguageId.mockResolvedValue(null);
+
+    await expect(
+      guard.canActivate(
+        makeContext(
+          { role: 'moderator', sub: 'm1' },
+          { languageId: 'lang-1' },
+          'PUT',
+        ),
+      ),
+    ).rejects.toBeInstanceOf(ForbiddenException);
   });
 
   it('forbids moderators without language permission', async () => {
@@ -94,6 +133,7 @@ describe('ResourceAccessGuard', () => {
     });
     resolver.resolveResourceId.mockResolvedValue('lang-1');
     permissions.checkUserPermissionForLanguage.mockResolvedValue(false);
+    permissions.findByUserIdAndLanguageId.mockResolvedValue(null);
 
     await expect(
       guard.canActivate(makeContext({ role: 'moderator', sub: 'm1' })),

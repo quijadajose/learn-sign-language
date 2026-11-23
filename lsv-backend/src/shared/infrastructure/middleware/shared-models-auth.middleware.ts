@@ -8,14 +8,23 @@ function isModelsPath(path: string): boolean {
   return path === '/models' || path.startsWith('/models/');
 }
 
-/** Require a valid access JWT for /shared/models/* TFJS artifacts. */
+export type AuthStateLoader = (
+  userId: string,
+) => Promise<{ tokenVersion: number } | null>;
+
+/**
+ * Require a valid access JWT for /shared/models/* TFJS artifacts.
+ * The token must also match the user's current tokenVersion, so logout and
+ * password changes revoke model access immediately (same rule as JwtAuthGuard).
+ */
 export function createSharedModelsAuthMiddleware(
   configService: ConfigService,
   jwtService: JwtService,
+  loadAuthState: AuthStateLoader,
 ) {
   const secret = configService.get<string>('JWT_SECRET');
 
-  return (req: Request, res: Response, next: NextFunction) => {
+  return async (req: Request, res: Response, next: NextFunction) => {
     if (!isModelsPath(req.path || '')) {
       return next();
     }
@@ -36,9 +45,18 @@ export function createSharedModelsAuthMiddleware(
     try {
       const decoded = jwtService.verify(token, { secret }) as {
         purpose?: string;
+        sub?: string;
+        tokenVersion?: number;
       };
       if ((decoded.purpose ?? 'access') !== 'access') {
         throw new Error('reset token');
+      }
+      const authState = decoded.sub ? await loadAuthState(decoded.sub) : null;
+      if (
+        !authState ||
+        authState.tokenVersion !== (decoded.tokenVersion ?? 0)
+      ) {
+        throw new Error('revoked token');
       }
       return next();
     } catch {

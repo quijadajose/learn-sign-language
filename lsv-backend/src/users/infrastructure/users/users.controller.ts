@@ -97,8 +97,16 @@ export class UsersController {
 
   @Get('lesson/:id')
   @DocGetLessonById()
-  async getLessonById(@Param('id', ParseUUIDPipe) id: string): Promise<Lesson> {
-    return this.lessonAdminService.getLessonById(id);
+  async getLessonById(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Req() req,
+  ): Promise<Lesson> {
+    const lesson = await this.lessonAdminService.getLessonById(id);
+    await this.lessonAdminService.assertCanViewLanguageLessons(
+      req.user,
+      lesson.language?.id ?? '',
+    );
+    return lesson;
   }
 
   @Get('enrolled-languages')

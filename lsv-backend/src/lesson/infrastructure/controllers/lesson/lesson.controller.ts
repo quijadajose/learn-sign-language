@@ -60,7 +60,12 @@ export class LessonController {
   async getLessonsByLanguage(
     @Param('languageId', ParseUUIDPipe) languageId: string,
     @Query() query: GetLessonsQueryDto,
+    @Req() req,
   ): Promise<PaginatedResponseDto<Lesson>> {
+    await this.lessonAdminService.assertCanViewLanguageLessons(
+      req.user,
+      languageId,
+    );
     return this.lessonAdminService.getLessonsByLanguage(
       languageId,
       query,
