@@ -53,12 +53,6 @@ export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
       normalizeEmail(emails[0].value),
     );
 
-    // Una cuenta con contraseña que no se creó con este googleId es una cuenta local
-    // sin verificar: no se vincula a un inicio de sesión de Google por el mero hecho de compartir correo.
-    if (user && user.hashPassword && user.googleId !== id) {
-      return done(null, false);
-    }
-
     if (!user) {
       user = await this.registerUserUseCase.registerUserWithOAuth2({
         email: normalizeEmail(emails[0].value),
